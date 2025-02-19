@@ -4,12 +4,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { IAuthViewModel } from "./auth.view-model.interface";
-import { useAuthStore } from "@/src/stores/auth";
+
 import {
   LoginFormData,
   loginSchema,
 } from "@/src/models/validation/auth.schema";
 import { authService } from "@/src/services/auth.service";
+import useAuthStore from "@/src/stores/auth";
 
 export function useAuthViewModel(): IAuthViewModel {
   const [isLoading, setIsLoading] = useState(false);

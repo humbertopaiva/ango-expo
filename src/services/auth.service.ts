@@ -1,6 +1,7 @@
 // services/auth.service.ts
 import { supabase } from "../lib/supabase";
-import { useAuthStore } from "../stores/auth";
+import useAuthStore from "../stores/auth";
+
 import { LoginFormData } from "../types/auth";
 
 export class AuthService {

@@ -1,16 +1,8 @@
+// src/stores/auth.ts
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-interface Profile {
-  id: string;
-  directus_token: string;
-  updated_at: string;
-  created_at: string;
-  directus_user_id: string;
-  plan: string | null;
-  company_id: string;
-}
+import { Profile } from "../models/auth";
+import { storage } from "../lib/storage";
 
 interface AuthState {
   profile: Profile | null;
@@ -21,7 +13,7 @@ interface AuthState {
   getCompanyId: () => string | null;
 }
 
-export const useAuthStore = create<AuthState>()(
+const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       profile: null,
@@ -42,7 +34,20 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => ({
+        getItem: async (name) => {
+          const value = await storage.getItem(name);
+          return value ? JSON.parse(value) : null;
+        },
+        setItem: async (name, value) => {
+          await storage.setItem(name, JSON.stringify(value));
+        },
+        removeItem: async (name) => {
+          await storage.removeItem(name);
+        },
+      })),
     }
   )
 );
+
+export default useAuthStore;

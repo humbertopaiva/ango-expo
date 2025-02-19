@@ -10,7 +10,7 @@ export function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1">
-      <View className="flex-1 justify-center items-center px-4 bg-white">
+      <View className="flex-1 justify-center items-center bg-white">
         <LoginForm viewModel={viewModel} />
       </View>
     </SafeAreaView>
