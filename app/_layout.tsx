@@ -8,11 +8,13 @@ import { useRouter, useSegments } from "expo-router";
 import { Text, View } from "react-native";
 import useAuthStore from "@/src/stores/auth";
 import { useCustomFonts } from "@/src/styles/fonts";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
 
-  // Move o hook para depois do carregamento das fontes
   const segments = useSegments();
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
@@ -26,7 +28,7 @@ export default function RootLayout() {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace("/(app)/home");
+      router.replace("/(app)/admin");
     }
   }, [isAuthenticated, segments, fontsLoaded]);
 
@@ -41,10 +43,12 @@ export default function RootLayout() {
   }
 
   return (
-    <GluestackUIProvider config={config}>
-      <View className="flex-1 bg-background">
-        <Slot />
-      </View>
-    </GluestackUIProvider>
+    <QueryClientProvider client={queryClient}>
+      <GluestackUIProvider config={config}>
+        <View className="flex-1 bg-background">
+          <Slot />
+        </View>
+      </GluestackUIProvider>
+    </QueryClientProvider>
   );
 }

@@ -46,7 +46,9 @@ export function LoginForm({ viewModel }: LoginFormProps) {
     },
   });
 
-  const WelcomeSection = ({ logoSize = 120 }) => (
+  const WelcomeSection: React.FC<{ logoSize?: number }> = ({
+    logoSize = 120,
+  }) => (
     <View style={styles.welcomeContainer}>
       {/* Logo */}
       <View style={styles.logo} className="flex items-center justify-center">
