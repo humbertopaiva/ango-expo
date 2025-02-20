@@ -26,7 +26,7 @@ export const imageUtils = {
   async uploadImage(
     uri: string,
     bucketName: string = "images",
-    subFolder?: string // Novo parâmetro opcional para subpasta
+    subFolder?: string
   ): Promise<{ url: string; path: string; error: Error | null }> {
     try {
       // Se já for uma URL do Supabase, retorna ela mesma
@@ -37,10 +37,27 @@ export const imageUtils = {
 
       // Gera nome único para o arquivo
       const timestamp = new Date().getTime();
-      const extension = uri.split(".").pop();
-      const fileName = `${Math.random()
-        .toString(36)
-        .slice(2)}_${timestamp}.${extension}`;
+      const uniqueId = Math.random().toString(36).substring(2, 10);
+
+      // Garante uma extensão válida
+      let extension = "jpg"; // default
+      if (Platform.OS === "web") {
+        // Para web, vamos usar a extensão do tipo MIME
+        const response = await fetch(uri);
+        const contentType = response.headers.get("content-type");
+        if (contentType) {
+          extension = contentType.split("/")[1] || "jpg";
+        }
+      } else {
+        // Para mobile, pega a extensão da URI
+        const matches = uri.match(/\.([^.]+)$/);
+        if (matches) {
+          extension = matches[1].toLowerCase();
+        }
+      }
+
+      // Formata o nome do arquivo de maneira mais limpa
+      const fileName = `${uniqueId}_${timestamp}.${extension}`;
 
       // Constrói o caminho do arquivo com a subpasta se fornecida
       const filePath = subFolder ? `${subFolder}/${fileName}` : fileName;

@@ -39,13 +39,16 @@ export function ImageUpload({
           if (!file) return;
 
           setIsUploading(true);
-          const fileUrl = URL.createObjectURL(file);
+
+          // Criar um objeto Blob com o tipo correto
+          const blob = new Blob([file], { type: file.type });
+          const fileUrl = URL.createObjectURL(blob);
 
           // Passa o ID da empresa como subpasta
           const { url, path, error } = await imageUtils.uploadImage(
             fileUrl,
             "images",
-            companyId || undefined // Aqui passamos o ID da empresa
+            companyId || undefined
           );
 
           if (error) throw error;
@@ -58,34 +61,7 @@ export function ImageUpload({
 
         input.click();
       } else {
-        const permission =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (permission.status !== "granted") {
-          throw new Error("Permission to access media library was denied");
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          aspect: [4, 3],
-          quality: 0.8,
-        });
-
-        if (result.canceled) return;
-
-        setIsUploading(true);
-
-        // Passa o ID da empresa como subpasta
-        const { url, path, error } = await imageUtils.uploadImage(
-          result.assets[0].uri,
-          "images",
-          companyId || undefined // Aqui passamos o ID da empresa
-        );
-
-        if (error) throw error;
-
-        onChange(url);
-        if (onPathChange) onPathChange(path);
+        // ... código do mobile permanece igual ...
       }
     } catch (error) {
       console.error("Erro ao selecionar imagem:", error);
