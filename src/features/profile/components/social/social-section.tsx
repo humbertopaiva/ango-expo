@@ -1,9 +1,9 @@
 import React from "react";
-import { View, Text, Linking } from "react-native";
+import { View, Text, Linking, TouchableOpacity } from "react-native";
 import { Edit3, ExternalLink } from "lucide-react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Button } from "@/components/ui/button";
-import { SocialForm } from "./social-form";
+
 import { useProfileContext } from "../../contexts/use-profile-context";
 import {
   Instagram,
@@ -12,7 +12,8 @@ import {
   Twitter,
   Linkedin,
 } from "lucide-react-native";
-import { extractUsername, SocialNetwork } from "@/utils/social-utils";
+import { extractUsername, SocialNetwork } from "@/src/utils/social.utils";
+import { SocialForm } from "./social-form";
 
 export function SocialSection() {
   const vm = useProfileContext();

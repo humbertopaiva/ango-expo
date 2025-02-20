@@ -3,21 +3,22 @@ import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
+  Modal,
+  ModalContent,
+  ModalHeader,
   Button,
   FormControl,
   Input,
+  Heading,
 } from "@gluestack-ui/themed";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
-import {
-  formatSocialUrl,
-  validateUsername,
-  extractUsername,
-  SocialNetwork,
-} from "@/utils/social-utils";
 import * as z from "zod";
+import {
+  extractUsername,
+  formatSocialUrl,
+  SocialNetwork,
+  validateUsername,
+} from "@/src/utils/social.utils";
 
 const createSocialSchema = (network: SocialNetwork) => {
   return z
@@ -71,22 +72,23 @@ export function SocialForm({
 
   const handleSubmit = (data: SocialFormData) => {
     const updateData: UpdateProfileDTO = {
-      facebook: data.facebook || undefined,
-      instagram: data.instagram || undefined,
-      tiktok: data.tiktok || undefined,
-      youtube: data.youtube || undefined,
-      twitter: data.twitter || undefined,
-      linkedin: data.linkedin || undefined,
+      facebook: typeof data.facebook === "string" ? data.facebook : undefined,
+      instagram:
+        typeof data.instagram === "string" ? data.instagram : undefined,
+      tiktok: typeof data.tiktok === "string" ? data.tiktok : undefined,
+      youtube: typeof data.youtube === "string" ? data.youtube : undefined,
+      twitter: typeof data.twitter === "string" ? data.twitter : undefined,
+      linkedin: typeof data.linkedin === "string" ? data.linkedin : undefined,
     };
     onSubmit(updateData);
   };
 
   return (
-    <Dialog isOpen={open} onClose={onClose}>
-      <DialogContent className="bg-white">
-        <DialogHeader>
-          <Text className="text-xl font-semibold">Editar Redes Sociais</Text>
-        </DialogHeader>
+    <Modal isOpen={open} onClose={onClose}>
+      <ModalContent className="bg-white">
+        <ModalHeader>
+          <Heading size="lg">Editar Redes Sociais</Heading>
+        </ModalHeader>
 
         <ScrollView className="p-4">
           <View className="space-y-4">
@@ -106,9 +108,16 @@ export function SocialForm({
                   </Input>
                 )}
               />
-              <FormControl.HelperText>
+              <Text className="text-sm text-gray-500 mt-1">
                 Digite apenas seu nome de usuário, exemplo: @sua-empresa
-              </FormControl.HelperText>
+              </Text>
+              {form.formState.errors.instagram && (
+                <FormControl.Error>
+                  <FormControl.Error.Text>
+                    {form.formState.errors.instagram.message}
+                  </FormControl.Error.Text>
+                </FormControl.Error>
+              )}
             </FormControl>
 
             <FormControl isInvalid={!!form.formState.errors.facebook}>
@@ -127,13 +136,129 @@ export function SocialForm({
                   </Input>
                 )}
               />
-              <FormControl.HelperText>
+              <Text className="text-sm text-gray-500 mt-1">
                 Digite apenas o nome da sua página
-              </FormControl.HelperText>
+              </Text>
+              {form.formState.errors.facebook && (
+                <FormControl.Error>
+                  <FormControl.Error.Text>
+                    {form.formState.errors.facebook.message}
+                  </FormControl.Error.Text>
+                </FormControl.Error>
+              )}
             </FormControl>
 
-            {/* Repetir o mesmo padrão para as outras redes sociais */}
-            {/* ... */}
+            <FormControl isInvalid={!!form.formState.errors.tiktok}>
+              <FormControl.Label>TikTok</FormControl.Label>
+              <Controller
+                control={form.control}
+                name="tiktok"
+                render={({ field: { onChange, value } }) => (
+                  <Input>
+                    <Input.Input
+                      placeholder="@sua-empresa"
+                      onChangeText={onChange}
+                      value={extractUsername("tiktok", value)}
+                      autoCapitalize="none"
+                    />
+                  </Input>
+                )}
+              />
+              <Text className="text-sm text-gray-500 mt-1">
+                Digite apenas seu nome de usuário, exemplo: @sua-empresa
+              </Text>
+              {form.formState.errors.tiktok && (
+                <FormControl.Error>
+                  <FormControl.Error.Text>
+                    {form.formState.errors.tiktok.message}
+                  </FormControl.Error.Text>
+                </FormControl.Error>
+              )}
+            </FormControl>
+
+            <FormControl isInvalid={!!form.formState.errors.youtube}>
+              <FormControl.Label>YouTube</FormControl.Label>
+              <Controller
+                control={form.control}
+                name="youtube"
+                render={({ field: { onChange, value } }) => (
+                  <Input>
+                    <Input.Input
+                      placeholder="@sua-empresa"
+                      onChangeText={onChange}
+                      value={extractUsername("youtube", value)}
+                      autoCapitalize="none"
+                    />
+                  </Input>
+                )}
+              />
+              <Text className="text-sm text-gray-500 mt-1">
+                Digite apenas seu nome de usuário, exemplo: @sua-empresa
+              </Text>
+              {form.formState.errors.youtube && (
+                <FormControl.Error>
+                  <FormControl.Error.Text>
+                    {form.formState.errors.youtube.message}
+                  </FormControl.Error.Text>
+                </FormControl.Error>
+              )}
+            </FormControl>
+
+            <FormControl isInvalid={!!form.formState.errors.twitter}>
+              <FormControl.Label>Twitter</FormControl.Label>
+              <Controller
+                control={form.control}
+                name="twitter"
+                render={({ field: { onChange, value } }) => (
+                  <Input>
+                    <Input.Input
+                      placeholder="@sua-empresa"
+                      onChangeText={onChange}
+                      value={extractUsername("twitter", value)}
+                      autoCapitalize="none"
+                    />
+                  </Input>
+                )}
+              />
+              <Text className="text-sm text-gray-500 mt-1">
+                Digite apenas seu nome de usuário, exemplo: @sua-empresa
+              </Text>
+              {form.formState.errors.twitter && (
+                <FormControl.Error>
+                  <FormControl.Error.Text>
+                    {form.formState.errors.twitter.message}
+                  </FormControl.Error.Text>
+                </FormControl.Error>
+              )}
+            </FormControl>
+
+            <FormControl isInvalid={!!form.formState.errors.linkedin}>
+              <FormControl.Label>LinkedIn</FormControl.Label>
+              <Controller
+                control={form.control}
+                name="linkedin"
+                render={({ field: { onChange, value } }) => (
+                  <Input>
+                    <Input.Input
+                      placeholder="sua-empresa"
+                      onChangeText={onChange}
+                      value={extractUsername("linkedin", value)}
+                      autoCapitalize="none"
+                    />
+                  </Input>
+                )}
+              />
+              <Text className="text-sm text-gray-500 mt-1">
+                Digite apenas o nome da sua empresa
+              </Text>
+              {form.formState.errors.linkedin && (
+                <FormControl.Error>
+                  <FormControl.Error.Text>
+                    {form.formState.errors.linkedin.message}
+                  </FormControl.Error.Text>
+                </FormControl.Error>
+              )}
+            </FormControl>
 
             <View className="flex-row justify-end gap-3 pt-4">
               <Button
@@ -156,7 +281,7 @@ export function SocialForm({
             </View>
           </View>
         </ScrollView>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }
