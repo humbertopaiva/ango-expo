@@ -2,16 +2,11 @@ import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  Button,
-  FormControl,
-  Switch,
-} from "@gluestack-ui/themed";
+import { Button, FormControl, Switch } from "@gluestack-ui/themed";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
+import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
+import { Heading } from "@/components/ui/heading";
 
 const PAYMENT_OPTIONS = [
   { id: "dinheiro", label: "Dinheiro" },
@@ -68,13 +63,11 @@ export function PaymentForm({
   };
 
   return (
-    <Dialog isOpen={open} onClose={onClose}>
-      <DialogContent className="bg-white">
-        <DialogHeader>
-          <Text className="text-xl font-semibold">
-            Editar Opções de Pagamento
-          </Text>
-        </DialogHeader>
+    <Modal isOpen={open} onClose={onClose}>
+      <ModalContent className="bg-white">
+        <ModalHeader>
+          <Heading size="lg">Editar Opções de Pagamento</Heading>
+        </ModalHeader>
 
         <ScrollView className="p-4">
           <View className="space-y-4">
@@ -86,7 +79,11 @@ export function PaymentForm({
                     control={form.control}
                     name={`opcoes_pagamento.${index}.ativo`}
                     render={({ field: { onChange, value } }) => (
-                      <Switch value={value} onValueChange={onChange} />
+                      <Switch
+                        value={value}
+                        onValueChange={onChange}
+                        disabled={isLoading}
+                      />
                     )}
                   />
                 </View>
@@ -114,7 +111,7 @@ export function PaymentForm({
             </View>
           </View>
         </ScrollView>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }

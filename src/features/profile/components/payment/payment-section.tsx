@@ -4,8 +4,9 @@ import { Edit3, CreditCard, Wallet } from "lucide-react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PaymentForm } from "./payment-form";
+
 import { useProfileContext } from "../../contexts/use-profile-context";
+import { PaymentForm } from "./payment-form";
 
 const PAYMENT_OPTIONS = [
   { id: "dinheiro", label: "Dinheiro", icon: Wallet },
@@ -58,7 +59,7 @@ export function PaymentSection() {
                     />
                     <Text className="font-medium">{option.label}</Text>
                   </View>
-                  <Badge variant={isEnabled ? "default" : "secondary"}>
+                  <Badge variant={isEnabled ? "solid" : "outline"}>
                     {isEnabled ? "Ativo" : "Inativo"}
                   </Badge>
                 </View>
