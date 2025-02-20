@@ -7,6 +7,7 @@ import * as ImagePicker from "expo-image-picker";
 
 import { ResilientImage } from "./resilient-image";
 import { imageUtils } from "@/src/utils/image.utils";
+import useAuthStore from "@/src/stores/auth";
 
 interface ImageUploadProps {
   value?: string | null;
@@ -22,13 +23,13 @@ export function ImageUpload({
   disabled,
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const companyId = useAuthStore((state) => state.getCompanyId());
 
   const handleSelectImage = async () => {
     if (disabled || isUploading) return;
 
     try {
       if (Platform.OS === "web") {
-        // Para web, usamos input file
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "image/*";
@@ -38,25 +39,25 @@ export function ImageUpload({
           if (!file) return;
 
           setIsUploading(true);
-
-          // Cria uma URL temporária para o arquivo
           const fileUrl = URL.createObjectURL(file);
 
-          // Faz o upload
-          const { url, path, error } = await imageUtils.uploadImage(fileUrl);
+          // Passa o ID da empresa como subpasta
+          const { url, path, error } = await imageUtils.uploadImage(
+            fileUrl,
+            "images",
+            companyId || undefined // Aqui passamos o ID da empresa
+          );
 
           if (error) throw error;
 
           onChange(url);
           if (onPathChange) onPathChange(path);
 
-          // Limpa a URL temporária
           URL.revokeObjectURL(fileUrl);
         };
 
         input.click();
       } else {
-        // Para mobile, usa ImagePicker
         const permission =
           await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (permission.status !== "granted") {
@@ -74,8 +75,11 @@ export function ImageUpload({
 
         setIsUploading(true);
 
+        // Passa o ID da empresa como subpasta
         const { url, path, error } = await imageUtils.uploadImage(
-          result.assets[0].uri
+          result.assets[0].uri,
+          "images",
+          companyId || undefined // Aqui passamos o ID da empresa
         );
 
         if (error) throw error;

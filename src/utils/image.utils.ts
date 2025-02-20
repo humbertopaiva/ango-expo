@@ -25,7 +25,8 @@ export const imageUtils = {
 
   async uploadImage(
     uri: string,
-    bucketName: string = "images"
+    bucketName: string = "images",
+    subFolder?: string // Novo parâmetro opcional para subpasta
   ): Promise<{ url: string; path: string; error: Error | null }> {
     try {
       // Se já for uma URL do Supabase, retorna ela mesma
@@ -41,24 +42,25 @@ export const imageUtils = {
         .toString(36)
         .slice(2)}_${timestamp}.${extension}`;
 
+      // Constrói o caminho do arquivo com a subpasta se fornecida
+      const filePath = subFolder ? `${subFolder}/${fileName}` : fileName;
+
       let arrayBuffer: ArrayBuffer;
 
       if (Platform.OS === "web") {
-        // Para web, usamos fetch
         const response = await fetch(uri);
         arrayBuffer = await response.arrayBuffer();
       } else {
-        // Para mobile, usamos FileSystem
         const base64 = await FileSystem.readAsStringAsync(uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
         arrayBuffer = this.base64ToArrayBuffer(base64);
       }
 
-      // Faz o upload
+      // Faz o upload com o novo caminho
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
-        .upload(fileName, arrayBuffer, {
+        .upload(filePath, arrayBuffer, {
           contentType: `image/${extension}`,
           cacheControl: "3600",
           upsert: false,
@@ -69,11 +71,11 @@ export const imageUtils = {
       // Pega a URL pública
       const {
         data: { publicUrl },
-      } = supabase.storage.from(bucketName).getPublicUrl(fileName);
+      } = supabase.storage.from(bucketName).getPublicUrl(filePath);
 
       return {
         url: this.addTimestamp(publicUrl),
-        path: fileName,
+        path: filePath,
         error: null,
       };
     } catch (error) {
