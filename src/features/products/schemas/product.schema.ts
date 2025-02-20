@@ -15,9 +15,9 @@ export const productFormSchema = z.object({
     .min(0)
     .max(100, "Desconto não pode ser maior que 100%")
     .default(0),
-  preco_parcelado_tipo: z.string().nullable(),
   status: z.enum(["disponivel", "indisponivel"]).default("disponivel"),
-  sort: z.coerce.number().nullable(),
+  preco_parcelado_tipo: z.string().nullable().optional(),
+  sort: z.number().nullable().optional().default(null),
 });
 
 export type ProductFormData = z.infer<typeof productFormSchema>;

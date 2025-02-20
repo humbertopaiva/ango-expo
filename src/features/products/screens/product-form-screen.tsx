@@ -64,6 +64,13 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
     },
   });
 
+  // Adicione este console.log antes do return do componente
+  console.log("Form State:", {
+    isValid: form.formState.isValid,
+    isDirty: form.formState.isDirty,
+    errors: form.formState.errors,
+    values: form.getValues(),
+  });
   const {
     control,
     handleSubmit,
@@ -90,7 +97,10 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
 
   const onSubmit = async (data: ProductFormData) => {
     try {
+      console.log("Iniciando submit do formulário:", data); // Log inicial
+
       if (isEditing && id) {
+        console.log("Atualizando produto:", id);
         await updateProduct({
           id,
           data: {
@@ -107,11 +117,22 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           },
         });
       } else {
+        console.log("Criando novo produto");
         await createProduct({
-          ...data,
+          nome: data.nome,
+          descricao: data.descricao,
+          preco: data.preco,
+          preco_promocional: data.preco_promocional,
+          categoria: data.categoria,
+          imagem: data.imagem,
+          parcelamento_cartao: data.parcelamento_cartao,
+          parcelas_sem_juros: data.parcelas_sem_juros,
+          desconto_avista: data.desconto_avista,
+          status: data.status,
           estoque: 0,
         });
       }
+      console.log("Produto salvo com sucesso");
       router.back();
     } catch (error) {
       console.error("Error submitting form:", error);

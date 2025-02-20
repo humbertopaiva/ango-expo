@@ -1,15 +1,12 @@
 // src/components/common/image-upload.tsx
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
-import { Upload, Trash2, ImageIcon } from "lucide-react-native";
+import { View, Text, TouchableOpacity, Platform } from "react-native";
+import { Upload, Trash2 } from "lucide-react-native";
 import { Button } from "@gluestack-ui/themed";
-import { pickImage, uploadFile, deleteFile } from "@/src/lib/supabase/storage";
+import * as ImagePicker from "expo-image-picker";
+
+import { ResilientImage } from "./resilient-image";
+import { imageUtils } from "@/src/utils/image.utils";
 
 interface ImageUploadProps {
   value?: string | null;
@@ -30,14 +27,62 @@ export function ImageUpload({
     if (disabled || isUploading) return;
 
     try {
-      const result = await pickImage();
-      if (!result) return;
+      if (Platform.OS === "web") {
+        // Para web, usamos input file
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
 
-      setIsUploading(true);
-      const { url, path } = await uploadFile(result);
+        input.onchange = async (e) => {
+          const file = (e.target as HTMLInputElement).files?.[0];
+          if (!file) return;
 
-      onChange(url);
-      if (onPathChange) onPathChange(path);
+          setIsUploading(true);
+
+          // Cria uma URL temporária para o arquivo
+          const fileUrl = URL.createObjectURL(file);
+
+          // Faz o upload
+          const { url, path, error } = await imageUtils.uploadImage(fileUrl);
+
+          if (error) throw error;
+
+          onChange(url);
+          if (onPathChange) onPathChange(path);
+
+          // Limpa a URL temporária
+          URL.revokeObjectURL(fileUrl);
+        };
+
+        input.click();
+      } else {
+        // Para mobile, usa ImagePicker
+        const permission =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permission.status !== "granted") {
+          throw new Error("Permission to access media library was denied");
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.8,
+        });
+
+        if (result.canceled) return;
+
+        setIsUploading(true);
+
+        const { url, path, error } = await imageUtils.uploadImage(
+          result.assets[0].uri
+        );
+
+        if (error) throw error;
+
+        onChange(url);
+        if (onPathChange) onPathChange(path);
+      }
     } catch (error) {
       console.error("Erro ao selecionar imagem:", error);
     } finally {
@@ -49,13 +94,18 @@ export function ImageUpload({
     if (!value || disabled || isUploading) return;
 
     try {
-      if (onPathChange) {
-        await deleteFile(value);
-        onPathChange(null);
+      setIsUploading(true);
+      const path = value.split("images/")[1]?.split("?")[0];
+      if (path) {
+        const { error } = await imageUtils.deleteImage(path);
+        if (error) throw error;
       }
       onChange(null);
+      if (onPathChange) onPathChange(null);
     } catch (error) {
       console.error("Erro ao remover imagem:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -63,16 +113,14 @@ export function ImageUpload({
     return (
       <View className="w-full">
         <View className="relative">
-          {/* Imagem */}
           <View className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-100">
-            <Image
-              source={{ uri: value }}
-              className="w-full h-full"
+            <ResilientImage
+              source={value}
+              style={{ width: "100%", height: "100%" }}
               resizeMode="cover"
             />
           </View>
 
-          {/* Botão de remover */}
           <View className="absolute top-2 right-2">
             <Button
               variant="solid"
@@ -97,20 +145,13 @@ export function ImageUpload({
       className="w-full aspect-[4/3] rounded-lg border-2 border-dashed border-gray-300 
                  bg-gray-50 items-center justify-center p-4"
     >
-      {isUploading ? (
-        <View className="items-center space-y-2">
-          <ActivityIndicator size="large" color="#0891B2" />
-          <Text className="text-gray-500">Enviando imagem...</Text>
-        </View>
-      ) : (
-        <View className="items-center space-y-2">
-          <Upload color="#0891B2" size={32} />
-          <Text className="text-base font-medium text-gray-700">
-            Toque para selecionar imagem
-          </Text>
-          <Text className="text-sm text-gray-500">JPG, PNG, GIF (max 5MB)</Text>
-        </View>
-      )}
+      <View className="items-center space-y-2">
+        <Upload color="#0891B2" size={32} />
+        <Text className="text-base font-medium text-gray-700">
+          {isUploading ? "Enviando imagem..." : "Toque para selecionar imagem"}
+        </Text>
+        <Text className="text-sm text-gray-500">JPG, PNG, GIF (max 5MB)</Text>
+      </View>
     </TouchableOpacity>
   );
 }
