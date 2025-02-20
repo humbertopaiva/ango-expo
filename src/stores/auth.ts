@@ -1,7 +1,7 @@
 // src/stores/auth.ts
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { Profile } from "../models/auth";
+import { Profile } from "../features/auth/models/auth";
 import { storage } from "../lib/storage";
 
 interface AuthState {

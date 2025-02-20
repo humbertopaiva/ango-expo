@@ -1,6 +1,6 @@
 // src/features/auth/view-models/auth.view-model.interface.ts
-import { Profile } from "@/src/models/auth";
-import { LoginFormData } from "@/src/models/validation/auth.schema";
+import { Profile } from "@/src/features/auth/models/auth";
+import { LoginFormData } from "@/src/features/auth/schemas/auth.schema";
 import { UseFormReturn } from "react-hook-form";
 
 export interface IAuthViewModel {

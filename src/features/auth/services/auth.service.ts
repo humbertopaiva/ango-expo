@@ -1,8 +1,8 @@
 // services/auth.service.ts
-import { supabase } from "../lib/supabase";
-import useAuthStore from "../stores/auth";
 
-import { LoginFormData } from "../types/auth";
+import { supabase } from "@/src/lib/supabase";
+import { LoginFormData } from "../schemas/auth.schema";
+import useAuthStore from "@/src/stores/auth";
 
 export class AuthService {
   async login({ email, password }: LoginFormData) {

@@ -8,9 +8,10 @@ import { IAuthViewModel } from "./auth.view-model.interface";
 import {
   LoginFormData,
   loginSchema,
-} from "@/src/models/validation/auth.schema";
-import { authService } from "@/src/services/auth.service";
+} from "@/src/features/auth/schemas/auth.schema";
+
 import useAuthStore from "@/src/stores/auth";
+import { authService } from "../services/auth.service";
 
 export function useAuthViewModel(): IAuthViewModel {
   const [isLoading, setIsLoading] = useState(false);

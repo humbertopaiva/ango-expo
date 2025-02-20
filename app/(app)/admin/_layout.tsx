@@ -2,6 +2,7 @@
 import { Stack, router } from "expo-router";
 import { useEffect } from "react";
 import useAuthStore from "@/src/stores/auth";
+import { AdminLayoutContainer } from "@/components/layouts/admin-layout";
 
 export default function AdminLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
@@ -17,28 +18,45 @@ export default function AdminLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen
-        name="categories/index"
-        options={{
-          headerShown: false,
-          title: "Categorias",
-        }}
-      />
-      <Stack.Screen
-        name="categories/new"
-        options={{
-          headerShown: false,
-          title: "Nova Categoria",
-        }}
-      />
-      <Stack.Screen
-        name="categories/[id]"
-        options={{
-          headerShown: false,
-          title: "Editar Categoria",
-        }}
-      />
-    </Stack>
+    <AdminLayoutContainer>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen
+          name="categories/index"
+          options={{
+            title: "Categorias",
+          }}
+        />
+        <Stack.Screen
+          name="products/index"
+          options={{
+            title: "Produtos",
+          }}
+        />
+        <Stack.Screen
+          name="delivery/index"
+          options={{
+            title: "Delivery",
+          }}
+        />
+        <Stack.Screen
+          name="destaques/index"
+          options={{
+            title: "Destaques",
+          }}
+        />
+        <Stack.Screen
+          name="encartes/index"
+          options={{
+            title: "Encartes",
+          }}
+        />
+        <Stack.Screen
+          name="profile/index"
+          options={{
+            title: "Perfil",
+          }}
+        />
+      </Stack>
+    </AdminLayoutContainer>
   );
 }
