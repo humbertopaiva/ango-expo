@@ -137,7 +137,9 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         <VStack space="lg" className="py-6">
           {/* Nome */}
           <FormControl isInvalid={!!errors.nome}>
-            <FormControl.Label>Nome</FormControl.Label>
+            <FormControl.Label>
+              <Text className="text-sm font-medium text-gray-700">Nome</Text>
+            </FormControl.Label>
             <Controller
               control={control}
               name="nome"
@@ -153,39 +155,20 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             />
             {errors.nome && (
               <FormControl.Error>
-                <FormControl.Error.Text>
+                <Text className="text-sm text-red-500">
                   {errors.nome.message}
-                </FormControl.Error.Text>
-              </FormControl.Error>
-            )}
-          </FormControl>
-
-          {/* Imagem */}
-          <FormControl isInvalid={!!errors.imagem}>
-            <FormControl.Label>Imagem do Produto</FormControl.Label>
-            <Controller
-              control={control}
-              name="imagem"
-              render={({ field: { onChange, value } }) => (
-                <ImageUpload
-                  value={value}
-                  onChange={onChange}
-                  disabled={isLoading}
-                />
-              )}
-            />
-            {errors.imagem && (
-              <FormControl.Error>
-                <FormControl.Error.Text>
-                  {errors.imagem.message}
-                </FormControl.Error.Text>
+                </Text>
               </FormControl.Error>
             )}
           </FormControl>
 
           {/* Descrição */}
           <FormControl isInvalid={!!errors.descricao}>
-            <FormControl.Label>Descrição</FormControl.Label>
+            <FormControl.Label>
+              <Text className="text-sm font-medium text-gray-700">
+                Descrição
+              </Text>
+            </FormControl.Label>
             <Controller
               control={control}
               name="descricao"
@@ -201,16 +184,20 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             />
             {errors.descricao && (
               <FormControl.Error>
-                <FormControl.Error.Text>
+                <Text className="text-sm text-red-500">
                   {errors.descricao.message}
-                </FormControl.Error.Text>
+                </Text>
               </FormControl.Error>
             )}
           </FormControl>
 
           {/* Categoria */}
           <FormControl isInvalid={!!errors.categoria}>
-            <FormControl.Label>Categoria</FormControl.Label>
+            <FormControl.Label>
+              <Text className="text-sm font-medium text-gray-700">
+                Categoria
+              </Text>
+            </FormControl.Label>
             <Controller
               control={control}
               name="categoria"
@@ -244,9 +231,38 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             />
           </FormControl>
 
+          {/* Imagem */}
+          <FormControl isInvalid={!!errors.imagem}>
+            <FormControl.Label>
+              <Text className="text-sm font-medium text-gray-700">
+                Imagem do Produto
+              </Text>
+            </FormControl.Label>
+            <Controller
+              control={control}
+              name="imagem"
+              render={({ field: { onChange, value } }) => (
+                <ImageUpload
+                  value={value}
+                  onChange={onChange}
+                  disabled={isLoading}
+                />
+              )}
+            />
+            {errors.imagem && (
+              <FormControl.Error>
+                <Text className="text-sm text-red-500">
+                  {errors.imagem.message}
+                </Text>
+              </FormControl.Error>
+            )}
+          </FormControl>
+
           {/* Preço */}
           <FormControl isInvalid={!!errors.preco}>
-            <FormControl.Label>Preço</FormControl.Label>
+            <FormControl.Label>
+              <Text className="text-sm font-medium text-gray-700">Preço</Text>
+            </FormControl.Label>
             <Controller
               control={control}
               name="preco"
@@ -263,16 +279,48 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             />
             {errors.preco && (
               <FormControl.Error>
-                <FormControl.Error.Text>
+                <Text className="text-sm text-red-500">
                   {errors.preco.message}
-                </FormControl.Error.Text>
+                </Text>
+              </FormControl.Error>
+            )}
+          </FormControl>
+
+          {/* Preço Promocional */}
+          <FormControl isInvalid={!!errors.preco_promocional}>
+            <FormControl.Label>
+              <Text className="text-sm font-medium text-gray-700">
+                Preço Promocional
+              </Text>
+            </FormControl.Label>
+            <Controller
+              control={control}
+              name="preco_promocional"
+              render={({ field: { onChange, value } }) => (
+                <Input>
+                  <Input.Input
+                    placeholder="0,00"
+                    keyboardType="numeric"
+                    onChangeText={onChange}
+                    value={value || ""}
+                  />
+                </Input>
+              )}
+            />
+            {errors.preco_promocional && (
+              <FormControl.Error>
+                <Text className="text-sm text-red-500">
+                  {errors.preco_promocional.message}
+                </Text>
               </FormControl.Error>
             )}
           </FormControl>
 
           {/* Status */}
           <FormControl>
-            <FormControl.Label>Status</FormControl.Label>
+            <FormControl.Label>
+              <Text className="text-sm font-medium text-gray-700">Status</Text>
+            </FormControl.Label>
             <Controller
               control={control}
               name="status"
@@ -317,6 +365,38 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               )}
             />
 
+            {/* Quantidade de Parcelas */}
+            {form.watch("parcelamento_cartao") && (
+              <FormControl isInvalid={!!errors.quantidade_parcelas}>
+                <FormControl.Label>
+                  <Text className="text-sm font-medium text-gray-700">
+                    Quantidade de Parcelas
+                  </Text>
+                </FormControl.Label>
+                <Controller
+                  control={control}
+                  name="quantidade_parcelas"
+                  render={({ field: { onChange, value } }) => (
+                    <Input>
+                      <Input.Input
+                        placeholder="Ex: 12"
+                        keyboardType="numeric"
+                        onChangeText={onChange}
+                        value={value || ""}
+                      />
+                    </Input>
+                  )}
+                />
+                {errors.quantidade_parcelas && (
+                  <FormControl.Error>
+                    <Text className="text-sm text-red-500">
+                      {errors.quantidade_parcelas.message}
+                    </Text>
+                  </FormControl.Error>
+                )}
+              </FormControl>
+            )}
+
             {/* Parcelas sem Juros */}
             <Controller
               control={control}
@@ -333,7 +413,11 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
 
             {/* Desconto à Vista */}
             <FormControl isInvalid={!!errors.desconto_avista}>
-              <FormControl.Label>Desconto à Vista (%)</FormControl.Label>
+              <FormControl.Label>
+                <Text className="text-sm font-medium text-gray-700">
+                  Desconto à Vista (%)
+                </Text>
+              </FormControl.Label>
               <Controller
                 control={control}
                 name="desconto_avista"
@@ -350,9 +434,9 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               />
               {errors.desconto_avista && (
                 <FormControl.Error>
-                  <FormControl.Error.Text>
+                  <Text className="text-sm text-red-500">
                     {errors.desconto_avista.message}
-                  </FormControl.Error.Text>
+                  </Text>
                 </FormControl.Error>
               )}
             </FormControl>
