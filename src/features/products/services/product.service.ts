@@ -1,12 +1,15 @@
 import { api } from "@/src/services/api";
 import { Product, CreateProductDTO, UpdateProductDTO } from "../models/product";
+import useAuthStore from "@/src/stores/auth";
 
 class ProductService {
   async getProducts() {
     try {
+      const companyId = useAuthStore.getState().getCompanyId();
       const response = await api.get<{ data: Product[] }>("/api/products", {
         params: {
-          _t: Date.now(), // Cache buster
+          company: companyId,
+          _t: Date.now(),
         },
       });
 
