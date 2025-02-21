@@ -53,12 +53,13 @@ export function ProfileContent() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-4 pb-20">
+        {" "}
+        {/* Adicionado pb-20 para dar espaço para a TabBar */}
         <ScreenHeader
           title="Perfil da Empresa"
           subtitle="Gerencie as informações do perfil da sua empresa"
         />
-
         <TabView
           navigationState={{ index, routes }}
           renderScene={renderScene}
@@ -75,6 +76,15 @@ export function ProfileContent() {
                 style={{ backgroundColor: "transparent" }}
                 tabStyle={{ width: "auto", padding: 0 }}
                 indicatorStyle={{ backgroundColor: "#0891B2" }}
+                renderLabel={({ route, focused }) => (
+                  <Text
+                    className={`px-4 py-2 text-sm ${
+                      focused ? "text-primary-600" : "text-gray-600"
+                    }`}
+                  >
+                    {route.title}
+                  </Text>
+                )}
               />
             </ScrollView>
           )}

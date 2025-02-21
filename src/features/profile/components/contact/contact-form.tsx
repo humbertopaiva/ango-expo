@@ -2,16 +2,10 @@ import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  Button,
-  FormControl,
-  Input,
-} from "@gluestack-ui/themed";
+import { Button, FormControl, Input } from "@gluestack-ui/themed";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
+import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
 
 const formSchema = z.object({
   endereco: z.string().min(1, "Endereço é obrigatório"),
@@ -58,13 +52,13 @@ export function ContactForm({
   };
 
   return (
-    <Dialog isOpen={open} onClose={onClose}>
-      <DialogContent className="bg-white">
-        <DialogHeader>
+    <Modal isOpen={open} onClose={onClose}>
+      <ModalContent className="bg-white">
+        <ModalHeader>
           <Text className="text-xl font-semibold">
             Editar Informações de Contato
           </Text>
-        </DialogHeader>
+        </ModalHeader>
 
         <ScrollView className="p-4">
           <View className="space-y-4">
@@ -182,7 +176,7 @@ export function ContactForm({
             </View>
           </View>
         </ScrollView>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }

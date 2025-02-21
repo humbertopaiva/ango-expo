@@ -4,8 +4,9 @@ import { Edit3, Clock } from "lucide-react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { HoursForm } from "./hours-form";
+
 import { useProfileContext } from "../../contexts/use-profile-context";
+import { HoursForm } from "./hours-form";
 
 const formatTime = (time: string | null): string => {
   if (!time) return "--:--";
@@ -109,7 +110,7 @@ export function HoursSection() {
                     )}
                   </View>
                 </View>
-                <Badge variant={isOpen(day.key) ? "default" : "secondary"}>
+                <Badge variant={isOpen(day.key) ? "solid" : "outline"}>
                   {isOpen(day.key) ? "Aberto" : "Fechado"}
                 </Badge>
               </View>

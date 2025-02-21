@@ -3,17 +3,19 @@ import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
   Button,
   FormControl,
   Input,
-  TextArea,
+  Textarea,
+  TextareaInput,
 } from "@gluestack-ui/themed";
 import { ImageUpload } from "@/components/common/image-upload";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
+import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
+import { Heading } from "@/components/ui/heading";
+import { InputField } from "@/components/ui/input";
+import { ButtonText } from "@/components/ui/button";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -74,19 +76,17 @@ export function BasicInfoForm({
   };
 
   return (
-    <Dialog isOpen={open} onClose={onClose}>
-      <DialogContent className="bg-white">
-        <DialogHeader>
-          <Text className="text-xl font-semibold">
-            Editar Informações Básicas
-          </Text>
+    <Modal isOpen={open} onClose={onClose}>
+      <ModalContent className="bg-white">
+        <ModalHeader>
+          <Heading size="lg">Editar Informações Básicas</Heading>
           <Text className="text-sm text-gray-500">
             Atualize as informações básicas da sua empresa
           </Text>
-        </DialogHeader>
+        </ModalHeader>
 
-        <ScrollView className="max-h-[80vh]">
-          <View className="space-y-4 p-4">
+        <ScrollView className="p-4">
+          <View className="space-y-4">
             <FormControl isInvalid={!!form.formState.errors.nome}>
               <FormControl.Label>Nome da Empresa</FormControl.Label>
               <Controller
@@ -94,7 +94,7 @@ export function BasicInfoForm({
                 name="nome"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="Nome da empresa"
                       onChangeText={onChange}
                       value={value}
@@ -117,15 +117,23 @@ export function BasicInfoForm({
                 control={form.control}
                 name="descricao"
                 render={({ field: { onChange, value } }) => (
-                  <TextArea>
-                    <TextArea.Input
+                  <Textarea>
+                    <TextareaInput
                       placeholder="Descreva sua empresa"
                       onChangeText={onChange}
                       value={value}
+                      numberOfLines={3}
                     />
-                  </TextArea>
+                  </Textarea>
                 )}
               />
+              {form.formState.errors.descricao && (
+                <FormControl.Error>
+                  <FormControl.Error.Text>
+                    {form.formState.errors.descricao.message}
+                  </FormControl.Error.Text>
+                </FormControl.Error>
+              )}
             </FormControl>
 
             <View className="space-y-6">
@@ -135,13 +143,22 @@ export function BasicInfoForm({
                   control={form.control}
                   name="logo"
                   render={({ field: { onChange, value } }) => (
-                    <ImageUpload
-                      value={value || ""}
-                      onChange={onChange}
-                      disabled={isLoading}
-                    />
+                    <View className="min-h-[200px]">
+                      <ImageUpload
+                        value={value || ""}
+                        onChange={onChange}
+                        disabled={isLoading}
+                      />
+                    </View>
                   )}
                 />
+                {form.formState.errors.logo && (
+                  <FormControl.Error>
+                    <FormControl.Error.Text>
+                      {form.formState.errors.logo.message}
+                    </FormControl.Error.Text>
+                  </FormControl.Error>
+                )}
               </FormControl>
 
               <FormControl isInvalid={!!form.formState.errors.banner}>
@@ -150,13 +167,22 @@ export function BasicInfoForm({
                   control={form.control}
                   name="banner"
                   render={({ field: { onChange, value } }) => (
-                    <ImageUpload
-                      value={value || ""}
-                      onChange={onChange}
-                      disabled={isLoading}
-                    />
+                    <View className="min-h-[200px]">
+                      <ImageUpload
+                        value={value || ""}
+                        onChange={onChange}
+                        disabled={isLoading}
+                      />
+                    </View>
                   )}
                 />
+                {form.formState.errors.banner && (
+                  <FormControl.Error>
+                    <FormControl.Error.Text>
+                      {form.formState.errors.banner.message}
+                    </FormControl.Error.Text>
+                  </FormControl.Error>
+                )}
               </FormControl>
             </View>
 
@@ -167,21 +193,19 @@ export function BasicInfoForm({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>Cancelar</Button.Text>
+                <ButtonText>Cancelar</ButtonText>
               </Button>
               <Button
                 onPress={form.handleSubmit(handleSubmit)}
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>
-                  {isLoading ? "Salvando..." : "Salvar"}
-                </Button.Text>
+                <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
               </Button>
             </View>
           </View>
         </ScrollView>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }

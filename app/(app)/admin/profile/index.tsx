@@ -1,5 +1,3 @@
-import { Text } from "@/components/ui/text";
-
-export default function ProfileScreen() {
-  return <Text>Perfil</Text>;
-}
+// app/(app)/admin/profile/index.tsx
+import { ProfileScreen } from "@/src/features/profile/screens/profile-screen";
+export default ProfileScreen;

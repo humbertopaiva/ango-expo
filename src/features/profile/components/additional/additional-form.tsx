@@ -2,17 +2,12 @@ import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  Button,
-  FormControl,
-  Input,
-} from "@gluestack-ui/themed";
+import { Button, FormControl, Input } from "@gluestack-ui/themed";
 import { Plus, Trash2 } from "lucide-react-native";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
+import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
+import { Heading } from "@/components/ui/heading";
 
 const formSchema = z.object({
   adicionais: z.array(
@@ -82,13 +77,13 @@ export function AdditionalForm({
   };
 
   return (
-    <Dialog isOpen={open} onClose={onClose}>
-      <DialogContent className="bg-white">
-        <DialogHeader>
-          <Text className="text-xl font-semibold">
+    <Modal isOpen={open} onClose={onClose}>
+      <ModalContent className="bg-white">
+        <ModalHeader>
+          <Heading className="text-xl font-semibold">
             Editar Informações Adicionais
-          </Text>
-        </DialogHeader>
+          </Heading>
+        </ModalHeader>
 
         <ScrollView className="p-4">
           <View className="space-y-6">
@@ -159,7 +154,7 @@ export function AdditionalForm({
                     </View>
 
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onPress={() => removeAdicional(index)}
                       className="ml-2"
@@ -207,7 +202,7 @@ export function AdditionalForm({
                   </FormControl>
 
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onPress={() => removeTag(index)}
                   >
@@ -238,7 +233,7 @@ export function AdditionalForm({
             </View>
           </View>
         </ScrollView>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }

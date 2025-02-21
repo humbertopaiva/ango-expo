@@ -3,8 +3,9 @@ import { View, Text } from "react-native";
 import { Edit3, MapPin, Phone, Mail, MessageSquare } from "lucide-react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Button } from "@/components/ui/button";
-import { ContactForm } from "./contact-form";
+
 import { useProfileContext } from "../../contexts/use-profile-context";
+import { ContactForm } from "./contact-form";
 
 export function ContactSection() {
   const vm = useProfileContext();

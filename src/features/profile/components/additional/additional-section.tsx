@@ -4,8 +4,9 @@ import { Edit3, Tag, Info } from "lucide-react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdditionalForm } from "./additional-form";
+
 import { useProfileContext } from "../../contexts/use-profile-context";
+import { AdditionalForm } from "./additional-form";
 
 export function AdditionalSection() {
   const vm = useProfileContext();
@@ -70,7 +71,7 @@ export function AdditionalSection() {
             {vm.profile.tags && vm.profile.tags.length > 0 ? (
               <View className="flex-row flex-wrap gap-2">
                 {vm.profile.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary">
+                  <Badge key={index} variant="solid">
                     {tag}
                   </Badge>
                 ))}

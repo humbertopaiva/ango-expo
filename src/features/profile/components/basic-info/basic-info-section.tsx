@@ -4,8 +4,10 @@ import { Edit3, Image as ImageIcon } from "lucide-react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BasicInfoForm } from "./basic-info-form";
+
 import { useProfileContext } from "../../contexts/use-profile-context";
+import { Image } from "@/components/ui/image";
+import { BasicInfoForm } from "./basic-info-form";
 
 export function BasicInfoSection() {
   const vm = useProfileContext();
@@ -76,9 +78,7 @@ export function BasicInfoSection() {
             <View>
               <Text className="text-sm font-medium mb-1">Status</Text>
               <Badge
-                variant={
-                  vm.profile.status === "ativo" ? "default" : "secondary"
-                }
+                variant={vm.profile.status === "ativo" ? "solid" : "outline"}
               >
                 {vm.profile.status === "ativo" ? "Ativo" : "Inativo"}
               </Badge>

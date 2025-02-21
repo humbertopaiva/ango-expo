@@ -2,17 +2,13 @@ import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  Button,
-  FormControl,
-  Input,
-  Switch,
-} from "@gluestack-ui/themed";
+import { Button, FormControl, Input, Switch } from "@gluestack-ui/themed";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
+import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
+import { Heading } from "@/components/ui/heading";
+import { InputField } from "@/components/ui/input";
+import { ButtonText } from "@/components/ui/button";
 
 const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
@@ -74,20 +70,24 @@ export function HoursForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       dias_funcionamento: profile.dias_funcionamento || [],
-      abertura_segunda: formatTime(profile.abertura_segunda),
-      fechamento_segunda: formatTime(profile.fechamento_segunda),
-      abertura_terca: formatTime(profile.abertura_terca),
-      fechamento_terca: formatTime(profile.fechamento_terca),
-      abertura_quarta: formatTime(profile.abertura_quarta),
-      fechamento_quarta: formatTime(profile.fechamento_quarta),
-      abertura_quinta: formatTime(profile.abertura_quinta),
-      fechamento_quinta: formatTime(profile.fechamento_quinta),
-      abertura_sexta: formatTime(profile.abertura_sexta),
-      fechamento_sexta: formatTime(profile.fechamento_sexta),
-      abertura_sabado: formatTime(profile.abertura_sabado),
-      fechamento_sabado: formatTime(profile.fechamento_sabado),
-      abertura_domingo: formatTime(profile.abertura_domingo),
-      fechamento_domingo: formatTime(profile.fechamento_domingo),
+      abertura_segunda: formatTime(profile.abertura_segunda as string | null),
+      fechamento_segunda: formatTime(
+        profile.fechamento_segunda as string | null
+      ),
+      abertura_terca: formatTime(profile.abertura_terca as string | null),
+      fechamento_terca: formatTime(profile.fechamento_terca as string | null),
+      abertura_quarta: formatTime(profile.abertura_quarta as string | null),
+      fechamento_quarta: formatTime(profile.fechamento_quarta as string | null),
+      abertura_quinta: formatTime(profile.abertura_quinta as string | null),
+      fechamento_quinta: formatTime(profile.fechamento_quinta as string | null),
+      abertura_sexta: formatTime(profile.abertura_sexta as string | null),
+      fechamento_sexta: formatTime(profile.fechamento_sexta as string | null),
+      abertura_sabado: formatTime(profile.abertura_sabado as string | null),
+      fechamento_sabado: formatTime(profile.fechamento_sabado as string | null),
+      abertura_domingo: formatTime(profile.abertura_domingo as string | null),
+      fechamento_domingo: formatTime(
+        profile.fechamento_domingo as string | null
+      ),
     },
   });
 
@@ -129,13 +129,11 @@ export function HoursForm({
   };
 
   return (
-    <Dialog isOpen={open} onClose={onClose}>
-      <DialogContent className="bg-white">
-        <DialogHeader>
-          <Text className="text-xl font-semibold">
-            Editar Horários de Funcionamento
-          </Text>
-        </DialogHeader>
+    <Modal isOpen={open} onClose={onClose}>
+      <ModalContent className="bg-white">
+        <ModalHeader>
+          <Heading size="lg">Editar Horários de Funcionamento</Heading>
+        </ModalHeader>
 
         <ScrollView className="p-4">
           <View className="space-y-6">
@@ -167,7 +165,7 @@ export function HoursForm({
                       name={`abertura_${day.key}` as keyof HoursFormData}
                       render={({ field: { onChange, value } }) => (
                         <Input>
-                          <Input.Input
+                          <InputField
                             type="time"
                             value={formatTime(value)}
                             onChangeText={onChange}
@@ -176,6 +174,19 @@ export function HoursForm({
                         </Input>
                       )}
                     />
+                    {form.formState.errors[
+                      `abertura_${day.key}` as keyof HoursFormData
+                    ] && (
+                      <FormControl.Error>
+                        <FormControl.Error.Text>
+                          {
+                            form.formState.errors[
+                              `abertura_${day.key}` as keyof HoursFormData
+                            ]?.message
+                          }
+                        </FormControl.Error.Text>
+                      </FormControl.Error>
+                    )}
                   </FormControl>
 
                   <FormControl
@@ -192,7 +203,7 @@ export function HoursForm({
                       name={`fechamento_${day.key}` as keyof HoursFormData}
                       render={({ field: { onChange, value } }) => (
                         <Input>
-                          <Input.Input
+                          <InputField
                             type="time"
                             value={formatTime(value)}
                             onChangeText={onChange}
@@ -201,6 +212,19 @@ export function HoursForm({
                         </Input>
                       )}
                     />
+                    {form.formState.errors[
+                      `fechamento_${day.key}` as keyof HoursFormData
+                    ] && (
+                      <FormControl.Error>
+                        <FormControl.Error.Text>
+                          {
+                            form.formState.errors[
+                              `fechamento_${day.key}` as keyof HoursFormData
+                            ]?.message
+                          }
+                        </FormControl.Error.Text>
+                      </FormControl.Error>
+                    )}
                   </FormControl>
                 </View>
               </View>
@@ -213,21 +237,19 @@ export function HoursForm({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>Cancelar</Button.Text>
+                <ButtonText>Cancelar</ButtonText>
               </Button>
               <Button
                 onPress={form.handleSubmit(handleSubmit)}
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>
-                  {isLoading ? "Salvando..." : "Salvar"}
-                </Button.Text>
+                <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
               </Button>
             </View>
           </View>
         </ScrollView>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }
