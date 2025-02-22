@@ -2,10 +2,19 @@ import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, FormControl, Input } from "@gluestack-ui/themed";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
 import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
+import { Input, InputField } from "@/components/ui/input";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+import { Heading } from "@/components/ui/heading";
 
 const formSchema = z.object({
   endereco: z.string().min(1, "Endereço é obrigatório"),
@@ -55,21 +64,24 @@ export function ContactForm({
     <Modal isOpen={open} onClose={onClose}>
       <ModalContent className="bg-white">
         <ModalHeader>
-          <Text className="text-xl font-semibold">
-            Editar Informações de Contato
+          <Heading size="lg">Editar Informações de Contato</Heading>
+          <Text className="text-sm text-gray-500">
+            Atualize as informações de contato da sua empresa
           </Text>
         </ModalHeader>
 
         <ScrollView className="p-4">
           <View className="space-y-4">
             <FormControl isInvalid={!!form.formState.errors.endereco}>
-              <FormControl.Label>Endereço</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>Endereço</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="endereco"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="Endereço completo"
                       onChangeText={onChange}
                       value={value}
@@ -78,23 +90,25 @@ export function ContactForm({
                 )}
               />
               {form.formState.errors.endereco && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
+                <FormControlError>
+                  <FormControlErrorText>
                     {form.formState.errors.endereco.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
             <View className="grid grid-cols-2 gap-4">
               <FormControl isInvalid={!!form.formState.errors.telefone}>
-                <FormControl.Label>Telefone</FormControl.Label>
+                <FormControlLabel>
+                  <FormControlLabelText>Telefone</FormControlLabelText>
+                </FormControlLabel>
                 <Controller
                   control={form.control}
                   name="telefone"
                   render={({ field: { onChange, value } }) => (
                     <Input>
-                      <Input.Input
+                      <InputField
                         placeholder="(00) 0000-0000"
                         onChangeText={onChange}
                         value={value}
@@ -103,22 +117,24 @@ export function ContactForm({
                   )}
                 />
                 {form.formState.errors.telefone && (
-                  <FormControl.Error>
-                    <FormControl.Error.Text>
+                  <FormControlError>
+                    <FormControlErrorText>
                       {form.formState.errors.telefone.message}
-                    </FormControl.Error.Text>
-                  </FormControl.Error>
+                    </FormControlErrorText>
+                  </FormControlError>
                 )}
               </FormControl>
 
               <FormControl isInvalid={!!form.formState.errors.whatsapp}>
-                <FormControl.Label>WhatsApp</FormControl.Label>
+                <FormControlLabel>
+                  <FormControlLabelText>WhatsApp</FormControlLabelText>
+                </FormControlLabel>
                 <Controller
                   control={form.control}
                   name="whatsapp"
                   render={({ field: { onChange, value } }) => (
                     <Input>
-                      <Input.Input
+                      <InputField
                         placeholder="(00) 00000-0000"
                         onChangeText={onChange}
                         value={value}
@@ -126,17 +142,26 @@ export function ContactForm({
                     </Input>
                   )}
                 />
+                {form.formState.errors.whatsapp && (
+                  <FormControlError>
+                    <FormControlErrorText>
+                      {form.formState.errors.whatsapp.message}
+                    </FormControlErrorText>
+                  </FormControlError>
+                )}
               </FormControl>
             </View>
 
             <FormControl isInvalid={!!form.formState.errors.email}>
-              <FormControl.Label>Email</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>Email</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="email"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="email@exemplo.com"
                       onChangeText={onChange}
                       value={value}
@@ -147,11 +172,11 @@ export function ContactForm({
                 )}
               />
               {form.formState.errors.email && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
+                <FormControlError>
+                  <FormControlErrorText>
                     {form.formState.errors.email.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
@@ -162,16 +187,14 @@ export function ContactForm({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>Cancelar</Button.Text>
+                <ButtonText>Cancelar</ButtonText>
               </Button>
               <Button
                 onPress={form.handleSubmit(handleSubmit)}
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>
-                  {isLoading ? "Salvando..." : "Salvar"}
-                </Button.Text>
+                <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
               </Button>
             </View>
           </View>

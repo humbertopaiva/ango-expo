@@ -1,9 +1,10 @@
+// social-section.tsx
 import React from "react";
-import { View, Text, Linking, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Linking } from "react-native";
 import { Edit3, ExternalLink } from "lucide-react-native";
-import { Card } from "@gluestack-ui/themed";
-import { Button } from "@/components/ui/button";
-
+import { Card } from "@/components/ui/card";
+import { Button, ButtonText } from "@/components/ui/button";
+import { SocialForm } from "./social-form";
 import { useProfileContext } from "../../contexts/use-profile-context";
 import {
   Instagram,
@@ -13,7 +14,6 @@ import {
   Linkedin,
 } from "lucide-react-native";
 import { extractUsername, SocialNetwork } from "@/src/utils/social.utils";
-import { SocialForm } from "./social-form";
 
 export function SocialSection() {
   const vm = useProfileContext();
@@ -39,7 +39,7 @@ export function SocialSection() {
     },
     {
       name: "TikTok",
-      icon: Youtube, // TikTok icon não disponível no lucide-react-native
+      icon: Youtube,
       value: vm.profile.tiktok,
       username: extractUsername("tiktok", vm.profile.tiktok || ""),
       color: "#000000",
@@ -83,7 +83,7 @@ export function SocialSection() {
               onPress={() => vm.setIsSocialLinksOpen(true)}
             >
               <Edit3 size={16} color="#000000" className="mr-2" />
-              <Text>Editar</Text>
+              <ButtonText>Editar</ButtonText>
             </Button>
           </View>
         </View>

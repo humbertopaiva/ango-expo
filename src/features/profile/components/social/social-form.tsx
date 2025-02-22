@@ -2,17 +2,19 @@ import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  Button,
-  FormControl,
-  Input,
-  Heading,
-} from "@gluestack-ui/themed";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
+import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
+import { Input, InputField } from "@/components/ui/input";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+import { Heading } from "@/components/ui/heading";
 import {
   extractUsername,
   formatSocialUrl,
@@ -87,19 +89,26 @@ export function SocialForm({
     <Modal isOpen={open} onClose={onClose}>
       <ModalContent className="bg-white">
         <ModalHeader>
-          <Heading size="lg">Editar Redes Sociais</Heading>
+          <Heading size="lg">
+            <Text>Editar Redes Sociais</Text>
+          </Heading>
+          <Text className="text-sm text-gray-500">
+            Atualize as redes sociais da sua empresa
+          </Text>
         </ModalHeader>
 
         <ScrollView className="p-4">
           <View className="space-y-4">
             <FormControl isInvalid={!!form.formState.errors.instagram}>
-              <FormControl.Label>Instagram</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>Instagram</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="instagram"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="@sua-empresa"
                       onChangeText={onChange}
                       value={extractUsername("instagram", value)}
@@ -112,22 +121,24 @@ export function SocialForm({
                 Digite apenas seu nome de usuário, exemplo: @sua-empresa
               </Text>
               {form.formState.errors.instagram && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
-                    {form.formState.errors.instagram.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                <FormControlError>
+                  <FormControlErrorText>
+                    <Text>{form.formState.errors.instagram.message}</Text>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
             <FormControl isInvalid={!!form.formState.errors.facebook}>
-              <FormControl.Label>Facebook</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>Facebook</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="facebook"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="sua-empresa"
                       onChangeText={onChange}
                       value={extractUsername("facebook", value)}
@@ -140,22 +151,24 @@ export function SocialForm({
                 Digite apenas o nome da sua página
               </Text>
               {form.formState.errors.facebook && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
-                    {form.formState.errors.facebook.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                <FormControlError>
+                  <FormControlErrorText>
+                    <Text>{form.formState.errors.facebook.message}</Text>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
             <FormControl isInvalid={!!form.formState.errors.tiktok}>
-              <FormControl.Label>TikTok</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>TikTok</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="tiktok"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="@sua-empresa"
                       onChangeText={onChange}
                       value={extractUsername("tiktok", value)}
@@ -168,22 +181,24 @@ export function SocialForm({
                 Digite apenas seu nome de usuário, exemplo: @sua-empresa
               </Text>
               {form.formState.errors.tiktok && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
-                    {form.formState.errors.tiktok.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                <FormControlError>
+                  <FormControlErrorText>
+                    <Text>{form.formState.errors.tiktok.message}</Text>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
             <FormControl isInvalid={!!form.formState.errors.youtube}>
-              <FormControl.Label>YouTube</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>YouTube</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="youtube"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="@sua-empresa"
                       onChangeText={onChange}
                       value={extractUsername("youtube", value)}
@@ -196,22 +211,24 @@ export function SocialForm({
                 Digite apenas seu nome de usuário, exemplo: @sua-empresa
               </Text>
               {form.formState.errors.youtube && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
-                    {form.formState.errors.youtube.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                <FormControlError>
+                  <FormControlErrorText>
+                    <Text>{form.formState.errors.youtube.message}</Text>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
             <FormControl isInvalid={!!form.formState.errors.twitter}>
-              <FormControl.Label>Twitter</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>Twitter</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="twitter"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="@sua-empresa"
                       onChangeText={onChange}
                       value={extractUsername("twitter", value)}
@@ -224,22 +241,24 @@ export function SocialForm({
                 Digite apenas seu nome de usuário, exemplo: @sua-empresa
               </Text>
               {form.formState.errors.twitter && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
-                    {form.formState.errors.twitter.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                <FormControlError>
+                  <FormControlErrorText>
+                    <Text>{form.formState.errors.twitter.message}</Text>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
             <FormControl isInvalid={!!form.formState.errors.linkedin}>
-              <FormControl.Label>LinkedIn</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>LinkedIn</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="linkedin"
                 render={({ field: { onChange, value } }) => (
                   <Input>
-                    <Input.Input
+                    <InputField
                       placeholder="sua-empresa"
                       onChangeText={onChange}
                       value={extractUsername("linkedin", value)}
@@ -252,11 +271,11 @@ export function SocialForm({
                 Digite apenas o nome da sua empresa
               </Text>
               {form.formState.errors.linkedin && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
-                    {form.formState.errors.linkedin.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                <FormControlError>
+                  <FormControlErrorText>
+                    <Text>{form.formState.errors.linkedin.message}</Text>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
@@ -267,16 +286,14 @@ export function SocialForm({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>Cancelar</Button.Text>
+                <ButtonText>Cancelar</ButtonText>
               </Button>
               <Button
                 onPress={form.handleSubmit(handleSubmit)}
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>
-                  {isLoading ? "Salvando..." : "Salvar"}
-                </Button.Text>
+                <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
               </Button>
             </View>
           </View>

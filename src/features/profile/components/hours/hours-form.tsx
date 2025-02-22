@@ -2,13 +2,20 @@ import React from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, FormControl, Input, Switch } from "@gluestack-ui/themed";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
 import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
 import { Heading } from "@/components/ui/heading";
-import { InputField } from "@/components/ui/input";
-import { ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+import { Switch } from "@/components/ui/switch";
+import { TimeInput } from "@/components/common/time-input";
 
 const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
@@ -132,7 +139,12 @@ export function HoursForm({
     <Modal isOpen={open} onClose={onClose}>
       <ModalContent className="bg-white">
         <ModalHeader>
-          <Heading size="lg">Editar Horários de Funcionamento</Heading>
+          <Heading size="lg">
+            <Text>Editar Horários de Funcionamento</Text>
+          </Heading>
+          <Text className="text-sm text-gray-500">
+            Configure os horários de funcionamento do seu estabelecimento
+          </Text>
         </ModalHeader>
 
         <ScrollView className="p-4">
@@ -145,8 +157,8 @@ export function HoursForm({
                 <View className="flex-row items-center justify-between">
                   <Text className="font-medium">{day.label}</Text>
                   <Switch
-                    value={getDayActive(day.key)}
-                    onValueChange={(checked) => toggleDay(day.key, checked)}
+                    isChecked={getDayActive(day.key)}
+                    onToggle={(value) => toggleDay(day.key, value)}
                   />
                 </View>
 
@@ -159,33 +171,34 @@ export function HoursForm({
                     }
                     className="flex-1"
                   >
-                    <FormControl.Label>Abertura</FormControl.Label>
+                    <FormControlLabel>
+                      <FormControlLabelText>Abertura</FormControlLabelText>
+                    </FormControlLabel>
                     <Controller
                       control={form.control}
                       name={`abertura_${day.key}` as keyof HoursFormData}
                       render={({ field: { onChange, value } }) => (
-                        <Input>
-                          <InputField
-                            type="time"
-                            value={formatTime(value)}
-                            onChangeText={onChange}
-                            disabled={!getDayActive(day.key)}
-                          />
-                        </Input>
+                        <TimeInput
+                          value={formatTime(value as string | null)}
+                          onChange={onChange}
+                          disabled={!getDayActive(day.key)}
+                        />
                       )}
                     />
                     {form.formState.errors[
                       `abertura_${day.key}` as keyof HoursFormData
                     ] && (
-                      <FormControl.Error>
-                        <FormControl.Error.Text>
-                          {
-                            form.formState.errors[
-                              `abertura_${day.key}` as keyof HoursFormData
-                            ]?.message
-                          }
-                        </FormControl.Error.Text>
-                      </FormControl.Error>
+                      <FormControlError>
+                        <FormControlErrorText>
+                          <Text>
+                            {
+                              form.formState.errors[
+                                `abertura_${day.key}` as keyof HoursFormData
+                              ]?.message
+                            }
+                          </Text>
+                        </FormControlErrorText>
+                      </FormControlError>
                     )}
                   </FormControl>
 
@@ -197,33 +210,34 @@ export function HoursForm({
                     }
                     className="flex-1"
                   >
-                    <FormControl.Label>Fechamento</FormControl.Label>
+                    <FormControlLabel>
+                      <FormControlLabelText>Fechamento</FormControlLabelText>
+                    </FormControlLabel>
                     <Controller
                       control={form.control}
                       name={`fechamento_${day.key}` as keyof HoursFormData}
                       render={({ field: { onChange, value } }) => (
-                        <Input>
-                          <InputField
-                            type="time"
-                            value={formatTime(value)}
-                            onChangeText={onChange}
-                            disabled={!getDayActive(day.key)}
-                          />
-                        </Input>
+                        <TimeInput
+                          value={formatTime(value as string | null)}
+                          onChange={onChange}
+                          disabled={!getDayActive(day.key)}
+                        />
                       )}
                     />
                     {form.formState.errors[
                       `fechamento_${day.key}` as keyof HoursFormData
                     ] && (
-                      <FormControl.Error>
-                        <FormControl.Error.Text>
-                          {
-                            form.formState.errors[
-                              `fechamento_${day.key}` as keyof HoursFormData
-                            ]?.message
-                          }
-                        </FormControl.Error.Text>
-                      </FormControl.Error>
+                      <FormControlError>
+                        <FormControlErrorText>
+                          <Text>
+                            {
+                              form.formState.errors[
+                                `fechamento_${day.key}` as keyof HoursFormData
+                              ]?.message
+                            }
+                          </Text>
+                        </FormControlErrorText>
+                      </FormControlError>
                     )}
                   </FormControl>
                 </View>

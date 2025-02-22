@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text } from "react-native";
 import { Edit3, MapPin, Phone, Mail, MessageSquare } from "lucide-react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 
 import { useProfileContext } from "../../contexts/use-profile-context";
 import { ContactForm } from "./contact-form";
@@ -50,7 +50,7 @@ export function ContactSection() {
               onPress={() => vm.setIsContactInfoOpen(true)}
             >
               <Edit3 size={16} color="#000000" className="mr-2" />
-              <Text>Editar</Text>
+              <ButtonText>Editar</ButtonText>
             </Button>
           </View>
         </View>

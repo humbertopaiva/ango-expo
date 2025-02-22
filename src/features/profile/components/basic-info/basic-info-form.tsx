@@ -2,20 +2,22 @@ import React, { useEffect } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Button,
-  FormControl,
-  Input,
-  Textarea,
-  TextareaInput,
-} from "@gluestack-ui/themed";
+
 import { ImageUpload } from "@/components/common/image-upload";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
 import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
 import { Heading } from "@/components/ui/heading";
-import { InputField } from "@/components/ui/input";
-import { ButtonText } from "@/components/ui/button";
+import { Input, InputField } from "@/components/ui/input";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  FormControl,
+  FormControlError,
+  FormControlErrorText,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
+import { Textarea, TextareaInput } from "@gluestack-ui/themed";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -88,7 +90,9 @@ export function BasicInfoForm({
         <ScrollView className="p-4">
           <View className="space-y-4">
             <FormControl isInvalid={!!form.formState.errors.nome}>
-              <FormControl.Label>Nome da Empresa</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>Nome da Empresa</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="nome"
@@ -103,16 +107,18 @@ export function BasicInfoForm({
                 )}
               />
               {form.formState.errors.nome && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
+                <FormControlError>
+                  <FormControlErrorText>
                     {form.formState.errors.nome.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
             <FormControl isInvalid={!!form.formState.errors.descricao}>
-              <FormControl.Label>Descrição</FormControl.Label>
+              <FormControlLabel>
+                <FormControlLabelText>Descrição</FormControlLabelText>
+              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="descricao"
@@ -128,17 +134,19 @@ export function BasicInfoForm({
                 )}
               />
               {form.formState.errors.descricao && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
+                <FormControlError>
+                  <FormControlErrorText>
                     {form.formState.errors.descricao.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
+                  </FormControlErrorText>
+                </FormControlError>
               )}
             </FormControl>
 
             <View className="space-y-6">
               <FormControl isInvalid={!!form.formState.errors.logo}>
-                <FormControl.Label>Logo</FormControl.Label>
+                <FormControlLabel>
+                  <FormControlLabelText>Logo</FormControlLabelText>
+                </FormControlLabel>
                 <Controller
                   control={form.control}
                   name="logo"
@@ -153,16 +161,18 @@ export function BasicInfoForm({
                   )}
                 />
                 {form.formState.errors.logo && (
-                  <FormControl.Error>
-                    <FormControl.Error.Text>
+                  <FormControlError>
+                    <FormControlErrorText>
                       {form.formState.errors.logo.message}
-                    </FormControl.Error.Text>
-                  </FormControl.Error>
+                    </FormControlErrorText>
+                  </FormControlError>
                 )}
               </FormControl>
 
               <FormControl isInvalid={!!form.formState.errors.banner}>
-                <FormControl.Label>Banner</FormControl.Label>
+                <FormControlLabel>
+                  <FormControlLabelText>Banner</FormControlLabelText>
+                </FormControlLabel>
                 <Controller
                   control={form.control}
                   name="banner"
@@ -177,11 +187,11 @@ export function BasicInfoForm({
                   )}
                 />
                 {form.formState.errors.banner && (
-                  <FormControl.Error>
-                    <FormControl.Error.Text>
+                  <FormControlError>
+                    <FormControlErrorText>
                       {form.formState.errors.banner.message}
-                    </FormControl.Error.Text>
-                  </FormControl.Error>
+                    </FormControlErrorText>
+                  </FormControlError>
                 )}
               </FormControl>
             </View>

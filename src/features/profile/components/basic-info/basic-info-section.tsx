@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Edit3, Image as ImageIcon } from "lucide-react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { useProfileContext } from "../../contexts/use-profile-context";
@@ -26,7 +26,7 @@ export function BasicInfoSection() {
               onPress={() => vm.setIsBasicInfoOpen(true)}
             >
               <Edit3 size={16} color="#000000" className="mr-2" />
-              <Text>Editar</Text>
+              <ButtonText>Editar</ButtonText>
             </Button>
           </View>
         </View>
