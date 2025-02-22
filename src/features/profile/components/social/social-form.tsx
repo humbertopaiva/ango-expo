@@ -123,7 +123,7 @@ export function SocialForm({
               {form.formState.errors.instagram && (
                 <FormControlError>
                   <FormControlErrorText>
-                    <Text>{form.formState.errors.instagram.message}</Text>
+                    {form.formState.errors.instagram.message}
                   </FormControlErrorText>
                 </FormControlError>
               )}
@@ -183,7 +183,7 @@ export function SocialForm({
               {form.formState.errors.tiktok && (
                 <FormControlError>
                   <FormControlErrorText>
-                    <Text>{form.formState.errors.tiktok.message}</Text>
+                    {form.formState.errors.tiktok.message}
                   </FormControlErrorText>
                 </FormControlError>
               )}
@@ -213,7 +213,7 @@ export function SocialForm({
               {form.formState.errors.youtube && (
                 <FormControlError>
                   <FormControlErrorText>
-                    <Text>{form.formState.errors.youtube.message}</Text>
+                    {form.formState.errors.youtube.message}
                   </FormControlErrorText>
                 </FormControlError>
               )}
@@ -243,7 +243,7 @@ export function SocialForm({
               {form.formState.errors.twitter && (
                 <FormControlError>
                   <FormControlErrorText>
-                    <Text>{form.formState.errors.twitter.message}</Text>
+                    {form.formState.errors.twitter.message}
                   </FormControlErrorText>
                 </FormControlError>
               )}
@@ -273,7 +273,7 @@ export function SocialForm({
               {form.formState.errors.linkedin && (
                 <FormControlError>
                   <FormControlErrorText>
-                    <Text>{form.formState.errors.linkedin.message}</Text>
+                    {form.formState.errors.linkedin.message}
                   </FormControlErrorText>
                 </FormControlError>
               )}
