@@ -1,4 +1,3 @@
-// src/components/common/image-upload.tsx
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Platform } from "react-native";
 import { Upload, Trash2 } from "lucide-react-native";
@@ -39,12 +38,9 @@ export function ImageUpload({
           if (!file) return;
 
           setIsUploading(true);
-
-          // Criar um objeto Blob com o tipo correto
           const blob = new Blob([file], { type: file.type });
           const fileUrl = URL.createObjectURL(blob);
 
-          // Passa o ID da empresa como subpasta
           const { url, path, error } = await imageUtils.uploadImage(
             fileUrl,
             "images",
@@ -61,7 +57,37 @@ export function ImageUpload({
 
         input.click();
       } else {
-        // ... código do mobile permanece igual ...
+        // Solicitar permissão para acessar a galeria
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (status !== "granted") {
+          alert("Desculpe, precisamos de permissão para acessar suas fotos!");
+          return;
+        }
+
+        // Abrir o seletor de imagens
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+        });
+
+        if (!result.canceled && result.assets[0]) {
+          setIsUploading(true);
+
+          const { url, path, error } = await imageUtils.uploadImage(
+            result.assets[0].uri,
+            "images",
+            companyId || undefined
+          );
+
+          if (error) throw error;
+
+          onChange(url);
+          if (onPathChange) onPathChange(path);
+        }
       }
     } catch (error) {
       console.error("Erro ao selecionar imagem:", error);
