@@ -60,7 +60,7 @@ export function PaymentSection() {
                     <Text className="font-medium">{option.label}</Text>
                   </View>
                   <Badge variant={isEnabled ? "solid" : "outline"}>
-                    {isEnabled ? "Ativo" : "Inativo"}
+                    <Text>{isEnabled ? "Ativo" : "Inativo"}</Text>
                   </Badge>
                 </View>
               );

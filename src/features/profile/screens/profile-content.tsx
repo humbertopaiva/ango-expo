@@ -1,5 +1,5 @@
 import React from "react";
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import ScreenHeader from "@/components/ui/screen-header";
@@ -22,22 +22,43 @@ const routes = [
   { key: "hours", title: "Horários" },
   { key: "visual", title: "Visual" },
   { key: "payment", title: "Pagamento" },
-  { key: "additional", title: "Adicional" },
+  // { key: "additional", title: "Adicional" },
 ];
+
+const renderScene = SceneMap({
+  basic: BasicInfoSection,
+  contact: ContactSection,
+  social: SocialSection,
+  hours: HoursSection,
+  visual: VisualSection,
+  payment: PaymentSection,
+  // additional: AdditionalSection,
+});
 
 export function ProfileContent() {
   const vm = useProfileContext();
-  const isWeb = Platform.OS === "web";
+  const layout = useWindowDimensions();
+  const index = routes.findIndex((route) => route.key === vm.activeTab);
 
-  const renderScene = SceneMap({
-    basic: BasicInfoSection,
-    contact: ContactSection,
-    social: SocialSection,
-    hours: HoursSection,
-    visual: VisualSection,
-    payment: PaymentSection,
-    additional: AdditionalSection,
-  });
+  const renderTabBar = (props: any) => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      className="border-b border-gray-200"
+    >
+      <TabBar
+        {...props}
+        scrollEnabled
+        style={{ backgroundColor: "transparent" }}
+        tabStyle={{ width: "auto", padding: 0 }}
+        indicatorStyle={{ backgroundColor: "#0891B2" }}
+        activeColor="#0891B2"
+        inactiveColor="#666666"
+        labelStyle={{ fontSize: 14 }}
+        gap={8}
+      />
+    </ScrollView>
+  );
 
   if (vm.isLoading) {
     return (
@@ -49,13 +70,9 @@ export function ProfileContent() {
     );
   }
 
-  const index = routes.findIndex((route) => route.key === vm.activeTab);
-
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 px-4 pb-20">
-        {" "}
-        {/* Adicionado pb-20 para dar espaço para a TabBar */}
         <ScreenHeader
           title="Perfil da Empresa"
           subtitle="Gerencie as informações do perfil da sua empresa"
@@ -64,30 +81,8 @@ export function ProfileContent() {
           navigationState={{ index, routes }}
           renderScene={renderScene}
           onIndexChange={(index) => vm.setActiveTab(routes[index].key as any)}
-          renderTabBar={(props) => (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="border-b border-gray-200"
-            >
-              <TabBar
-                {...props}
-                scrollEnabled
-                style={{ backgroundColor: "transparent" }}
-                tabStyle={{ width: "auto", padding: 0 }}
-                indicatorStyle={{ backgroundColor: "#0891B2" }}
-                renderLabel={({ route, focused }) => (
-                  <Text
-                    className={`px-4 py-2 text-sm ${
-                      focused ? "text-primary-600" : "text-gray-600"
-                    }`}
-                  >
-                    {route.title}
-                  </Text>
-                )}
-              />
-            </ScrollView>
-          )}
+          renderTabBar={renderTabBar}
+          initialLayout={{ width: layout.width }}
           style={{ flex: 1 }}
         />
       </View>

@@ -1,12 +1,19 @@
 import React from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, ScrollView } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, FormControl, Switch } from "@gluestack-ui/themed";
+import { Switch } from "@gluestack-ui/themed";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
 import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
+import { Button, ButtonText } from "@/components/ui/button";
+import {
+  FormControl,
+  FormControlLabel,
+  FormControlLabelText,
+} from "@/components/ui/form-control";
 import { Heading } from "@/components/ui/heading";
+import { Text } from "@gluestack-ui/themed";
 
 const PAYMENT_OPTIONS = [
   { id: "dinheiro", label: "Dinheiro" },
@@ -66,7 +73,12 @@ export function PaymentForm({
     <Modal isOpen={open} onClose={onClose}>
       <ModalContent className="bg-white">
         <ModalHeader>
-          <Heading size="lg">Editar Opções de Pagamento</Heading>
+          <Heading size="lg">
+            <Text>Editar Opções de Pagamento</Text>
+          </Heading>
+          <Text className="text-sm text-gray-500">
+            Selecione as formas de pagamento aceitas
+          </Text>
         </ModalHeader>
 
         <ScrollView className="p-4">
@@ -74,7 +86,9 @@ export function PaymentForm({
             {PAYMENT_OPTIONS.map((option, index) => (
               <FormControl key={option.id}>
                 <View className="flex-row items-center justify-between p-4 border rounded-lg">
-                  <Text className="text-base font-medium">{option.label}</Text>
+                  <FormControlLabel>
+                    <FormControlLabelText>{option.label}</FormControlLabelText>
+                  </FormControlLabel>
                   <Controller
                     control={form.control}
                     name={`opcoes_pagamento.${index}.ativo`}
@@ -97,16 +111,14 @@ export function PaymentForm({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>Cancelar</Button.Text>
+                <ButtonText>Cancelar</ButtonText>
               </Button>
               <Button
                 onPress={form.handleSubmit(handleSubmit)}
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Button.Text>
-                  {isLoading ? "Salvando..." : "Salvar"}
-                </Button.Text>
+                <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
               </Button>
             </View>
           </View>
