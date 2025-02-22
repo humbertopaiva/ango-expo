@@ -55,6 +55,13 @@ interface HoursFormProps {
 
 const formatTime = (time: string | null): string => {
   if (!time) return "08:00";
+
+  // Se o tempo incluir segundos (HH:MM:SS), remove os segundos
+  if (time.includes(":")) {
+    const [hours, minutes] = time.split(":");
+    return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+  }
+
   return time;
 };
 
