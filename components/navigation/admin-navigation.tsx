@@ -19,6 +19,7 @@ import {
   Truck,
   Star,
   FileText,
+  Settings,
 } from "lucide-react-native";
 import { router, usePathname } from "expo-router";
 
@@ -40,6 +41,12 @@ const navigationItems = [
     label: "Delivery",
     icon: Truck,
     path: "/(app)/admin/delivery",
+  },
+  {
+    name: "delivery-config",
+    label: "Config. Entrega",
+    icon: Settings,
+    path: "/(app)/admin/delivery-config",
   },
   {
     name: "destaques",

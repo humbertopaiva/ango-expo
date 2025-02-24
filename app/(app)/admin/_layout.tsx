@@ -39,6 +39,12 @@ export default function AdminLayout() {
           }}
         />
         <Stack.Screen
+          name="delivery-config/index"
+          options={{
+            title: "Configurações de Delivery",
+          }}
+        />
+        <Stack.Screen
           name="destaques/index"
           options={{
             title: "Destaques",
