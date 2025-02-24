@@ -41,3 +41,10 @@ export interface CreateVitrineLinkDTO {
 }
 
 export type UpdateVitrineLinkDTO = Partial<CreateVitrineLinkDTO>;
+
+export interface VitrineLinkFormData {
+  texto: string;
+  url: string;
+  tipo_link: string;
+  ordem?: number;
+}

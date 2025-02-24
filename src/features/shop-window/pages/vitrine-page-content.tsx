@@ -4,14 +4,25 @@ import { View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
 import { TabView, SceneMap } from "react-native-tab-view";
-import { useVitrineContext } from "../contexts/use-vitrine-context";
-import { Button } from "@gluestack-ui/themed";
+
+import { Button, ButtonText } from "@/components/ui/button";
 import { VitrineProdutoList } from "../components/vitrine-produto-list";
-import { VitrineLinkList } from "../components/vitrine-link-list";
+
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogBody,
+  AlertDialogBackdrop,
+} from "@/components/ui/alert-dialog";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import ScreenHeader from "@/components/ui/screen-header";
 import { VitrineProdutoForm } from "../components/vitrine-produto-form";
 import { VitrineLinkForm } from "../components/vitrine-link-form";
-import { Dialog } from "@/components/ui/dialog";
-import ScreenHeader from "@/components/ui/screen-header";
+import { useVitrineContext } from "../contexts/use-vitrine-context";
+import { VitrineLinkList } from "../components/vitrine-link-list";
 
 export function VitrinePageContent() {
   const vm = useVitrineContext();
@@ -30,7 +41,7 @@ export function VitrinePageContent() {
             className="gap-2"
           >
             <Plus size={16} color="white" />
-            <Button.Text>Adicionar Produto</Button.Text>
+            <ButtonText>Adicionar Produto</ButtonText>
           </Button>
         )}
 
@@ -48,7 +59,7 @@ export function VitrinePageContent() {
       <View className="space-y-4 p-4">
         <Button onPress={() => vm.setIsCreateLinkOpen(true)} className="gap-2">
           <Plus size={16} color="white" />
-          <Button.Text>Adicionar Link</Button.Text>
+          <ButtonText>Adicionar Link</ButtonText>
         </Button>
 
         <VitrineLinkList
@@ -93,37 +104,48 @@ export function VitrinePageContent() {
         link={vm.selectedLink ?? undefined}
       />
 
-      <Dialog
-        visible={vm.isDeleteOpen}
-        onDismiss={() => vm.setIsDeleteOpen(false)}
+      {/* AlertDialog de confirmação de exclusão */}
+      <AlertDialog
+        isOpen={vm.isDeleteOpen}
         onClose={() => vm.setIsDeleteOpen(false)}
+        size="md"
       >
-        <Dialog.Content>
-          <Dialog.Title>Confirmar Exclusão</Dialog.Title>
-          <Dialog.Description>
-            Tem certeza que deseja remover este item da vitrine? Esta ação não
-            pode ser desfeita.
-          </Dialog.Description>
-          <View className="flex-row justify-end space-x-3 mt-4">
+        <AlertDialogBackdrop />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <Heading className="text-typography-950 font-semibold" size="md">
+              Confirmar Exclusão
+            </Heading>
+          </AlertDialogHeader>
+          <AlertDialogBody className="mt-3 mb-4">
+            <Text size="sm">
+              Tem certeza que deseja remover este item da vitrine? Esta ação não
+              pode ser desfeita.
+            </Text>
+          </AlertDialogBody>
+          <AlertDialogFooter>
             <Button
               variant="outline"
+              action="secondary"
               onPress={() => vm.setIsDeleteOpen(false)}
               disabled={vm.isDeleting}
+              size="sm"
+              className="mr-2"
             >
-              <Button.Text>Cancelar</Button.Text>
+              <ButtonText>Cancelar</ButtonText>
             </Button>
             <Button
-              variant="destructive"
               onPress={vm.handleConfirmDelete}
               disabled={vm.isDeleting}
+              size="sm"
             >
-              <Button.Text>
+              <ButtonText>
                 {vm.isDeleting ? "Excluindo..." : "Excluir"}
-              </Button.Text>
+              </ButtonText>
             </Button>
-          </View>
-        </Dialog.Content>
-      </Dialog>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SafeAreaView>
   );
 }

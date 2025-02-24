@@ -40,3 +40,10 @@ export interface CreateVitrineProdutoDTO {
 }
 
 export type UpdateVitrineProdutoDTO = Partial<CreateVitrineProdutoDTO>;
+
+export interface VitrineProdutoFormData {
+  produto: string;
+  disponivel?: boolean;
+  ordem?: string;
+  sort?: number;
+}

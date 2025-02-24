@@ -144,29 +144,6 @@ export function VitrineProdutoForm({
                 </FormControl>
               )}
             />
-
-            <Controller
-              control={form.control}
-              name="ordem"
-              render={({
-                field: { onChange, value },
-                fieldState: { error },
-              }) => (
-                <FormControl isInvalid={!!error}>
-                  <FormControl.Label>Ordem de Exibição</FormControl.Label>
-                  <Input>
-                    <InputText
-                      placeholder="Ex: A, B, C..."
-                      onChangeText={onChange}
-                      value={value}
-                    />
-                  </Input>
-                  {error && (
-                    <FormControl.Error>{error.message}</FormControl.Error>
-                  )}
-                </FormControl>
-              )}
-            />
           </VStack>
         </Modal.Body>
         <Modal.Footer>

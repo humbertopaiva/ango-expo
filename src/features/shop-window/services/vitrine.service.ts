@@ -1,5 +1,6 @@
 // Path: src/features/vitrine/services/vitrine.service.ts
-import { api } from "@/services/api";
+
+import { api } from "@/src/services/api";
 import {
   VitrineProduto,
   CreateVitrineProdutoDTO,

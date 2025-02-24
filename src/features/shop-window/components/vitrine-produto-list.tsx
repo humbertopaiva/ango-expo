@@ -3,14 +3,16 @@ import React from "react";
 import { View, ScrollView, Text } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Package } from "lucide-react-native";
-import { VitrineProduto } from "../models";
-import { SortableProdutoItem } from "./sortable-produto-item";
+
 import DraggableFlatList, {
   ScaleDecorator,
   RenderItemParams,
 } from "react-native-draggable-flatlist";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import { VitrineProduto } from "../models";
+import { SortableProdutoItem } from "./sortable-produto-item";
 
 interface VitrineProdutoListProps {
   produtos: VitrineProduto[];
@@ -78,9 +80,9 @@ export function VitrineProdutoList({
       {produtos.length >= 10 && (
         <Alert>
           <AlertCircle size={16} color="#6B7280" />
-          <AlertDescription>
-            Limite máximo de 10 produtos em destaque atingido.
-          </AlertDescription>
+          <Text className="ml-2 text-gray-500">
+            Você atingiu o limite de 10 produtos em destaque.
+          </Text>
         </Alert>
       )}
 
