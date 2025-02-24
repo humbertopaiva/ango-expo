@@ -59,6 +59,12 @@ const navigationItems = [
     icon: User,
     path: "/(app)/admin/profile",
   },
+  {
+    name: "vitrine",
+    label: "Vitrine",
+    icon: Star,
+    path: "/(app)/admin/vitrine",
+  },
 ];
 
 export function AdminNavigation() {
