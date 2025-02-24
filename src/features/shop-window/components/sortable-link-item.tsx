@@ -5,7 +5,10 @@ import { Card } from "@gluestack-ui/themed";
 import {
   MoreHorizontal,
   ExternalLink,
-  GripVertical,
+  ArrowUp,
+  ArrowDown,
+  Trash,
+  Edit,
 } from "lucide-react-native";
 import { VitrineLink } from "../models";
 
@@ -13,14 +16,18 @@ interface SortableLinkItemProps {
   link: VitrineLink;
   onEdit: (link: VitrineLink) => void;
   onDelete: (link: VitrineLink) => void;
-  isDragging?: boolean;
+  isReordering?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 }
 
 export function SortableLinkItem({
   link,
   onEdit,
   onDelete,
-  isDragging,
+  isReordering,
+  onMoveUp,
+  onMoveDown,
 }: SortableLinkItemProps) {
   const handleOpenUrl = async () => {
     try {
@@ -31,16 +38,29 @@ export function SortableLinkItem({
   };
 
   return (
-    <Card
-      className={`bg-white ${
-        isDragging ? "shadow-lg border-2 border-primary-500" : ""
-      }`}
-    >
+    <Card className="bg-white">
       <View className="p-4">
         <View className="flex-row items-center space-x-4">
-          <TouchableOpacity className="p-2">
-            <GripVertical size={20} color="#6B7280" />
-          </TouchableOpacity>
+          {/* Botões de Reordenação */}
+          {isReordering && (
+            <View className="flex-col justify-center items-center">
+              <TouchableOpacity
+                onPress={onMoveUp}
+                disabled={!onMoveUp}
+                className={`p-2 ${!onMoveUp ? "opacity-30" : ""}`}
+              >
+                <ArrowUp size={20} color="#374151" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={onMoveDown}
+                disabled={!onMoveDown}
+                className={`p-2 ${!onMoveDown ? "opacity-30" : ""}`}
+              >
+                <ArrowDown size={20} color="#374151" />
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View className="flex-1">
             <View className="flex-row justify-between">
@@ -48,7 +68,9 @@ export function SortableLinkItem({
                 <Text className="font-medium text-base">{link.texto}</Text>
                 <TouchableOpacity onPress={handleOpenUrl}>
                   <View className="flex-row items-center space-x-1">
-                    <Text className="text-sm text-gray-500">{link.url}</Text>
+                    <Text numberOfLines={1} className="text-sm text-gray-500">
+                      {link.url}
+                    </Text>
                     <ExternalLink size={12} color="#6B7280" />
                   </View>
                 </TouchableOpacity>
@@ -59,9 +81,21 @@ export function SortableLinkItem({
             </View>
           </View>
 
-          <TouchableOpacity onPress={() => onEdit(link)} className="p-2">
-            <MoreHorizontal size={20} color="#374151" />
-          </TouchableOpacity>
+          {/* Menu de Ações - esconder no modo de reordenação */}
+          {!isReordering && (
+            <View className="flex-row">
+              <TouchableOpacity
+                onPress={() => onEdit(link)}
+                className="p-2 mr-2"
+              >
+                <Edit size={20} color="#374151" />
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => onDelete(link)} className="p-2">
+                <Trash size={20} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     </Card>

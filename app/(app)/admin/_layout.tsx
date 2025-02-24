@@ -56,6 +56,12 @@ export default function AdminLayout() {
             title: "Perfil",
           }}
         />
+        <Stack.Screen
+          name="vitrine/index"
+          options={{
+            title: "Vitrine",
+          }}
+        />
       </Stack>
     </AdminLayoutContainer>
   );

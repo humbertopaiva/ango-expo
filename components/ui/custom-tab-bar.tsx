@@ -9,6 +9,7 @@ import {
   Package,
   Grid,
   User,
+  Star,
 } from "lucide-react-native";
 import { useNavigation, router } from "expo-router";
 import useAuthStore from "@/src/stores/auth";
@@ -87,6 +88,11 @@ export function CustomTabBar({
       name: "profile",
       label: "Perfil",
       icon: User,
+    },
+    {
+      name: "vitrine",
+      label: "Vitrine",
+      icon: Star,
     },
   ];
 

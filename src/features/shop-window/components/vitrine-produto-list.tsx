@@ -1,18 +1,13 @@
 // Path: src/features/vitrine/components/vitrine-produto-list.tsx
-import React from "react";
-import { View, ScrollView, Text } from "react-native";
+import React, { useState } from "react";
+import { View, Text, ScrollView } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Package } from "lucide-react-native";
-
-import DraggableFlatList, {
-  ScaleDecorator,
-  RenderItemParams,
-} from "react-native-draggable-flatlist";
-import { Alert } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { Package, Check } from "lucide-react-native";
 import { VitrineProduto } from "../models";
 import { SortableProdutoItem } from "./sortable-produto-item";
+import { Alert } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react-native";
+import { Button, ButtonText } from "@/components/ui/button";
 
 interface VitrineProdutoListProps {
   produtos: VitrineProduto[];
@@ -31,6 +26,47 @@ export function VitrineProdutoList({
   onReorder,
   isReordering,
 }: VitrineProdutoListProps) {
+  const [isEditingOrder, setIsEditingOrder] = useState(false);
+  const [orderedProducts, setOrderedProducts] =
+    useState<VitrineProduto[]>(produtos);
+
+  // Reset ordenação quando os produtos mudam
+  React.useEffect(() => {
+    setOrderedProducts(produtos);
+  }, [produtos]);
+
+  const moveItem = (index: number, direction: "up" | "down") => {
+    const newOrderedProducts = [...orderedProducts];
+
+    if (direction === "up" && index > 0) {
+      // Troca com o item acima
+      [newOrderedProducts[index], newOrderedProducts[index - 1]] = [
+        newOrderedProducts[index - 1],
+        newOrderedProducts[index],
+      ];
+    } else if (direction === "down" && index < newOrderedProducts.length - 1) {
+      // Troca com o item abaixo
+      [newOrderedProducts[index], newOrderedProducts[index + 1]] = [
+        newOrderedProducts[index + 1],
+        newOrderedProducts[index],
+      ];
+    }
+
+    setOrderedProducts(newOrderedProducts);
+  };
+
+  const handleSaveOrder = () => {
+    // Atualiza ordem alfabética e sort
+    const updatedProducts = orderedProducts.map((produto, index) => ({
+      ...produto,
+      ordem: String.fromCharCode(65 + index), // A, B, C...
+      sort: index + 1,
+    }));
+
+    onReorder(updatedProducts);
+    setIsEditingOrder(false);
+  };
+
   if (isLoading || isReordering) {
     return (
       <View className="space-y-4">
@@ -58,47 +94,51 @@ export function VitrineProdutoList({
     );
   }
 
-  const renderItem = ({
-    item,
-    drag,
-    isActive,
-  }: RenderItemParams<VitrineProduto>) => (
-    <ScaleDecorator>
-      <TouchableOpacity onLongPress={drag} disabled={isActive}>
-        <SortableProdutoItem
-          produto={item}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          isDragging={isActive}
-        />
-      </TouchableOpacity>
-    </ScaleDecorator>
-  );
-
   return (
-    <View className="space-y-4">
+    <View>
       {produtos.length >= 10 && (
-        <Alert>
+        <Alert className="mb-4">
           <AlertCircle size={16} color="#6B7280" />
-          <Text className="ml-2 text-gray-500">
-            Você atingiu o limite de 10 produtos em destaque.
-          </Text>
+          <Text>Limite máximo de 10 produtos em destaque atingido.</Text>
         </Alert>
       )}
 
-      <DraggableFlatList
-        data={produtos}
-        onDragEnd={({ data }) => {
-          const newProdutos = data.map((produto, index) => ({
-            ...produto,
-            ordem: String.fromCharCode(65 + index),
-            sort: index + 1,
-          }));
-          onReorder(newProdutos);
-        }}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-      />
+      {/* Botão de Editar Ordem */}
+      <View className="flex-row justify-end mb-4">
+        {!isEditingOrder ? (
+          <Button
+            variant="outline"
+            onPress={() => setIsEditingOrder(true)}
+            size="sm"
+          >
+            <ButtonText>Editar Ordem</ButtonText>
+          </Button>
+        ) : (
+          <Button onPress={handleSaveOrder} size="sm">
+            <Check size={16} color="white" className="mr-1" />
+            <ButtonText>Salvar Ordem</ButtonText>
+          </Button>
+        )}
+      </View>
+
+      <ScrollView className="space-y-4">
+        {orderedProducts.map((produto, index) => (
+          <View key={produto.id} className="mb-4">
+            <SortableProdutoItem
+              produto={produto}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              isReordering={isEditingOrder}
+              onMoveUp={index > 0 ? () => moveItem(index, "up") : undefined}
+              onMoveDown={
+                index < orderedProducts.length - 1
+                  ? () => moveItem(index, "down")
+                  : undefined
+              }
+            />
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }

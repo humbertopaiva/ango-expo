@@ -1,4 +1,5 @@
 // app/_layout.tsx
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useEffect } from "react";
 import "@/global.css";
 import { GluestackUIProvider } from "@gluestack-ui/themed";
@@ -43,12 +44,14 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <GluestackUIProvider config={config}>
-        <View className="flex-1 bg-background">
-          <Slot />
-        </View>
-      </GluestackUIProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <GluestackUIProvider config={config}>
+          <View className="flex-1 bg-background">
+            <Slot />
+          </View>
+        </GluestackUIProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
