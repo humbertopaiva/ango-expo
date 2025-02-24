@@ -90,6 +90,11 @@ export function CustomTabBar({
       icon: User,
     },
     {
+      name: "leaflets",
+      label: "Encartes",
+      icon: FileText,
+    },
+    {
       name: "vitrine",
       label: "Vitrine",
       icon: Star,

@@ -65,6 +65,12 @@ const navigationItems = [
     icon: Star,
     path: "/(app)/admin/vitrine",
   },
+  {
+    name: "leaflets",
+    label: "Encartes",
+    icon: FileText,
+    path: "/(app)/admin/leaflets",
+  },
 ];
 
 export function AdminNavigation() {
