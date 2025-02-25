@@ -65,6 +65,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       parcelas_sem_juros: false,
       desconto_avista: 0,
       status: "disponivel",
+      estoque: 0,
     },
   });
 

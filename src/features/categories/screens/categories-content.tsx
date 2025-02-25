@@ -4,53 +4,30 @@ import { View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCategoriesContext } from "../contexts/use-categories-context";
 import { CategoriesList } from "../components/categories-list";
-import { Plus, Search } from "lucide-react-native";
-import { Input, InputField } from "@/components/ui/input";
-import { Text } from "@/components/ui/text";
-import { Button } from "@/components/ui/button";
-
-import { router, RelativePathString } from "expo-router";
+import { SearchInput } from "@/components/custom/search-input";
+import { useHeaderAction } from "@/src/hooks/use-header-action";
+import { router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
 
 export function CategoriesContent() {
   const vm = useCategoriesContext();
 
+  useHeaderAction({
+    actionType: "add",
+    onPress: () => router.push("/(app)/admin/categories/new"),
+  });
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 px-4">
-        {/* Header */}
-        <ScreenHeader
-          title="Categorias"
-          subtitle="Gerencie as categorias de produtos da sua loja"
-          action={{
-            label: "Nova Categoria",
-            icon: Plus,
-            onPress: () => router.push("/(app)/admin/categories/new"),
-          }}
-        />
-
         {/* Search */}
-        <View className="mb-4">
-          <View className="relative">
-            <View className="absolute left-3 top-3 z-10">
-              <Search size={20} color="#6B7280" />
-            </View>
-            <Input
-              variant="outline"
-              size="md"
-              isDisabled={false}
-              isInvalid={false}
-              isReadOnly={false}
-            >
-              <InputField
-                placeholder="Enter Text here..."
-                value={vm.searchTerm}
-                onChangeText={vm.setSearchTerm}
-                className="pl-10"
-              />
-            </Input>
-            <Input />
-          </View>
+        <View className="mt-3">
+          <SearchInput
+            value={vm.searchTerm}
+            onChangeText={vm.setSearchTerm}
+            placeholder="Buscar categorias..."
+            disabled={vm.isLoading}
+          />
         </View>
 
         {/* List */}
@@ -59,8 +36,10 @@ export function CategoriesContent() {
             categories={vm.categories}
             isLoading={vm.isLoading}
             onEdit={(category) => {
-              vm.setSelectedCategory(category);
-              vm.setIsFormVisible(true);
+              router.push({
+                pathname: "/(app)/admin/categories/[id]",
+                params: { id: category.id },
+              });
             }}
             onDelete={(category) => vm.handleDeleteCategory(category.id)}
           />

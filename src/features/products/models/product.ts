@@ -27,7 +27,6 @@ export interface CreateProductDTO {
   descricao: string;
   preco: string;
   preco_promocional?: string | null;
-  estoque: number;
   video?: string | null;
   categoria: number;
   empresa: string;
@@ -39,6 +38,7 @@ export interface CreateProductDTO {
   preco_parcelado_tipo?: string | null;
   status?: "disponivel" | "indisponivel";
   sort?: number | null;
+  estoque?: number | null;
 }
 
 export type UpdateProductDTO = Partial<CreateProductDTO>;

@@ -1,10 +1,9 @@
 // app/(app)/admin/_layout.tsx
-import { Stack, router } from "expo-router";
+import { Tabs, router } from "expo-router";
 import { useEffect } from "react";
 import useAuthStore from "@/src/stores/auth";
 import { AdminLayoutContainer } from "@/components/layouts/admin-layout";
-import { Pressable } from "@gluestack-ui/themed";
-import { Ionicons } from "@expo/vector-icons";
+import { CustomTabBar } from "@/components/ui/custom-tab-bar";
 
 export default function AdminLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
@@ -21,75 +20,95 @@ export default function AdminLayout() {
 
   return (
     <AdminLayoutContainer>
-      <Stack
+      <Tabs
         screenOptions={{
           headerShown: true,
-          headerLeft: () => (
-            <Pressable
-              onPress={() => {
-                console.log("Voltando...");
-                router.back();
-              }}
-              style={{ padding: 10 }}
-            >
-              <Ionicons
-                name="chevron-back"
-                size={20}
-                className="color-primary-500"
-              />
-            </Pressable>
-          ),
+          tabBarStyle: { display: "none" }, // Esconde a tab bar nativa
         }}
+        tabBar={(props) => <CustomTabBar {...props} />}
       >
-        <Stack.Screen
+        {/* Dashboard */}
+        <Tabs.Screen
+          name="dashboard/index"
+          options={{
+            title: "Dashboard",
+          }}
+        />
+
+        {/* Categorias */}
+        <Tabs.Screen
           name="categories/index"
           options={{
             title: "Categorias",
           }}
         />
-        <Stack.Screen
+        <Tabs.Screen
+          name="categories/new"
+          options={{
+            title: "Nova Categoria",
+          }}
+        />
+        <Tabs.Screen
+          name="categories/[id]"
+          options={{
+            title: "Categoria",
+          }}
+        />
+
+        {/* Produtos */}
+        <Tabs.Screen
           name="products/index"
           options={{
             title: "Produtos",
           }}
         />
-        <Stack.Screen
-          name="delivery/index"
+        <Tabs.Screen
+          name="products/new"
           options={{
-            title: "Delivery",
+            title: "Novo Produto",
           }}
         />
-        <Stack.Screen
+        <Tabs.Screen
+          name="products/[id]"
+          options={{
+            title: "Produto",
+          }}
+        />
+
+        {/* Configurações */}
+        <Tabs.Screen
           name="delivery-config/index"
           options={{
             title: "Configurações de Delivery",
           }}
         />
-        <Stack.Screen
+
+        {/* Destaques */}
+        <Tabs.Screen
           name="destaques/index"
           options={{
             title: "Destaques",
           }}
         />
-        <Stack.Screen
+        <Tabs.Screen
           name="encartes/index"
           options={{
             title: "Encartes",
           }}
         />
-        <Stack.Screen
+        <Tabs.Screen
           name="profile/index"
           options={{
             title: "Perfil",
           }}
         />
-        <Stack.Screen
+        <Tabs.Screen
           name="vitrine/index"
           options={{
             title: "Vitrine",
           }}
         />
-      </Stack>
+      </Tabs>
     </AdminLayoutContainer>
   );
 }

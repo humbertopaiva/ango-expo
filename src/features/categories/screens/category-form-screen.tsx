@@ -1,6 +1,6 @@
 // src/features/categories/screens/category-form-screen.tsx
 import React, { useEffect } from "react";
-import { View, ScrollView, Text, TouchableOpacity } from "react-native";
+import { View, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,13 +13,13 @@ import {
   VStack,
   HStack,
 } from "@gluestack-ui/themed";
-import { ArrowLeft } from "lucide-react-native";
 import {
   categoryFormSchema,
   CategoryFormData,
 } from "../schemas/category.schema";
 import { useCategories } from "../hooks/use-categories";
 import { Category } from "../models/category";
+import ScreenHeader from "@/components/ui/screen-header";
 
 interface CategoryFormScreenProps {
   categoryId?: string;
@@ -76,25 +76,18 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
       } else {
         await createCategory({ data });
       }
-      router.back();
+      router.push("/(app)/admin/categories");
     } catch (error) {
       console.error("Error submitting form:", error);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      {/* Header */}
-      <View className="px-4 py-4 border-b border-gray-200">
-        <HStack space="md" alignItems="center">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <ArrowLeft size={24} color="#000" />
-          </TouchableOpacity>
-          <Text className="text-xl font-semibold">
-            {isEditing ? "Editar Categoria" : "Nova Categoria"}
-          </Text>
-        </HStack>
-      </View>
+    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+      <ScreenHeader
+        title={isEditing ? "Editar Categoria" : "Nova Categoria"}
+        showBackButton={true}
+      />
 
       {/* Form */}
       <ScrollView className="flex-1 px-4">

@@ -9,6 +9,7 @@ export default function PublicLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
+          tabBarStyle: { display: "none" }, // Esconde a tab bar nativa
         }}
         tabBar={(props) => <CustomTabBar {...props} />}
       >

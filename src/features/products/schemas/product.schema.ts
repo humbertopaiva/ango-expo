@@ -10,6 +10,7 @@ export const productFormSchema = z.object({
   parcelamento_cartao: z.boolean().default(false),
   parcelas_sem_juros: z.boolean().default(false),
   quantidade_parcelas: z.string().nullable().optional(),
+  estoque: z.number().nullable().optional(),
   desconto_avista: z.coerce
     .number()
     .min(0)

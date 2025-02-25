@@ -39,7 +39,7 @@ export function CategoriesList({
   }
 
   return (
-    <View className="space-y-4">
+    <View className="gap-3">
       {categories.map((category) => (
         <Card key={category.id} className="p-4 bg-white">
           <View className="flex-row items-center justify-between">

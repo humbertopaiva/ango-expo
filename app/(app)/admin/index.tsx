@@ -1,10 +1,6 @@
-import { Box } from "@/components/ui/box";
-import { Text } from "@/components/ui/text";
+// app/(app)/admin/index.tsx
+import { Redirect } from "expo-router";
 
 export default function IndexAdmin() {
-  return (
-    <Box>
-      <Text>Admin</Text>Admin
-    </Box>
-  );
+  return <Redirect href="/(app)/admin/dashboard" />;
 }
