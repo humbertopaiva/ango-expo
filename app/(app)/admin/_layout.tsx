@@ -1,12 +1,16 @@
 // app/(app)/admin/_layout.tsx
-import { Tabs, router } from "expo-router";
+import { Stack, router } from "expo-router";
 import { useEffect } from "react";
 import useAuthStore from "@/src/stores/auth";
 import { AdminLayoutContainer } from "@/components/layouts/admin-layout";
 import { CustomTabBar } from "@/components/ui/custom-tab-bar";
+import { TouchableOpacity } from "react-native";
+import { ArrowLeft, ChevronLeft } from "lucide-react-native";
+import { useSegments } from "expo-router";
 
 export default function AdminLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const segments = useSegments();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -18,17 +22,35 @@ export default function AdminLayout() {
     return null;
   }
 
+  // Função para voltar ao dashboard
+  const goToDashboard = () => {
+    router.push("/(app)/admin/dashboard");
+  };
+
   return (
     <AdminLayoutContainer>
-      <Tabs
+      <Stack
         screenOptions={{
           headerShown: true,
-          tabBarStyle: { display: "none" }, // Esconde a tab bar nativa
+          headerBackground: () => (
+            <TouchableOpacity
+              onPress={goToDashboard}
+              className="flex-row items-center bg-primary-500 p-6 h-20"
+            ></TouchableOpacity>
+          ),
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={goToDashboard}
+              className="flex-row items-center pr-4"
+            >
+              <ChevronLeft size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          ),
+          headerTintColor: "#FFFFFF",
         }}
-        tabBar={(props) => <CustomTabBar {...props} />}
       >
         {/* Dashboard */}
-        <Tabs.Screen
+        <Stack.Screen
           name="dashboard/index"
           options={{
             title: "Dashboard",
@@ -36,19 +58,19 @@ export default function AdminLayout() {
         />
 
         {/* Categorias */}
-        <Tabs.Screen
+        <Stack.Screen
           name="categories/index"
           options={{
             title: "Categorias",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="categories/new"
           options={{
             title: "Nova Categoria",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="categories/[id]"
           options={{
             title: "Categoria",
@@ -56,19 +78,19 @@ export default function AdminLayout() {
         />
 
         {/* Produtos */}
-        <Tabs.Screen
+        <Stack.Screen
           name="products/index"
           options={{
             title: "Produtos",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="products/new"
           options={{
             title: "Novo Produto",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="products/[id]"
           options={{
             title: "Produto",
@@ -76,7 +98,7 @@ export default function AdminLayout() {
         />
 
         {/* Configurações */}
-        <Tabs.Screen
+        <Stack.Screen
           name="delivery-config/index"
           options={{
             title: "Configurações de Delivery",
@@ -84,31 +106,34 @@ export default function AdminLayout() {
         />
 
         {/* Destaques */}
-        <Tabs.Screen
+        <Stack.Screen
           name="destaques/index"
           options={{
             title: "Destaques",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="encartes/index"
           options={{
             title: "Encartes",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="profile/index"
           options={{
             title: "Perfil",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="vitrine/index"
           options={{
             title: "Vitrine",
           }}
         />
-      </Tabs>
+      </Stack>
+
+      {/* Custom Tab Bar */}
+      <CustomTabBar />
     </AdminLayoutContainer>
   );
 }

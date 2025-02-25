@@ -23,7 +23,7 @@ import {
   LogOut,
   ShoppingBag,
 } from "lucide-react-native";
-import { useSegments, router } from "expo-router";
+import { useSegments, router, usePathname } from "expo-router";
 import useAuthStore from "@/src/stores/auth";
 
 interface RouteItem {
@@ -74,25 +74,16 @@ const RouteSection = ({ title, routes, onItemPress }: RouteSectionProps) => {
   );
 };
 
-interface CustomTabBarProps {
-  state: any;
-  descriptors: any;
-  navigation: any;
-}
-
-export function CustomTabBar({
-  state,
-  descriptors,
-  navigation,
-}: CustomTabBarProps) {
+export function CustomTabBar() {
   const segments = useSegments();
+  const pathname = usePathname();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
   const isAdminRoute = segments[0] === "(app)";
 
   // Modal state
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Public routes (always visible)
+  // Public routes (always visible in tab bar)
   const publicRoutes: RouteItem[] = [
     {
       id: "comercio-local",
@@ -177,18 +168,13 @@ export function CustomTabBar({
     },
     {
       id: "encartes-admin",
-      name: "encartes",
-      label: "Encartes",
+      name: "encartes-admin",
+      label: "Encartes Admin",
       icon: FileText,
       path: "/(app)/admin/encartes",
       color: "#EF4444",
     },
   ];
-
-  // Determine which routes to show in the main toolbar
-  const mainRoutes = isAdminRoute
-    ? adminRoutes.slice(0, 3) // First 3 admin routes if in admin mode
-    : publicRoutes; // Public routes if in public mode
 
   // Handle navigation
   const handleNavigation = (path: string) => {
@@ -196,29 +182,33 @@ export function CustomTabBar({
     setIsMenuOpen(false);
   };
 
-  // Toggle between admin and public mode
-  const toggleMode = () => {
-    if (isAdminRoute) {
-      router.push("/(public)/comercio-local");
-    } else {
-      router.push("/(app)/admin/dashboard");
-    }
-    setIsMenuOpen(false);
-  };
-
   // Check if a route is active
   const isRouteActive = (routeName: string) => {
-    if (isAdminRoute) {
-      return segments.includes(routeName as any);
-    } else {
-      const index = publicRoutes.findIndex((route) => route.name === routeName);
-      return index === state.index;
+    // Para rotas públicas
+    if (routeName === "comercio-local") {
+      return pathname === "/(public)/comercio-local";
+    } else if (routeName === "delivery") {
+      return pathname === "/(public)/delivery";
+    } else if (routeName === "encartes") {
+      return pathname === "/(public)/encartes";
     }
+
+    // Mesmo em rotas admin, ainda queremos destacar a tab pública
+    // correspondente se existir uma relação
+    if (
+      isAdminRoute &&
+      routeName === "encartes" &&
+      pathname.includes("/(app)/admin/encartes")
+    ) {
+      return true;
+    }
+
+    return false;
   };
 
   // Group routes for expanded menu
-  const mainMenuRoutes = adminRoutes.slice(0, 4); // First group
-  const secondaryMenuRoutes = adminRoutes.slice(4); // Second group
+  const mainAdminRoutes = adminRoutes.slice(0, 4); // First group
+  const secondaryAdminRoutes = adminRoutes.slice(4); // Second group
 
   return (
     <>
@@ -236,7 +226,7 @@ export function CustomTabBar({
                 <View className="w-10 h-1 bg-gray-300 rounded-full" />
               </View>
 
-              <View className="px-6 pt-2 pb-8">
+              <View className="px-6 pt-2 pb-4">
                 {/* Close button */}
                 <View className="flex-row justify-end mb-2">
                   <TouchableOpacity
@@ -249,53 +239,64 @@ export function CustomTabBar({
 
                 <ScrollView
                   showsVerticalScrollIndicator={false}
-                  className="max-h-96"
+                  className="max-h-[500px]"
                 >
-                  {/* Admin/Public toggle button */}
-                  <TouchableOpacity
-                    onPress={toggleMode}
-                    className="mb-5 flex-row items-center justify-center py-3 bg-gray-100 rounded-xl"
-                  >
-                    <Text className="font-medium mr-2">
-                      {isAdminRoute
-                        ? "Alternar para Modo Público"
-                        : "Alternar para Modo Admin"}
+                  <View className="mb-5 bg-blue-50 p-3 rounded-xl">
+                    <Text className="font-medium text-blue-800 mb-1 text-center">
+                      Área Administrativa
                     </Text>
-                    {isAdminRoute ? (
-                      <Store size={18} color="#374151" />
-                    ) : (
-                      <Settings size={18} color="#374151" />
-                    )}
-                  </TouchableOpacity>
+                    <Text className="text-xs text-blue-600 text-center">
+                      Acesse as funcionalidades administrativas do seu comércio
+                    </Text>
+                  </View>
 
                   {isAuthenticated && (
                     <>
                       <RouteSection
                         title="Gerenciamento"
-                        routes={mainMenuRoutes}
+                        routes={mainAdminRoutes}
                         onItemPress={handleNavigation}
                       />
 
                       <RouteSection
                         title="Configurações & Marketing"
-                        routes={secondaryMenuRoutes}
+                        routes={secondaryAdminRoutes}
                         onItemPress={handleNavigation}
                       />
 
                       {/* Logout option */}
+                      <View className="mt-6 mb-4 flex items-center justify-center">
+                        <TouchableOpacity
+                          className="p-2 flex-row items-center"
+                          onPress={() => {
+                            // Handle logout logic here
+                            setIsMenuOpen(false);
+                          }}
+                        >
+                          <Text className="font-medium mr-2 text-gray-500">
+                            Sair da conta
+                          </Text>
+                          <LogOut size={16} color="#6B7280" />
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
+
+                  {!isAuthenticated && (
+                    <View className="py-8 items-center">
+                      <Text className="text-gray-500 mb-4">
+                        Faça login para acessar estas funcionalidades
+                      </Text>
                       <TouchableOpacity
-                        className="mt-2 p-3 flex-row items-center justify-center bg-gray-100 rounded-xl"
+                        className="bg-primary-500 py-2 px-6 rounded-lg"
                         onPress={() => {
-                          // Handle logout logic here
+                          router.push("/(auth)/login");
                           setIsMenuOpen(false);
                         }}
                       >
-                        <Text className="font-medium mr-2 text-red-500">
-                          Sair
-                        </Text>
-                        <LogOut size={18} color="#EF4444" />
+                        <Text className="text-white font-medium">Entrar</Text>
                       </TouchableOpacity>
-                    </>
+                    </View>
                   )}
                 </ScrollView>
               </View>
@@ -307,8 +308,8 @@ export function CustomTabBar({
       {/* Main Tab Bar */}
       <View className="absolute bottom-0 left-0 right-0 z-10">
         <View className="h-16 bg-white border-t border-gray-200 flex-row items-center justify-between px-4 relative">
-          {/* Tab items */}
-          {mainRoutes.map((route, index) => {
+          {/* Tab items - sempre mostra as rotas públicas */}
+          {publicRoutes.map((route, index) => {
             const isActive = isRouteActive(route.name);
             return (
               <TouchableOpacity
@@ -331,24 +332,22 @@ export function CustomTabBar({
             );
           })}
 
-          {/* FAB button for authenticated users */}
-          {isAuthenticated && (
-            <View className="absolute -top-6 right-6">
-              <TouchableOpacity
-                onPress={() => setIsMenuOpen(true)}
-                className="w-12 h-12 bg-primary-500 rounded-full items-center justify-center"
-                style={{
-                  elevation: 4,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 3.84,
-                }}
-              >
-                <List size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          )}
+          {/* FAB button para menu */}
+          <View className="absolute -top-6 right-6">
+            <TouchableOpacity
+              onPress={() => setIsMenuOpen(true)}
+              className="w-12 h-12 bg-primary-500 rounded-full items-center justify-center"
+              style={{
+                elevation: 4,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+              }}
+            >
+              <List size={24} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </>

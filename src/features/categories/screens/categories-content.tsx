@@ -5,20 +5,30 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useCategoriesContext } from "../contexts/use-categories-context";
 import { CategoriesList } from "../components/categories-list";
 import { SearchInput } from "@/components/custom/search-input";
-import { useHeaderAction } from "@/src/hooks/use-header-action";
 import { router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
+import { useHeaderAction } from "@/src/hooks/use-header-action";
 
 export function CategoriesContent() {
   const vm = useCategoriesContext();
 
   useHeaderAction({
+    title: "Categorias",
     actionType: "add",
     onPress: () => router.push("/(app)/admin/categories/new"),
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+      {/* <ScreenHeader
+        title="Categorias"
+        subtitle="Gerencie suas categorias de produtos"
+        action={{
+          label: "Nova",
+          onPress: () => router.push("/(app)/admin/categories/new"),
+        }}
+      /> */}
+
       <View className="flex-1 px-4">
         {/* Search */}
         <View className="mt-3">
@@ -31,7 +41,7 @@ export function CategoriesContent() {
         </View>
 
         {/* List */}
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} className="pb-16">
           <CategoriesList
             categories={vm.categories}
             isLoading={vm.isLoading}

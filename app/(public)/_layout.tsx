@@ -1,37 +1,34 @@
 // app/(public)/_layout.tsx
-import { Tabs } from "expo-router";
+import { Stack } from "expo-router";
 import { CustomTabBar } from "@/components/ui/custom-tab-bar";
 import { PublicLayoutContainer } from "@/components/layouts/public-layout";
 
 export default function PublicLayout() {
   return (
     <PublicLayoutContainer>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: { display: "none" }, // Esconde a tab bar nativa
-        }}
-        tabBar={(props) => <CustomTabBar {...props} />}
-      >
-        <Tabs.Screen
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen
           name="comercio-local"
           options={{
             title: "Comércio Local",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="delivery"
           options={{
             title: "Delivery",
           }}
         />
-        <Tabs.Screen
+        <Stack.Screen
           name="encartes"
           options={{
             title: "Encartes",
           }}
         />
-      </Tabs>
+      </Stack>
+
+      {/* Custom Tab Bar */}
+      <CustomTabBar />
     </PublicLayoutContainer>
   );
 }

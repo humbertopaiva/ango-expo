@@ -76,6 +76,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
       } else {
         await createCategory({ data });
       }
+      // Navega de volta para a listagem de categorias
       router.push("/(app)/admin/categories");
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -84,83 +85,86 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
-      <ScreenHeader
-        title={isEditing ? "Editar Categoria" : "Nova Categoria"}
-        showBackButton={true}
-      />
-
-      {/* Form */}
-      <ScrollView className="flex-1 px-4">
-        <VStack space="lg" className="py-6">
-          {/* Nome */}
-          <FormControl isInvalid={!!errors.nome}>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">Nome</Text>
-            </FormControl.Label>
-            <Controller
-              control={control}
-              name="nome"
-              render={({ field: { onChange, value, onBlur } }) => (
-                <Input>
-                  <Input.Input
-                    placeholder="Digite o nome da categoria"
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    value={value}
-                    className="bg-gray-50"
-                  />
-                </Input>
+      {/* <ScreenHeader
+        title="Criar Categoria"
+        subtitle="Crie categorias de produtos"
+      /> */}
+      <View className="flex-1">
+        {/* Form */}
+        <ScrollView className="flex-1 px-4">
+          <VStack space="lg" className="py-6">
+            {/* Nome */}
+            <FormControl isInvalid={!!errors.nome}>
+              <FormControl.Label>
+                <Text className="text-sm font-medium text-gray-700">Nome</Text>
+              </FormControl.Label>
+              <Controller
+                control={control}
+                name="nome"
+                render={({ field: { onChange, value, onBlur } }) => (
+                  <Input>
+                    <Input.Input
+                      placeholder="Digite o nome da categoria"
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      value={value}
+                      className="bg-gray-50"
+                    />
+                  </Input>
+                )}
+              />
+              {errors.nome && (
+                <FormControl.Error>
+                  <FormControl.Error.Text>
+                    {errors.nome.message}
+                  </FormControl.Error.Text>
+                </FormControl.Error>
               )}
-            />
-            {errors.nome && (
-              <FormControl.Error>
-                <FormControl.Error.Text>
-                  {errors.nome.message}
-                </FormControl.Error.Text>
-              </FormControl.Error>
-            )}
-          </FormControl>
+            </FormControl>
 
-          {/* Status */}
-          <FormControl>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">Status</Text>
-            </FormControl.Label>
-            <Controller
-              control={control}
-              name="categoria_ativa"
-              render={({ field: { onChange, value } }) => (
-                <HStack space="md" alignItems="center">
-                  <Switch value={value} onValueChange={onChange} />
-                  <Text className="text-sm text-gray-600">
-                    {value ? "Ativa" : "Inativa"}
-                  </Text>
-                </HStack>
-              )}
-            />
-          </FormControl>
-        </VStack>
-      </ScrollView>
+            {/* Status */}
+            <FormControl>
+              <FormControl.Label>
+                <Text className="text-sm font-medium text-gray-700">
+                  Status
+                </Text>
+              </FormControl.Label>
+              <Controller
+                control={control}
+                name="categoria_ativa"
+                render={({ field: { onChange, value } }) => (
+                  <HStack space="md" alignItems="center">
+                    <Switch value={value} onValueChange={onChange} />
+                    <Text className="text-sm text-gray-600">
+                      {value ? "Ativa" : "Inativa"}
+                    </Text>
+                  </HStack>
+                )}
+              />
+            </FormControl>
+          </VStack>
+        </ScrollView>
 
-      {/* Footer */}
-      <View className="px-4 py-4 border-t border-gray-200">
-        <HStack space="md" justifyContent="flex-end">
-          <Button
-            variant="outline"
-            onPress={() => router.back()}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            <Button.Text>Cancelar</Button.Text>
-          </Button>
-          <Button
-            onPress={handleSubmit(onSubmit)}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            <Button.Text>{isLoading ? "Salvando..." : "Salvar"}</Button.Text>
-          </Button>
-        </HStack>
+        {/* Footer */}
+        <View className="px-4 py-4 border-t border-gray-200">
+          <HStack space="md" justifyContent="flex-end">
+            <Button
+              variant="outline"
+              onPress={() => router.push("/(app)/admin/categories")}
+              disabled={isLoading}
+              className="flex-1"
+            >
+              <Button.Text>Cancelar</Button.Text>
+            </Button>
+            <Button
+              onPress={handleSubmit(onSubmit)}
+              disabled={isLoading}
+              className="flex-1"
+            >
+              <Button.Text>{isLoading ? "Salvando..." : "Salvar"}</Button.Text>
+            </Button>
+          </HStack>
+        </View>
       </View>
     </SafeAreaView>
   );
