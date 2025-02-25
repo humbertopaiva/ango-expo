@@ -25,21 +25,6 @@ export function LeafletsContent() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 px-4">
-        {/* Header */}
-        <ScreenHeader
-          title="Encartes"
-          subtitle="Gerencie os encartes promocionais da sua loja"
-          action={
-            vm.leafletCount < 5
-              ? {
-                  label: "Novo Encarte",
-                  icon: Plus,
-                  onPress: () => router.push("/(app)/admin/leaflets/new"),
-                }
-              : undefined
-          }
-        />
-
         {/* Alerta de limite atingido */}
         {vm.leafletCount >= 5 && (
           <View className="mb-4 bg-amber-50 p-4 rounded-lg flex-row items-start">

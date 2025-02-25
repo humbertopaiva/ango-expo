@@ -76,11 +76,6 @@ export function VitrinePageContent() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <ScreenHeader
-        title="Vitrine"
-        subtitle="Gerencie os produtos em destaque e links da sua loja"
-      />
-
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}

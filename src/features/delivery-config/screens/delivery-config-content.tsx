@@ -14,11 +14,6 @@ export function DeliveryConfigContent() {
   if (vm.isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
-        <ScreenHeader
-          title="Configurações de Entrega"
-          subtitle="Gerencie as configurações de entrega da sua loja"
-          showBackButton={true}
-        />
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#0891B2" />
         </View>

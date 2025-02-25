@@ -1,5 +1,5 @@
 // src/features/dashboard/screens/dashboard-screen.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -15,7 +15,7 @@ import {
   ShoppingCart,
   Users,
 } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
 import { Card } from "@gluestack-ui/themed";
 import { useCategories } from "@/src/features/categories/hooks/use-categories";
