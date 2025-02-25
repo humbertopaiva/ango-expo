@@ -1,3 +1,4 @@
+// src/features/products/view-models/products.view-model.interface.ts
 import { Product } from "../models/product";
 import { ProductFormData } from "../schemas/product.schema";
 
@@ -11,6 +12,8 @@ export interface IProductsViewModel {
   isCreating: boolean;
   isUpdating: boolean;
   isDeleting: boolean;
+  isDeleteDialogOpen: boolean;
+  productToDelete: string | null;
 
   // Setters
   setSearchTerm: (term: string) => void;
@@ -21,4 +24,8 @@ export interface IProductsViewModel {
   handleCreateProduct: (data: ProductFormData) => Promise<void>;
   handleUpdateProduct: (id: string, data: ProductFormData) => Promise<void>;
   handleDeleteProduct: (id: string) => Promise<void>;
+
+  // Diálogo de confirmação
+  confirmDeleteProduct: (id: string) => void;
+  cancelDeleteProduct: () => void;
 }

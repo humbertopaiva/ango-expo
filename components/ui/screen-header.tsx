@@ -4,13 +4,16 @@ import { View, Text, TouchableOpacity, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, LucideIcon } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { Button } from "@gluestack-ui/themed";
+
+import { HStack } from "./hstack";
+import { VStack } from "./vstack";
+import { Button, ButtonText } from "./button";
 
 interface ScreenHeaderProps {
   title: string;
   subtitle?: string;
   action?: {
-    label: string;
+    label?: string;
     icon?: LucideIcon;
     onPress: () => void;
   };
@@ -56,7 +59,7 @@ export default function ScreenHeader({
                       })}
                     </View>
                   )}
-                  <Button.Text>{action.label}</Button.Text>
+                  <ButtonText>{action.label}</ButtonText>
                 </Button>
               )}
             </View>
@@ -73,43 +76,50 @@ export default function ScreenHeader({
 
         {/* Layout para web */}
         {isWeb && (
-          <View className="max-w-7xl mx-auto">
+          <View className="w-full container md:px-4 mx-auto">
             <View className="flex-row items-center justify-between py-2">
-              <View className="flex-1">
-                {showBackButton && (
-                  <TouchableOpacity
-                    onPress={() => router.back()}
-                    className="flex-row items-center"
-                  >
-                    <ArrowLeft size={20} color="#6B7280" />
-                    <Text className="ml-2 text-sm text-gray-500">Voltar</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <HStack className="flex-1 items-center gap-3">
+                <View className="">
+                  {showBackButton && (
+                    <TouchableOpacity
+                      onPress={() => router.back()}
+                      className="flex-row items-center"
+                    >
+                      <ArrowLeft size={20} color="#6B7280" />
+                    </TouchableOpacity>
+                  )}
+                </View>
 
-              <View className="flex-1">
-                <Text className="text-2xl font-bold text-center text-gray-900">
-                  {title}
-                </Text>
-                {subtitle && (
-                  <Text className="text-sm text-center text-gray-500 mt-1">
-                    {subtitle}
+                <VStack className="">
+                  <Text className="text-lg font-bold text-center text-gray-900">
+                    {title}
                   </Text>
-                )}
-              </View>
+                  {/* {subtitle && (
+                    <Text className="text-sm text-center text-gray-500 mt-1">
+                      {subtitle}
+                    </Text>
+                  )} */}
+                </VStack>
+              </HStack>
 
               <View className="flex-1 flex-row justify-end">
                 {action && (
-                  <Button onPress={action.onPress} size="sm">
+                  <Button
+                    onPress={action.onPress}
+                    size="sm"
+                    className="p-2 rounded-full flex justify-center items-center"
+                  >
                     {action.icon && (
-                      <View className="mr-2">
+                      <View>
                         {React.createElement(action.icon, {
-                          size: 16,
+                          size: 14,
                           color: "white",
                         })}
                       </View>
                     )}
-                    <Button.Text>{action.label}</Button.Text>
+                    <ButtonText className="font-sans text-xs">
+                      {action.label}
+                    </ButtonText>
                   </Button>
                 )}
               </View>

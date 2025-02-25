@@ -3,6 +3,8 @@ import { Stack, router } from "expo-router";
 import { useEffect } from "react";
 import useAuthStore from "@/src/stores/auth";
 import { AdminLayoutContainer } from "@/components/layouts/admin-layout";
+import { Pressable } from "@gluestack-ui/themed";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function AdminLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
@@ -19,7 +21,26 @@ export default function AdminLayout() {
 
   return (
     <AdminLayoutContainer>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: true,
+          headerLeft: () => (
+            <Pressable
+              onPress={() => {
+                console.log("Voltando...");
+                router.back();
+              }}
+              style={{ padding: 10 }}
+            >
+              <Ionicons
+                name="chevron-back"
+                size={20}
+                className="color-primary-500"
+              />
+            </Pressable>
+          ),
+        }}
+      >
         <Stack.Screen
           name="categories/index"
           options={{

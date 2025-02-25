@@ -1,8 +1,8 @@
 // src/features/products/screens/product-form-screen.tsx
 import React, { useEffect } from "react";
-import { View, ScrollView, Text, TouchableOpacity } from "react-native";
+import { View, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Controller, useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -22,15 +22,19 @@ import {
   SelectDragIndicator,
   SelectItem,
   ChevronDownIcon,
+  Textarea,
   TextareaInput,
 } from "@gluestack-ui/themed";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, DollarSign, Tag, Percent } from "lucide-react-native";
 import { productFormSchema, ProductFormData } from "../schemas/product.schema";
 import { useProducts } from "../hooks/use-products";
-// import { Product } from "../models/product";
 import { useCategories } from "../../categories/hooks/use-categories";
-import { Textarea } from "@gluestack-ui/themed";
+import { FormField } from "@/components/custom/form-field";
+import { ActionCard } from "@/components/custom/action-card";
 import { ImageUpload } from "@/components/common/image-upload";
+import ScreenHeader from "@/components/ui/screen-header";
+import { ProductFormSkeleton } from "../components/product-form-skeleton";
+import { FormActions } from "@/components/custom/form-actions";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -64,18 +68,12 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
     },
   });
 
-  // Adicione este console.log antes do return do componente
-  console.log("Form State:", {
-    isValid: form.formState.isValid,
-    isDirty: form.formState.isDirty,
-    errors: form.formState.errors,
-    values: form.getValues(),
-  });
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = form;
 
   useEffect(() => {
@@ -97,10 +95,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
 
   const onSubmit = async (data: ProductFormData) => {
     try {
-      console.log("Iniciando submit do formulário:", data); // Log inicial
-
       if (isEditing && id) {
-        console.log("Atualizando produto:", id);
         await updateProduct({
           id,
           data: {
@@ -117,7 +112,6 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           },
         });
       } else {
-        console.log("Criando novo produto");
         await createProduct({
           nome: data.nome,
           descricao: data.descricao,
@@ -132,133 +126,120 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           estoque: 0,
         });
       }
-      console.log("Produto salvo com sucesso");
       router.back();
     } catch (error) {
       console.error("Error submitting form:", error);
     }
   };
 
+  // Mostra o skeleton enquanto estiver carregando produtos (para edição)
+  if (isEditing && isLoading) {
+    return <ProductFormSkeleton />;
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
-      <View className="px-4 py-4 border-b border-gray-200">
-        <HStack space="md" alignItems="center">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <ArrowLeft size={24} color="#000" />
-          </TouchableOpacity>
-          <Text className="text-xl font-semibold">
-            {isEditing ? "Editar Produto" : "Novo Produto"}
-          </Text>
-        </HStack>
-      </View>
+      <ScreenHeader
+        title={isEditing ? "Editar Produto" : "Novo Produto"}
+        showBackButton={true}
+      />
 
       {/* Form */}
-      <ScrollView className="flex-1 px-4">
+      <ScrollView className="flex-1 container mx-auto px-4">
         <VStack space="lg" className="py-6">
-          {/* Nome */}
-          <FormControl isInvalid={!!errors.nome}>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">Nome</Text>
-            </FormControl.Label>
-            <Controller
+          {/* Informações básicas */}
+          <ActionCard title="Informações Básicas">
+            <FormField
               control={control}
               name="nome"
-              render={({ field: { onChange, value } }) => (
-                <Input>
-                  <Input.Input
-                    placeholder="Digite o nome do produto"
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                </Input>
-              )}
+              label="Nome do Produto"
+              placeholder="Digite o nome do produto"
+              error={errors.nome}
             />
-            {errors.nome && (
-              <FormControl.Error>
-                <Text className="text-sm text-red-500">
-                  {errors.nome.message}
-                </Text>
-              </FormControl.Error>
-            )}
-          </FormControl>
 
-          {/* Descrição */}
-          <FormControl isInvalid={!!errors.descricao}>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">
-                Descrição
-              </Text>
-            </FormControl.Label>
             <Controller
               control={control}
               name="descricao"
               render={({ field: { onChange, value } }) => (
-                <Textarea>
-                  <TextareaInput
-                    placeholder="Digite a descrição do produto"
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                </Textarea>
+                <FormControl isInvalid={!!errors.descricao}>
+                  <FormControl.Label>
+                    <Text className="text-sm font-medium text-gray-700">
+                      Descrição
+                    </Text>
+                  </FormControl.Label>
+                  <Textarea>
+                    <TextareaInput
+                      placeholder="Digite a descrição do produto"
+                      onChangeText={onChange}
+                      value={value}
+                    />
+                  </Textarea>
+                  {errors.descricao && (
+                    <FormControl.Error>
+                      <Text className="text-sm text-red-500">
+                        {errors.descricao.message}
+                      </Text>
+                    </FormControl.Error>
+                  )}
+                </FormControl>
               )}
             />
-            {errors.descricao && (
-              <FormControl.Error>
-                <Text className="text-sm text-red-500">
-                  {errors.descricao.message}
-                </Text>
-              </FormControl.Error>
-            )}
-          </FormControl>
 
-          {/* Categoria */}
-          <FormControl isInvalid={!!errors.categoria}>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">
-                Categoria
-              </Text>
-            </FormControl.Label>
-            <Controller
-              control={control}
-              name="categoria"
-              render={({ field: { onChange, value } }) => (
-                <Select
-                  selectedValue={value?.toString()}
-                  onValueChange={(val) => onChange(parseInt(val))}
-                >
-                  <SelectTrigger>
-                    <SelectInput placeholder="Selecione uma categoria" />
-                    <SelectIcon>
-                      <ChevronDownIcon />
-                    </SelectIcon>
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent>
-                      <SelectDragIndicator />
-                      <SelectItem label="Sem categoria" value="0" />
-                      {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          label={category.nome}
-                          value={category.id.toString()}
+            <FormControl isInvalid={!!errors.categoria}>
+              <FormControl.Label>
+                <Text className="text-sm font-medium text-gray-700">
+                  Categoria
+                </Text>
+              </FormControl.Label>
+              <Controller
+                control={control}
+                name="categoria"
+                render={({ field: { onChange, value } }) => {
+                  // Encontra a categoria atual para exibição
+                  const categoryName =
+                    value === 0
+                      ? "Sem categoria"
+                      : categories.find((c) => c.id === value.toString())
+                          ?.nome || "";
+
+                  return (
+                    <Select
+                      selectedValue={value?.toString()}
+                      onValueChange={(val) => onChange(parseInt(val))}
+                    >
+                      <SelectTrigger>
+                        <SelectInput
+                          placeholder="Selecione uma categoria"
+                          value={categoryName}
                         />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-              )}
-            />
-          </FormControl>
+                        <SelectIcon>
+                          <ChevronDownIcon />
+                        </SelectIcon>
+                      </SelectTrigger>
+                      <SelectPortal>
+                        <SelectBackdrop />
+                        <SelectContent>
+                          <SelectDragIndicator />
+                          <SelectItem label="Sem categoria" value="0" />
+                          {categories.map((category) => (
+                            <SelectItem
+                              key={category.id}
+                              label={category.nome}
+                              value={category.id.toString()}
+                            />
+                          ))}
+                        </SelectContent>
+                      </SelectPortal>
+                    </Select>
+                  );
+                }}
+              />
+            </FormControl>
+          </ActionCard>
 
           {/* Imagem */}
-          <FormControl isInvalid={!!errors.imagem}>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">
-                Imagem do Produto
-              </Text>
-            </FormControl.Label>
+          <ActionCard title="Imagem do Produto">
             <Controller
               control={control}
               name="imagem"
@@ -270,112 +251,71 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                 />
               )}
             />
-            {errors.imagem && (
-              <FormControl.Error>
-                <Text className="text-sm text-red-500">
-                  {errors.imagem.message}
-                </Text>
-              </FormControl.Error>
-            )}
-          </FormControl>
+          </ActionCard>
 
-          {/* Preço */}
-          <FormControl isInvalid={!!errors.preco}>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">Preço</Text>
-            </FormControl.Label>
-            <Controller
+          {/* Preços */}
+          <ActionCard title="Preços">
+            <FormField
               control={control}
               name="preco"
-              render={({ field: { onChange, value } }) => (
-                <Input>
-                  <Input.Input
-                    placeholder="0,00"
-                    keyboardType="numeric"
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                </Input>
-              )}
+              label="Preço"
+              placeholder="0,00"
+              keyboardType="numeric"
+              error={errors.preco}
+              leftIcon={<DollarSign size={20} color="#6B7280" />}
             />
-            {errors.preco && (
-              <FormControl.Error>
-                <Text className="text-sm text-red-500">
-                  {errors.preco.message}
-                </Text>
-              </FormControl.Error>
-            )}
-          </FormControl>
 
-          {/* Preço Promocional */}
-          <FormControl isInvalid={!!errors.preco_promocional}>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">
-                Preço Promocional
-              </Text>
-            </FormControl.Label>
-            <Controller
+            <FormField
               control={control}
               name="preco_promocional"
-              render={({ field: { onChange, value } }) => (
-                <Input>
-                  <Input.Input
-                    placeholder="0,00"
-                    keyboardType="numeric"
-                    onChangeText={onChange}
-                    value={value || ""}
-                  />
-                </Input>
-              )}
+              label="Preço Promocional"
+              placeholder="0,00"
+              keyboardType="numeric"
+              error={errors.preco_promocional}
+              leftIcon={<Tag size={20} color="#6B7280" />}
             />
-            {errors.preco_promocional && (
-              <FormControl.Error>
-                <Text className="text-sm text-red-500">
-                  {errors.preco_promocional.message}
-                </Text>
-              </FormControl.Error>
-            )}
-          </FormControl>
+          </ActionCard>
 
           {/* Status */}
-          <FormControl>
-            <FormControl.Label>
-              <Text className="text-sm font-medium text-gray-700">Status</Text>
-            </FormControl.Label>
-            <Controller
-              control={control}
-              name="status"
-              render={({ field: { onChange, value } }) => (
-                <Select selectedValue={value} onValueChange={onChange}>
-                  <SelectTrigger>
-                    <SelectInput placeholder="Selecione o status" />
-                    <SelectIcon>
-                      <ChevronDownIcon />
-                    </SelectIcon>
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent>
-                      <SelectDragIndicator />
-                      <SelectItem label="Disponível" value="disponivel" />
-                      <SelectItem label="Indisponível" value="indisponivel" />
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-              )}
-            />
-          </FormControl>
+          <ActionCard title="Status do Produto">
+            <FormControl>
+              <FormControl.Label>
+                <Text className="text-sm font-medium text-gray-700">
+                  Status
+                </Text>
+              </FormControl.Label>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field: { onChange, value } }) => (
+                  <Select selectedValue={value} onValueChange={onChange}>
+                    <SelectTrigger>
+                      <SelectInput placeholder="Selecione o status" />
+                      <SelectIcon>
+                        <ChevronDownIcon />
+                      </SelectIcon>
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent>
+                        <SelectDragIndicator />
+                        <SelectItem label="Disponível" value="disponivel" />
+                        <SelectItem label="Indisponível" value="indisponivel" />
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                )}
+              />
+            </FormControl>
+          </ActionCard>
 
           {/* Opções de Pagamento */}
-          <View className="space-y-4 p-4 bg-gray-50 rounded-lg">
-            <Text className="font-medium text-base">Opções de Pagamento</Text>
-
-            {/* Parcelamento */}
+          <ActionCard title="Opções de Pagamento">
             <Controller
               control={control}
               name="parcelamento_cartao"
               render={({ field: { onChange, value } }) => (
-                <HStack space="md" alignItems="center">
+                <HStack space="md" alignItems="center" className="mb-4">
                   <Switch value={value} onValueChange={onChange} />
                   <Text className="text-sm text-gray-600">
                     {value
@@ -387,35 +327,15 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             />
 
             {/* Quantidade de Parcelas */}
-            {form.watch("parcelamento_cartao") && (
-              <FormControl isInvalid={!!errors.quantidade_parcelas}>
-                <FormControl.Label>
-                  <Text className="text-sm font-medium text-gray-700">
-                    Quantidade de Parcelas
-                  </Text>
-                </FormControl.Label>
-                <Controller
-                  control={control}
-                  name="quantidade_parcelas"
-                  render={({ field: { onChange, value } }) => (
-                    <Input>
-                      <Input.Input
-                        placeholder="Ex: 12"
-                        keyboardType="numeric"
-                        onChangeText={onChange}
-                        value={value || ""}
-                      />
-                    </Input>
-                  )}
-                />
-                {errors.quantidade_parcelas && (
-                  <FormControl.Error>
-                    <Text className="text-sm text-red-500">
-                      {errors.quantidade_parcelas.message}
-                    </Text>
-                  </FormControl.Error>
-                )}
-              </FormControl>
+            {Boolean(watch("parcelamento_cartao")) && (
+              <FormField
+                control={control}
+                name="quantidade_parcelas"
+                label="Quantidade de Parcelas"
+                placeholder="Ex: 12"
+                keyboardType="numeric"
+                error={errors.quantidade_parcelas}
+              />
             )}
 
             {/* Parcelas sem Juros */}
@@ -423,7 +343,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               control={control}
               name="parcelas_sem_juros"
               render={({ field: { onChange, value } }) => (
-                <HStack space="md" alignItems="center">
+                <HStack space="md" alignItems="center" className="my-4">
                   <Switch value={value} onValueChange={onChange} />
                   <Text className="text-sm text-gray-600">
                     {value ? "Parcelas sem Juros" : "Parcelas com Juros"}
@@ -432,59 +352,35 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               )}
             />
 
-            {/* Desconto à Vista */}
-            <FormControl isInvalid={!!errors.desconto_avista}>
-              <FormControl.Label>
-                <Text className="text-sm font-medium text-gray-700">
-                  Desconto à Vista (%)
-                </Text>
-              </FormControl.Label>
-              <Controller
-                control={control}
-                name="desconto_avista"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <Input.Input
-                      placeholder="0"
-                      keyboardType="numeric"
-                      onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                      value={value?.toString()}
-                    />
-                  </Input>
-                )}
-              />
-              {errors.desconto_avista && (
-                <FormControl.Error>
-                  <Text className="text-sm text-red-500">
-                    {errors.desconto_avista.message}
-                  </Text>
-                </FormControl.Error>
-              )}
-            </FormControl>
-          </View>
+            <FormField
+              control={control}
+              name="desconto_avista"
+              label="Desconto à Vista (%)"
+              placeholder="0"
+              keyboardType="numeric"
+              error={errors.desconto_avista}
+              leftIcon={<Percent size={20} color="#6B7280" />}
+            />
+          </ActionCard>
         </VStack>
       </ScrollView>
 
       {/* Footer */}
-      <View className="px-4 py-4 border-t border-gray-200">
-        <HStack space="md" justifyContent="flex-end">
-          <Button
-            variant="outline"
-            onPress={() => router.back()}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            <Button.Text>Cancelar</Button.Text>
-          </Button>
-          <Button
-            onPress={handleSubmit(onSubmit)}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            <Button.Text>{isLoading ? "Salvando..." : "Salvar"}</Button.Text>
-          </Button>
-        </HStack>
-      </View>
+      <FormActions
+        fixed={true}
+        primaryAction={{
+          label: "Salvar",
+          onPress: handleSubmit(onSubmit),
+          isLoading: isLoading,
+          colorScheme: "primary",
+        }}
+        secondaryAction={{
+          label: "Cancelar",
+          onPress: () => router.back(),
+          variant: "outline",
+          isDisabled: isLoading,
+        }}
+      />
     </SafeAreaView>
   );
 }

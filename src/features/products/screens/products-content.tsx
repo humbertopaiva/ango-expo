@@ -1,65 +1,77 @@
 // src/features/products/screens/products-content.tsx
-import React from "react";
-import { View, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { Pressable, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProductsContext } from "../contexts/use-products-context";
 import { ProductsList } from "../components/products-list";
-import { Plus, Search } from "lucide-react-native";
-import { Input, InputField } from "@/components/ui/input";
-import { router } from "expo-router";
+import { Plus } from "lucide-react-native";
+import { router, useNavigation } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
+import { SearchInput } from "@/components/custom/search-input";
+import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 
 export function ProductsContent() {
   const vm = useProductsContext();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={() => {
+            router.push("/(app)/admin/products/new");
+          }}
+          style={{ padding: 10 }}
+        >
+          <AntDesign
+            name="pluscircle"
+            size={24}
+            className="color-primary-500"
+          />
+        </Pressable>
+      ),
+    });
+  }, [navigation]);
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 px-4">
-        {/* Header */}
-        <ScreenHeader
-          title="Produtos"
-          subtitle="Gerencie os produtos da sua loja"
-          action={{
-            label: "Novo Produto",
-            icon: Plus,
-            onPress: () => router.push("/(app)/admin/products/new"),
-          }}
-        />
-
+      <View className="flex-1 w-full container px-4 mx-auto">
         {/* Search */}
-        <View className="mb-4">
-          <View className="relative">
-            <View className="absolute left-3 top-3 z-10">
-              <Search size={20} color="#6B7280" />
-            </View>
-            <Input
-              variant="outline"
-              size="md"
-              isDisabled={false}
-              isInvalid={false}
-              isReadOnly={false}
-            >
-              <InputField
-                placeholder="Buscar produtos..."
-                value={vm.searchTerm}
-                onChangeText={vm.setSearchTerm}
-                className="pl-10"
-              />
-            </Input>
-          </View>
+        <View className="mt-3">
+          <SearchInput
+            value={vm.searchTerm}
+            onChangeText={vm.setSearchTerm}
+            placeholder="Buscar produtos..."
+            disabled={vm.isLoading}
+          />
         </View>
 
-        {/* List */}
-        <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Products List */}
+        <View className="flex-1">
           <ProductsList
             products={vm.products}
             isLoading={vm.isLoading}
             onEdit={(product) => {
               router.push(`/(app)/admin/products/${product.id}` as any);
             }}
-            onDelete={(product) => vm.handleDeleteProduct(product.id)}
+            onDelete={(product) => vm.confirmDeleteProduct(product.id)}
           />
-        </ScrollView>
+        </View>
+
+        {/* Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={vm.isDeleteDialogOpen}
+          onClose={vm.cancelDeleteProduct}
+          onConfirm={() =>
+            vm.productToDelete && vm.handleDeleteProduct(vm.productToDelete)
+          }
+          title="Excluir Produto"
+          message="Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita."
+          confirmLabel="Excluir"
+          variant="danger"
+          isLoading={vm.isDeleting}
+        />
       </View>
     </SafeAreaView>
   );
