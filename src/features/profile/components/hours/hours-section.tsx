@@ -1,12 +1,12 @@
+// src/features/profile/components/hours/hours-section.tsx
 import React from "react";
 import { View, Text } from "react-native";
 import { Edit3, Clock } from "lucide-react-native";
-import { Card } from "@gluestack-ui/themed";
-import { Button, ButtonText } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { useProfileContext } from "../../contexts/use-profile-context";
 import { HoursForm } from "./hours-form";
+import { Section } from "@/components/custom/section";
 
 const formatTime = (time: string | null): string => {
   if (!time) return "--:--";
@@ -71,53 +71,43 @@ export function HoursSection() {
     vm.profile?.dias_funcionamento?.includes(dia) ?? false;
 
   return (
-    <View className="space-y-6">
-      <Card>
-        <View className="p-4 border-b border-gray-200">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-semibold">
-              Horários de Funcionamento
-            </Text>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => vm.setIsHoursOpen(true)}
+    <View>
+      <Section
+        title="Horários de Funcionamento"
+        icon={<Clock size={22} color="#0891B2" />}
+        actionIcon={<Edit3 size={16} color="#374151" />}
+        onAction={() => vm.setIsHoursOpen(true)}
+      >
+        <View className="space-y-3">
+          {weekDays.map((day) => (
+            <View
+              key={day.key}
+              className="flex-row items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100"
             >
-              <Edit3 size={16} color="#000000" className="mr-2" />
-              <ButtonText>Editar</ButtonText>
-            </Button>
-          </View>
-        </View>
-
-        <View className="p-4">
-          <View className="space-y-4">
-            {weekDays.map((day) => (
-              <View
-                key={day.key}
-                className="flex-row items-center justify-between p-4 rounded-lg border bg-card"
-              >
-                <View className="flex-row items-center space-x-3">
-                  <Clock size={20} color="#6B7280" />
-                  <View>
-                    <Text className="font-medium">{day.label}</Text>
-                    {isOpen(day.key) ? (
-                      <Text className="text-sm text-gray-500">
-                        {formatTime(day.abertura)} -{" "}
-                        {formatTime(day.fechamento)}
-                      </Text>
-                    ) : (
-                      <Text className="text-sm text-gray-500">Fechado</Text>
-                    )}
-                  </View>
+              <View className="flex-row items-center space-x-3">
+                <Clock size={18} color="#6B7280" />
+                <View>
+                  <Text className="font-medium text-gray-700">{day.label}</Text>
+                  {isOpen(day.key) ? (
+                    <Text className="text-sm text-gray-500">
+                      {formatTime(day.abertura)} - {formatTime(day.fechamento)}
+                    </Text>
+                  ) : (
+                    <Text className="text-sm text-gray-500">Fechado</Text>
+                  )}
                 </View>
-                <Badge variant={isOpen(day.key) ? "solid" : "outline"}>
-                  {isOpen(day.key) ? "Aberto" : "Fechado"}
-                </Badge>
               </View>
-            ))}
-          </View>
+              <Badge variant={isOpen(day.key) ? "solid" : "outline"}>
+                <Text
+                  className={isOpen(day.key) ? "text-white" : "text-gray-800"}
+                >
+                  {isOpen(day.key) ? "Aberto" : "Fechado"}
+                </Text>
+              </Badge>
+            </View>
+          ))}
         </View>
-      </Card>
+      </Section>
 
       <HoursForm
         open={vm.isHoursOpen}

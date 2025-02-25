@@ -85,10 +85,6 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
-      {/* <ScreenHeader
-        title="Criar Categoria"
-        subtitle="Crie categorias de produtos"
-      /> */}
       <View className="flex-1">
         {/* Form */}
         <ScrollView className="flex-1 px-4">

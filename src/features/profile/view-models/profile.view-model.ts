@@ -3,10 +3,12 @@ import { useState, useCallback } from "react";
 import { IProfileViewModel } from "./profile.view-model.interface";
 import { useProfile } from "../hooks/use-profile";
 import { UpdateProfileDTO } from "../models/profile";
+import { useToast } from "@/src/hooks/use-toast";
 
 export function useProfileViewModel(companyId: string): IProfileViewModel {
   const { profile, isLoading, updateProfile, isUpdating } =
     useProfile(companyId);
+  const toast = useToast();
 
   // Local state
   const [state, setState] = useState<{
@@ -62,68 +64,79 @@ export function useProfileViewModel(companyId: string): IProfileViewModel {
     setState((prev) => ({ ...prev, isAdditionalOpen: isOpen }));
   }, []);
 
+  // Função genérica para manipular atualizações
+  const handleUpdate = useCallback(
+    async (section: string, data: UpdateProfileDTO) => {
+      if (!profile?.id) return;
+
+      try {
+        await updateProfile({ id: profile.id, data });
+        closeModals();
+        toast?.show({
+          title: "Sucesso",
+          description: `${section} atualizado com sucesso!`,
+          type: "success",
+        });
+      } catch (error) {
+        console.error(`Erro ao atualizar ${section}:`, error);
+        toast?.show({
+          title: "Erro",
+          description: `Não foi possível atualizar ${section}. Tente novamente.`,
+          type: "error",
+        });
+      }
+    },
+    [profile, updateProfile, toast]
+  );
+
   // Handlers
   const handleUpdateBasicInfo = useCallback(
     (data: UpdateProfileDTO) => {
-      if (!profile?.id) return;
-      updateProfile({ id: profile.id, data });
-      setIsBasicInfoOpen(false);
+      handleUpdate("Informações básicas", data);
     },
-    [profile, updateProfile, setIsBasicInfoOpen]
+    [handleUpdate]
   );
 
   const handleUpdateContactInfo = useCallback(
     (data: UpdateProfileDTO) => {
-      if (!profile?.id) return;
-      updateProfile({ id: profile.id, data });
-      setIsContactInfoOpen(false);
+      handleUpdate("Informações de contato", data);
     },
-    [profile, updateProfile, setIsContactInfoOpen]
+    [handleUpdate]
   );
 
   const handleUpdateSocialLinks = useCallback(
     (data: UpdateProfileDTO) => {
-      if (!profile?.id) return;
-      updateProfile({ id: profile.id, data });
-      setIsSocialLinksOpen(false);
+      handleUpdate("Redes sociais", data);
     },
-    [profile, updateProfile, setIsSocialLinksOpen]
+    [handleUpdate]
   );
 
   const handleUpdateHours = useCallback(
     (data: UpdateProfileDTO) => {
-      if (!profile?.id) return;
-      updateProfile({ id: profile.id, data });
-      setIsHoursOpen(false);
+      handleUpdate("Horários de funcionamento", data);
     },
-    [profile, updateProfile, setIsHoursOpen]
+    [handleUpdate]
   );
 
   const handleUpdateVisual = useCallback(
     (data: UpdateProfileDTO) => {
-      if (!profile?.id) return;
-      updateProfile({ id: profile.id, data });
-      setIsVisualOpen(false);
+      handleUpdate("Identidade visual", data);
     },
-    [profile, updateProfile, setIsVisualOpen]
+    [handleUpdate]
   );
 
   const handleUpdatePayment = useCallback(
     (data: UpdateProfileDTO) => {
-      if (!profile?.id) return;
-      updateProfile({ id: profile.id, data });
-      setIsPaymentOpen(false);
+      handleUpdate("Opções de pagamento", data);
     },
-    [profile, updateProfile, setIsPaymentOpen]
+    [handleUpdate]
   );
 
   const handleUpdateAdditional = useCallback(
     (data: UpdateProfileDTO) => {
-      if (!profile?.id) return;
-      updateProfile({ id: profile.id, data });
-      setIsAdditionalOpen(false);
+      handleUpdate("Informações adicionais", data);
     },
-    [profile, updateProfile, setIsAdditionalOpen]
+    [handleUpdate]
   );
 
   const closeModals = useCallback(() => {

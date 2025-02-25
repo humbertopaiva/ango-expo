@@ -1,11 +1,11 @@
+// src/features/profile/components/contact/contact-section.tsx
 import React from "react";
 import { View, Text } from "react-native";
 import { Edit3, MapPin, Phone, Mail, MessageSquare } from "lucide-react-native";
-import { Card } from "@gluestack-ui/themed";
-import { Button, ButtonText } from "@/components/ui/button";
 
 import { useProfileContext } from "../../contexts/use-profile-context";
 import { ContactForm } from "./contact-form";
+import { Section } from "@/components/custom/section";
 
 export function ContactSection() {
   const vm = useProfileContext();
@@ -17,69 +17,64 @@ export function ContactSection() {
       icon: MapPin,
       label: "Endereço",
       value: vm.profile.endereco,
+      color: "#3B82F6", // blue
     },
     {
       icon: Phone,
       label: "Telefone",
       value: vm.profile.telefone,
+      color: "#10B981", // green
     },
     {
       icon: MessageSquare,
       label: "WhatsApp",
       value: vm.profile.whatsapp,
       isOptional: true,
+      color: "#10B981", // green
     },
     {
       icon: Mail,
       label: "Email",
       value: vm.profile.email,
+      color: "#F59E0B", // amber
     },
   ];
 
   return (
-    <View className="space-y-6">
-      <Card>
-        <View className="p-4 border-b border-gray-200">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-semibold">
-              Informações de Contato
-            </Text>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => vm.setIsContactInfoOpen(true)}
+    <View>
+      <Section
+        title="Informações de Contato"
+        icon={<Phone size={22} color="#0891B2" />}
+        actionIcon={<Edit3 size={16} color="#374151" />}
+        onAction={() => vm.setIsContactInfoOpen(true)}
+      >
+        <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {contactItems.map((item) => (
+            <View
+              key={item.label}
+              className="flex-row space-x-3 p-4 rounded-lg bg-gray-50 border border-gray-100"
             >
-              <Edit3 size={16} color="#000000" className="mr-2" />
-              <ButtonText>Editar</ButtonText>
-            </Button>
-          </View>
-        </View>
-
-        <View className="p-4">
-          <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {contactItems.map((item) => (
-              <View
-                key={item.label}
-                className="flex-row items-start space-x-3 p-4 rounded-lg border bg-card"
-              >
-                <item.icon size={20} color="#6B7280" />
-                <View className="space-y-1">
-                  <Text className="text-sm font-medium">{item.label}</Text>
-                  {item.value ? (
-                    <Text className="text-sm text-gray-500 break-all">
-                      {item.value}
-                    </Text>
-                  ) : (
-                    <Text className="text-sm text-gray-500 italic">
-                      {item.isOptional ? "Não informado" : "Não configurado"}
-                    </Text>
-                  )}
-                </View>
+              <View className="mt-1">
+                <item.icon size={20} color={item.color} />
               </View>
-            ))}
-          </View>
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-gray-700">
+                  {item.label}
+                </Text>
+                {item.value ? (
+                  <Text className="text-base text-gray-900 break-all mt-1">
+                    {item.value}
+                  </Text>
+                ) : (
+                  <Text className="text-sm text-gray-500 italic mt-1">
+                    {item.isOptional ? "Não informado" : "Não configurado"}
+                  </Text>
+                )}
+              </View>
+            </View>
+          ))}
         </View>
-      </Card>
+      </Section>
 
       <ContactForm
         open={vm.isContactInfoOpen}

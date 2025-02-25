@@ -11,12 +11,11 @@ export function AdminLayoutContainer({ children }: AdminLayoutProps) {
   const isWeb = Platform.OS === "web";
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
-      <View
-        className={`flex-1 ${isWeb ? "md:pl-0" : ""}`}
-        // Adiciona espaço para a tab bar
-        // style={{ paddingBottom: 65 }}
-      >
+    <SafeAreaView
+      className="flex-1 flex w-full justify-center bg-gray-50"
+      edges={["top"]}
+    >
+      <View className={`flex-1 ${isWeb ? "md:pl-0" : ""} md:max-w-6xl`}>
         {children}
       </View>
     </SafeAreaView>

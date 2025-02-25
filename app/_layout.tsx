@@ -10,6 +10,7 @@ import { Text, View } from "react-native";
 import useAuthStore from "@/src/stores/auth";
 import { useCustomFonts } from "@/src/styles/fonts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ToastProvider } from "@/src/providers/toast-provider";
 
 const queryClient = new QueryClient();
 
@@ -47,9 +48,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <GluestackUIProvider config={config}>
-          <View className="flex-1 bg-background">
-            <Slot />
-          </View>
+          <ToastProvider>
+            <View className="flex-1 bg-background">
+              <Slot />
+            </View>
+          </ToastProvider>
         </GluestackUIProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

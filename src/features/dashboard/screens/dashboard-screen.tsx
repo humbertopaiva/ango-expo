@@ -69,6 +69,12 @@ export function DashboardScreen() {
     },
   ];
 
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>
       <ScrollView className="flex-1 px-4">

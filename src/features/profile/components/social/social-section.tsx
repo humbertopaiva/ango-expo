@@ -1,11 +1,7 @@
-// social-section.tsx
+// src/features/profile/components/social/social-section.tsx
 import React from "react";
 import { View, Text, TouchableOpacity, Linking } from "react-native";
-import { Edit3, ExternalLink } from "lucide-react-native";
-import { Card } from "@/components/ui/card";
-import { Button, ButtonText } from "@/components/ui/button";
-import { SocialForm } from "./social-form";
-import { useProfileContext } from "../../contexts/use-profile-context";
+import { Edit3, ExternalLink, Share2 } from "lucide-react-native";
 import {
   Instagram,
   Facebook,
@@ -13,6 +9,10 @@ import {
   Twitter,
   Linkedin,
 } from "lucide-react-native";
+
+import { useProfileContext } from "../../contexts/use-profile-context";
+import { SocialForm } from "./social-form";
+import { Section } from "@/components/custom/section";
 import { extractUsername, SocialNetwork } from "@/src/utils/social.utils";
 
 export function SocialSection() {
@@ -72,61 +72,50 @@ export function SocialSection() {
   ];
 
   return (
-    <View className="space-y-6">
-      <Card>
-        <View className="p-4 border-b border-gray-200">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-semibold">Redes Sociais</Text>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => vm.setIsSocialLinksOpen(true)}
+    <View>
+      <Section
+        title="Redes Sociais"
+        icon={<Share2 size={22} color="#0891B2" />}
+        actionIcon={<Edit3 size={16} color="#374151" />}
+        onAction={() => vm.setIsSocialLinksOpen(true)}
+      >
+        <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {socialNetworks.map((network) => (
+            <View
+              key={network.name}
+              className="flex-row items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100"
             >
-              <Edit3 size={16} color="#000000" className="mr-2" />
-              <ButtonText>Editar</ButtonText>
-            </Button>
-          </View>
-        </View>
-
-        <View className="p-4">
-          <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {socialNetworks.map((network) => (
-              <View
-                key={network.name}
-                className="flex-row items-center justify-between p-4 rounded-lg border bg-card"
-              >
-                <View className="flex-row items-center space-x-3">
-                  <network.icon size={20} color={network.color} />
-                  <View>
-                    <Text className="font-medium">{network.name}</Text>
-                    {network.value && (
-                      <Text className="text-sm text-gray-500">
-                        {network.username}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-
-                {network.value ? (
-                  <TouchableOpacity
-                    onPress={() => Linking.openURL(network.value || "")}
-                    className="flex-row items-center"
-                  >
-                    <Text className="text-sm text-primary-600 mr-1">
-                      Visitar
-                    </Text>
-                    <ExternalLink size={16} color="#0891B2" />
-                  </TouchableOpacity>
-                ) : (
-                  <Text className="text-sm text-gray-500 italic">
-                    Não configurado
+              <View className="flex-row items-center space-x-3">
+                <network.icon size={20} color={network.color} />
+                <View>
+                  <Text className="font-medium text-gray-700">
+                    {network.name}
                   </Text>
-                )}
+                  {network.value && (
+                    <Text className="text-sm text-gray-500">
+                      {network.username}
+                    </Text>
+                  )}
+                </View>
               </View>
-            ))}
-          </View>
+
+              {network.value ? (
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(network.value || "")}
+                  className="flex-row items-center bg-gray-100 px-2 py-1 rounded"
+                >
+                  <Text className="text-sm text-primary-600 mr-1">Visitar</Text>
+                  <ExternalLink size={14} color="#0891B2" />
+                </TouchableOpacity>
+              ) : (
+                <Text className="text-sm text-gray-500 italic">
+                  Não configurado
+                </Text>
+              )}
+            </View>
+          ))}
         </View>
-      </Card>
+      </Section>
 
       <SocialForm
         open={vm.isSocialLinksOpen}

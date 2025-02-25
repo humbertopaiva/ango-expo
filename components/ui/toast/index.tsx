@@ -1,224 +1,201 @@
-'use client';
-import React from 'react';
-import { createToastHook } from '@gluestack-ui/toast';
-import { AccessibilityInfo, Text, View } from 'react-native';
-import { tva } from '@gluestack-ui/nativewind-utils/tva';
-import { cssInterop } from 'nativewind';
-import { Motion, AnimatePresence } from '@legendapp/motion';
+// src/components/ui/toast.tsx
+import React, { useEffect } from "react";
 import {
-  withStyleContext,
-  useStyleContext,
-} from '@gluestack-ui/nativewind-utils/withStyleContext';
-import type { VariantProps } from '@gluestack-ui/nativewind-utils';
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  StyleSheet,
+  Platform,
+} from "react-native";
+import {
+  AlertCircle,
+  CheckCircle,
+  Info,
+  X,
+  AlertTriangle,
+} from "lucide-react-native";
 
-const useToast = createToastHook(Motion.View, AnimatePresence);
-const SCOPE = 'TOAST';
+type ToastType = "success" | "error" | "warning" | "info";
 
-cssInterop(Motion.View, { className: 'style' });
+interface ToastProps {
+  id: string;
+  title: string;
+  description?: string;
+  type?: ToastType;
+  onDismiss: (id: string) => void;
+  duration?: number;
+}
 
-const toastStyle = tva({
-  base: 'p-4 m-1 rounded-md gap-1 web:pointer-events-auto shadow-hard-5 border-outline-100',
-  variants: {
-    action: {
-      error: 'bg-error-800',
-      warning: 'bg-warning-700',
-      success: 'bg-success-700',
-      info: 'bg-info-700',
-      muted: 'bg-background-800',
-    },
+export function Toast({
+  id,
+  title,
+  description,
+  type = "info",
+  onDismiss,
+  duration = 5000,
+}: ToastProps) {
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(-20)).current;
 
-    variant: {
-      solid: '',
-      outline: 'border bg-background-0',
-    },
-  },
-});
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-const toastTitleStyle = tva({
-  base: 'text-typography-0 font-medium font-body tracking-md text-left',
-  variants: {
-    isTruncated: {
-      true: '',
-    },
-    bold: {
-      true: 'font-bold',
-    },
-    underline: {
-      true: 'underline',
-    },
-    strikeThrough: {
-      true: 'line-through',
-    },
-    size: {
-      '2xs': 'text-2xs',
-      'xs': 'text-xs',
-      'sm': 'text-sm',
-      'md': 'text-base',
-      'lg': 'text-lg',
-      'xl': 'text-xl',
-      '2xl': 'text-2xl',
-      '3xl': 'text-3xl',
-      '4xl': 'text-4xl',
-      '5xl': 'text-5xl',
-      '6xl': 'text-6xl',
-    },
-  },
-  parentVariants: {
-    variant: {
-      solid: '',
-      outline: '',
-    },
-    action: {
-      error: '',
-      warning: '',
-      success: '',
-      info: '',
-      muted: '',
-    },
-  },
-  parentCompoundVariants: [
-    {
-      variant: 'outline',
-      action: 'error',
-      class: 'text-error-800',
-    },
-    {
-      variant: 'outline',
-      action: 'warning',
-      class: 'text-warning-800',
-    },
-    {
-      variant: 'outline',
-      action: 'success',
-      class: 'text-success-800',
-    },
-    {
-      variant: 'outline',
-      action: 'info',
-      class: 'text-info-800',
-    },
-    {
-      variant: 'outline',
-      action: 'muted',
-      class: 'text-background-800',
-    },
-  ],
-});
+    if (duration > 0) {
+      const timer = setTimeout(() => {
+        handleDismiss();
+      }, duration);
 
-const toastDescriptionStyle = tva({
-  base: 'font-normal font-body tracking-md text-left',
-  variants: {
-    isTruncated: {
-      true: '',
-    },
-    bold: {
-      true: 'font-bold',
-    },
-    underline: {
-      true: 'underline',
-    },
-    strikeThrough: {
-      true: 'line-through',
-    },
-    size: {
-      '2xs': 'text-2xs',
-      'xs': 'text-xs',
-      'sm': 'text-sm',
-      'md': 'text-base',
-      'lg': 'text-lg',
-      'xl': 'text-xl',
-      '2xl': 'text-2xl',
-      '3xl': 'text-3xl',
-      '4xl': 'text-4xl',
-      '5xl': 'text-5xl',
-      '6xl': 'text-6xl',
-    },
-  },
-  parentVariants: {
-    variant: {
-      solid: 'text-typography-50',
-      outline: 'text-typography-900',
-    },
-  },
-});
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
-const Root = withStyleContext(View, SCOPE);
-type IToastProps = React.ComponentProps<typeof Root> & {
-  className?: string;
-} & VariantProps<typeof toastStyle>;
+  const handleDismiss = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: -20,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onDismiss(id);
+    });
+  };
 
-const Toast = React.forwardRef<React.ElementRef<typeof Root>, IToastProps>(
-  ({ className, variant = 'solid', action = 'muted', ...props }, ref) => {
-    return (
-      <Root
-        ref={ref}
-        className={toastStyle({ variant, action, class: className })}
-        context={{ variant, action }}
-        {...props}
-      />
-    );
-  }
-);
+  const getIconForType = (type: ToastType) => {
+    switch (type) {
+      case "success":
+        return <CheckCircle size={20} color="#16A34A" />;
+      case "error":
+        return <AlertCircle size={20} color="#DC2626" />;
+      case "warning":
+        return <AlertTriangle size={20} color="#F59E0B" />;
+      default:
+        return <Info size={20} color="#2563EB" />;
+    }
+  };
 
-type IToastTitleProps = React.ComponentProps<typeof Text> & {
-  className?: string;
-} & VariantProps<typeof toastTitleStyle>;
+  const getBackgroundForType = (type: ToastType) => {
+    switch (type) {
+      case "success":
+        return "#F0FDF4";
+      case "error":
+        return "#FEF2F2";
+      case "warning":
+        return "#FFFBEB";
+      default:
+        return "#EFF6FF";
+    }
+  };
 
-const ToastTitle = React.forwardRef<
-  React.ElementRef<typeof Text>,
-  IToastTitleProps
->(({ className, size = 'md', children, ...props }, ref) => {
-  const { variant: parentVariant, action: parentAction } =
-    useStyleContext(SCOPE);
-  React.useEffect(() => {
-    // Issue from react-native side
-    // Hack for now, will fix this later
-    AccessibilityInfo.announceForAccessibility(children as string);
-  }, [children]);
+  const getBorderColorForType = (type: ToastType) => {
+    switch (type) {
+      case "success":
+        return "#22C55E";
+      case "error":
+        return "#EF4444";
+      case "warning":
+        return "#F59E0B";
+      default:
+        return "#3B82F6";
+    }
+  };
 
   return (
-    <Text
-      {...props}
-      ref={ref}
-      aria-live="assertive"
-      aria-atomic="true"
-      role="alert"
-      className={toastTitleStyle({
-        size,
-        class: className,
-        parentVariants: {
-          variant: parentVariant,
-          action: parentAction,
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+          backgroundColor: getBackgroundForType(type),
+          borderLeftColor: getBorderColorForType(type),
         },
-      })}
+      ]}
+    >
+      <View style={styles.iconContainer}>{getIconForType(type)}</View>
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>{title}</Text>
+        {description && <Text style={styles.description}>{description}</Text>}
+      </View>
+      <TouchableOpacity onPress={handleDismiss} style={styles.closeButton}>
+        <X size={18} color="#6B7280" />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+export function ToastContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <View
+      style={[
+        styles.toastContainer,
+        Platform.OS === "web"
+          ? { position: "fixed" as any, zIndex: 50 }
+          : { position: "absolute" as any, zIndex: 50 },
+      ]}
     >
       {children}
-    </Text>
+    </View>
   );
+}
+
+const styles = StyleSheet.create({
+  toastContainer: {
+    top: 70,
+    right: 16,
+    width: 340,
+    maxWidth: "90%",
+  },
+  container: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  iconContainer: {
+    paddingRight: 12,
+    paddingTop: 2,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  title: {
+    fontWeight: "600",
+    fontSize: 14,
+    color: "#111827",
+  },
+  description: {
+    fontSize: 12,
+    color: "#4B5563",
+    marginTop: 2,
+  },
+  closeButton: {
+    padding: 2,
+    marginLeft: 8,
+  },
 });
-
-type IToastDescriptionProps = React.ComponentProps<typeof Text> & {
-  className?: string;
-} & VariantProps<typeof toastDescriptionStyle>;
-
-const ToastDescription = React.forwardRef<
-  React.ElementRef<typeof Text>,
-  IToastDescriptionProps
->(({ className, size = 'md', ...props }, ref) => {
-  const { variant: parentVariant } = useStyleContext(SCOPE);
-  return (
-    <Text
-      ref={ref}
-      {...props}
-      className={toastDescriptionStyle({
-        size,
-        class: className,
-        parentVariants: {
-          variant: parentVariant,
-        },
-      })}
-    />
-  );
-});
-
-export { useToast, Toast, ToastTitle, ToastDescription };
