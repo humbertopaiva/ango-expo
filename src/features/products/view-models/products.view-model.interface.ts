@@ -1,4 +1,4 @@
-// src/features/products/view-models/products.view-model.interface.ts
+// Path: src/features/products/view-models/products.view-model.interface.ts
 import { Product } from "../models/product";
 import { ProductFormData } from "../schemas/product.schema";
 
@@ -8,6 +8,7 @@ export interface IProductsViewModel {
   isLoading: boolean;
   selectedProduct: Product | null;
   isFormVisible: boolean;
+  isEditFormVisible: boolean;
   searchTerm: string;
   isCreating: boolean;
   isUpdating: boolean;
@@ -19,6 +20,7 @@ export interface IProductsViewModel {
   setSearchTerm: (term: string) => void;
   setSelectedProduct: (product: Product | null) => void;
   setIsFormVisible: (visible: boolean) => void;
+  setIsEditFormVisible: (visible: boolean) => void;
 
   // Handlers
   handleCreateProduct: (data: ProductFormData) => Promise<void>;
@@ -28,4 +30,9 @@ export interface IProductsViewModel {
   // Diálogo de confirmação
   confirmDeleteProduct: (id: string) => void;
   cancelDeleteProduct: () => void;
+
+  // Modal handlers
+  openCreateProductModal: () => void;
+  openEditProductModal: (product: Product) => void;
+  closeModals: () => void;
 }

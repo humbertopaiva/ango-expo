@@ -1,6 +1,5 @@
 export interface Product {
   id: string;
-  sort: number | null;
   user_created: string;
   date_created: string;
   user_updated: string | null;
@@ -37,7 +36,6 @@ export interface CreateProductDTO {
   desconto_avista: number;
   preco_parcelado_tipo?: string | null;
   status?: "disponivel" | "indisponivel";
-  sort?: number | null;
   estoque?: number | null;
 }
 
