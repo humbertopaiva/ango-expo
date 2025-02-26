@@ -1,7 +1,12 @@
 // src/features/profile/components/basic-info/basic-info-section.tsx
 import React from "react";
-import { View, Text } from "react-native";
-import { Edit3, Image as ImageIcon, Building2 } from "lucide-react-native";
+import { View, Text, TouchableOpacity } from "react-native";
+import {
+  Edit3,
+  Image as ImageIcon,
+  Building2,
+  Clock,
+} from "lucide-react-native";
 import { Badge } from "@/components/ui/badge";
 
 import { useProfileContext } from "../../contexts/use-profile-context";
@@ -14,6 +19,18 @@ export function BasicInfoSection() {
 
   if (!vm.profile) return null;
 
+  // Formata a data para exibição
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date);
+  };
+
   return (
     <View>
       <Section
@@ -22,88 +39,88 @@ export function BasicInfoSection() {
         actionIcon={<Edit3 size={16} color="#374151" />}
         onAction={() => vm.setIsBasicInfoOpen(true)}
       >
-        {/* Logo e Banner */}
-        <View className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <View className="space-y-2">
-            <Text className="text-sm font-medium text-gray-700">Logo</Text>
-            <View className="overflow-hidden rounded-lg">
+        {/* Principal Card de Informações */}
+        <View className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-6">
+          {/* Header com nome da empresa destacado */}
+          <View className="p-4 border-b border-gray-100 bg-gray-50">
+            <Text className="text-xl font-bold text-gray-800">
+              {vm.profile.nome}
+            </Text>
+          </View>
+
+          {/* Descrição da empresa */}
+          <View className="p-4">
+            <Text className="text-base text-gray-600 leading-relaxed">
+              {vm.profile.descricao ||
+                "Sua empresa ainda não possui uma descrição. Adicione informações sobre seus produtos, serviços e diferenciais."}
+            </Text>
+          </View>
+
+          {/* Datas de criação e atualização */}
+          <View className="bg-gray-50 p-3 flex-row items-center justify-center border-t border-gray-100">
+            {vm.profile.date_updated && (
+              <View className="flex-row items-center">
+                <Clock size={14} color="#6B7280" />
+                <Text className="text-xs text-gray-500 ml-1">
+                  Atualizado: {formatDate(vm.profile.date_updated)}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Cards de imagem em grid com legenda */}
+        <Text className="font-medium text-base mb-3 text-gray-800">
+          Imagem da marca
+        </Text>
+        <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card da Logo - Agora com resizeMode="contain" */}
+          <View className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <View className="p-3 bg-gray-50 border-b border-gray-100">
+              <Text className="font-medium text-sm text-gray-700">Logo</Text>
+            </View>
+            <View className="p-4 bg-gray-50">
               <ImagePreview
                 uri={vm.profile.logo}
                 height={140}
                 fallbackIcon={ImageIcon}
-                fallbackText="Sem logo"
+                fallbackText="Adicione uma logo para sua marca"
                 containerClassName="rounded-lg border border-gray-200"
+                resizeMode="contain" // Alterado para "contain" para preservar a proporção
               />
             </View>
           </View>
 
-          <View className="space-y-2">
-            <Text className="text-sm font-medium text-gray-700">Banner</Text>
-            <View className="overflow-hidden rounded-lg">
+          {/* Card do Banner */}
+          <View className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <View className="p-3 bg-gray-50 border-b border-gray-100">
+              <Text className="font-medium text-sm text-gray-700">Banner</Text>
+            </View>
+            <View className="p-4">
               <ImagePreview
                 uri={vm.profile.banner}
                 height={140}
                 fallbackIcon={ImageIcon}
-                fallbackText="Sem banner"
-                resizeMode="cover"
+                fallbackText="Adicione um banner para suas promoções"
                 containerClassName="rounded-lg border border-gray-200"
+                resizeMode="cover" // Este permanece como "cover"
               />
             </View>
           </View>
         </View>
 
-        {/* Divisor */}
-        <View className="h-px bg-gray-100 w-full my-4" />
-
-        {/* Informações */}
-        <View className="space-y-4">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-medium text-gray-700">Status</Text>
-            <Badge
-              variant={vm.profile.status === "ativo" ? "solid" : "outline"}
-              className={vm.profile.status === "ativo" ? "bg-green-100" : ""}
-            >
-              <Text
-                className={
-                  vm.profile.status === "ativo"
-                    ? "text-green-800"
-                    : "text-gray-800"
-                }
-              >
-                {vm.profile.status === "ativo" ? "Ativo" : "Inativo"}
-              </Text>
-            </Badge>
-          </View>
-
-          <View className="space-y-1">
-            <Text className="text-sm font-medium text-gray-700">
-              Nome da Empresa
+        {/* CTA para editar se não tiver informações completas */}
+        {(!vm.profile.descricao || !vm.profile.logo || !vm.profile.banner) && (
+          <TouchableOpacity
+            onPress={() => vm.setIsBasicInfoOpen(true)}
+            className="mt-4 flex-row items-center justify-center bg-primary-50 p-4 rounded-lg border border-primary-100"
+          >
+            <Edit3 size={16} color="#0891B2" className="mr-2" />
+            <Text className="text-primary-700 font-medium">
+              Complete as informações básicas da sua loja
             </Text>
-            <Text className="text-base text-gray-800">{vm.profile.nome}</Text>
-          </View>
-
-          <View className="space-y-1">
-            <Text className="text-sm font-medium text-gray-700">Descrição</Text>
-            <Text className="text-base text-gray-600">
-              {vm.profile.descricao || "Sem descrição"}
-            </Text>
-          </View>
-
-          <View className="border-t border-gray-100 pt-4 mt-2">
-            <View className="flex-row flex-wrap">
-              <Text className="text-xs text-gray-500 mr-4">
-                Criado em:{" "}
-                {new Date(vm.profile.date_created).toLocaleDateString()}
-              </Text>
-              {vm.profile.date_updated && (
-                <Text className="text-xs text-gray-500">
-                  Atualizado:{" "}
-                  {new Date(vm.profile.date_updated).toLocaleDateString()}
-                </Text>
-              )}
-            </View>
-          </View>
-        </View>
+          </TouchableOpacity>
+        )}
       </Section>
 
       <BasicInfoForm

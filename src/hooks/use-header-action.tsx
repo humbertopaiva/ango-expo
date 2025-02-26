@@ -1,7 +1,7 @@
 // src/hooks/use-header-action.tsx
 import { useEffect } from "react";
 import { Pressable } from "react-native";
-import { useNavigation } from "expo-router";
+import { useNavigation, router } from "expo-router";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { ChevronLeft } from "lucide-react-native";
 
@@ -43,7 +43,7 @@ export function useHeaderAction({
   headerTintColor,
   headerStyle,
 }: UseHeaderActionProps) {
-  const navigation = useNavigation();
+  let navigation;
 
   // Mapa de ícones por tipo
   const iconMap = {
@@ -57,7 +57,18 @@ export function useHeaderAction({
     ),
   };
 
+  try {
+    // Tenta obter o contexto de navegação do expo-router
+    navigation = useNavigation();
+  } catch (error) {
+    // Se não estiver disponível, define como undefined
+    navigation = undefined;
+  }
+
   useEffect(() => {
+    // Se não tiver contexto de navegação, não tenta configurar o header
+    if (!navigation) return;
+
     const options: any = {};
 
     // Configurar título se fornecido
@@ -87,7 +98,7 @@ export function useHeaderAction({
     if (backButton && backButton.show !== false) {
       options.headerLeft = () => (
         <Pressable
-          onPress={backButton.onPress || (() => navigation.goBack())}
+          onPress={backButton.onPress || (() => router.back())}
           style={{ padding: 10 }}
         >
           <ChevronLeft
@@ -110,7 +121,7 @@ export function useHeaderAction({
     }
 
     // Aplicar opções configuradas
-    if (Object.keys(options).length > 0) {
+    if (Object.keys(options).length > 0 && navigation.setOptions) {
       navigation.setOptions(options);
     }
   }, [
