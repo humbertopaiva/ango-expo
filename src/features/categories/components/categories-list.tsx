@@ -1,9 +1,11 @@
 // src/features/categories/components/categories-list.tsx
+
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { MoreHorizontal } from "lucide-react-native";
+import { Edit, Trash } from "lucide-react-native";
 import { Category } from "../models/category";
+import { StatusBadge } from "@/components/custom/status-badge";
 
 interface CategoriesListProps {
   categories: Category[];
@@ -46,27 +48,27 @@ export function CategoriesList({
             <View className="flex-1">
               <Text className="font-medium text-base">{category.nome}</Text>
               <View className="flex-row items-center mt-1">
-                <View
-                  className={`px-2 py-1 rounded-full ${
-                    category.categoria_ativa ? "bg-green-100" : "bg-gray-100"
-                  }`}
-                >
-                  <Text
-                    className={
-                      category.categoria_ativa
-                        ? "text-green-800"
-                        : "text-gray-800"
-                    }
-                  >
-                    {category.categoria_ativa ? "Ativa" : "Inativa"}
-                  </Text>
-                </View>
+                <StatusBadge
+                  status={category.categoria_ativa ? "ativa" : "inativa"}
+                />
               </View>
             </View>
 
-            <TouchableOpacity onPress={() => onEdit(category)} className="p-2">
-              <MoreHorizontal size={20} color="#374151" />
-            </TouchableOpacity>
+            <View className="flex-row">
+              <TouchableOpacity
+                onPress={() => onEdit(category)}
+                className="p-2 mr-2"
+              >
+                <Edit size={20} color="#374151" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => onDelete(category)}
+                className="p-2"
+              >
+                <Trash size={20} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
           </View>
         </Card>
       ))}

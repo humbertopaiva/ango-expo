@@ -1,4 +1,5 @@
 // src/features/categories/view-models/categories.view-model.ts
+
 import { useState, useCallback } from "react";
 import {
   Category,
@@ -7,6 +8,7 @@ import {
 } from "../models/category";
 import { useCategories } from "../hooks/use-categories";
 import { ICategoriesViewModel } from "./categories.view-model.interface";
+import { router } from "expo-router";
 
 export function useCategoriesViewModel(): ICategoriesViewModel {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
@@ -14,6 +16,10 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
   );
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Novos estados para o diálogo de confirmação
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   const {
     categories,
@@ -33,7 +39,7 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
   const handleCreateCategory = useCallback(
     async (data: Omit<CreateCategoryDTO, "empresa">) => {
       try {
-        createCategory({ data });
+        await createCategory({ data });
         setIsFormVisible(false);
       } catch (error) {
         console.error("Error creating category:", error);
@@ -48,6 +54,8 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
         await updateCategory({ id, data });
         setSelectedCategory(null);
         setIsFormVisible(false);
+        // Navegar de volta para a listagem após atualização
+        router.push("/(app)/admin/categories");
       } catch (error) {
         console.error("Error updating category:", error);
       }
@@ -55,16 +63,37 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     [updateCategory]
   );
 
+  // Função para abrir o diálogo de confirmação
+  const confirmDeleteCategory = useCallback((id: string) => {
+    setCategoryToDelete(id);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  // Função de exclusão real que será chamada após a confirmação
   const handleDeleteCategory = useCallback(
     async (id: string) => {
       try {
         await deleteCategory(id);
+        setIsDeleteDialogOpen(false);
+        setCategoryToDelete(null);
       } catch (error) {
         console.error("Error deleting category:", error);
       }
     },
     [deleteCategory]
   );
+
+  // Função para cancelar a exclusão
+  const cancelDeleteCategory = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+    setCategoryToDelete(null);
+  }, []);
+
+  // Função para abrir o modal de criação
+  const openCreateCategoryModal = useCallback(() => {
+    setSelectedCategory(null);
+    setIsFormVisible(true);
+  }, []);
 
   return {
     categories: filteredCategories,
@@ -75,11 +104,16 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     isCreating,
     isUpdating,
     isDeleting,
+    isDeleteDialogOpen,
+    categoryToDelete,
     setSearchTerm,
     setSelectedCategory,
     setIsFormVisible,
     handleCreateCategory,
     handleUpdateCategory,
     handleDeleteCategory,
+    confirmDeleteCategory,
+    cancelDeleteCategory,
+    openCreateCategoryModal,
   };
 }

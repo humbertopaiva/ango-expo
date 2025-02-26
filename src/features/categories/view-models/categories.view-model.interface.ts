@@ -1,4 +1,5 @@
 // src/features/categories/view-models/categories.view-model.interface.ts
+
 import {
   Category,
   CreateCategoryDTO,
@@ -6,7 +7,7 @@ import {
 } from "../models/category";
 
 export interface ICategoriesViewModel {
-  // Estados
+  // Estados existentes...
   categories: Category[];
   isLoading: boolean;
   selectedCategory: Category | null;
@@ -16,15 +17,26 @@ export interface ICategoriesViewModel {
   isUpdating: boolean;
   isDeleting: boolean;
 
-  // Setters
+  // Novos estados para o diálogo de confirmação
+  isDeleteDialogOpen: boolean;
+  categoryToDelete: string | null;
+
+  // Setters existentes...
   setSearchTerm: (term: string) => void;
   setSelectedCategory: (category: Category | null) => void;
   setIsFormVisible: (visible: boolean) => void;
 
-  // Handlers
+  // Handlers existentes e novos...
   handleCreateCategory: (
     data: Omit<CreateCategoryDTO, "empresa">
   ) => Promise<void>;
   handleUpdateCategory: (id: string, data: UpdateCategoryDTO) => Promise<void>;
   handleDeleteCategory: (id: string) => Promise<void>;
+
+  // Novos handlers para confirmação
+  confirmDeleteCategory: (id: string) => void;
+  cancelDeleteCategory: () => void;
+
+  // Novo handler para abrir modal de criação
+  openCreateCategoryModal: () => void;
 }

@@ -63,7 +63,7 @@ export default function AdminLayout() {
                 title: "Categorias",
               }}
             />
-            <Stack.Screen
+            {/* <Stack.Screen
               name="categories/new"
               options={{
                 title: "Nova Categoria",
@@ -74,7 +74,7 @@ export default function AdminLayout() {
               options={{
                 title: "Categoria",
               }}
-            />
+            /> */}
 
             {/* Produtos */}
             <Stack.Screen

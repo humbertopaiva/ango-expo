@@ -41,7 +41,7 @@ export function VisualSection() {
               Cores da Marca
             </Text>
             <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <View className="p-4 rounded-lg bg-gray-50 space-y-2">
+              <View className="p-4 rounded-lg bg-gray-50 gap-2">
                 <Text className="text-sm font-medium text-gray-700">
                   Cor Primária
                 </Text>
