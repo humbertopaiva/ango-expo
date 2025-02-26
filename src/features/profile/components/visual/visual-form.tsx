@@ -98,7 +98,6 @@ export function VisualForm({
   const handleSubmit = (data: VisualFormData): void => {
     const updateData: UpdateProfileDTO = {
       cor_primaria: data.cor_primaria,
-      cor_secundaria: data.cor_secundaria,
       imagem_01: data.imagem_01 || undefined,
       imagem_02: data.imagem_02 || undefined,
       imagem_03: data.imagem_03 || undefined,
