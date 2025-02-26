@@ -15,11 +15,9 @@ import {
   ShoppingCart,
   Users,
 } from "lucide-react-native";
-import { router, useNavigation } from "expo-router";
-import ScreenHeader from "@/components/ui/screen-header";
+import { router } from "expo-router";
 import { Card } from "@gluestack-ui/themed";
 import { useCategories } from "@/src/features/categories/hooks/use-categories";
-import { DashboardStatCard } from "../components/dashboard-stat-card";
 
 export function DashboardScreen() {
   const { categories, isLoading } = useCategories();
@@ -68,12 +66,6 @@ export function DashboardScreen() {
       path: "/(app)/admin/vitrine" as const,
     },
   ];
-
-  const navigation = useNavigation();
-
-  useEffect(() => {
-    navigation.setOptions({ headerShown: false });
-  }, [navigation]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={["top"]}>

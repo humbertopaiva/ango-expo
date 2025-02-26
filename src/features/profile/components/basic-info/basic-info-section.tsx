@@ -1,4 +1,4 @@
-// src/features/profile/components/basic-info/basic-info-section.tsx
+// Path: src/features/profile/components/basic-info/basic-info-section.tsx
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import {
@@ -6,8 +6,9 @@ import {
   Image as ImageIcon,
   Building2,
   Clock,
+  FileText,
+  Info,
 } from "lucide-react-native";
-import { Badge } from "@/components/ui/badge";
 
 import { useProfileContext } from "../../contexts/use-profile-context";
 import { ImagePreview } from "@/components/custom/image-preview";
@@ -31,35 +32,49 @@ export function BasicInfoSection() {
     }).format(date);
   };
 
+  // Verifica se há informações incompletas
+  const hasIncompleteInfo =
+    !vm.profile.descricao || !vm.profile.logo || !vm.profile.banner;
+
   return (
     <View>
       <Section
         title="Informações Básicas"
         icon={<Building2 size={22} color="#0891B2" />}
-        actionIcon={<Edit3 size={16} color="#374151" />}
+        actionLabel="Editar Informações"
+        actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsBasicInfoOpen(true)}
+        className="mb-2"
       >
-        {/* Principal Card de Informações */}
-        <View className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-6">
-          {/* Header com nome da empresa destacado */}
-          <View className="p-4 border-b border-gray-100 bg-gray-50">
-            <Text className="text-xl font-bold text-gray-800">
+        {/* Informações Gerais - Nome e Descrição */}
+        <View className="">
+          {/* <View className="flex-row items-center mb-3">
+            <Building2 size={18} color="#6B7280" />
+            <Text className="ml-2 text-base font-medium text-gray-700">
+              Informações Gerais
+            </Text>
+          </View> */}
+
+          <View className="bg-white rounded-md p-4 mb-2">
+            <Text className="text-xl font-bold text-gray-800 mb-2">
               {vm.profile.nome}
             </Text>
-          </View>
 
-          {/* Descrição da empresa */}
-          <View className="p-4">
-            <Text className="text-base text-gray-600 leading-relaxed">
-              {vm.profile.descricao ||
-                "Sua empresa ainda não possui uma descrição. Adicione informações sobre seus produtos, serviços e diferenciais."}
-            </Text>
-          </View>
+            {vm.profile.descricao ? (
+              <Text className="text-base text-gray-600 leading-relaxed">
+                {vm.profile.descricao}
+              </Text>
+            ) : (
+              <View className="flex-row items-start mt-2">
+                <Info size={16} color="#F59E0B" className="mr-2 mt-0.5" />
+                <Text className="text-amber-700 flex-1">
+                  Sua empresa ainda não possui uma descrição.
+                </Text>
+              </View>
+            )}
 
-          {/* Datas de criação e atualização */}
-          <View className="bg-gray-50 p-3 flex-row items-center justify-center border-t border-gray-100">
             {vm.profile.date_updated && (
-              <View className="flex-row items-center">
+              <View className="flex-row items-center mt-3 pt-3 border-t border-gray-200">
                 <Clock size={14} color="#6B7280" />
                 <Text className="text-xs text-gray-500 ml-1">
                   Atualizado: {formatDate(vm.profile.date_updated)}
@@ -69,55 +84,63 @@ export function BasicInfoSection() {
           </View>
         </View>
 
-        {/* Cards de imagem em grid com legenda */}
-        <Text className="font-medium text-base mb-3 text-gray-800">
-          Imagem da marca
-        </Text>
-        <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Card da Logo - Agora com resizeMode="contain" */}
-          <View className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <View className="p-3 bg-gray-50 border-b border-gray-100">
-              <Text className="font-medium text-sm text-gray-700">Logo</Text>
-            </View>
-            <View className="p-4 bg-gray-50">
+        {/* Imagens da Marca - Logo e Banner */}
+        <View className=" bg-white rounded-md p-4 ">
+          {/* <View className="flex-row items-center mb-3">
+            <FileText size={18} color="#6B7280" />
+            <Text className="ml-2 text-base font-medium text-gray-700">
+              Imagens da Marca
+            </Text>
+          </View> */}
+
+          <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Logo */}
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-gray-700">Logo</Text>
               <ImagePreview
                 uri={vm.profile.logo}
-                height={140}
+                height={120}
                 fallbackIcon={ImageIcon}
-                fallbackText="Adicione uma logo para sua marca"
-                containerClassName="rounded-lg border border-gray-200"
-                resizeMode="contain" // Alterado para "contain" para preservar a proporção
+                fallbackText="Adicione uma logo"
+                containerClassName="rounded-lg"
+                resizeMode="contain"
               />
+              {!vm.profile.logo && (
+                <Text className="text-xs text-amber-600">
+                  A logo identifica sua marca nas listagens
+                </Text>
+              )}
             </View>
-          </View>
 
-          {/* Card do Banner */}
-          <View className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <View className="p-3 bg-gray-50 border-b border-gray-100">
-              <Text className="font-medium text-sm text-gray-700">Banner</Text>
-            </View>
-            <View className="p-4">
+            {/* Banner */}
+            <View className="gap-2">
+              <Text className="text-sm font-medium text-gray-700">Banner</Text>
               <ImagePreview
                 uri={vm.profile.banner}
-                height={140}
+                height={120}
                 fallbackIcon={ImageIcon}
-                fallbackText="Adicione um banner para suas promoções"
-                containerClassName="rounded-lg border border-gray-200"
-                resizeMode="cover" // Este permanece como "cover"
+                fallbackText="Adicione um banner"
+                containerClassName="rounded-lg"
+                resizeMode="cover"
               />
+              {!vm.profile.banner && (
+                <Text className="text-xs text-amber-600">
+                  O banner aparece no cabeçalho da sua página
+                </Text>
+              )}
             </View>
           </View>
         </View>
 
-        {/* CTA para editar se não tiver informações completas */}
-        {(!vm.profile.descricao || !vm.profile.logo || !vm.profile.banner) && (
+        {/* CTA para completar informações se necessário */}
+        {hasIncompleteInfo && (
           <TouchableOpacity
             onPress={() => vm.setIsBasicInfoOpen(true)}
-            className="mt-4 flex-row items-center justify-center bg-primary-50 p-4 rounded-lg border border-primary-100"
+            className="mt-2 py-3 flex-row items-center justify-center bg-primary-50 rounded-lg"
           >
             <Edit3 size={16} color="#0891B2" className="mr-2" />
             <Text className="text-primary-700 font-medium">
-              Complete as informações básicas da sua loja
+              Complete as informações básicas
             </Text>
           </TouchableOpacity>
         )}
