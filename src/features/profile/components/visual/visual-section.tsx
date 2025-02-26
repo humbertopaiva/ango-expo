@@ -7,6 +7,7 @@ import { useProfileContext } from "../../contexts/use-profile-context";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { VisualForm } from "./visual-form";
 import { Section } from "@/components/custom/section";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 export function VisualSection() {
   const vm = useProfileContext();
@@ -29,7 +30,7 @@ export function VisualSection() {
     <View>
       <Section
         title="Identidade Visual"
-        icon={<Palette size={22} color="#0891B2" />}
+        icon={<Palette size={22} color={THEME_COLORS.secondary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsVisualOpen(true)}
       >
@@ -51,21 +52,6 @@ export function VisualSection() {
                   />
                   <Text className="font-mono text-sm text-gray-700">
                     {vm.profile.cor_primaria}
-                  </Text>
-                </View>
-              </View>
-
-              <View className="p-4 rounded-lg bg-gray-50 space-y-2">
-                <Text className="text-sm font-medium text-gray-700">
-                  Cor Secundária
-                </Text>
-                <View className="flex-row items-center space-x-3">
-                  <View
-                    className="w-12 h-12 rounded-lg border border-gray-200"
-                    style={{ backgroundColor: vm.profile.cor_secundaria }}
-                  />
-                  <Text className="font-mono text-sm text-gray-700">
-                    {vm.profile.cor_secundaria}
                   </Text>
                 </View>
               </View>

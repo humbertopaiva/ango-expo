@@ -13,6 +13,7 @@ import {
 import { useProfileContext } from "../../contexts/use-profile-context";
 import { ContactForm } from "./contact-form";
 import { Section } from "@/components/custom/section";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 export function ContactSection() {
   const vm = useProfileContext();
@@ -52,7 +53,7 @@ export function ContactSection() {
       action: vm.profile.whatsapp
         ? () =>
             Linking.openURL(
-              `https://wa.me/${vm.profile.whatsapp.replace(/\D/g, "")}`
+              `https://wa.me/${vm.profile?.whatsapp.replace(/\D/g, "")}`
             )
         : undefined,
     },
@@ -71,7 +72,7 @@ export function ContactSection() {
     <View>
       <Section
         title="Informações de Contato"
-        icon={<Phone size={22} color="#0891B2" />}
+        icon={<Phone size={22} color={THEME_COLORS.secondary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsContactInfoOpen(true)}
       >

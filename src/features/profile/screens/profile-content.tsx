@@ -16,6 +16,7 @@ import { HoursSection } from "../components/hours/hours-section";
 import { VisualSection } from "../components/visual/visual-section";
 import { PaymentSection } from "../components/payment/payment-section";
 import { Text } from "@/components/ui/text";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const sections = [
   {
@@ -62,18 +63,18 @@ export function ProfileContent() {
               onPress={() => setActiveSection(section.key)}
               className={`flex-row items-center px-3 py-1 mx-1 rounded-full border ${
                 activeSection === section.key
-                  ? "bg-primary-100 border-primary-200"
+                  ? "bg-secondary-500 border-secondary-200"
                   : "bg-gray-50 border-gray-200"
               }`}
             >
               <section.icon
                 size={16}
-                color={activeSection === section.key ? "#0891B2" : "#6B7280"}
+                color={activeSection === section.key ? "#FFFFFF" : "#6B7280"}
               />
               <Text
-                className={`ml-2 text-sm ${
+                className={`ml-2 text-md font-semibold ${
                   activeSection === section.key
-                    ? "text-primary-700 font-medium"
+                    ? "text-white "
                     : "text-gray-600"
                 }`}
               >
@@ -84,7 +85,7 @@ export function ProfileContent() {
         </ScrollView>
       </View>
       <ScrollView
-        className="flex-1 px-4 py-4"
+        className="flex-1 px-4 py-6"
         showsVerticalScrollIndicator={false}
       >
         <ActiveSectionComponent />

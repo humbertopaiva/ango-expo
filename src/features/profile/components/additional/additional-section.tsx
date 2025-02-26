@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useProfileContext } from "../../contexts/use-profile-context";
 import { AdditionalForm } from "./additional-form";
 import { Section } from "@/components/custom/section";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 export function AdditionalSection() {
   const vm = useProfileContext();
@@ -17,7 +18,7 @@ export function AdditionalSection() {
     <View>
       <Section
         title="Informações Adicionais"
-        icon={<Info size={22} color="#0891B2" />}
+        icon={<Info size={22} color={THEME_COLORS.secondary} />}
         actionIcon={<Edit3 size={16} color="#374151" />}
         onAction={() => vm.setIsAdditionalOpen(true)}
       >

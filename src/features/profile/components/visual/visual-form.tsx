@@ -38,7 +38,9 @@ const formSchema = z.object({
     .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Cor inválida"),
   cor_secundaria: z
     .string()
-    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Cor inválida"),
+    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Cor inválida")
+    .nullable()
+    .optional(),
   imagem_01: z.string().nullable(),
   imagem_02: z.string().nullable(),
   imagem_03: z.string().nullable(),
@@ -172,26 +174,6 @@ export function VisualForm({
                     <FormControlError>
                       <FormControlErrorText>
                         {form.formState.errors.cor_primaria.message}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  )}
-                </FormControl>
-
-                <FormControl isInvalid={!!form.formState.errors.cor_secundaria}>
-                  <FormControlLabel>
-                    <FormControlLabelText>Cor Secundária</FormControlLabelText>
-                  </FormControlLabel>
-                  <Controller
-                    control={form.control}
-                    name="cor_secundaria"
-                    render={({ field: { onChange, value } }) => (
-                      <ColorInput value={value} onChange={onChange} />
-                    )}
-                  />
-                  {form.formState.errors.cor_secundaria && (
-                    <FormControlError>
-                      <FormControlErrorText>
-                        {form.formState.errors.cor_secundaria.message}
                       </FormControlErrorText>
                     </FormControlError>
                   )}

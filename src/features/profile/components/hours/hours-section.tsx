@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useProfileContext } from "../../contexts/use-profile-context";
 import { HoursForm } from "./hours-form";
 import { Section } from "@/components/custom/section";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const formatTime = (time: string | null): string => {
   if (!time) return "--:--";
@@ -74,7 +75,7 @@ export function HoursSection() {
     <View>
       <Section
         title="Horários de Funcionamento"
-        icon={<Clock size={22} color="#0891B2" />}
+        icon={<Clock size={22} color={THEME_COLORS.secondary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsHoursOpen(true)}
       >

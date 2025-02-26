@@ -14,6 +14,7 @@ import { useProfileContext } from "../../contexts/use-profile-context";
 import { SocialForm } from "./social-form";
 import { Section } from "@/components/custom/section";
 import { extractUsername, SocialNetwork } from "@/src/utils/social.utils";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 export function SocialSection() {
   const vm = useProfileContext();
@@ -77,7 +78,7 @@ export function SocialSection() {
     <View>
       <Section
         title="Redes Sociais"
-        icon={<Share2 size={22} color="#0891B2" />}
+        icon={<Share2 size={22} color={THEME_COLORS.secondary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsSocialLinksOpen(true)}
       >

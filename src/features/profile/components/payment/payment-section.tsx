@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useProfileContext } from "../../contexts/use-profile-context";
 import { PaymentForm } from "./payment-form";
 import { Section } from "@/components/custom/section";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const PAYMENT_OPTIONS = [
   { id: "dinheiro", label: "Dinheiro", icon: Wallet, color: "#65A30D" },
@@ -45,7 +46,7 @@ export function PaymentSection() {
     <View>
       <Section
         title="Opções de Pagamento"
-        icon={<CreditCard size={22} color="#0891B2" />}
+        icon={<CreditCard size={22} color={THEME_COLORS.secondary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsPaymentOpen(true)}
       >

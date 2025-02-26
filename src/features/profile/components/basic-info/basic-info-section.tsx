@@ -14,6 +14,7 @@ import { useProfileContext } from "../../contexts/use-profile-context";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { BasicInfoForm } from "./basic-info-form";
 import { Section } from "@/components/custom/section";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 export function BasicInfoSection() {
   const vm = useProfileContext();
@@ -40,7 +41,7 @@ export function BasicInfoSection() {
     <View>
       <Section
         title="Informações Básicas"
-        icon={<Building2 size={22} color="#0891B2" />}
+        icon={<Building2 size={22} color={THEME_COLORS.secondary} />}
         actionLabel="Editar"
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsBasicInfoOpen(true)}
