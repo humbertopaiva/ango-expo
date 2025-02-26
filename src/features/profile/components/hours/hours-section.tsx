@@ -75,7 +75,7 @@ export function HoursSection() {
       <Section
         title="Horários de Funcionamento"
         icon={<Clock size={22} color="#0891B2" />}
-        actionIcon={<Edit3 size={16} color="#374151" />}
+        actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsHoursOpen(true)}
       >
         <View className="space-y-3">

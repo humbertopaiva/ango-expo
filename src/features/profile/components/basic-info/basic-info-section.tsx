@@ -41,7 +41,7 @@ export function BasicInfoSection() {
       <Section
         title="Informações Básicas"
         icon={<Building2 size={22} color="#0891B2" />}
-        actionLabel="Editar Informações"
+        actionLabel="Editar"
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsBasicInfoOpen(true)}
         className="mb-2"

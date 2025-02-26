@@ -31,7 +31,7 @@ export function PaymentSection() {
       <Section
         title="Opções de Pagamento"
         icon={<CreditCard size={22} color="#0891B2" />}
-        actionIcon={<Edit3 size={16} color="#374151" />}
+        actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsPaymentOpen(true)}
       >
         <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
