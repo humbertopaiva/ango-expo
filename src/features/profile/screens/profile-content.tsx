@@ -17,14 +17,12 @@ import {
   Tag,
 } from "lucide-react-native";
 
-import ScreenHeader from "@/components/ui/screen-header";
 import { BasicInfoSection } from "../components/basic-info/basic-info-section";
 import { ContactSection } from "../components/contact/contact-section";
 import { SocialSection } from "../components/social/social-section";
 import { HoursSection } from "../components/hours/hours-section";
 import { VisualSection } from "../components/visual/visual-section";
 import { PaymentSection } from "../components/payment/payment-section";
-import { AdditionalSection } from "../components/additional/additional-section";
 import { useProfileContext } from "../contexts/use-profile-context";
 import { Text } from "@/components/ui/text";
 
@@ -51,12 +49,12 @@ const sections = [
     icon: CreditCard,
     component: PaymentSection,
   },
-  {
-    key: "additional",
-    title: "Adicional",
-    icon: Tag,
-    component: AdditionalSection,
-  },
+  // {
+  //   key: "additional",
+  //   title: "Adicional",
+  //   icon: Tag,
+  //   component: AdditionalSection,
+  // },
 ];
 
 export function ProfileContent() {
@@ -128,7 +126,7 @@ export function ProfileContent() {
 
       {/* Conteúdo da seção ativa sem animação e sem formato de card */}
       <ScrollView
-        ref={scrollRef}
+        // ref={scrollRef}
         className="flex-1 px-4 py-4"
         showsVerticalScrollIndicator={false}
       >

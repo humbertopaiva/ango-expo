@@ -25,7 +25,7 @@ export function SectionCard({
   const Container = onPress ? TouchableOpacity : View;
 
   return (
-    <Card className="bg-white mb-6 rounded-xl overflow-hidden shadow-sm">
+    <View className="bg-white overflow-hidden ">
       {/* Cabeçalho */}
       <View className="p-4 border-b border-gray-100 flex-row items-center justify-between">
         <View className="flex-row items-center">
@@ -46,6 +46,6 @@ export function SectionCard({
 
       {/* Conteúdo */}
       <View className="p-2">{children}</View>
-    </Card>
+    </View>
   );
 }

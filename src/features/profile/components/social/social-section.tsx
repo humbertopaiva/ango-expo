@@ -85,7 +85,7 @@ export function SocialSection() {
               key={network.name}
               className="flex-row items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100"
             >
-              <View className="flex-row items-center space-x-3">
+              <View className="flex-row items-center gap-3">
                 <network.icon size={20} color={network.color} />
                 <View>
                   <Text className="font-medium text-gray-700">
@@ -105,7 +105,6 @@ export function SocialSection() {
                   className="flex-row items-center bg-gray-100 px-2 py-1 rounded"
                 >
                   <Text className="text-sm text-primary-600 mr-1">Visitar</Text>
-                  <ExternalLink size={14} color="#0891B2" />
                 </TouchableOpacity>
               ) : (
                 <Text className="text-sm text-gray-500 italic">

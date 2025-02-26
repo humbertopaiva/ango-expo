@@ -40,7 +40,7 @@ export function ModalForm({
         className="bg-white"
         style={maxWidth ? { maxWidth } : undefined}
       >
-        <ModalHeader>
+        <ModalHeader className="flex flex-col">
           <Heading size="lg">{title}</Heading>
           {subtitle && (
             <Text className="text-sm text-gray-500">{subtitle}</Text>

@@ -42,7 +42,7 @@ export function PaymentSection() {
                 key={option.id}
                 className="flex-row items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100"
               >
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-3">
                   <option.icon
                     size={20}
                     color={isEnabled ? "#0891B2" : "#6B7280"}

@@ -52,7 +52,7 @@ export function ContactSection() {
           {contactItems.map((item) => (
             <View
               key={item.label}
-              className="flex-row space-x-3 p-4 rounded-lg bg-gray-50 border border-gray-100"
+              className="flex-row gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100"
             >
               <View className="mt-1">
                 <item.icon size={20} color={item.color} />

@@ -61,7 +61,7 @@ export function ContactForm({
       title="Editar Informações de Contato"
       subtitle="Atualize as informações de contato da sua empresa"
     >
-      <View className="space-y-4">
+      <View className="gap-4">
         <FormField
           control={form.control}
           name="endereco"

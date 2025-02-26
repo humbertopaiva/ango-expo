@@ -98,7 +98,7 @@ export function SocialForm({
         </ModalHeader>
 
         <ScrollView className="p-4">
-          <View className="space-y-4">
+          <View className="gap-4">
             <FormControl isInvalid={!!form.formState.errors.instagram}>
               <FormControlLabel>
                 <FormControlLabelText>Instagram</FormControlLabelText>

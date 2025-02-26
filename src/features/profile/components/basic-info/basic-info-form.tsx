@@ -133,7 +133,7 @@ export function BasicInfoForm({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
               paddingBottom: 24,
-              gap: 24,
+              gap: 16,
             }}
           >
             {/* Seção de informações gerais */}
@@ -141,7 +141,7 @@ export function BasicInfoForm({
               title="Informações Gerais"
               icon={<Building2 size={22} color="#0891B2" />}
             >
-              <View className="gap-4 flex flex-col">
+              <View className="gap-4 flex flex-col py-4">
                 <FormField
                   control={form.control}
                   name="nome"
@@ -185,15 +185,6 @@ export function BasicInfoForm({
                     </FormControlError>
                   )}
                 </FormControl>
-
-                <View className="flex-row items-start mt-2 gap-2">
-                  <Info size={16} color="#0891B2" className="mr-2 mt-0.5" />
-                  <Text className="text-gray-600 text-sm flex-1">
-                    Uma boa descrição ajuda seus clientes a entenderem melhor o
-                    seu negócio. Seja claro, direto e destaque seus
-                    diferenciais.
-                  </Text>
-                </View>
               </View>
             </SectionCard>
 
