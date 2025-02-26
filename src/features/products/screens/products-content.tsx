@@ -7,15 +7,9 @@ import { ProductsList } from "../components/products-list";
 import { router } from "expo-router";
 import { SearchInput } from "@/components/custom/search-input";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
-import { useHeaderAction } from "@/src/hooks/use-header-action";
 
 export function ProductsContent() {
   const vm = useProductsContext();
-
-  useHeaderAction({
-    actionType: "add",
-    onPress: () => router.push("/(app)/admin/products/new"),
-  });
 
   return (
     <SafeAreaView className="flex-1 bg-background">

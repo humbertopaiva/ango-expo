@@ -128,7 +128,7 @@ export function BasicInfoForm({
           </Text>
         </ModalHeader>
 
-        <ModalBody className="p-4">
+        <ModalBody className="">
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
@@ -141,7 +141,7 @@ export function BasicInfoForm({
               title="Informações Gerais"
               icon={<Building2 size={22} color="#0891B2" />}
             >
-              <View className="space-y-4">
+              <View className="gap-4 flex flex-col">
                 <FormField
                   control={form.control}
                   name="nome"
@@ -160,13 +160,19 @@ export function BasicInfoForm({
                     control={form.control}
                     name="descricao"
                     render={({ field: { onChange, value } }) => (
-                      <Textarea>
+                      <Textarea h={200}>
+                        {/* Definindo altura fixa para o componente */}
                         <TextareaInput
                           placeholder="Descreva o que sua empresa faz, produtos, serviços e diferenciais"
                           onChangeText={onChange}
                           value={value}
-                          numberOfLines={5}
-                          className="bg-white border border-gray-200 rounded-md p-3 text-base"
+                          multiline={true}
+                          textAlignVertical="top"
+                          style={{
+                            height: 200, // Altura fixa em pixels
+                            minHeight: 200, // Altura mínima garantida
+                          }}
+                          className="bg-white border border-gray-200 rounded-md p-4 text-base"
                         />
                       </Textarea>
                     )}
@@ -252,11 +258,13 @@ export function BasicInfoForm({
                       name="banner"
                       render={({ field: { onChange, value } }) => (
                         <View className="mt-2">
-                          <ImageUpload
-                            value={value || ""}
-                            onChange={onChange}
-                            disabled={isLoading}
-                          />
+                          <View className="w-full aspect-[5/2] bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden">
+                            <ImageUpload
+                              value={value || ""}
+                              onChange={onChange}
+                              disabled={isLoading}
+                            />
+                          </View>
                         </View>
                       )}
                     />
@@ -270,11 +278,11 @@ export function BasicInfoForm({
                     )}
                   </FormControl>
 
-                  <View className="flex-row items-start mt-2 gap-2">
+                  <View className="flex-row items-start mt-2">
                     <Info size={16} color="#0891B2" className="mr-2 mt-0.5" />
                     <Text className="text-gray-600 text-sm flex-1">
-                      O banner deve ter proporção 16:9 ou 4:1 para melhor
-                      visualização. Tamanho recomendado: 1200x300 pixels.
+                      O banner deve ter proporção 4:1 para melhor visualização.
+                      Tamanho recomendado: 1200x300 pixels.
                     </Text>
                   </View>
                 </View>

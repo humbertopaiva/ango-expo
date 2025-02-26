@@ -7,15 +7,8 @@ import { CategoriesList } from "../components/categories-list";
 import { SearchInput } from "@/components/custom/search-input";
 import { router } from "expo-router";
 
-import { useHeaderAction } from "@/src/hooks/use-header-action";
-
 export function CategoriesContent() {
   const vm = useCategoriesContext();
-
-  useHeaderAction({
-    actionType: "add",
-    onPress: () => router.push("/(app)/admin/categories/new"),
-  });
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>

@@ -45,7 +45,7 @@ export function SectionCard({
       </View>
 
       {/* Conteúdo */}
-      <View className="p-4">{children}</View>
+      <View className="p-2">{children}</View>
     </Card>
   );
 }
