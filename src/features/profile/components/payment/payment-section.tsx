@@ -1,6 +1,6 @@
-// src/features/profile/components/payment/payment-section.tsx
+// Path: src/features/profile/components/payment/payment-section.tsx
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Edit3, CreditCard, Wallet } from "lucide-react-native";
 import { Badge } from "@/components/ui/badge";
 
@@ -9,12 +9,27 @@ import { PaymentForm } from "./payment-form";
 import { Section } from "@/components/custom/section";
 
 const PAYMENT_OPTIONS = [
-  { id: "dinheiro", label: "Dinheiro", icon: Wallet },
-  { id: "pix", label: "PIX", icon: Wallet },
-  { id: "cartao_credito", label: "Cartão de Crédito", icon: CreditCard },
-  { id: "cartao_debito", label: "Cartão de Débito", icon: CreditCard },
-  { id: "transferencia", label: "Transferência Bancária", icon: Wallet },
-  { id: "boleto", label: "Boleto", icon: CreditCard },
+  { id: "dinheiro", label: "Dinheiro", icon: Wallet, color: "#65A30D" },
+  { id: "pix", label: "PIX", icon: Wallet, color: "#0891B2" },
+  {
+    id: "cartao_credito",
+    label: "Cartão de Crédito",
+    icon: CreditCard,
+    color: "#0EA5E9",
+  },
+  {
+    id: "cartao_debito",
+    label: "Cartão de Débito",
+    icon: CreditCard,
+    color: "#0D9488",
+  },
+  {
+    id: "transferencia",
+    label: "Transferência Bancária",
+    icon: Wallet,
+    color: "#7C3AED",
+  },
+  { id: "boleto", label: "Boleto", icon: CreditCard, color: "#F59E0B" },
 ];
 
 export function PaymentSection() {
@@ -34,24 +49,31 @@ export function PaymentSection() {
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsPaymentOpen(true)}
       >
-        <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <View className="gap-3">
           {PAYMENT_OPTIONS.map((option) => {
             const isEnabled = isPaymentEnabled(option.id);
             return (
               <View
                 key={option.id}
-                className="flex-row items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100"
+                className="bg-white rounded-md p-4 flex-row items-center space-x-3 border border-gray-100"
               >
-                <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
                   <option.icon
                     size={20}
-                    color={isEnabled ? "#0891B2" : "#6B7280"}
+                    color={isEnabled ? option.color : "#6B7280"}
                   />
-                  <Text className="font-medium text-gray-700">
+                </View>
+
+                <View className="flex-1">
+                  <Text className="text-base font-medium text-gray-700">
                     {option.label}
                   </Text>
                 </View>
-                <Badge variant={isEnabled ? "solid" : "outline"}>
+
+                <Badge
+                  variant={isEnabled ? "solid" : "outline"}
+                  className={isEnabled ? "bg-green-500" : ""}
+                >
                   <Text className={isEnabled ? "text-white" : "text-gray-800"}>
                     {isEnabled ? "Ativo" : "Inativo"}
                   </Text>

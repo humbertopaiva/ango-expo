@@ -1,6 +1,6 @@
-// src/features/profile/components/hours/hours-section.tsx
+// Path: src/features/profile/components/hours/hours-section.tsx
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Edit3, Clock } from "lucide-react-native";
 import { Badge } from "@/components/ui/badge";
 
@@ -78,26 +78,39 @@ export function HoursSection() {
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsHoursOpen(true)}
       >
-        <View className="space-y-3">
+        <View className="gap-3">
           {weekDays.map((day) => (
             <View
               key={day.key}
-              className="flex-row items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100"
+              className="bg-white rounded-md p-4 flex-row items-center space-x-3 border border-gray-100"
             >
-              <View className="flex-row items-center space-x-3">
-                <Clock size={18} color="#6B7280" />
-                <View>
-                  <Text className="font-medium text-gray-700">{day.label}</Text>
-                  {isOpen(day.key) ? (
-                    <Text className="text-sm text-gray-500">
-                      {formatTime(day.abertura)} - {formatTime(day.fechamento)}
-                    </Text>
-                  ) : (
-                    <Text className="text-sm text-gray-500">Fechado</Text>
-                  )}
-                </View>
+              <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+                <Clock
+                  size={20}
+                  color={isOpen(day.key) ? "#10B981" : "#6B7280"}
+                />
               </View>
-              <Badge variant={isOpen(day.key) ? "solid" : "outline"}>
+
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-gray-700">
+                  {day.label}
+                </Text>
+
+                {isOpen(day.key) ? (
+                  <Text className="text-base text-gray-900 mt-1">
+                    {formatTime(day.abertura)} - {formatTime(day.fechamento)}
+                  </Text>
+                ) : (
+                  <Text className="text-sm text-gray-500 italic mt-1">
+                    Fechado
+                  </Text>
+                )}
+              </View>
+
+              <Badge
+                variant={isOpen(day.key) ? "solid" : "outline"}
+                className={isOpen(day.key) ? "bg-green-500" : ""}
+              >
                 <Text
                   className={isOpen(day.key) ? "text-white" : "text-gray-800"}
                 >

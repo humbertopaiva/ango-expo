@@ -1,16 +1,16 @@
-// hours-form.tsx
-import React from "react";
-import { View, Text, ScrollView } from "react-native";
-import { useForm, Controller } from "react-hook-form";
+// Path: src/features/profile/components/hours/hours-form.tsx
+import React, { useEffect } from "react";
+import { View, Text, ScrollView, Platform } from "react-native";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-} from "@/components/ui/modal";
-import { Button, ButtonText } from "@/components/ui/button";
+import { Clock } from "lucide-react-native";
+import { Switch } from "@/components/ui/switch";
+
+import { Profile, UpdateProfileDTO } from "../../models/profile";
+import { TimePicker } from "@/components/common/time-picker";
+import { SectionCard } from "@/components/custom/section-card";
+
 import {
   FormControl,
   FormControlError,
@@ -18,10 +18,19 @@ import {
   FormControlLabel,
   FormControlLabelText,
 } from "@/components/ui/form-control";
-import { Switch } from "@/components/ui/switch";
 
-import type { Profile, UpdateProfileDTO } from "../../models/profile";
-import { TimePicker } from "@/components/common/time-picker";
+import {
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+} from "@/components/ui/modal";
+import { Heading } from "@/components/ui/heading";
+import { Button, ButtonText } from "@/components/ui/button";
+import { Icon, CloseIcon } from "@/components/ui/icon";
 
 const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
@@ -103,6 +112,28 @@ export function HoursForm({
     },
   });
 
+  useEffect(() => {
+    if (profile && open) {
+      form.reset({
+        dias_funcionamento: profile.dias_funcionamento || [],
+        abertura_segunda: formatTime(profile.abertura_segunda),
+        fechamento_segunda: formatTime(profile.fechamento_segunda),
+        abertura_terca: formatTime(profile.abertura_terca),
+        fechamento_terca: formatTime(profile.fechamento_terca),
+        abertura_quarta: formatTime(profile.abertura_quarta),
+        fechamento_quarta: formatTime(profile.fechamento_quarta),
+        abertura_quinta: formatTime(profile.abertura_quinta),
+        fechamento_quinta: formatTime(profile.fechamento_quinta),
+        abertura_sexta: formatTime(profile.abertura_sexta),
+        fechamento_sexta: formatTime(profile.fechamento_sexta),
+        abertura_sabado: formatTime(profile.abertura_sabado),
+        fechamento_sabado: formatTime(profile.fechamento_sabado),
+        abertura_domingo: formatTime(profile.abertura_domingo),
+        fechamento_domingo: formatTime(profile.fechamento_domingo),
+      });
+    }
+  }, [profile, form.reset, open]);
+
   const handleSubmit = (data: FormData) => {
     onSubmit(data);
   };
@@ -126,140 +157,184 @@ export function HoursForm({
   };
 
   return (
-    <Modal isOpen={open} onClose={onClose}>
-      <ModalContent className="bg-white">
-        <ModalHeader>
-          <Text className="text-lg font-semibold">
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      size="lg"
+      useRNModal={Platform.OS !== "web"}
+    >
+      <ModalBackdrop />
+      <ModalContent
+        className="max-w-4xl rounded-xl"
+        style={{
+          marginHorizontal: 16,
+          marginVertical: 24,
+          marginTop: 40,
+          marginBottom: 40,
+          maxHeight: "90%",
+        }}
+      >
+        <ModalHeader className="border-b border-gray-200 px-4 py-4 flex flex-col">
+          <View className="w-full flex">
+            <ModalCloseButton className="justify-end items-end">
+              <Icon
+                as={CloseIcon}
+                size="lg"
+                className="stroke-primary-500 group-[:hover]/modal-close-button:stroke-background-700"
+              />
+            </ModalCloseButton>
+          </View>
+          <Heading size="md" className="text-typography-950">
             Horários de Funcionamento
+          </Heading>
+          <Text className="text-sm text-gray-500 mt-1">
+            Configure os dias e horários de funcionamento
           </Text>
-          <ModalCloseButton />
         </ModalHeader>
 
-        <ScrollView className="p-4">
-          <View className="space-y-6">
+        <ModalBody>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: 24,
+              gap: 16,
+            }}
+          >
             {weekDays.map((day) => (
-              <View
+              <SectionCard
                 key={day.key}
-                className="space-y-4 pb-4 border-b border-gray-200"
+                title={day.label}
+                icon={<Clock size={22} color="#0891B2" />}
               >
-                <View className="flex-row items-center justify-between">
-                  <Text className="font-medium">{day.label}</Text>
-                  <Switch
-                    value={isDayActive(day.key)}
-                    onValueChange={() => toggleDay(day.key)}
-                    disabled={isLoading}
-                  />
-                </View>
+                <View className="gap-4 flex flex-col py-4">
+                  <FormControl>
+                    <View className="flex-row items-center justify-between mb-4">
+                      <FormControlLabel>
+                        <FormControlLabelText className="text-base font-medium">
+                          {isDayActive(day.key) ? "Aberto" : "Fechado"}
+                        </FormControlLabelText>
+                      </FormControlLabel>
+                      <Switch
+                        value={isDayActive(day.key)}
+                        onValueChange={() => toggleDay(day.key)}
+                        disabled={isLoading}
+                      />
+                    </View>
+                  </FormControl>
 
-                {isDayActive(day.key) && (
-                  <View className="flex-row space-x-4">
-                    <FormControl
-                      isInvalid={
-                        !!form.formState.errors[
+                  {isDayActive(day.key) && (
+                    <View className="flex-row space-x-4">
+                      <FormControl
+                        isInvalid={
+                          !!form.formState.errors[
+                            `abertura_${day.key}` as keyof FormData
+                          ]
+                        }
+                        className="flex-1"
+                      >
+                        <FormControlLabel>
+                          <FormControlLabelText>Abertura</FormControlLabelText>
+                        </FormControlLabel>
+                        <Controller
+                          control={form.control}
+                          name={`abertura_${day.key}` as keyof FormData}
+                          render={({ field: { onChange, value } }) => (
+                            <TimePicker
+                              value={Array.isArray(value) ? value[0] : value}
+                              onChange={onChange}
+                              disabled={!isDayActive(day.key) || isLoading}
+                              isInvalid={
+                                !!form.formState.errors[
+                                  `abertura_${day.key}` as keyof FormData
+                                ]
+                              }
+                            />
+                          )}
+                        />
+                        {form.formState.errors[
                           `abertura_${day.key}` as keyof FormData
-                        ]
-                      }
-                      className="flex-1"
-                    >
-                      <FormControlLabel>
-                        <FormControlLabelText>Abertura</FormControlLabelText>
-                      </FormControlLabel>
-                      <Controller
-                        control={form.control}
-                        name={`abertura_${day.key}` as keyof FormData}
-                        render={({ field: { onChange, value } }) => (
-                          <TimePicker
-                            value={Array.isArray(value) ? value[0] : value}
-                            onChange={onChange}
-                            disabled={!isDayActive(day.key) || isLoading}
-                            isInvalid={
-                              !!form.formState.errors[
-                                `abertura_${day.key}` as keyof FormData
-                              ]
-                            }
-                          />
+                        ] && (
+                          <FormControlError>
+                            <FormControlErrorText>
+                              {
+                                form.formState.errors[
+                                  `abertura_${day.key}` as keyof FormData
+                                ]?.message
+                              }
+                            </FormControlErrorText>
+                          </FormControlError>
                         )}
-                      />
-                      {form.formState.errors[
-                        `abertura_${day.key}` as keyof FormData
-                      ] && (
-                        <FormControlError>
-                          <FormControlErrorText>
-                            {
-                              form.formState.errors[
-                                `abertura_${day.key}` as keyof FormData
-                              ]?.message
-                            }
-                          </FormControlErrorText>
-                        </FormControlError>
-                      )}
-                    </FormControl>
+                      </FormControl>
 
-                    <FormControl
-                      isInvalid={
-                        !!form.formState.errors[
+                      <FormControl
+                        isInvalid={
+                          !!form.formState.errors[
+                            `fechamento_${day.key}` as keyof FormData
+                          ]
+                        }
+                        className="flex-1"
+                      >
+                        <FormControlLabel>
+                          <FormControlLabelText>
+                            Fechamento
+                          </FormControlLabelText>
+                        </FormControlLabel>
+                        <Controller
+                          control={form.control}
+                          name={`fechamento_${day.key}` as keyof FormData}
+                          render={({ field: { onChange, value } }) => (
+                            <TimePicker
+                              value={Array.isArray(value) ? value[0] : value}
+                              onChange={onChange}
+                              disabled={!isDayActive(day.key) || isLoading}
+                              isInvalid={
+                                !!form.formState.errors[
+                                  `fechamento_${day.key}` as keyof FormData
+                                ]
+                              }
+                            />
+                          )}
+                        />
+                        {form.formState.errors[
                           `fechamento_${day.key}` as keyof FormData
-                        ]
-                      }
-                      className="flex-1"
-                    >
-                      <FormControlLabel>
-                        <FormControlLabelText>Fechamento</FormControlLabelText>
-                      </FormControlLabel>
-                      <Controller
-                        control={form.control}
-                        name={`fechamento_${day.key}` as keyof FormData}
-                        render={({ field: { onChange, value } }) => (
-                          <TimePicker
-                            value={Array.isArray(value) ? value[0] : value}
-                            onChange={onChange}
-                            disabled={!isDayActive(day.key) || isLoading}
-                            isInvalid={
-                              !!form.formState.errors[
-                                `fechamento_${day.key}` as keyof FormData
-                              ]
-                            }
-                          />
+                        ] && (
+                          <FormControlError>
+                            <FormControlErrorText>
+                              {
+                                form.formState.errors[
+                                  `fechamento_${day.key}` as keyof FormData
+                                ]?.message
+                              }
+                            </FormControlErrorText>
+                          </FormControlError>
                         )}
-                      />
-                      {form.formState.errors[
-                        `fechamento_${day.key}` as keyof FormData
-                      ] && (
-                        <FormControlError>
-                          <FormControlErrorText>
-                            {
-                              form.formState.errors[
-                                `fechamento_${day.key}` as keyof FormData
-                              ]?.message
-                            }
-                          </FormControlErrorText>
-                        </FormControlError>
-                      )}
-                    </FormControl>
-                  </View>
-                )}
-              </View>
+                      </FormControl>
+                    </View>
+                  )}
+                </View>
+              </SectionCard>
             ))}
-          </View>
+          </ScrollView>
+        </ModalBody>
 
-          <View className="flex-row justify-end space-x-2 pt-4">
-            <Button
-              variant="outline"
-              onPress={onClose}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              <ButtonText>Cancelar</ButtonText>
-            </Button>
-            <Button
-              onPress={form.handleSubmit(handleSubmit)}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
-            </Button>
-          </View>
-        </ScrollView>
+        <ModalFooter className="border-t border-gray-200 p-4">
+          <Button
+            variant="outline"
+            action="primary"
+            onPress={onClose}
+            disabled={isLoading}
+            className="flex-1 mr-3"
+          >
+            <ButtonText>Cancelar</ButtonText>
+          </Button>
+          <Button
+            onPress={form.handleSubmit(handleSubmit)}
+            disabled={isLoading}
+            className="flex-1"
+          >
+            <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
+          </Button>
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );

@@ -1,20 +1,34 @@
-import React from "react";
-import { View, Text, ScrollView } from "react-native";
+// Path: src/features/profile/components/social/social-form.tsx
+import React, { useEffect } from "react";
+import { View, ScrollView, Platform } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Profile, UpdateProfileDTO } from "../../models/profile";
 import * as z from "zod";
-import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
-import { Input, InputField } from "@/components/ui/input";
-import { Button, ButtonText } from "@/components/ui/button";
 import {
-  FormControl,
-  FormControlError,
-  FormControlErrorText,
-  FormControlLabel,
-  FormControlLabelText,
-} from "@/components/ui/form-control";
+  Instagram,
+  Facebook,
+  Youtube,
+  Twitter,
+  Linkedin,
+} from "lucide-react-native";
+
+import { SectionCard } from "@/components/custom/section-card";
+import { FormField } from "@/components/custom/form-field";
+
+import {
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+} from "@/components/ui/modal";
 import { Heading } from "@/components/ui/heading";
+import { Button, ButtonText } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { Icon, CloseIcon } from "@/components/ui/icon";
 import {
   extractUsername,
   formatSocialUrl,
@@ -72,6 +86,19 @@ export function SocialForm({
     },
   });
 
+  useEffect(() => {
+    if (profile && open) {
+      form.reset({
+        facebook: profile.facebook || "",
+        instagram: profile.instagram || "",
+        tiktok: profile.tiktok || "",
+        youtube: profile.youtube || "",
+        twitter: profile.twitter || "",
+        linkedin: profile.linkedin || "",
+      });
+    }
+  }, [profile, form.reset, open]);
+
   const handleSubmit = (data: SocialFormData) => {
     const updateData: UpdateProfileDTO = {
       facebook: typeof data.facebook === "string" ? data.facebook : undefined,
@@ -85,219 +112,145 @@ export function SocialForm({
     onSubmit(updateData);
   };
 
+  const socialNetworks = [
+    {
+      name: "Instagram",
+      field: "instagram" as keyof SocialFormData,
+      icon: Instagram,
+      color: "#E1306C",
+      placeholder: "@sua-empresa",
+      helpText: "Digite apenas seu nome de usuário, exemplo: @sua-empresa",
+    },
+    {
+      name: "Facebook",
+      field: "facebook" as keyof SocialFormData,
+      icon: Facebook,
+      color: "#1877F2",
+      placeholder: "sua-empresa",
+      helpText: "Digite apenas o nome da sua página",
+    },
+    {
+      name: "TikTok",
+      field: "tiktok" as keyof SocialFormData,
+      icon: Youtube,
+      color: "#000000",
+      placeholder: "@sua-empresa",
+      helpText: "Digite apenas seu nome de usuário, exemplo: @sua-empresa",
+    },
+    {
+      name: "YouTube",
+      field: "youtube" as keyof SocialFormData,
+      icon: Youtube,
+      color: "#FF0000",
+      placeholder: "@sua-empresa",
+      helpText: "Digite apenas seu nome de usuário, exemplo: @sua-empresa",
+    },
+    {
+      name: "Twitter",
+      field: "twitter" as keyof SocialFormData,
+      icon: Twitter,
+      color: "#1DA1F2",
+      placeholder: "@sua-empresa",
+      helpText: "Digite apenas seu nome de usuário, exemplo: @sua-empresa",
+    },
+    {
+      name: "LinkedIn",
+      field: "linkedin" as keyof SocialFormData,
+      icon: Linkedin,
+      color: "#0A66C2",
+      placeholder: "sua-empresa",
+      helpText: "Digite apenas o nome da sua empresa",
+    },
+  ];
+
   return (
-    <Modal isOpen={open} onClose={onClose}>
-      <ModalContent className="bg-white">
-        <ModalHeader>
-          <Heading size="lg">
-            <Text>Editar Redes Sociais</Text>
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      size="lg"
+      useRNModal={Platform.OS !== "web"}
+    >
+      <ModalBackdrop />
+      <ModalContent
+        className="max-w-4xl rounded-xl"
+        style={{
+          marginHorizontal: 16,
+          marginVertical: 24,
+          marginTop: 40,
+          marginBottom: 40,
+          maxHeight: "90%",
+        }}
+      >
+        <ModalHeader className="border-b border-gray-200 px-4 py-4 flex flex-col">
+          <View className="w-full flex">
+            <ModalCloseButton className="justify-end items-end">
+              <Icon
+                as={CloseIcon}
+                size="lg"
+                className="stroke-primary-500 group-[:hover]/modal-close-button:stroke-background-700"
+              />
+            </ModalCloseButton>
+          </View>
+          <Heading size="md" className="text-typography-950">
+            Editar Redes Sociais
           </Heading>
-          <Text className="text-sm text-gray-500">
+          <Text size="sm" className="text-typography-500 mt-1">
             Atualize as redes sociais da sua empresa
           </Text>
         </ModalHeader>
 
-        <ScrollView className="p-4">
-          <View className="gap-4">
-            <FormControl isInvalid={!!form.formState.errors.instagram}>
-              <FormControlLabel>
-                <FormControlLabelText>Instagram</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="instagram"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="@sua-empresa"
-                      onChangeText={onChange}
-                      value={extractUsername("instagram", value)}
-                      autoCapitalize="none"
-                    />
-                  </Input>
-                )}
-              />
-              <Text className="text-sm text-gray-500 mt-1">
-                Digite apenas seu nome de usuário, exemplo: @sua-empresa
-              </Text>
-              {form.formState.errors.instagram && (
-                <FormControlError>
-                  <FormControlErrorText>
-                    {form.formState.errors.instagram.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={!!form.formState.errors.facebook}>
-              <FormControlLabel>
-                <FormControlLabelText>Facebook</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="facebook"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="sua-empresa"
-                      onChangeText={onChange}
-                      value={extractUsername("facebook", value)}
-                      autoCapitalize="none"
-                    />
-                  </Input>
-                )}
-              />
-              <Text className="text-sm text-gray-500 mt-1">
-                Digite apenas o nome da sua página
-              </Text>
-              {form.formState.errors.facebook && (
-                <FormControlError>
-                  <FormControlErrorText>
-                    <Text>{form.formState.errors.facebook.message}</Text>
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={!!form.formState.errors.tiktok}>
-              <FormControlLabel>
-                <FormControlLabelText>TikTok</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="tiktok"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="@sua-empresa"
-                      onChangeText={onChange}
-                      value={extractUsername("tiktok", value)}
-                      autoCapitalize="none"
-                    />
-                  </Input>
-                )}
-              />
-              <Text className="text-sm text-gray-500 mt-1">
-                Digite apenas seu nome de usuário, exemplo: @sua-empresa
-              </Text>
-              {form.formState.errors.tiktok && (
-                <FormControlError>
-                  <FormControlErrorText>
-                    {form.formState.errors.tiktok.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={!!form.formState.errors.youtube}>
-              <FormControlLabel>
-                <FormControlLabelText>YouTube</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="youtube"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="@sua-empresa"
-                      onChangeText={onChange}
-                      value={extractUsername("youtube", value)}
-                      autoCapitalize="none"
-                    />
-                  </Input>
-                )}
-              />
-              <Text className="text-sm text-gray-500 mt-1">
-                Digite apenas seu nome de usuário, exemplo: @sua-empresa
-              </Text>
-              {form.formState.errors.youtube && (
-                <FormControlError>
-                  <FormControlErrorText>
-                    {form.formState.errors.youtube.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={!!form.formState.errors.twitter}>
-              <FormControlLabel>
-                <FormControlLabelText>Twitter</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="twitter"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="@sua-empresa"
-                      onChangeText={onChange}
-                      value={extractUsername("twitter", value)}
-                      autoCapitalize="none"
-                    />
-                  </Input>
-                )}
-              />
-              <Text className="text-sm text-gray-500 mt-1">
-                Digite apenas seu nome de usuário, exemplo: @sua-empresa
-              </Text>
-              {form.formState.errors.twitter && (
-                <FormControlError>
-                  <FormControlErrorText>
-                    {form.formState.errors.twitter.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={!!form.formState.errors.linkedin}>
-              <FormControlLabel>
-                <FormControlLabelText>LinkedIn</FormControlLabelText>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="linkedin"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="sua-empresa"
-                      onChangeText={onChange}
-                      value={extractUsername("linkedin", value)}
-                      autoCapitalize="none"
-                    />
-                  </Input>
-                )}
-              />
-              <Text className="text-sm text-gray-500 mt-1">
-                Digite apenas o nome da sua empresa
-              </Text>
-              {form.formState.errors.linkedin && (
-                <FormControlError>
-                  <FormControlErrorText>
-                    {form.formState.errors.linkedin.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
-            </FormControl>
-
-            <View className="flex-row justify-end gap-3 pt-4">
-              <Button
-                variant="outline"
-                onPress={onClose}
-                disabled={isLoading}
-                className="flex-1"
+        <ModalBody>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: 24,
+              gap: 16,
+            }}
+          >
+            {socialNetworks.map((network) => (
+              <SectionCard
+                key={network.field}
+                title={network.name}
+                icon={<network.icon size={22} color={network.color} />}
               >
-                <ButtonText>Cancelar</ButtonText>
-              </Button>
-              <Button
-                onPress={form.handleSubmit(handleSubmit)}
-                disabled={isLoading}
-                className="flex-1"
-              >
-                <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
-              </Button>
-            </View>
-          </View>
-        </ScrollView>
+                <View className="gap-4 flex flex-col py-4">
+                  <View>
+                    <FormField
+                      control={form.control}
+                      name={network.field}
+                      label={`Perfil do ${network.name}`}
+                      placeholder={network.placeholder}
+                      error={form.formState.errors[network.field]}
+                      autoCapitalize="none"
+                    />
+                    <Text className="text-sm text-gray-500 mt-1">
+                      {network.helpText}
+                    </Text>
+                  </View>
+                </View>
+              </SectionCard>
+            ))}
+          </ScrollView>
+        </ModalBody>
+
+        <ModalFooter className="border-t border-gray-200 p-4">
+          <Button
+            variant="outline"
+            action="primary"
+            onPress={onClose}
+            disabled={isLoading}
+            className="flex-1 mr-3"
+          >
+            <ButtonText>Cancelar</ButtonText>
+          </Button>
+          <Button
+            onPress={form.handleSubmit(handleSubmit)}
+            disabled={isLoading}
+            className="flex-1"
+          >
+            <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
+          </Button>
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );

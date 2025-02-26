@@ -1,4 +1,4 @@
-// src/features/profile/components/social/social-section.tsx
+// Path: src/features/profile/components/social/social-section.tsx
 import React from "react";
 import { View, Text, TouchableOpacity, Linking } from "react-native";
 import { Edit3, ExternalLink, Share2 } from "lucide-react-native";
@@ -71,6 +71,8 @@ export function SocialSection() {
     },
   ];
 
+  const hasSocialNetworks = socialNetworks.some((network) => !!network.value);
+
   return (
     <View>
       <Section
@@ -79,37 +81,41 @@ export function SocialSection() {
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsSocialLinksOpen(true)}
       >
-        <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <View className="gap-3">
           {socialNetworks.map((network) => (
             <View
               key={network.name}
-              className="flex-row items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100"
+              className="bg-white rounded-md p-4 flex-row items-center space-x-3 border border-gray-100"
             >
-              <View className="flex-row items-center gap-3">
+              <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
                 <network.icon size={20} color={network.color} />
-                <View>
-                  <Text className="font-medium text-gray-700">
-                    {network.name}
-                  </Text>
-                  {network.value && (
-                    <Text className="text-sm text-gray-500">
-                      {network.username}
-                    </Text>
-                  )}
-                </View>
               </View>
 
-              {network.value ? (
+              <View className="flex-1">
+                <Text className="text-sm font-medium text-gray-700">
+                  {network.name}
+                </Text>
+
+                {network.value ? (
+                  <View className="flex-row items-center mt-1">
+                    <Text className="text-base text-gray-900">
+                      {network.username}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text className="text-sm text-gray-500 italic mt-1">
+                    Não configurado
+                  </Text>
+                )}
+              </View>
+
+              {network.value && (
                 <TouchableOpacity
                   onPress={() => Linking.openURL(network.value || "")}
-                  className="flex-row items-center bg-gray-100 px-2 py-1 rounded"
+                  className="bg-gray-50 p-2 rounded-full"
                 >
-                  <Text className="text-sm text-primary-600 mr-1">Visitar</Text>
+                  <ExternalLink size={18} color={network.color} />
                 </TouchableOpacity>
-              ) : (
-                <Text className="text-sm text-gray-500 italic">
-                  Não configurado
-                </Text>
               )}
             </View>
           ))}
