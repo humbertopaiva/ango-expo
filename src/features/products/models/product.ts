@@ -1,3 +1,5 @@
+import { ZodNull } from "zod";
+
 export interface Product {
   id: string;
   user_created: string;
@@ -10,7 +12,7 @@ export interface Product {
   preco_promocional: string | null;
   estoque: number;
   video: string | null;
-  categoria: number;
+  categoria: number | null;
   empresa: string;
   imagem: string | null;
   parcelamento_cartao: boolean;
@@ -27,7 +29,7 @@ export interface CreateProductDTO {
   preco: string;
   preco_promocional?: string | null;
   video?: string | null;
-  categoria: number;
+  categoria: number | null;
   empresa: string;
   imagem?: string | null;
   parcelamento_cartao: boolean;

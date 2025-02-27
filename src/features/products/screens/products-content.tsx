@@ -1,17 +1,25 @@
-// Path: src/features/products/screens/products-content.tsx
-import React from "react";
+// src/features/products/screens/products-content.tsx
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProductsContext } from "../contexts/use-products-context";
 import { ProductsList } from "../components/products-list";
 import { SearchInput } from "@/components/custom/search-input";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
-import { ProductFormModal } from "../components/product-form-modal";
 import { Plus } from "lucide-react-native";
 import { Button, ButtonText } from "@/components/ui/button";
+import { router } from "expo-router";
 
 export function ProductsContent() {
   const vm = useProductsContext();
+
+  // Funções para navegação direta em vez de usar modal
+  const handleAddProduct = () => {
+    router.push("/(app)/admin/products/new");
+  };
+
+  const handleEditProduct = (productId: string) => {
+    router.push(`/(app)/admin/products/${productId}`);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -28,7 +36,7 @@ export function ProductsContent() {
 
         {/* Add Button */}
         <View className="my-3">
-          <Button onPress={vm.openCreateProductModal}>
+          <Button onPress={handleAddProduct}>
             <Plus size={18} color="white" className="mr-2" />
             <ButtonText>Novo Produto</ButtonText>
           </Button>
@@ -39,23 +47,10 @@ export function ProductsContent() {
           <ProductsList
             products={vm.products}
             isLoading={vm.isLoading}
-            onEdit={(product) => vm.openEditProductModal(product)}
+            onEdit={(product) => handleEditProduct(product.id)}
             onDelete={(product) => vm.confirmDeleteProduct(product.id)}
           />
         </View>
-
-        {/* Create/Edit Product Form Modal */}
-        <ProductFormModal
-          open={vm.isFormVisible || vm.isEditFormVisible}
-          onClose={vm.closeModals}
-          onSubmit={
-            vm.selectedProduct
-              ? (data) => vm.handleUpdateProduct(vm.selectedProduct!.id, data)
-              : vm.handleCreateProduct
-          }
-          isLoading={vm.isCreating || vm.isUpdating}
-          product={vm.selectedProduct}
-        />
 
         {/* Confirmation Dialog */}
         <ConfirmationDialog

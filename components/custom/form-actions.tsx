@@ -1,5 +1,6 @@
-import React from "react";
-import { View } from "react-native";
+// src/components/custom/form-actions.tsx
+
+import { View, Platform } from "react-native";
 import { Button, ButtonText } from "@/components/ui/button";
 
 interface ActionButtonProps {
@@ -67,25 +68,8 @@ export function FormActions({
     ${direction === "row" ? "flex-row" : "flex-col"}
     ${alignmentClasses[alignment]}
     ${spacingClasses[spacing]}
-    ${fixed ? "py-4 px-4 border-t border-gray-200 bg-white" : ""}
-    ${fixed ? "w-full" : ""}
     ${className}
   `;
-
-  // For bottom fixed position
-  const wrapperClasses = fixed
-    ? "fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe"
-    : "";
-
-  const Container = fixed
-    ? ({ children }: { children: React.ReactNode }) => (
-        <View className={wrapperClasses}>
-          <View className={containerClasses}>{children}</View>
-        </View>
-      )
-    : ({ children }: { children: React.ReactNode }) => (
-        <View className={containerClasses}>{children}</View>
-      );
 
   const renderButton = ({
     label,
@@ -112,10 +96,10 @@ export function FormActions({
   };
 
   return (
-    <Container>
+    <View className={containerClasses}>
       {tertiaryAction && renderButton(tertiaryAction)}
       {secondaryAction && renderButton(secondaryAction)}
       {renderButton(primaryAction)}
-    </Container>
+    </View>
   );
 }
