@@ -11,7 +11,7 @@ class LeafletService {
       const response = await api.get<{ data: Leaflet[] }>("/api/encartes", {
         params: {
           company: companyId,
-          _t: Date.now(),
+          _t: Date.now(), // Cache busting
         },
       });
 
@@ -58,26 +58,9 @@ class LeafletService {
   async deleteLeaflet(id: string) {
     try {
       await api.delete(`/api/encartes/${id}`);
+      return true;
     } catch (error) {
       console.error("Erro ao excluir encarte:", error);
-      throw error;
-    }
-  }
-
-  async getLeafletCount() {
-    try {
-      const companyId = useAuthStore.getState().getCompanyId();
-      const response = await api.get<{ count: number }>("/api/encartes", {
-        params: {
-          company: companyId,
-          aggregate: {
-            count: "id",
-          },
-        },
-      });
-      return response.data.count;
-    } catch (error) {
-      console.error("Erro ao contar encartes:", error);
       throw error;
     }
   }

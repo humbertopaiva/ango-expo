@@ -7,13 +7,16 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-  Image,
+  Image as RNImage,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Leaflet } from "../models/leaflet";
 import { X, Calendar, FileText, Eye } from "lucide-react-native";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Button, ButtonText } from "@/components/ui/button";
+import { ImagePreview } from "@/components/custom/image-preview";
+import { StatusBadge } from "@/components/custom/status-badge";
 
 interface LeafletDetailsModalProps {
   leaflet: Leaflet | null;
@@ -67,16 +70,14 @@ export function LeafletDetailsModal({
           <ScrollView className="flex-1">
             {/* Cabeçalho com Banner e Info Básica */}
             <View className="p-4 flex-row space-x-4">
-              <View className="w-24 h-24 rounded-lg bg-gray-100 items-center justify-center overflow-hidden">
-                {leaflet.banner ? (
-                  <Image
-                    source={{ uri: leaflet.banner }}
-                    style={{ width: "100%", height: "100%" }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <FileText size={24} color="#6B7280" />
-                )}
+              <View className="w-24 h-24 rounded-lg overflow-hidden">
+                <ImagePreview
+                  uri={leaflet.banner}
+                  fallbackIcon={FileText}
+                  fallbackText="Sem banner"
+                  width={96}
+                  height={96}
+                />
               </View>
 
               <View className="flex-1">
@@ -85,23 +86,12 @@ export function LeafletDetailsModal({
                 </Text>
 
                 <View className="flex-row mt-1 space-x-2">
-                  <View
-                    className={`px-2 py-1 rounded-full ${
-                      leaflet.status === "ativo"
-                        ? "bg-green-100"
-                        : "bg-gray-100"
-                    }`}
-                  >
-                    <Text
-                      className={
-                        leaflet.status === "ativo"
-                          ? "text-green-800"
-                          : "text-gray-800"
-                      }
-                    >
-                      {leaflet.status === "ativo" ? "Ativo" : "Inativo"}
-                    </Text>
-                  </View>
+                  <StatusBadge
+                    status={leaflet.status}
+                    customLabel={
+                      leaflet.status === "ativo" ? "Ativo" : "Inativo"
+                    }
+                  />
                   <View className="px-2 py-1 rounded-full bg-gray-100">
                     <Text className="text-gray-800">
                       {images.length}{" "}
@@ -121,7 +111,7 @@ export function LeafletDetailsModal({
 
             {/* Grade de Imagens */}
             {images.length > 0 && (
-              <View className="p-4">
+              <View className="p-4 border-t border-gray-100">
                 <Text className="text-lg font-semibold mb-4">
                   Páginas do Encarte
                 </Text>
@@ -129,14 +119,14 @@ export function LeafletDetailsModal({
                   {images.map((image, index) => (
                     <View key={index} className="w-1/2 p-1 aspect-[3/4]">
                       <TouchableOpacity
-                        className="w-full h-full rounded-lg overflow-hidden border border-gray-200"
-                        onPress={() => {
-                          // Abrir visualização em tela cheia
-                        }}
+                        className="w-full h-full rounded-lg overflow-hidden"
+                        activeOpacity={0.8}
                       >
-                        <Image
-                          source={{ uri: image }}
-                          style={{ width: "100%", height: "100%" }}
+                        <ImagePreview
+                          uri={image}
+                          fallbackIcon={FileText}
+                          width="100%"
+                          height="100%"
                           resizeMode="cover"
                         />
                         <View className="absolute bottom-2 right-2 bg-white rounded-full p-1 shadow">
@@ -169,6 +159,13 @@ export function LeafletDetailsModal({
               </View>
             </View>
           </ScrollView>
+
+          {/* Footer com botão de fechar */}
+          <View className="p-4 border-t border-gray-200">
+            <Button onPress={onClose} variant="outline" className="w-full">
+              <ButtonText>Fechar</ButtonText>
+            </Button>
+          </View>
         </View>
       </SafeAreaView>
     </Modal>

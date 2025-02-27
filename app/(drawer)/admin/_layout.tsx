@@ -4,12 +4,13 @@ import { Stack, router } from "expo-router";
 import useAuthStore from "@/src/stores/auth";
 import { AdminLayoutContainer } from "@/components/layouts/admin-layout";
 import { CustomTabBar } from "@/components/ui/custom-tab-bar";
-import { StatusBar } from "react-native";
+import { StatusBar, TouchableOpacity } from "react-native";
 
 import { useSegments } from "expo-router";
 import { View } from "@gluestack-ui/themed";
 
 import { useEffect } from "react";
+import { ArrowLeft } from "lucide-react-native";
 
 export default function AdminLayout() {
   const isAuthenticated = useAuthStore(
@@ -19,7 +20,7 @@ export default function AdminLayout() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.replace("/(auth)/login");
+      router.replace("/(drawer)/(auth)/login");
     }
   }, [isAuthenticated]);
 
@@ -49,12 +50,12 @@ export default function AdminLayout() {
           }}
         >
           {/* Dashboard */}
-          {/* <Stack.Screen
+          <Stack.Screen
             name="dashboard/index"
             options={{
               title: "Dashboard",
             }}
-          /> */}
+          />
 
           {/* Categorias */}
           <Stack.Screen
@@ -70,6 +71,14 @@ export default function AdminLayout() {
             options={{
               title: "Produtos",
               headerBackVisible: true,
+              headerLeft: () => (
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{ marginLeft: 8 }}
+                >
+                  <ArrowLeft color="#FFFFFF" size={24} />
+                </TouchableOpacity>
+              ),
             }}
           />
           <Stack.Screen
