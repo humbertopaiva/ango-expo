@@ -18,6 +18,7 @@ import {
 import { router } from "expo-router";
 import { Card } from "@gluestack-ui/themed";
 import { useCategories } from "@/src/features/categories/hooks/use-categories";
+import { DrawerToggleButton } from "@react-navigation/drawer";
 
 export function DashboardScreen() {
   const { categories, isLoading } = useCategories();
@@ -78,6 +79,7 @@ export function DashboardScreen() {
           <Text className="text-gray-500">
             Aqui está a visão geral do seu comércio.
           </Text>
+          <DrawerToggleButton />
         </View>
 
         {/* Resumo Rápido de Estatísticas */}

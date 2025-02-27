@@ -13,10 +13,18 @@ export default function Layout() {
           }}
         />
         <Drawer.Screen
-          name="dashboard"
+          name="admin"
           options={{
             drawerLabel: "Painel Administrativo",
-            title: "dashboard",
+            title: "categories",
+          }}
+        />
+        <Drawer.Screen
+          name="(auth)"
+          options={{
+            drawerLabel: "Login",
+            title: "categories",
+            headerShown: false,
           }}
         />
       </Drawer>

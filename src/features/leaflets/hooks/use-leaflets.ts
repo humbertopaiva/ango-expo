@@ -18,14 +18,14 @@ export function useLeaflets() {
     enabled: !!companyId,
   });
 
-  // Removemos a consulta separada de contagem e usamos o array de leaflets
+  // Use the array length directly for count
   const leafletCount = Array.isArray(leaflets) ? leaflets.length : 0;
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<CreateLeafletDTO, "empresa">) => {
       if (!companyId) throw new Error("ID da empresa não encontrado");
 
-      // Verificamos o limite usando o array local
+      // Check limit before creating
       if (leafletCount >= 5)
         throw new Error("Limite máximo de encartes atingido (5)");
 
@@ -39,10 +39,10 @@ export function useLeaflets() {
     },
     onError: (error: any) => {
       console.error("Erro ao criar encarte:", error);
+      throw error; // Re-throw to be caught by the caller
     },
   });
 
-  // Resto do código permanece o mesmo
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateLeafletDTO }) =>
       leafletService.updateLeaflet(id, data),
@@ -51,6 +51,7 @@ export function useLeaflets() {
     },
     onError: (error: any) => {
       console.error("Erro ao atualizar encarte:", error);
+      throw error; // Re-throw to be caught by the caller
     },
   });
 
@@ -61,13 +62,14 @@ export function useLeaflets() {
     },
     onError: (error: any) => {
       console.error("Erro ao excluir encarte:", error);
+      throw error; // Re-throw to be caught by the caller
     },
   });
 
   return {
     leaflets: Array.isArray(leaflets) ? leaflets : [],
     isLoading,
-    leafletCount, // Agora vem do array local
+    leafletCount,
     createLeaflet: createMutation.mutate,
     updateLeaflet: updateMutation.mutate,
     deleteLeaflet: deleteMutation.mutate,

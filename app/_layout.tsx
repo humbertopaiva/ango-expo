@@ -24,14 +24,14 @@ export default function RootLayout() {
   useEffect(() => {
     if (!fontsLoaded) return;
 
-    const inAuthGroup = segments[0] === "(auth)";
-    if (!segments.length) return;
+    // const inAuthGroup = segments[0] === "(drawer)";
+    // if (!segments.length) return;
 
-    if (!isAuthenticated && !inAuthGroup && segments[0] !== "(drawer)") {
-      router.replace("/(auth)/login");
-    } else if (isAuthenticated && inAuthGroup) {
-      router.replace("/(drawer)/dashboard");
-    }
+    // if (!isAuthenticated) {
+    //   router.replace("/(drawer)/(auth)/login");
+    // } else if (isAuthenticated) {
+    //   router.replace("/(drawer)/admin/dashboard");
+    // }
   }, [isAuthenticated, segments, fontsLoaded]);
 
   if (!fontsLoaded) {

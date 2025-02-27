@@ -33,7 +33,7 @@ export function useAuthViewModel(): IAuthViewModel {
       setIsLoading(true);
       const profile = await authService.login(data);
       setAuth(profile);
-      router.replace("/(drawer)/dashboard");
+      router.replace("/(drawer)/admin/dashboard");
     } catch (error) {
       console.error(error);
       throw error;
@@ -47,7 +47,7 @@ export function useAuthViewModel(): IAuthViewModel {
       setIsLoading(true);
       await authService.logout();
       clearAuth();
-      router.replace("/(auth)/login");
+      router.replace("/(drawer)/(auth)/login");
     } catch (error) {
       console.error(error);
       throw error;
