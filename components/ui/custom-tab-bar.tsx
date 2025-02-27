@@ -78,7 +78,7 @@ export function CustomTabBar() {
   const segments = useSegments();
   const pathname = usePathname();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
-  const isAdminRoute = segments[0] === "(app)";
+  const isAdminRoute = segments[0] === "(drawer)";
 
   // Modal state
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -115,7 +115,7 @@ export function CustomTabBar() {
       name: "dashboard",
       label: "Dashboard",
       icon: BarChart,
-      path: "/(app)/admin/dashboard",
+      path: "/admin/dashboard",
       color: "#4F46E5",
     },
     {
@@ -123,7 +123,7 @@ export function CustomTabBar() {
       name: "categories",
       label: "Categorias",
       icon: Grid,
-      path: "/(app)/admin/categories",
+      path: "/admin/categories",
       color: "#0891B2",
     },
     {
@@ -131,7 +131,7 @@ export function CustomTabBar() {
       name: "products",
       label: "Produtos",
       icon: Package,
-      path: "/(app)/admin/products",
+      path: "/admin/products",
       color: "#F59E0B",
     },
     {
@@ -139,7 +139,7 @@ export function CustomTabBar() {
       name: "profile",
       label: "Perfil",
       icon: User,
-      path: "/(app)/admin/profile",
+      path: "/admin/profile",
       color: "#EC4899",
     },
     {
@@ -147,7 +147,7 @@ export function CustomTabBar() {
       name: "destaques",
       label: "Destaques",
       icon: Star,
-      path: "/(app)/admin/destaques",
+      path: "/admin/destaques",
       color: "#10B981",
     },
     {
@@ -155,7 +155,7 @@ export function CustomTabBar() {
       name: "vitrine",
       label: "Vitrine",
       icon: ShoppingBag,
-      path: "/(app)/admin/vitrine",
+      path: "/admin/vitrine",
       color: "#8B5CF6",
     },
     {
@@ -163,7 +163,7 @@ export function CustomTabBar() {
       name: "delivery-config",
       label: "Config. Delivery",
       icon: Settings,
-      path: "/(app)/admin/delivery-config",
+      path: "/admin/delivery-config",
       color: "#6B7280",
     },
     {
@@ -171,7 +171,7 @@ export function CustomTabBar() {
       name: "encartes-admin",
       label: "Encartes Admin",
       icon: FileText,
-      path: "/(app)/admin/encartes",
+      path: "/admin/encartes",
       color: "#EF4444",
     },
   ];
@@ -186,11 +186,11 @@ export function CustomTabBar() {
   const isRouteActive = (routeName: string) => {
     // Para rotas públicas
     if (routeName === "comercio-local") {
-      return pathname === "/(public)/comercio-local";
+      return pathname === "/(drawer)/(public-tabs)/comercio-local";
     } else if (routeName === "delivery") {
-      return pathname === "/(public)/delivery";
+      return pathname === "/(drawer)/(public-tabs)/delivery";
     } else if (routeName === "encartes") {
-      return pathname === "/(public)/encartes";
+      return pathname === "/(drawer)/(public-tabs)/encartes";
     }
 
     // Mesmo em rotas admin, ainda queremos destacar a tab pública
@@ -198,7 +198,7 @@ export function CustomTabBar() {
     if (
       isAdminRoute &&
       routeName === "encartes" &&
-      pathname.includes("/(app)/admin/encartes")
+      pathname.includes("/admin/encartes")
     ) {
       return true;
     }

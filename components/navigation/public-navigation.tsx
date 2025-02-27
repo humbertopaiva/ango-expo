@@ -18,19 +18,19 @@ const navigationItems = [
     name: "comercio-local",
     label: "Comércio Local",
     icon: Store,
-    path: "/(public)/comercio-local",
+    path: "/(drawer)/(public-tabs)/comercio-local",
   },
   {
     name: "delivery",
     label: "Delivery",
     icon: Truck,
-    path: "/(public)/delivery",
+    path: "/(drawer)/(public-tabs)/delivery",
   },
   {
     name: "encartes",
     label: "Encartes",
     icon: FileText,
-    path: "/(public)/encartes",
+    path: "/(drawer)/(public-tabs)/encartes",
   },
 ];
 

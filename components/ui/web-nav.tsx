@@ -10,21 +10,21 @@ export function WebNav() {
     <View className="hidden md:flex border-b border-gray-200 bg-white">
       <View className="max-w-7xl mx-auto w-full">
         <View className="flex-row items-center justify-center space-x-8 py-4">
-          <Link href="/(public)/comercio-local" asChild>
+          <Link href="/(drawer)/(tabs)/comercio-local" asChild>
             <TouchableOpacity className="flex-row items-center space-x-2">
               <Store size={20} />
               <Text>Comércio Local</Text>
             </TouchableOpacity>
           </Link>
 
-          <Link href="/(public)/delivery" asChild>
+          <Link href="/(drawer)/(tabs)/delivery" asChild>
             <TouchableOpacity className="flex-row items-center space-x-2">
               <Truck size={20} />
               <Text>Delivery</Text>
             </TouchableOpacity>
           </Link>
 
-          <Link href="/(public)/encartes" asChild>
+          <Link href="/(drawer)/(tabs)/encartes" asChild>
             <TouchableOpacity className="flex-row items-center space-x-2">
               <FileText size={20} />
               <Text>Encartes</Text>

@@ -65,7 +65,7 @@ export function LeafletsContent() {
             leaflets={vm.leaflets}
             isLoading={vm.isLoading}
             onEdit={(leaflet) => {
-              router.push(`/(app)/admin/leaflets/${leaflet.id}` as any);
+              router.push(`/admin/leaflets/${leaflet.id}` as any);
             }}
             onDelete={(leaflet) => vm.handleDeleteLeaflet(leaflet)}
             onView={(leaflet) => vm.handleViewLeaflet(leaflet)}

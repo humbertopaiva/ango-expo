@@ -27,10 +27,10 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === "(auth)";
     if (!segments.length) return;
 
-    if (!isAuthenticated && !inAuthGroup && segments[0] !== "(public)") {
+    if (!isAuthenticated && !inAuthGroup && segments[0] !== "(drawer)") {
       router.replace("/(auth)/login");
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace("/(app)/admin/dashboard");
+      router.replace("/(drawer)/(signin)/admin/dashboard");
     }
   }, [isAuthenticated, segments, fontsLoaded]);
 
