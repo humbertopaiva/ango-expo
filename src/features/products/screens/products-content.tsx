@@ -6,8 +6,8 @@ import { ProductsList } from "../components/products-list";
 import { SearchInput } from "@/components/custom/search-input";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
 import { Plus } from "lucide-react-native";
-import { Button, ButtonText } from "@/components/ui/button";
 import { router } from "expo-router";
+import { PrimaryActionButton } from "@/components/common/primary-action-button";
 
 export function ProductsContent() {
   const vm = useProductsContext();
@@ -34,16 +34,8 @@ export function ProductsContent() {
           />
         </View>
 
-        {/* Add Button */}
-        <View className="my-3">
-          <Button onPress={handleAddProduct}>
-            <Plus size={18} color="white" className="mr-2" />
-            <ButtonText>Novo Produto</ButtonText>
-          </Button>
-        </View>
-
         {/* Products List */}
-        <View className="flex-1">
+        <View className="flex-1 pb-20">
           <ProductsList
             products={vm.products}
             isLoading={vm.isLoading}
@@ -51,6 +43,13 @@ export function ProductsContent() {
             onDelete={(product) => vm.confirmDeleteProduct(product.id)}
           />
         </View>
+
+        {/* Primary Action Button */}
+        <PrimaryActionButton
+          onPress={handleAddProduct}
+          label="Novo Produto"
+          icon={<Plus size={20} color="white" />}
+        />
 
         {/* Confirmation Dialog */}
         <ConfirmationDialog

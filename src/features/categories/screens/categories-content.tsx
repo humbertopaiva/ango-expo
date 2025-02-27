@@ -10,9 +10,15 @@ import { SearchInput } from "@/components/custom/search-input";
 import { Button, ButtonText } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
 import { CategoryFormModal } from "../components/category-form-modal";
+import { PrimaryActionButton } from "@/components/common/primary-action-button";
+import { router } from "expo-router";
 
 export function CategoriesContent() {
   const vm = useCategoriesContext();
+
+  const handleAddCategory = () => {
+    router.push("/admin/categories/new");
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -64,6 +70,13 @@ export function CategoriesContent() {
           }
           isLoading={vm.isCreating || vm.isUpdating}
           category={vm.selectedCategory}
+        />
+
+        {/* Primary Action Button */}
+        <PrimaryActionButton
+          onPress={handleAddCategory}
+          label="Nova Categoria"
+          icon={<Plus size={20} color="white" />}
         />
 
         {/* Confirmation Dialog */}
