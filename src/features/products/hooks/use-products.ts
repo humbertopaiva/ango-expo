@@ -1,3 +1,4 @@
+// src/features/products/hooks/use-products.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productService } from "../services/product.service";
 import { CreateProductDTO, UpdateProductDTO } from "../models/product";

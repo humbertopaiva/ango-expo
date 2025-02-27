@@ -30,7 +30,7 @@ export default function RootLayout() {
     if (!isAuthenticated && !inAuthGroup && segments[0] !== "(drawer)") {
       router.replace("/(auth)/login");
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace("/(drawer)/(signin)/admin/dashboard");
+      router.replace("/(drawer)/dashboard");
     }
   }, [isAuthenticated, segments, fontsLoaded]);
 

@@ -49,12 +49,12 @@ export default function AdminLayout() {
           }}
         >
           {/* Dashboard */}
-          <Stack.Screen
+          {/* <Stack.Screen
             name="dashboard/index"
             options={{
               title: "Dashboard",
             }}
-          />
+          /> */}
 
           {/* Categorias */}
           <Stack.Screen
@@ -69,18 +69,21 @@ export default function AdminLayout() {
             name="products/index"
             options={{
               title: "Produtos",
+              headerBackVisible: true,
             }}
           />
           <Stack.Screen
             name="products/new"
             options={{
               title: "Novo Produto",
+              headerBackVisible: true,
             }}
           />
           <Stack.Screen
             name="products/[id]"
             options={{
               title: "Produto",
+              headerBackVisible: true,
             }}
           />
 
