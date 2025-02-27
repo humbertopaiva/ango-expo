@@ -28,55 +28,55 @@ const navigationItems = [
     name: "categories",
     label: "Categorias",
     icon: Grid,
-    path: "/(app)/admin/categories",
+    path: "/admin/categories",
   },
   {
     name: "products",
     label: "Produtos",
     icon: Package,
-    path: "/(app)/admin/products",
+    path: "/admin/products",
   },
   {
     name: "delivery",
     label: "Delivery",
     icon: Truck,
-    path: "/(app)/admin/delivery",
+    path: "/admin/delivery",
   },
   {
     name: "delivery-config",
     label: "Config. Entrega",
     icon: Settings,
-    path: "/(app)/admin/delivery-config",
+    path: "/admin/delivery-config",
   },
   {
     name: "destaques",
     label: "Destaques",
     icon: Star,
-    path: "/(app)/admin/destaques",
+    path: "/admin/destaques",
   },
   {
     name: "encartes",
     label: "Encartes",
     icon: FileText,
-    path: "/(app)/admin/encartes",
+    path: "/admin/encartes",
   },
   {
     name: "profile",
     label: "Perfil",
     icon: User,
-    path: "/(app)/admin/profile",
+    path: "/admin/profile",
   },
   {
     name: "vitrine",
     label: "Vitrine",
     icon: Star,
-    path: "/(app)/admin/vitrine",
+    path: "/admin/vitrine",
   },
   {
     name: "leaflets",
     label: "Encartes",
     icon: FileText,
-    path: "/(app)/admin/leaflets",
+    path: "/admin/leaflets",
   },
 ];
 
@@ -144,7 +144,7 @@ export function AdminNavigation() {
         <View className="p-4 border-t border-gray-200">
           <TouchableOpacity
             className="flex-row items-center"
-            onPress={() => router.push("/(app)/admin/profile")}
+            onPress={() => router.push("/admin/profile")}
           >
             <View className="w-8 h-8 rounded-full bg-gray-200 items-center justify-center">
               <User size={16} color="#6B7280" />
@@ -216,7 +216,7 @@ export function AdminNavigation() {
                 <TouchableOpacity
                   className="flex-row items-center"
                   onPress={() => {
-                    router.push("/(app)/admin/profile");
+                    router.push("/admin/profile");
                     setIsMenuOpen(false);
                   }}
                 >

@@ -14,11 +14,11 @@ export function ProductsContent() {
 
   // Funções para navegação direta em vez de usar modal
   const handleAddProduct = () => {
-    router.push("/(app)/admin/products/new");
+    router.push("/admin/products/new");
   };
 
   const handleEditProduct = (productId: string) => {
-    router.push(`/(app)/admin/products/${productId}`);
+    router.push(`/admin/products/${productId}`);
   };
 
   return (

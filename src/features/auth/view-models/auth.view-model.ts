@@ -33,7 +33,7 @@ export function useAuthViewModel(): IAuthViewModel {
       setIsLoading(true);
       const profile = await authService.login(data);
       setAuth(profile);
-      router.replace("/(app)/home");
+      router.replace("/(drawer)/(signin)/admin/dashboard");
     } catch (error) {
       console.error(error);
       throw error;

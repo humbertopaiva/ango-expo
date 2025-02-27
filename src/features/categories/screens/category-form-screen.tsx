@@ -77,7 +77,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
         await createCategory({ data });
       }
       // Navega de volta para a listagem de categorias
-      router.push("/(app)/admin/categories");
+      router.push("/admin/categories");
     } catch (error) {
       console.error("Error submitting form:", error);
     }
@@ -146,7 +146,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
           <HStack space="md" justifyContent="flex-end">
             <Button
               variant="outline"
-              onPress={() => router.push("/(app)/admin/categories")}
+              onPress={() => router.push("/admin/categories")}
               disabled={isLoading}
               className="flex-1"
             >

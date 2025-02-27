@@ -55,7 +55,7 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
         setSelectedCategory(null);
         setIsFormVisible(false);
         // Navegar de volta para a listagem após atualização
-        router.push("/(app)/admin/categories");
+        router.push("/admin/categories");
       } catch (error) {
         console.error("Error updating category:", error);
       }

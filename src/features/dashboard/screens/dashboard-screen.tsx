@@ -28,42 +28,42 @@ export function DashboardScreen() {
       icon: Grid,
       color: "#0891B2", // primary-500
       count: categories?.length || 0,
-      path: "/(app)/admin/categories" as const,
+      path: "/admin/categories" as const,
     },
     {
       title: "Produtos",
       icon: Package,
       color: "#F59E0B", // amber-500
       count: 0,
-      path: "/(app)/admin/products" as const,
+      path: "/admin/products" as const,
     },
     {
       title: "Destaques",
       icon: Star,
       color: "#10B981", // emerald-500
       count: 0,
-      path: "/(app)/admin/destaques" as const,
+      path: "/admin/destaques" as const,
     },
     {
       title: "Delivery",
       icon: Truck,
       color: "#6366F1", // indigo-500
       count: 0,
-      path: "/(app)/admin/delivery-config" as const,
+      path: "/admin/delivery-config" as const,
     },
     {
       title: "Encartes",
       icon: FileText,
       color: "#EC4899", // pink-500
       count: 0,
-      path: "/(app)/admin/encartes" as const,
+      path: "/admin/encartes" as const,
     },
     {
       title: "Vitrine",
       icon: PieChart,
       color: "#8B5CF6", // violet-500
       count: 0,
-      path: "/(app)/admin/vitrine" as const,
+      path: "/admin/vitrine" as const,
     },
   ];
 
