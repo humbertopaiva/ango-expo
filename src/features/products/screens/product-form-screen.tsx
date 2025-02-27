@@ -31,12 +31,14 @@ import {
   TextareaInput,
   Switch,
 } from "@gluestack-ui/themed";
+import { useToast } from "@/src/hooks/use-toast";
 
 interface ProductFormScreenProps {
   productId?: string;
 }
 
 export function ProductFormScreen({ productId }: ProductFormScreenProps) {
+  const toast = useToast();
   const params = useLocalSearchParams<{ id: string }>();
   const id = productId || params.id;
   const isEditing = !!id;
@@ -79,7 +81,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         descricao: product.descricao,
         preco: product.preco,
         preco_promocional: product.preco_promocional || "",
-        categoria: product.categoria,
+        categoria: product.categoria ?? undefined,
         imagem: product.imagem,
         parcelamento_cartao: product.parcelamento_cartao,
         parcelas_sem_juros: product.parcelas_sem_juros,
@@ -105,10 +107,20 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           id,
           data: dataToSubmit,
         });
+        toast.show({
+          title: "Produto atualizado",
+          description: "O produto foi atualizado com sucesso!",
+          type: "success",
+        });
       } else {
         await createProduct({
           ...dataToSubmit,
           estoque: 0,
+        });
+        toast.show({
+          title: "Produto criado",
+          description: "O produto foi criado com sucesso!",
+          type: "success",
         });
       }
 
@@ -118,6 +130,13 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       }, 100);
     } catch (error) {
       console.error("Error submitting form:", error);
+      toast.show({
+        title: "Erro",
+        description: `Ocorreu um erro ao ${
+          isEditing ? "atualizar" : "criar"
+        } o produto.`,
+        type: "error",
+      });
       setIsSubmitting(false);
     }
   };
@@ -139,11 +158,6 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScreenHeader
-        title={isEditing ? "Editar Produto" : "Novo Produto"}
-        showBackButton={true}
-      />
-
       <ScrollView
         className="flex-1 p-4"
         showsVerticalScrollIndicator={false}
@@ -473,7 +487,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
 
       {/* Botões de ação */}
       <View
-        className="absolute bottom-16 left-0 right-0 w-full pb-6 pt-3 bg-white border-t border-gray-200 shadow-lg"
+        className="absolute bottom-0 left-0 right-0 w-full pb-6 pt-3 bg-white border-t border-gray-200 shadow-lg"
         style={{ paddingBottom: Platform.OS === "ios" ? 24 : 16 }}
       >
         <FormActions

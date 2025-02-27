@@ -12,6 +12,13 @@ export default function Layout() {
             title: "categories",
           }}
         />
+        <Drawer.Screen
+          name="dashboard"
+          options={{
+            drawerLabel: "Painel Administrativo",
+            title: "dashboard",
+          }}
+        />
       </Drawer>
     </GestureHandlerRootView>
   );

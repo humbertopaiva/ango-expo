@@ -2,7 +2,6 @@
 import { useState, useCallback } from "react";
 import { Product } from "../models/product";
 import { useProducts } from "../hooks/use-products";
-import { ProductFormData } from "../schemas/product.schema";
 import { IProductsViewModel } from "./products.view-model.interface";
 import { useToast } from "@/src/hooks/use-toast";
 
@@ -42,15 +41,15 @@ export function useProductsViewModel(): IProductsViewModel {
         await deleteProduct(id);
         setIsDeleteDialogOpen(false);
         setProductToDelete(null);
-        toast?.show({
-          title: "Sucesso",
-          description: "Produto excluído com sucesso!",
+        toast.show({
+          title: "Produto excluído",
+          description: "O produto foi excluído com sucesso.",
           type: "success",
         });
       } catch (error) {
         console.error("Error deleting product:", error);
-        toast?.show({
-          title: "Erro",
+        toast.show({
+          title: "Erro ao excluir",
           description: "Não foi possível excluir o produto. Tente novamente.",
           type: "error",
         });
