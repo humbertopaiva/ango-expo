@@ -15,9 +15,11 @@ import {
   SelectBackdrop,
   SelectContent,
   SelectDragIndicator,
+  SelectDragIndicatorWrapper,
   SelectItem,
   ChevronDownIcon,
   Text,
+  HStack,
 } from "@gluestack-ui/themed";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
@@ -25,6 +27,7 @@ import * as z from "zod";
 import { VitrineLink } from "../models";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { Globe, Instagram, Facebook, MessageCircle } from "lucide-react-native";
+import { FormControlHelperText } from "@/components/ui/form-control";
 
 const formSchema = z.object({
   texto: z.string().min(1, "Texto é obrigatório"),
@@ -91,6 +94,19 @@ export function VitrineLinkForm({
     (tipo) => tipo.id === form.watch("tipo_link")
   );
 
+  // Função para renderizar o texto do input com ícone
+  const renderSelectedText = () => {
+    if (!selectedLinkType) return "Selecione o tipo";
+
+    const Icon = selectedLinkType.icon;
+    return (
+      <HStack space="xs" alignItems="center">
+        <Icon size={16} color={selectedLinkType.color} />
+        <Text>{selectedLinkType.label}</Text>
+      </HStack>
+    );
+  };
+
   return (
     <Modal isOpen={open} onClose={onClose}>
       <Modal.Content maxWidth={400} bg="$white" borderRadius="$lg">
@@ -122,10 +138,9 @@ export function VitrineLinkForm({
                       borderRadius="$md"
                       backgroundColor="$white"
                     >
-                      <SelectInput
-                        placeholder="Selecione o tipo"
-                        value={selectedLinkType?.label}
-                      />
+                      <SelectInput placeholder="Selecione o tipo">
+                        {value ? renderSelectedText() : undefined}
+                      </SelectInput>
                       <SelectIcon>
                         <ChevronDownIcon color="$gray400" />
                       </SelectIcon>
@@ -133,7 +148,9 @@ export function VitrineLinkForm({
                     <SelectPortal>
                       <SelectBackdrop />
                       <SelectContent>
-                        <SelectDragIndicator />
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
                         {TIPOS_LINK.map((tipo) => {
                           const Icon = tipo.icon;
                           return (
@@ -141,7 +158,6 @@ export function VitrineLinkForm({
                               key={tipo.id}
                               label={tipo.label}
                               value={tipo.id}
-                              startIcon={<Icon size={16} color={tipo.color} />}
                             />
                           );
                         })}
@@ -219,25 +235,27 @@ export function VitrineLinkForm({
                       </FormControl.Error.Text>
                     </FormControl.Error>
                   )}
-                  <FormControlHelperText>
-                    {selectedLinkType?.id === "whatsapp" && (
+                  {selectedLinkType?.id === "whatsapp" && (
+                    <FormControlHelperText>
                       <Text className="text-xs text-gray-500">
                         Formato: https://wa.me/5511912345678
                       </Text>
-                    )}
-                    {selectedLinkType?.id === "instagram" && (
+                    </FormControlHelperText>
+                  )}
+                  {selectedLinkType?.id === "instagram" && (
+                    <FormControlHelperText>
                       <Text className="text-xs text-gray-500">
                         Formato: https://instagram.com/seu_perfil
                       </Text>
-                    )}
-                  </FormControlHelperText>
+                    </FormControlHelperText>
+                  )}
                 </FormControl>
               )}
             />
           </VStack>
         </Modal.Body>
         <Modal.Footer>
-          <View className="flex-row justify-end space-x-2 w-full">
+          <View className="flex-row justify-end gap-2 w-full">
             <Button
               variant="outline"
               onPress={onClose}

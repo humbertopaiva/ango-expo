@@ -65,7 +65,7 @@ export function VitrineLinkList({
 
   if (isLoading || isReordering) {
     return (
-      <View className="space-y-4">
+      <View className="gap-4">
         {[1, 2, 3].map((i) => (
           <Card key={i} className="h-24 bg-gray-100 rounded-lg animate-pulse" />
         ))}

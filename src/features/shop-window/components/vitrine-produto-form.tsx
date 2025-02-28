@@ -180,7 +180,7 @@ export function VitrineProdutoForm({
           </VStack>
         </Modal.Body>
         <Modal.Footer>
-          <View className="flex-row justify-end space-x-2 w-full">
+          <View className="flex-row justify-end gap-2 w-full">
             <Button
               variant="outline"
               onPress={onClose}

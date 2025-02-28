@@ -74,7 +74,7 @@ export function VitrineProdutoList({
 
   if (isLoading || isReordering) {
     return (
-      <View className="space-y-4">
+      <View className="gap-4">
         {[1, 2, 3].map((i) => (
           <Card key={i} className="animate-pulse">
             <View className="p-4">
