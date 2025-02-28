@@ -1,9 +1,11 @@
+// Path: src/components/custom/action-card.tsx
+
 // components/custom/ActionCard.tsx
 import React from "react";
 import { View, Text } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Edit3 } from "lucide-react-native";
-import { Button, ButtonText } from "@/components/ui/button";
+import { PrimaryActionButton } from "../common/primary-action-button";
 
 interface ActionCardProps {
   title: string;
@@ -30,10 +32,21 @@ export function ActionCard({
         <View className="flex-row items-center justify-between">
           <Text className="text-lg font-semibold">{title}</Text>
           {onAction && (
-            <Button variant="outline" size="sm" onPress={onAction}>
-              <Icon size={16} color="#000000" className="mr-2" />
-              <ButtonText>{actionLabel}</ButtonText>
-            </Button>
+            <PrimaryActionButton
+              onPress={onAction}
+              icon={<Icon size={16} color="white" />}
+              label={actionLabel}
+              floating={true}
+              style={{
+                position: "relative",
+                right: 0,
+                top: 0,
+                width: "auto",
+                height: "auto",
+                padding: 0,
+              }}
+              primaryColor="#F4511E"
+            />
           )}
         </View>
       </View>

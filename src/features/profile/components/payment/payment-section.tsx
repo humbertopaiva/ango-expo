@@ -56,7 +56,7 @@ export function PaymentSection() {
             return (
               <View
                 key={option.id}
-                className="bg-white rounded-md p-4 flex-row items-center space-x-3 border border-gray-100"
+                className="bg-white rounded-md p-4 flex-row items-center gap-3 border border-gray-100"
               >
                 <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
                   <option.icon

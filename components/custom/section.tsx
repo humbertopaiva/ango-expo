@@ -22,29 +22,17 @@ export function Section({
   className = "",
 }: SectionProps) {
   return (
-    <View className={`mb-6 ${className} px-4`}>
+    <View className={`mb-6 ${className} px-4 pt-6 pb-16 flex-1`}>
       {/* Cabeçalho da seção */}
       <View className="flex-row items-center justify-between mb-4">
         <View className="flex-row items-center">
           {icon && <View className="mr-3">{icon}</View>}
-          <Text className="text-lg font-semibold text-gray-800">{title}</Text>
+          <Text className="text-xl font-semibold text-gray-800">{title}</Text>
         </View>
-
-        {onAction && (
-          <TouchableOpacity
-            onPress={onAction}
-            className="flex-row items-center py-2 px-4 rounded-lg bg-primary-500 shadow-sm"
-          >
-            {actionIcon && <View className="mr-2">{actionIcon}</View>}
-            <Text className="text-sm font-medium text-white">
-              {actionLabel}
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* Conteúdo da seção */}
-      <View>{children}</View>
+      <View className="flex-1">{children}</View>
     </View>
   );
 }
