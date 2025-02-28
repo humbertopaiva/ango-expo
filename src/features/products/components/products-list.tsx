@@ -1,14 +1,16 @@
-// src/features/products/components/products-list.tsx
+// Path: src/features/products/components/products-list.tsx
 import React from "react";
 import { Product } from "../models/product";
-import { DataList } from "@/components/custom/data-list";
-import { ListItem } from "@/components/custom/list-item";
+import { SwipeableDataList } from "@/components/custom/swipeable-data-list";
+import { Package } from "lucide-react-native";
+import { ProductSkeletonList } from "./product-skeleton";
 
 interface ProductsListProps {
   products: Product[];
   isLoading: boolean;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onItemPress?: (product: Product) => void;
 }
 
 export function ProductsList({
@@ -16,28 +18,39 @@ export function ProductsList({
   isLoading = false,
   onEdit = () => {},
   onDelete = () => {},
+  onItemPress,
 }: ProductsListProps) {
   return (
-    <DataList
+    <SwipeableDataList
       data={products}
       isLoading={isLoading}
       emptyMessage="Nenhum produto encontrado. Crie um novo produto para começar."
-      renderItem={(product) => (
-        <ListItem
-          title={product.nome}
-          description={product.descricao}
-          price={product.preco}
-          promotionalPrice={product.preco_promocional ?? undefined}
-          imageUri={product.imagem}
-          status={product.status}
-          statusLabel={
-            product.status === "disponivel" ? "Disponível" : "Indisponível"
-          }
-          onEdit={() => onEdit(product)}
-          onDelete={() => onDelete(product)}
-          metadata={[]}
-        />
-      )}
+      renderSkeleton={() => <ProductSkeletonList count={3} />}
+      getTitle={(product) => product.nome}
+      getSubtitle={(product) =>
+        product.descricao
+          ? product.descricao.slice(0, 50) +
+            (product.descricao.length > 50 ? "..." : "")
+          : ""
+      }
+      getPrice={(product) => product.preco}
+      getPromotionalPrice={(product) => product.preco_promocional || undefined}
+      getImageUri={(product) => product.imagem}
+      getImageIcon={() => Package}
+      getStatus={(product) => product.status}
+      getStatusLabel={(product) =>
+        product.status === "disponivel" ? "Disponível" : "Indisponível"
+      }
+      getMetadata={(product) => {
+        const metadata = [];
+        if (product.categoria !== null && product.categoria !== undefined) {
+          metadata.push({ label: "Categoria", value: `#${product.categoria}` });
+        }
+        return metadata;
+      }}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onItemPress={onItemPress}
     />
   );
 }
