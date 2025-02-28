@@ -67,7 +67,7 @@ export function ListItem({
 
           <View className="flex-1">
             <Text
-              className="font-medium text-xs"
+              className="font-medium text-sm"
               numberOfLines={1}
               ellipsizeMode="tail"
             >

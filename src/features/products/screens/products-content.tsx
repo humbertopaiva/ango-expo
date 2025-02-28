@@ -8,9 +8,12 @@ import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
 import { Plus } from "lucide-react-native";
 import { router } from "expo-router";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
+import { useCategories } from "../../categories/hooks/use-categories";
+import { CategoryFilter } from "../components/category-filter";
 
 export function ProductsContent() {
   const vm = useProductsContext();
+  const { categories, isLoading: isCategoriesLoading } = useCategories();
 
   // Funções para navegação direta em vez de usar modal
   const handleAddProduct = () => {
@@ -33,6 +36,15 @@ export function ProductsContent() {
             disabled={vm.isLoading}
           />
         </View>
+
+        {/* Filtro de Categorias */}
+        {!isCategoriesLoading && categories.length > 0 && (
+          <CategoryFilter
+            categories={categories}
+            selectedCategoryId={vm.selectedCategoryId}
+            onSelectCategory={vm.setSelectedCategory}
+          />
+        )}
 
         {/* Products List */}
         <View className="flex-1 pb-20">
