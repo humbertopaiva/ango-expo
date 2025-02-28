@@ -223,7 +223,7 @@ export function HoursForm({
                   </FormControl>
 
                   {isDayActive(day.key) && (
-                    <View className="flex-row space-x-4">
+                    <View className="flex-row gap-4">
                       <FormControl
                         isInvalid={
                           !!form.formState.errors[

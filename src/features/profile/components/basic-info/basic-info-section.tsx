@@ -15,6 +15,7 @@ import { ImagePreview } from "@/components/custom/image-preview";
 import { BasicInfoForm } from "./basic-info-form";
 import { Section } from "@/components/custom/section";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { PrimaryActionButton } from "@/components/common/primary-action-button";
 
 export function BasicInfoSection() {
   const vm = useProfileContext();
@@ -38,25 +39,18 @@ export function BasicInfoSection() {
     !vm.profile.descricao || !vm.profile.logo || !vm.profile.banner;
 
   return (
-    <View>
+    <View className="flex-1 style={{ minHeight: '100%' }}">
       <Section
         title="Informações Básicas"
-        icon={<Building2 size={22} color={THEME_COLORS.secondary} />}
+        icon={<Building2 size={22} color={THEME_COLORS.primary} />}
         actionLabel="Editar"
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsBasicInfoOpen(true)}
-        className="mb-2"
+        className="mb-2 flex-1"
       >
         {/* Informações Gerais - Nome e Descrição */}
         <View className="">
-          {/* <View className="flex-row items-center mb-3">
-            <Building2 size={18} color="#6B7280" />
-            <Text className="ml-2 text-base font-medium text-gray-700">
-              Informações Gerais
-            </Text>
-          </View> */}
-
-          <View className="bg-white rounded-md p-4 mb-2">
+          <View className="bg-white rounded-md p-4 mb-4">
             <Text className="text-xl font-bold text-gray-800 mb-2">
               {vm.profile.nome}
             </Text>
@@ -87,13 +81,6 @@ export function BasicInfoSection() {
 
         {/* Imagens da Marca - Logo e Banner */}
         <View className=" bg-white rounded-md p-4 ">
-          {/* <View className="flex-row items-center mb-3">
-            <FileText size={18} color="#6B7280" />
-            <Text className="ml-2 text-base font-medium text-gray-700">
-              Imagens da Marca
-            </Text>
-          </View> */}
-
           <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Logo */}
             <View className="gap-2">

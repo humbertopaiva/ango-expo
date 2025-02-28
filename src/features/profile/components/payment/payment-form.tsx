@@ -161,11 +161,11 @@ export function PaymentForm({
               title="Formas de Pagamento"
               icon={<CreditCard size={22} color="#0891B2" />}
             >
-              <View className="flex-col py-4 space-y-4">
+              <View className="flex-col py-4 gap-4">
                 {PAYMENT_OPTIONS.map((option, index) => (
                   <FormControl key={option.id}>
                     <View className="flex-row items-center justify-between p-4 border rounded-lg bg-gray-50">
-                      <View className="flex-row items-center space-x-3">
+                      <View className="flex-row items-center gap-3">
                         <View className="w-10 h-10 rounded-full bg-white items-center justify-center">
                           <option.icon size={20} color={option.color} />
                         </View>
