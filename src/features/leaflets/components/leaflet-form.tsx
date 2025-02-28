@@ -390,7 +390,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
 
       {/* Footer */}
       <View className="px-4 py-4 border-t border-gray-200">
-        <View className="flex-row space-x-4 justify-end">
+        <View className="flex-row gap-4 justify-end">
           <Button
             variant="outline"
             onPress={() => router.back()}

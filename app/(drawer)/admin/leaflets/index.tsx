@@ -1,5 +1,4 @@
-// app/(app)/admin/leaflets/index.tsx
-
+// Path: app/(drawer)/admin/leaflets/index.tsx
 import React from "react";
 import { LeafletsScreen } from "@/src/features/leaflets/screens/leaflets-screen";
 
