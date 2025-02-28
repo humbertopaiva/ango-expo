@@ -69,7 +69,7 @@ export function LeafletDetailsModal({
 
           <ScrollView className="flex-1">
             {/* Cabeçalho com Banner e Info Básica */}
-            <View className="p-4 flex-row space-x-4">
+            <View className="p-4 flex-row gap-4">
               <View className="w-24 h-24 rounded-lg overflow-hidden">
                 <ImagePreview
                   uri={leaflet.banner}
@@ -85,7 +85,7 @@ export function LeafletDetailsModal({
                   {leaflet.nome}
                 </Text>
 
-                <View className="flex-row mt-1 space-x-2">
+                <View className="flex-row mt-1 gap-2">
                   <StatusBadge
                     status={leaflet.status}
                     customLabel={

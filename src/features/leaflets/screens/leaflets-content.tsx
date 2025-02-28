@@ -1,116 +1,90 @@
-// src/features/leaflets/screens/leaflets-content.tsx
-
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
+// Path: src/features/leaflets/screens/leaflets-content.tsx
+import React, { useState, useEffect } from "react";
+import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLeafletsContext } from "../contexts/use-leaflets-context";
-import { LeafletsList } from "../components/leaflets-list";
-import { Plus, Search, AlertCircle } from "lucide-react-native";
-import {
-  Input,
-  InputField,
-  Modal,
-  AlertText,
-  AlertIcon,
-} from "@gluestack-ui/themed";
-import { Button } from "@gluestack-ui/themed";
+import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
+import { Plus, FileText, AlertCircle } from "lucide-react-native";
 import { router } from "expo-router";
-import ScreenHeader from "@/components/ui/screen-header";
+import { PrimaryActionButton } from "@/components/common/primary-action-button";
+import { LeafletDetailsList } from "../components/leaflet-details-list";
+import { SearchInput } from "@/components/custom/search-input";
 import { LeafletDetailsModal } from "../components/leaflet-details-modal";
+import { Alert } from "@/components/ui/alert";
+import { SwipeTutorial } from "@/components/custom/swipe-tutorial";
 
 export function LeafletsContent() {
   const vm = useLeafletsContext();
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+
+  const handleAddLeaflet = () => {
+    // Verifica se atingiu o limite de encartes
+    if (vm.leafletCount >= 5) {
+      return; // Não permite a criação de mais encartes
+    }
+    router.push("/admin/leaflets/new");
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 px-4">
-        {/* Alerta de limite atingido */}
-        {vm.leafletCount >= 5 && (
-          <View className="mb-4 bg-amber-50 p-4 rounded-lg flex-row items-start">
-            <AlertCircle size={20} color="#F59E0B" className="mr-2 mt-0.5" />
-            <Text className="text-amber-800 flex-1">
-              Você atingiu o limite máximo de 5 encartes. Para criar um novo
-              encarte, exclua um dos existentes.
-            </Text>
-          </View>
-        )}
+      <View className="flex-1 w-full container px-4 mx-auto">
+        {/* Contador de limite e alerta */}
+        <View className="mt-3">
+          <Text className="text-sm text-primary-700 mb-2">
+            {vm.leafletCount}/5 encartes criados
+          </Text>
 
-        {/* Search */}
-        <View className="mb-4">
-          <View className="relative">
-            <View className="absolute left-3 top-3 z-10">
-              <Search size={20} color="#6B7280" />
-            </View>
-            <Input
-              variant="outline"
-              size="md"
-              isDisabled={false}
-              isInvalid={false}
-              isReadOnly={false}
-            >
-              <InputField
-                placeholder="Buscar encartes..."
-                value={vm.searchTerm}
-                onChangeText={vm.setSearchTerm}
-                className="pl-10"
-              />
-            </Input>
-          </View>
+          {vm.leafletCount >= 5 && (
+            <Alert className="mb-4 bg-amber-50 border border-amber-200">
+              <AlertCircle size={16} color="#F59E0B" />
+              <Text className="ml-2 text-amber-700">
+                Você atingiu o limite máximo de 5 encartes. Para criar um novo
+                encarte, exclua um dos existentes.
+              </Text>
+            </Alert>
+          )}
         </View>
 
-        {/* List */}
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <LeafletsList
+        {/* Barra de busca */}
+        <SearchInput
+          value={vm.searchTerm}
+          onChangeText={vm.setSearchTerm}
+          placeholder="Buscar encartes..."
+          disabled={vm.isLoading}
+        />
+
+        {/* Lista de encartes com swipe */}
+        <View className="flex-1 mt-4 pb-20">
+          <LeafletDetailsList
             leaflets={vm.leaflets}
             isLoading={vm.isLoading}
-            onEdit={(leaflet) => {
-              router.push(`/admin/leaflets/${leaflet.id}` as any);
-            }}
+            onEdit={(leaflet) => router.push(`/admin/leaflets/${leaflet.id}`)}
             onDelete={(leaflet) => vm.handleDeleteLeaflet(leaflet)}
             onView={(leaflet) => vm.handleViewLeaflet(leaflet)}
           />
-        </ScrollView>
+        </View>
 
-        {/* Delete Confirmation Modal */}
-        <Modal
+        {/* Botão de ação primária */}
+        <PrimaryActionButton
+          onPress={handleAddLeaflet}
+          label="Novo Encarte"
+          icon={<Plus size={20} color="white" />}
+          primaryColor={vm.leafletCount >= 5 ? "#9CA3AF" : "#F4511E"}
+          secondaryColor={vm.leafletCount >= 5 ? "#6B7280" : "#6200EE"}
+        />
+
+        {/* Diálogo de confirmação de exclusão */}
+        <ConfirmationDialog
           isOpen={vm.isDeleteModalVisible}
           onClose={() => vm.setIsDeleteModalVisible(false)}
-        >
-          <Modal.Content>
-            <Modal.Header>
-              <Text className="text-lg font-semibold">Excluir Encarte</Text>
-            </Modal.Header>
-            <Modal.Body>
-              <Text>
-                Tem certeza que deseja excluir o encarte "
-                {vm.selectedLeaflet?.nome}"? Esta ação não pode ser desfeita.
-              </Text>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="outline"
-                onPress={() => vm.setIsDeleteModalVisible(false)}
-                disabled={vm.isDeleting}
-                className="mr-2"
-              >
-                <Button.Text>Cancelar</Button.Text>
-              </Button>
-              <Button
-                variant="solid"
-                bgColor="$red500"
-                onPress={vm.handleConfirmDelete}
-                disabled={vm.isDeleting}
-              >
-                <Button.Text>
-                  {vm.isDeleting ? "Excluindo..." : "Excluir"}
-                </Button.Text>
-              </Button>
-            </Modal.Footer>
-          </Modal.Content>
-        </Modal>
+          onConfirm={vm.handleConfirmDelete}
+          title="Excluir Encarte"
+          message={`Tem certeza que deseja excluir o encarte "${vm.selectedLeaflet?.nome}"? Esta ação não pode ser desfeita.`}
+          confirmLabel="Excluir"
+          variant="danger"
+          isLoading={vm.isDeleting}
+        />
 
-        {/* Leaflet Details Modal */}
+        {/* Modal de visualização de detalhes */}
         <LeafletDetailsModal
           leaflet={vm.selectedLeaflet}
           isVisible={vm.isViewModalVisible}
