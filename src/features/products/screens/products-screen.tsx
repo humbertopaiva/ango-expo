@@ -7,12 +7,11 @@ import ScreenHeader from "@/components/ui/screen-header";
 
 export function ProductsScreen() {
   return (
-    <View className="flex-1 bg-white">
-      {/* <ScreenHeader
+    <View className="flex-1 bg-background">
+      <ScreenHeader
         title="Produtos"
         subtitle="Gerencie os produtos da sua loja"
-        showBackButton={false}
-      /> */}
+      />
       <ProductsProvider>
         <ProductsContent />
       </ProductsProvider>

@@ -23,7 +23,7 @@ export function CategoriesContent() {
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <View className="flex-1">
         {/* Conteúdo fixo superior */}
-        <View className="px-4 pt-3 pb-2">
+        <View className="px-4 pt-3 pb- bg-background-100">
           {/* Search */}
           <SearchInput
             value={vm.searchTerm}

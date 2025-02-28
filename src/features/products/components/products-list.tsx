@@ -17,14 +17,6 @@ export function ProductsList({
   onEdit = () => {},
   onDelete = () => {},
 }: ProductsListProps) {
-  const formatCurrency = (value: string) => {
-    const numericValue = parseFloat(value);
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(numericValue);
-  };
-
   return (
     <DataList
       data={products}
