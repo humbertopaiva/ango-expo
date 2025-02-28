@@ -1,8 +1,8 @@
-// Path: src/features/vitrine/components/vitrine-link-list.tsx
+// Path: src/features/shop-window/components/vitrine-link-list.tsx
 import React, { useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, FlatList } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Link2, ArrowDown, ArrowUp, Check } from "lucide-react-native";
+import { Link2, Check, PanelRight, ChevronsUpDown } from "lucide-react-native";
 import { VitrineLink } from "../models";
 import { SortableLinkItem } from "./sortable-link-item";
 import { Button, ButtonText } from "@/components/ui/button";
@@ -65,7 +65,7 @@ export function VitrineLinkList({
 
   if (isLoading || isReordering) {
     return (
-      <View className="space-y-4">
+      <View className="gap-4">
         {[1, 2, 3].map((i) => (
           <Card key={i} className="h-24 bg-gray-100 rounded-lg animate-pulse" />
         ))}
@@ -86,44 +86,83 @@ export function VitrineLinkList({
     );
   }
 
+  // Renderiza cada item da lista
+  const renderItem = ({
+    item,
+    index,
+  }: {
+    item: VitrineLink;
+    index: number;
+  }) => (
+    <View className="mb-3">
+      <SortableLinkItem
+        link={item}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        isReordering={isEditingOrder}
+        onMoveUp={index > 0 ? () => moveItem(index, "up") : undefined}
+        onMoveDown={
+          index < orderedLinks.length - 1
+            ? () => moveItem(index, "down")
+            : undefined
+        }
+        position={index + 1}
+      />
+    </View>
+  );
+
   return (
-    <View>
-      {/* Botão de Editar Ordem */}
-      <View className="flex-row justify-end mb-4">
+    <View className="flex-1">
+      {/* Botão de Editar Ordem com design melhorado */}
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="text-sm text-gray-500">
+          {links.length} {links.length === 1 ? "link" : "links"} na vitrine
+        </Text>
+
         {!isEditingOrder ? (
           <Button
             variant="outline"
             onPress={() => setIsEditingOrder(true)}
             size="sm"
+            className="border-primary-500"
           >
-            <ButtonText>Editar Ordem</ButtonText>
+            <ChevronsUpDown size={16} color="#F4511E" className="mr-1" />
+            <ButtonText className="text-primary-500">Ordenar</ButtonText>
           </Button>
         ) : (
-          <Button onPress={handleSaveOrder} size="sm">
+          <Button
+            onPress={handleSaveOrder}
+            size="sm"
+            className="bg-primary-500"
+          >
             <Check size={16} color="white" className="mr-1" />
             <ButtonText>Salvar Ordem</ButtonText>
           </Button>
         )}
       </View>
 
-      <ScrollView className="space-y-4">
-        {orderedLinks.map((link, index) => (
-          <View key={link.id} className="mb-4">
-            <SortableLinkItem
-              link={link}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              isReordering={isEditingOrder}
-              onMoveUp={index > 0 ? () => moveItem(index, "up") : undefined}
-              onMoveDown={
-                index < orderedLinks.length - 1
-                  ? () => moveItem(index, "down")
-                  : undefined
-              }
-            />
-          </View>
-        ))}
-      </ScrollView>
+      {/* Modo de edição de ordem - banner informativo */}
+      {isEditingOrder && (
+        <View className="mb-3 bg-primary-50 p-3 rounded-lg border border-primary-100 flex-row items-center">
+          <PanelRight size={20} color="#F4511E" className="mr-2" />
+          <Text className="text-sm text-primary-700 flex-1">
+            Arraste os links para cima ou para baixo para reorganizar a ordem em
+            que aparecerão na vitrine.
+          </Text>
+        </View>
+      )}
+
+      {/* Lista de links com FlatList para melhor performance de scroll */}
+      <FlatList
+        data={orderedLinks}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={true}
+        contentContainerStyle={{ paddingBottom: 160 }} // Espaço extra para FAB e TabBar
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+      />
     </View>
   );
 }
