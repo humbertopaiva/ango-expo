@@ -1,4 +1,5 @@
-// src/features/products/screens/products-content.tsx
+// Path: src/features/products/screens/products-content.tsx
+import React, { useState, useEffect } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProductsContext } from "../contexts/use-products-context";
@@ -10,6 +11,8 @@ import { router } from "expo-router";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { useCategories } from "../../categories/hooks/use-categories";
 import { CategoryFilter } from "../components/category-filter";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export function ProductsContent() {
   const vm = useProductsContext();

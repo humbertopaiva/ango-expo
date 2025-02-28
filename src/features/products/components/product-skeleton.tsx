@@ -1,10 +1,10 @@
-// src/features/products/components/product-skeleton.tsx
+// Path: src/features/products/components/product-skeleton.tsx
 import React from "react";
 import { Card, VStack } from "@gluestack-ui/themed";
-
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import { Box } from "@/components/ui/box";
 import { HStack } from "@gluestack-ui/themed";
+import { View } from "react-native";
 
 /**
  * Skeleton para um item de produto individual
@@ -40,10 +40,10 @@ export function ProductSkeleton() {
  */
 export function ProductSkeletonList({ count = 3 }) {
   return (
-    <Box className="space-y-4">
+    <View className="gap-4">
       {Array.from({ length: count }).map((_, index) => (
         <ProductSkeleton key={`skeleton-${index}`} />
       ))}
-    </Box>
+    </View>
   );
 }

@@ -1,6 +1,5 @@
-// src/features/categories/screens/categories-content.tsx
-
-import React from "react";
+// Path: src/features/categories/screens/categories-content.tsx
+import React, { useState, useEffect } from "react";
 import { View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
@@ -11,6 +10,8 @@ import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
 import { CategoryFormModal } from "../components/category-form-modal";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { router } from "expo-router";
+
+const SWIPE_TUTORIAL_SEEN_KEY = "categories_swipe_tutorial_seen";
 
 export function CategoriesContent() {
   const vm = useCategoriesContext();
