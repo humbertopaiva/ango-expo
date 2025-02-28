@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   fullWidthGradient: {
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     width: "100%",
   },

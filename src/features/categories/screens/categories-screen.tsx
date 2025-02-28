@@ -5,6 +5,8 @@ import { CategoriesProvider } from "../contexts/categories-provider";
 import { CategoriesContent } from "./categories-content";
 import { View } from "react-native";
 import ScreenHeader from "@/components/ui/screen-header";
+import { Plus } from "lucide-react-native";
+import { router } from "expo-router";
 
 export function CategoriesScreen() {
   return (
@@ -12,7 +14,6 @@ export function CategoriesScreen() {
       <ScreenHeader
         title="Categorias"
         subtitle="Gerencie as categorias de produtos"
-        showBackButton={false}
       />
       <CategoriesProvider>
         <CategoriesContent />

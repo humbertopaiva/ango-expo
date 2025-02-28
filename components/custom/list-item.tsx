@@ -66,20 +66,39 @@ export function ListItem({
           )}
 
           <View className="flex-1">
-            <Text className="font-medium text-base">{title}</Text>
-
+            <Text
+              className="font-medium text-xs"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {title}
+            </Text>
             {subtitle && (
-              <Text className="text-sm text-gray-500">{subtitle}</Text>
+              <Text
+                className="text-sm text-gray-500"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {subtitle}
+              </Text>
             )}
 
             {price && (
               <View className="flex-row items-center mt-1">
-                <Text className="font-medium text-primary-600">
-                  {formatCurrency(price)}
-                </Text>
-                {promotionalPrice && (
-                  <Text className="ml-2 text-sm text-gray-500 line-through">
-                    {formatCurrency(promotionalPrice)}
+                {promotionalPrice ? (
+                  <>
+                    {/* Se tiver preço promocional, destaca ele e mostra o preço original riscado */}
+                    <Text className="font-medium text-xs text-primary-500">
+                      {formatCurrency(promotionalPrice)}
+                    </Text>
+                    <Text className="ml-2 text-xs text-gray-500 line-through">
+                      {formatCurrency(price)}
+                    </Text>
+                  </>
+                ) : (
+                  // Se não tiver preço promocional, mostra só o preço normal destacado
+                  <Text className="font-medium text-sm text-primary-600">
+                    {formatCurrency(price)}
                   </Text>
                 )}
               </View>
@@ -94,8 +113,7 @@ export function ListItem({
                 ))}
               </View>
             )}
-
-            <View className="flex-row items-center mt-1 space-x-2">
+            <View className="flex-row items-center mt-1 gap-2">
               {status && (
                 <StatusBadge status={status} customLabel={statusLabel} />
               )}
@@ -107,7 +125,7 @@ export function ListItem({
                     badge.variant === "outline" ? "bg-gray-100" : "bg-gray-100"
                   }`}
                 >
-                  <Text className="text-gray-800 text-sm">{badge.label}</Text>
+                  <Text className="text-gray-800 text-xs">{badge.label}</Text>
                 </View>
               ))}
             </View>
@@ -118,7 +136,7 @@ export function ListItem({
           ) : (
             <View className="flex-row">
               {onEdit && (
-                <TouchableOpacity onPress={onEdit} className="p-2 mr-2">
+                <TouchableOpacity onPress={onEdit} className="p-2">
                   <Edit size={20} color="#374151" />
                 </TouchableOpacity>
               )}

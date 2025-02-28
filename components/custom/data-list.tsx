@@ -36,7 +36,7 @@ export function DataList<T>({
 
     // Fallback para skeleton padrão
     return (
-      <View className={`space-y-4 ${className}`}>
+      <View className={`gap-3 ${className}`}>
         {Array.from({ length: loadingItemCount }).map((_, i) => (
           <View key={i} className="h-24 bg-gray-100 rounded-lg animate-pulse" />
         ))}
@@ -71,11 +71,11 @@ export function DataList<T>({
   // Data state
   return (
     <ScrollView
-      className={`space-y-4 ${className}`}
+      className={`gap-3 ${className}`}
       showsVerticalScrollIndicator={false}
     >
       {data.map((item, index) => (
-        <View key={index} className="mb-4">
+        <View key={index} className="mb-2">
           {renderItem(item, index)}
         </View>
       ))}
