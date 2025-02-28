@@ -22,7 +22,7 @@ export function CategoriesList({
 }: CategoriesListProps) {
   if (isLoading) {
     return (
-      <View className="space-y-4">
+      <View className="gap-4 mt-6">
         {[1, 2, 3].map((i) => (
           <View key={i} className="h-24 bg-gray-100 rounded-lg animate-pulse" />
         ))}
@@ -32,7 +32,7 @@ export function CategoriesList({
 
   if (categories.length === 0) {
     return (
-      <View className="p-6 bg-white rounded-lg">
+      <View className="p-6 bg-white rounded-lg mt-6">
         <Text className="text-gray-500 text-center">
           Nenhuma categoria encontrada. Crie uma nova categoria para começar.
         </Text>

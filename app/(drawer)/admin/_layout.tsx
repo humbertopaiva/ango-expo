@@ -28,7 +28,7 @@ export default function AdminLayout() {
       <StatusBar backgroundColor="#F4511E" barStyle="light-content" />
       <Stack
         screenOptions={({ navigation, route }) => ({
-          headerShown: true,
+          headerShown: false,
           headerStyle: {
             backgroundColor: "#F4511E",
           },

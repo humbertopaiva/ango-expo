@@ -7,7 +7,6 @@ import { Plus } from "lucide-react-native";
 import { useCategoriesContext } from "../contexts/use-categories-context";
 import { CategoriesList } from "../components/categories-list";
 import { SearchInput } from "@/components/custom/search-input";
-import { Button, ButtonText } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
 import { CategoryFormModal } from "../components/category-form-modal";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
@@ -32,21 +31,13 @@ export function CategoriesContent() {
             placeholder="Buscar categorias..."
             disabled={vm.isLoading}
           />
-
-          {/* Add Button */}
-          <View className="my-3">
-            <Button onPress={vm.openCreateCategoryModal}>
-              <Plus size={18} color="white" className="mr-2" />
-              <ButtonText>Nova Categoria</ButtonText>
-            </Button>
-          </View>
         </View>
 
         {/* Conteúdo rolável */}
         <ScrollView
-          className="flex-1 px-4"
+          className="flex-1 px-4 flex-grow bg-background-100"
           showsVerticalScrollIndicator={true}
-          contentContainerStyle={{ paddingBottom: 100 }} // Espaço extra no final para evitar que o conteúdo fique escondido
+          contentContainerStyle={{ paddingBottom: 100 }}
         >
           <CategoriesList
             categories={vm.categories}
