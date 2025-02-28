@@ -18,6 +18,11 @@ export interface IProductsViewModel {
   // Handlers
   handleDeleteProduct: (id: string) => Promise<void>;
 
+  // Filtros de categoria
+  selectedCategoryId: number | null;
+  filteredProducts: Product[];
+  setSelectedCategory: (categoryId: number | null) => void;
+
   // Diálogo de confirmação
   confirmDeleteProduct: (id: string) => void;
   cancelDeleteProduct: () => void;

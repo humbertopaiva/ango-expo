@@ -67,35 +67,37 @@ export default function ScreenHeader({
       >
         {/* Layout para mobile */}
         {!isWeb && (
-          <View className="gap-2">
-            {/* Header com botão voltar */}
-            {showBackButton && (
-              <TouchableOpacity
-                onPress={handleBack}
-                className="p-2 -ml-2 rounded-full active:bg-white/20"
-              >
-                <ChevronLeft size={28} color={iconColor} />
-              </TouchableOpacity>
-            )}
-
-            {/* Título e Subtítulo */}
-            <View className="gap-1 w-full">
-              <Text
-                className={`text-2xl font-bold ${
-                  variant === "primary" ? "text-white" : "text-gray-900"
-                }`}
-              >
-                {title}
-              </Text>
-              {subtitle && (
-                <Text
-                  className={`text-sm ${
-                    variant === "primary" ? "text-white/80" : "text-gray-500"
-                  } w-full`}
+          <View>
+            {/* Header com botão voltar e título em uma única linha */}
+            <View className="flex-row items-center mb-2">
+              {showBackButton && (
+                <TouchableOpacity
+                  onPress={handleBack}
+                  className="p-2 -ml-2 rounded-full active:bg-white/20 mr-2"
                 >
-                  {subtitle}
-                </Text>
+                  <ChevronLeft size={28} color={iconColor} />
+                </TouchableOpacity>
               )}
+
+              {/* Título e Subtítulo */}
+              <View className="flex-1">
+                <Text
+                  className={`text-2xl font-bold ${
+                    variant === "primary" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {title}
+                </Text>
+                {subtitle && (
+                  <Text
+                    className={`text-sm ${
+                      variant === "primary" ? "text-white/80" : "text-gray-500"
+                    }`}
+                  >
+                    {subtitle}
+                  </Text>
+                )}
+              </View>
             </View>
           </View>
         )}

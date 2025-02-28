@@ -1,5 +1,5 @@
 // src/features/products/view-models/products.view-model.ts
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Product } from "../models/product";
 import { useProducts } from "../hooks/use-products";
 import { IProductsViewModel } from "./products.view-model.interface";
@@ -13,6 +13,10 @@ export function useProductsViewModel(): IProductsViewModel {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    null
+  );
+
   const {
     products,
     isLoading,
@@ -24,9 +28,27 @@ export function useProductsViewModel(): IProductsViewModel {
     isDeleting,
   } = useProducts();
 
-  const filteredProducts = products.filter((product) =>
-    product.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Função para filtrar os produtos
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      // Filtro de busca
+      const matchesSearch = product.nome
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+      // Filtro de categoria
+      const matchesCategory =
+        selectedCategoryId === null || product.categoria === selectedCategoryId;
+
+      // Produto é exibido se passar em ambos os filtros
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchTerm, selectedCategoryId]);
+
+  // Função para definir a categoria selecionada
+  const setSelectedCategory = useCallback((categoryId: number | null) => {
+    setSelectedCategoryId(categoryId);
+  }, []);
 
   // Função para abrir o diálogo de confirmação
   const confirmDeleteProduct = useCallback((id: string) => {
@@ -66,6 +88,8 @@ export function useProductsViewModel(): IProductsViewModel {
 
   return {
     products: filteredProducts,
+    filteredProducts,
+    selectedCategoryId,
     isLoading,
     searchTerm,
     isCreating,
@@ -74,8 +98,9 @@ export function useProductsViewModel(): IProductsViewModel {
     isDeleteDialogOpen,
     productToDelete,
     setSearchTerm,
-    handleDeleteProduct,
+    setSelectedCategory,
     confirmDeleteProduct,
     cancelDeleteProduct,
+    handleDeleteProduct,
   };
 }
