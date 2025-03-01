@@ -1,4 +1,4 @@
-// app/_layout.tsx
+// Path: app/_layout.tsx
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useEffect } from "react";
 import "@/global.css";
@@ -10,7 +10,7 @@ import { Text, View } from "react-native";
 import useAuthStore from "@/src/stores/auth";
 import { useCustomFonts } from "@/src/styles/fonts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ToastProvider } from "@/src/providers/toast-provider"; // Importa o ToastProvider atualizado
+import { DrawerProvider } from "@/src/providers/drawer-provider";
 
 const queryClient = new QueryClient();
 
@@ -23,14 +23,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!fontsLoaded) return;
-
-    // Lógica de navegação baseada em autenticação
-    // (comentada para fins de demonstração)
-    // if (!isAuthenticated) {
-    //   router.replace("/(drawer)/(auth)/login");
-    // } else if (isAuthenticated) {
-    //   router.replace("/(drawer)/admin/dashboard");
-    // }
+    // Lógica de navegação baseada em autenticação pode ser adicionada aqui
   }, [isAuthenticated, segments, fontsLoaded]);
 
   if (!fontsLoaded) {
@@ -47,9 +40,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <GluestackUIProvider config={config}>
-          <View className="flex-1 bg-background">
-            <Slot />
-          </View>
+          <DrawerProvider>
+            <View className="flex-1 bg-background">
+              <Slot />
+            </View>
+          </DrawerProvider>
         </GluestackUIProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
