@@ -13,11 +13,15 @@ const { width } = Dimensions.get("window");
 export default function DrawerLayout() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const isLargeScreen = width >= 1024;
+
+  // Use permanent drawer apenas em telas grandes na web
+  const isPermanentDrawer = isWeb && isLargeScreen;
 
   // Define diferentes larguras para web e mobile
-  const drawerWidth = isWeb
-    ? Math.min(width * 0.25, 300) // Para web, 25% da largura até max 300px
-    : width * 0.75; // Para mobile, 75% da largura
+  const drawerWidth = isPermanentDrawer
+    ? Math.min(width * 0.25, 300) // Para web em telas grandes, 25% da largura até max 300px
+    : width * 0.75; // Para mobile e web em telas pequenas, 75% da largura
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -26,15 +30,15 @@ export default function DrawerLayout() {
         screenOptions={{
           headerShown: false,
           drawerPosition: "left",
-          drawerType: isWeb ? "permanent" : "front", // Permanente na web, slide na frente em mobile
+          drawerType: isPermanentDrawer ? "permanent" : "front", // Permanente na web em telas grandes
           drawerStyle: {
             width: drawerWidth,
             backgroundColor: "white",
-            borderRightWidth: isWeb ? 1 : 0,
+            borderRightWidth: isPermanentDrawer ? 1 : 0,
             borderRightColor: "#e2e8f0",
           },
           overlayColor: "rgba(0, 0, 0, 0.5)",
-          swipeEnabled: !isWeb, // Permitir swipe apenas em dispositivos móveis
+          swipeEnabled: !isPermanentDrawer, // Permitir swipe apenas em dispositivos móveis e web em telas pequenas
         }}
       >
         <Drawer.Screen

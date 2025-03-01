@@ -57,7 +57,13 @@ export function AppBar({
   };
 
   const handleMenuPress = () => {
-    navigation.dispatch(DrawerActions.toggleDrawer());
+    try {
+      navigation.dispatch(DrawerActions.toggleDrawer());
+    } catch (error) {
+      console.log(
+        "Não foi possível abrir o drawer. Certifique-se que está dentro de um DrawerNavigator"
+      );
+    }
   };
 
   return (
@@ -73,7 +79,7 @@ export function AppBar({
         <HStack
           alignItems="center"
           justifyContent="space-between"
-          className="py-16 px-12"
+          className="px-12 py-16"
           height={56 + statusBarHeight}
         >
           {/* Lado esquerdo: Botão de menu/voltar e título */}

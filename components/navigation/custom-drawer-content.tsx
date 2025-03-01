@@ -74,7 +74,11 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
   };
 
   const handleCloseDrawer = () => {
-    navigation.dispatch(DrawerActions.closeDrawer());
+    try {
+      navigation.dispatch(DrawerActions.closeDrawer());
+    } catch (error) {
+      console.log("Erro ao fechar drawer:", error);
+    }
   };
 
   // Itens do menu para navegação pública
@@ -175,25 +179,15 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
     >
       {/* Header */}
       <HStack
-        justifyContent="space-between"
-        alignItems="center"
+        className="py-8"
         borderBottomWidth={1}
         borderBottomColor="#f1f5f9"
-        className="p-16"
       >
         <Image
-          source={require("@/assets/images/logo-white.png")}
-          style={{ height: 32, width: 120 }}
+          source={require("@/assets/images/limei-1.png")}
+          style={{ height: 24, width: 120 }}
           resizeMode="contain"
         />
-
-        <TouchableOpacity
-          onPress={handleCloseDrawer}
-          className="w-8 h-8 items-center justify-center rounded-full"
-          style={{ backgroundColor: "#f1f5f9" }}
-        >
-          <X size={18} color="#64748b" />
-        </TouchableOpacity>
       </HStack>
 
       {/* Perfil (se autenticado) */}
