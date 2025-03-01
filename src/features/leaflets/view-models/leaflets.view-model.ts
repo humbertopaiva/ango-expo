@@ -1,11 +1,16 @@
-// src/features/leaflets/view-models/leaflets.view-model.ts
+// Path: src/features/leaflets/view-models/leaflets.view-model.ts
 
 import { useState, useCallback, useMemo } from "react";
 import { Leaflet } from "../models/leaflet";
 import { useLeaflets } from "../hooks/use-leaflets";
 import { LeafletFormData } from "../schemas/leaflet.schema";
 import { ILeafletsViewModel } from "./leaflets.view-model.interface";
-import { useToast } from "@/src/hooks/use-toast";
+import { useToast } from "@gluestack-ui/themed";
+import {
+  showErrorToast,
+  showSuccessToast,
+  showWarningToast,
+} from "@/components/common/toast-helper";
 
 export function useLeafletsViewModel(): ILeafletsViewModel {
   const [selectedLeaflet, setSelectedLeaflet] = useState<Leaflet | null>(null);
@@ -58,13 +63,7 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
     if (selectedLeaflet) {
       deleteLeaflet(selectedLeaflet.id);
       setIsDeleteModalVisible(false);
-
-      toast.show({
-        title: "Encarte excluído",
-        description: "O encarte foi excluído com sucesso.",
-        type: "success",
-      });
-
+      showSuccessToast(toast, "Encarte excluído com sucesso!");
       setSelectedLeaflet(null);
     }
   }, [deleteLeaflet, selectedLeaflet, toast]);
@@ -73,6 +72,12 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
   const handleCreateLeaflet = useCallback(
     async (data: LeafletFormData) => {
       try {
+        // Verificar se atingiu o limite de encartes
+        if (leafletCount >= 5) {
+          showWarningToast(toast, "Limite máximo de 5 encartes atingido!");
+          return;
+        }
+
         await createLeaflet({
           nome: data.nome,
           validade: data.validade,
@@ -88,24 +93,17 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
           imagem_08: data.imagem_08,
         });
 
-        toast.show({
-          title: "Encarte criado",
-          description: "O novo encarte foi criado com sucesso.",
-          type: "success",
-        });
-
+        showSuccessToast(toast, "Encarte criado com sucesso!");
         setIsFormVisible(false);
       } catch (error) {
         console.error("Erro ao criar encarte:", error);
-
-        toast.show({
-          title: "Erro ao criar",
-          description: "Não foi possível criar o encarte. Tente novamente.",
-          type: "error",
-        });
+        showErrorToast(
+          toast,
+          "Não foi possível criar o encarte. Tente novamente."
+        );
       }
     },
-    [createLeaflet, toast]
+    [createLeaflet, toast, leafletCount]
   );
 
   // Update leaflet
@@ -130,22 +128,15 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
           },
         });
 
-        toast.show({
-          title: "Encarte atualizado",
-          description: "O encarte foi atualizado com sucesso.",
-          type: "success",
-        });
-
+        showSuccessToast(toast, "Encarte atualizado com sucesso!");
         setIsFormVisible(false);
         setSelectedLeaflet(null);
       } catch (error) {
         console.error("Erro ao atualizar encarte:", error);
-
-        toast.show({
-          title: "Erro ao atualizar",
-          description: "Não foi possível atualizar o encarte. Tente novamente.",
-          type: "error",
-        });
+        showErrorToast(
+          toast,
+          "Não foi possível atualizar o encarte. Tente novamente."
+        );
       }
     },
     [updateLeaflet, toast]
