@@ -1,4 +1,4 @@
-// src/lib/storage.ts
+// Path: src/lib/storage.ts
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
@@ -20,10 +20,7 @@ class CustomStorage implements StorageController {
         return this.webStorage?.getItem(key) ?? null;
       }
 
-      if (Platform.OS === "ios" || Platform.OS === "android") {
-        return await SecureStore.getItemAsync(key);
-      }
-
+      // Para dispositivos móveis, usamos AsyncStorage
       return await AsyncStorage.getItem(key);
     } catch (error) {
       console.error("Error getting item from storage:", error);
@@ -38,11 +35,7 @@ class CustomStorage implements StorageController {
         return;
       }
 
-      if (Platform.OS === "ios" || Platform.OS === "android") {
-        await SecureStore.setItemAsync(key, value);
-        return;
-      }
-
+      // Para dispositivos móveis, usamos AsyncStorage
       await AsyncStorage.setItem(key, value);
     } catch (error) {
       console.error("Error setting item in storage:", error);
@@ -56,11 +49,7 @@ class CustomStorage implements StorageController {
         return;
       }
 
-      if (Platform.OS === "ios" || Platform.OS === "android") {
-        await SecureStore.deleteItemAsync(key);
-        return;
-      }
-
+      // Para dispositivos móveis, usamos AsyncStorage
       await AsyncStorage.removeItem(key);
     } catch (error) {
       console.error("Error removing item from storage:", error);
