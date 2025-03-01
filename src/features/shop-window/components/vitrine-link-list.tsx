@@ -1,11 +1,11 @@
 // Path: src/features/shop-window/components/vitrine-link-list.tsx
-import React, { useState } from "react";
-import { View, Text, FlatList } from "react-native";
+
+import React, { useState, useEffect } from "react";
+import { View, Text, ScrollView, Button } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Link2, Check, PanelRight, ChevronsUpDown } from "lucide-react-native";
+import { Link2, PanelRight } from "lucide-react-native";
 import { VitrineLink } from "../models";
-import { SortableLinkItem } from "./sortable-link-item";
-import { Button, ButtonText } from "@/components/ui/button";
+import { SimpleLinkItem } from "./simple-link-item"; // Importando o novo componente
 
 interface VitrineLinkListProps {
   links: VitrineLink[];
@@ -28,7 +28,7 @@ export function VitrineLinkList({
   const [orderedLinks, setOrderedLinks] = useState<VitrineLink[]>(links);
 
   // Reset ordenação quando os links mudam
-  React.useEffect(() => {
+  useEffect(() => {
     setOrderedLinks(links);
   }, [links]);
 
@@ -86,83 +86,77 @@ export function VitrineLinkList({
     );
   }
 
-  // Renderiza cada item da lista
-  const renderItem = ({
-    item,
-    index,
-  }: {
-    item: VitrineLink;
-    index: number;
-  }) => (
-    <View className="mb-3">
-      <SortableLinkItem
-        link={item}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        isReordering={isEditingOrder}
-        onMoveUp={index > 0 ? () => moveItem(index, "up") : undefined}
-        onMoveDown={
-          index < orderedLinks.length - 1
-            ? () => moveItem(index, "down")
-            : undefined
-        }
-        position={index + 1}
-      />
-    </View>
-  );
-
   return (
     <View className="flex-1">
-      {/* Botão de Editar Ordem com design melhorado */}
-      <View className="flex-row justify-between items-center mb-3">
+      {/* Controles de Ordenação */}
+      <View className="flex-row items-center justify-between mb-3">
         <Text className="text-sm text-gray-500">
           {links.length} {links.length === 1 ? "link" : "links"} na vitrine
         </Text>
 
         {!isEditingOrder ? (
-          <Button
-            variant="outline"
-            onPress={() => setIsEditingOrder(true)}
-            size="sm"
-            className="border-primary-500"
-          >
-            <ChevronsUpDown size={16} color="#F4511E" className="mr-1" />
-            <ButtonText className="text-primary-500">Ordenar</ButtonText>
-          </Button>
+          <View>
+            <Button
+              title="Ordenar"
+              onPress={() => setIsEditingOrder(true)}
+              color="#F4511E"
+            />
+          </View>
         ) : (
-          <Button
-            onPress={handleSaveOrder}
-            size="sm"
-            className="bg-primary-500"
-          >
-            <Check size={16} color="white" className="mr-1" />
-            <ButtonText>Salvar Ordem</ButtonText>
-          </Button>
+          <View className="flex-row">
+            <Button
+              title="Cancelar"
+              onPress={() => {
+                setOrderedLinks(links);
+                setIsEditingOrder(false);
+              }}
+              color="#6B7280"
+            />
+            <View style={{ width: 8 }} />
+            <Button
+              title="Salvar Ordem"
+              onPress={handleSaveOrder}
+              color="#F4511E"
+            />
+          </View>
         )}
       </View>
 
-      {/* Modo de edição de ordem - banner informativo */}
+      {/* Banner de instrução para ordenação */}
       {isEditingOrder && (
-        <View className="mb-3 bg-primary-50 p-3 rounded-lg border border-primary-100 flex-row items-center">
-          <PanelRight size={20} color="#F4511E" className="mr-2" />
-          <Text className="text-sm text-primary-700 flex-1">
-            Arraste os links para cima ou para baixo para reorganizar a ordem em
-            que aparecerão na vitrine.
-          </Text>
-        </View>
+        <Card className="mb-3 bg-blue-50 border-blue-200 border">
+          <View className="p-3 flex-row items-center">
+            <PanelRight size={20} color="#3B82F6" />
+            <Text className="ml-2 text-blue-700 flex-1">
+              Use as setas para cima e para baixo para reorganizar a ordem dos
+              links.
+            </Text>
+          </View>
+        </Card>
       )}
 
-      {/* Lista de links com FlatList para melhor performance de scroll */}
-      <FlatList
-        data={orderedLinks}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={true}
-        contentContainerStyle={{ paddingBottom: 160 }} // Espaço extra para FAB e TabBar
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-      />
+      {/* Lista de links */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
+        {orderedLinks.map((link, index) => (
+          <SimpleLinkItem
+            key={link.id}
+            link={link}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            isReordering={isEditingOrder}
+            onMoveUp={index > 0 ? () => moveItem(index, "up") : undefined}
+            onMoveDown={
+              index < orderedLinks.length - 1
+                ? () => moveItem(index, "down")
+                : undefined
+            }
+            position={index + 1}
+          />
+        ))}
+      </ScrollView>
     </View>
   );
 }
