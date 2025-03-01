@@ -1,41 +1,60 @@
-// src/features/delivery-config/screens/delivery-config-content.tsx
-import React from "react";
-import { View, Text, ActivityIndicator } from "react-native";
+// Path: src/features/delivery-config/screens/delivery-config-content.tsx
+
+import React, { useRef } from "react";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useDeliveryConfigContext } from "../contexts/use-delivery-config-context";
 import { DeliveryConfigForm } from "../components/delivery-config-form";
-import { Settings } from "lucide-react-native";
-import { router } from "expo-router";
-import ScreenHeader from "@/components/ui/screen-header";
+import { Section } from "@/components/custom/section";
+import { DeliveryConfigSkeleton } from "../components/delivery-config-skeleton";
+import { PrimaryActionButton } from "@/components/common/primary-action-button";
+import { Save } from "lucide-react-native";
 
 export function DeliveryConfigContent() {
   const vm = useDeliveryConfigContext();
-
-  if (vm.isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-white">
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#0891B2" />
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const formRef = useRef<{ handleSubmit: () => void } | null>(null);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScreenHeader
-        title="Configurações de Entrega"
-        subtitle="Gerencie as configurações de entrega da sua loja"
-        showBackButton={true}
-      />
-
-      <View className="flex-1 px-4">
-        <DeliveryConfigForm
-          config={vm.config}
-          onSubmit={vm.handleSubmit}
-          isLoading={vm.isUpdating}
-        />
+    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+      <View className="flex-1">
+        <Section className="flex-1">
+          {vm.isLoading ? (
+            <DeliveryConfigSkeleton />
+          ) : (
+            <DeliveryConfigForm
+              ref={formRef}
+              config={vm.config}
+              onSubmit={vm.handleSubmit}
+              isLoading={vm.isUpdating}
+              isSaved={vm.isSaved}
+              // Não mostrar o botão no formulário
+              showSubmitButton={false}
+            />
+          )}
+        </Section>
       </View>
+
+      {/* Botão de ação primário - agora no componente content */}
+      {!vm.isLoading && (
+        <PrimaryActionButton
+          onPress={() => {
+            if (formRef.current) {
+              formRef.current.handleSubmit();
+            }
+          }}
+          label={
+            vm.isUpdating ? "Salvando..." : vm.isSaved ? "Salvo!" : "Salvar"
+          }
+          icon={
+            <Save
+              size={20}
+              color={vm.isUpdating || vm.isSaved ? "#DDDDDD" : "white"}
+            />
+          }
+          disabled={vm.isUpdating || vm.isSaved}
+          primaryColor={vm.isSaved ? "#22C55E" : undefined}
+        />
+      )}
     </SafeAreaView>
   );
 }
