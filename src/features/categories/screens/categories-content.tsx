@@ -17,7 +17,7 @@ export function CategoriesContent() {
   const vm = useCategoriesContext();
 
   const handleAddCategory = () => {
-    router.push("/admin/categories/new");
+    router.push("/(drawer)/admin/categories/new");
   };
 
   return (

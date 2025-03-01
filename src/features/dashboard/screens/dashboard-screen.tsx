@@ -244,6 +244,7 @@ export default function DashboardScreen() {
                 activeOpacity={0.7}
                 style={[styles.menuCard, { borderColor: item.color + "20" }]}
                 onPress={() => router.push(item.path as any)}
+                className="shadow-md"
               >
                 <View
                   style={[
@@ -271,6 +272,7 @@ export default function DashboardScreen() {
             onPress={() => router.push("/(drawer)/support")}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
+            className="shadow-md"
           >
             <LinearGradient
               colors={[primaryColor, "#6200EE"]} // Usar a cor primária da empresa
@@ -373,12 +375,7 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: "space-between",
     ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
+      ios: {},
       android: {
         elevation: 2,
       },
@@ -407,12 +404,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-      },
+      ios: {},
       android: {
         elevation: 6,
       },
