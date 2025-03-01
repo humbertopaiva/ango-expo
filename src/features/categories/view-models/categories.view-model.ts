@@ -9,6 +9,11 @@ import {
 import { useCategories } from "../hooks/use-categories";
 import { ICategoriesViewModel } from "./categories.view-model.interface";
 import { router } from "expo-router";
+import { useToast } from "@gluestack-ui/themed";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/components/common/toast-helper";
 
 export function useCategoriesViewModel(): ICategoriesViewModel {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
@@ -16,6 +21,7 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
   );
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const toast = useToast();
 
   // Novos estados para o diálogo de confirmação
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -41,11 +47,13 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
       try {
         await createCategory({ data });
         setIsFormVisible(false);
+        showSuccessToast(toast, "Categoria criada com sucesso!");
       } catch (error) {
         console.error("Error creating category:", error);
+        showErrorToast(toast, "Não foi possível criar a categoria");
       }
     },
-    [createCategory]
+    [createCategory, toast]
   );
 
   const handleUpdateCategory = useCallback(
@@ -54,13 +62,15 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
         await updateCategory({ id, data });
         setSelectedCategory(null);
         setIsFormVisible(false);
+        showSuccessToast(toast, "Categoria atualizada com sucesso!");
         // Navegar de volta para a listagem após atualização
         router.push("/admin/categories");
       } catch (error) {
         console.error("Error updating category:", error);
+        showErrorToast(toast, "Não foi possível atualizar a categoria");
       }
     },
-    [updateCategory]
+    [updateCategory, toast]
   );
 
   // Função para abrir o diálogo de confirmação
@@ -76,11 +86,13 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
         await deleteCategory(id);
         setIsDeleteDialogOpen(false);
         setCategoryToDelete(null);
+        showSuccessToast(toast, "Categoria excluída com sucesso");
       } catch (error) {
         console.error("Error deleting category:", error);
+        showErrorToast(toast, "Não foi possível excluir a categoria");
       }
     },
-    [deleteCategory]
+    [deleteCategory, toast]
   );
 
   // Função para cancelar a exclusão

@@ -2,13 +2,16 @@
 import React, { ReactNode, createContext, useContext } from "react";
 import {
   Toast,
-  ToastDescription,
   ToastTitle,
-  useToast,
+  ToastDescription,
+  VStack,
+  useToast as useGluestackToast,
+  Box,
+  HStack,
 } from "@gluestack-ui/themed";
 import { Icon } from "@gluestack-ui/themed";
 import { CheckCircle, AlertTriangle, Info, XCircle } from "lucide-react-native";
-import { View } from "react-native";
+import { Platform } from "react-native";
 
 type ToastType = "success" | "error" | "info" | "warning";
 
@@ -24,7 +27,7 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const toast = useToast();
+  const gluestackToast = useGluestackToast();
 
   const getIcon = (type: ToastType = "info") => {
     switch (type) {
@@ -68,6 +71,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const getBorderColor = (type: ToastType = "info") => {
+    switch (type) {
+      case "success":
+        return "border-green-200";
+      case "error":
+        return "border-red-200";
+      case "warning":
+        return "border-yellow-200";
+      case "info":
+      default:
+        return "border-blue-200";
+    }
+  };
+
+  // Obtém a largura da plataforma
+  const toastWidth =
+    Platform.OS === "web"
+      ? 400
+      : Math.min(400, Platform.OS === "ios" ? 375 : 320);
+
   const show = ({
     title,
     description,
@@ -79,31 +102,60 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     type?: ToastType;
     duration?: number;
   }) => {
-    toast.show({
+    gluestackToast.show({
       placement: "top",
       duration,
       render: ({ id }) => {
         const toastId = "toast-" + id;
+
+        // Construa um estilo base que funcione bem em todas as plataformas
+        const baseStyle = {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          elevation: 4,
+          marginTop: 8,
+          borderWidth: 1,
+          borderRadius: 8,
+          maxWidth: Platform.OS === "web" ? 400 : "92%",
+          width: Platform.OS === "web" ? "auto" : undefined,
+          alignSelf: "center" as
+            | "auto"
+            | "flex-start"
+            | "flex-end"
+            | "center"
+            | "stretch"
+            | "baseline",
+          zIndex: 9999,
+        };
+
         return (
           <Toast
             nativeID={toastId}
-            className={`p-4 rounded-lg border ${getBgColor(
-              type
-            )} shadow-lg w-full max-w-[400px] mx-4 mt-4`}
+            action="attention"
+            variant="solid"
+            className={`${getBgColor(type)} border ${getBorderColor(type)}`}
           >
-            <View className="flex-row items-start space-x-3">
-              <View className="mt-0.5">{getIcon(type)}</View>
-              <View className="flex-1">
-                <ToastTitle className={`font-medium ${getTextColor(type)}`}>
+            <HStack space="sm" alignItems="flex-start" className="p-4">
+              <Box className="mt-0.5">{getIcon(type)}</Box>
+              <VStack space="xs" className="flex-1">
+                <ToastTitle
+                  className={`font-medium ${getTextColor(type)}`}
+                  style={{ fontSize: 16 }}
+                >
                   {title}
                 </ToastTitle>
                 {description && (
-                  <ToastDescription className={getTextColor(type)}>
+                  <ToastDescription
+                    className={`${getTextColor(type)}`}
+                    style={{ fontSize: 14, opacity: 0.9 }}
+                  >
                     {description}
                   </ToastDescription>
                 )}
-              </View>
-            </View>
+              </VStack>
+            </HStack>
           </Toast>
         );
       },
@@ -115,10 +167,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useToastContext = () => {
+export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToastContext must be used within a ToastProvider");
+    throw new Error("useToast must be used within a ToastProvider");
   }
   return context;
 };

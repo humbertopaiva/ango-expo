@@ -3,7 +3,11 @@ import { useState, useCallback, useMemo } from "react";
 import { Product } from "../models/product";
 import { useProducts } from "../hooks/use-products";
 import { IProductsViewModel } from "./products.view-model.interface";
-import { useToast } from "@/src/hooks/use-toast";
+import { useToast } from "@gluestack-ui/themed";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/components/common/toast-helper";
 
 export function useProductsViewModel(): IProductsViewModel {
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,18 +67,10 @@ export function useProductsViewModel(): IProductsViewModel {
         await deleteProduct(id);
         setIsDeleteDialogOpen(false);
         setProductToDelete(null);
-        toast.show({
-          title: "Produto excluído",
-          description: "O produto foi excluído com sucesso.",
-          type: "success",
-        });
+        showSuccessToast(toast, "Produto excluído com sucesso");
       } catch (error) {
         console.error("Error deleting product:", error);
-        toast.show({
-          title: "Erro ao excluir",
-          description: "Não foi possível excluir o produto. Tente novamente.",
-          type: "error",
-        });
+        showErrorToast(toast, "Não foi possível excluir o produto");
       }
     },
     [deleteProduct, toast]

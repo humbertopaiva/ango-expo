@@ -10,7 +10,7 @@ import { Text, View } from "react-native";
 import useAuthStore from "@/src/stores/auth";
 import { useCustomFonts } from "@/src/styles/fonts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ToastProvider } from "@/src/providers/toast-provider";
+import { ToastProvider } from "@/src/providers/toast-provider"; // Importa o ToastProvider atualizado
 
 const queryClient = new QueryClient();
 
@@ -24,9 +24,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (!fontsLoaded) return;
 
-    // const inAuthGroup = segments[0] === "(drawer)";
-    // if (!segments.length) return;
-
+    // Lógica de navegação baseada em autenticação
+    // (comentada para fins de demonstração)
     // if (!isAuthenticated) {
     //   router.replace("/(drawer)/(auth)/login");
     // } else if (isAuthenticated) {
@@ -48,11 +47,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <GluestackUIProvider config={config}>
-          <ToastProvider>
-            <View className="flex-1 bg-background">
-              <Slot />
-            </View>
-          </ToastProvider>
+          <View className="flex-1 bg-background">
+            <Slot />
+          </View>
         </GluestackUIProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
