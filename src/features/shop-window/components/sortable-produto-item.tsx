@@ -1,6 +1,7 @@
 // Path: src/features/shop-window/components/sortable-produto-item.tsx
+
 import React, { useRef, useState } from "react";
-import { View, Text, TouchableOpacity, Animated } from "react-native";
+import { View, Text, Pressable, Animated } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import {
   Package,
@@ -14,6 +15,7 @@ import {
 import { VitrineProduto } from "../models";
 import { ResilientImage } from "@/components/common/resilient-image";
 
+// Importante: Substitui TouchableOpacity por Pressable para evitar problemas com contexto de navegação
 interface SortableProdutoItemProps {
   produto: VitrineProduto;
   onEdit: (produto: VitrineProduto) => void;
@@ -70,18 +72,18 @@ export function SortableProdutoItem({
         className="absolute right-0 top-0 bottom-0 flex-row items-center justify-center h-full"
         style={{ width: 100 }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => onEdit(produto)}
           className="bg-gray-100 h-full w-1/2 items-center justify-center"
         >
           <Edit size={20} color="#374151" />
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Pressable>
+        <Pressable
           onPress={() => onDelete(produto)}
           className="bg-red-100 h-full w-1/2 items-center justify-center"
         >
           <Trash size={20} color="#ef4444" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Card principal que desliza */}
@@ -109,7 +111,7 @@ export function SortableProdutoItem({
               {isReordering ? (
                 <View className="h-12 w-12 bg-gray-50 rounded-lg justify-center items-center">
                   <View className="flex-row">
-                    <TouchableOpacity
+                    <Pressable
                       onPress={onMoveUp}
                       disabled={!onMoveUp}
                       className={`p-2 rounded-full ${
@@ -117,8 +119,8 @@ export function SortableProdutoItem({
                       }`}
                     >
                       <ArrowUp size={16} color="#F4511E" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
+                    </Pressable>
+                    <Pressable
                       onPress={onMoveDown}
                       disabled={!onMoveDown}
                       className={`p-2 rounded-full ml-1 ${
@@ -126,7 +128,7 @@ export function SortableProdutoItem({
                       }`}
                     >
                       <ArrowDown size={16} color="#F4511E" />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 </View>
               ) : (
@@ -189,12 +191,12 @@ export function SortableProdutoItem({
 
             {/* Botão de mais opções - apenas visível quando não está reordenando */}
             {!isReordering && (
-              <TouchableOpacity
+              <Pressable
                 onPress={toggleActions}
                 className="p-1 ml-1 self-center"
               >
                 <MoreVertical size={18} color="#6B7280" />
-              </TouchableOpacity>
+              </Pressable>
             )}
           </View>
         </Card>

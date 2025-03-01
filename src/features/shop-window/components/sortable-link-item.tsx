@@ -1,6 +1,7 @@
 // Path: src/features/shop-window/components/sortable-link-item.tsx
+
 import React, { useRef, useState } from "react";
-import { View, Text, TouchableOpacity, Animated, Linking } from "react-native";
+import { View, Text, Pressable, Animated, Linking } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import {
   ExternalLink,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react-native";
 import { VitrineLink } from "../models";
 
+// Importante: Substitui TouchableOpacity por Pressable
 interface SortableLinkItemProps {
   link: VitrineLink;
   onEdit: (link: VitrineLink) => void;
@@ -41,7 +43,11 @@ export function SortableLinkItem({
 
   const handleOpenUrl = async () => {
     try {
-      await Linking.openURL(link.url);
+      if (await Linking.canOpenURL(link.url)) {
+        await Linking.openURL(link.url);
+      } else {
+        console.warn("Não foi possível abrir a URL:", link.url);
+      }
     } catch (error) {
       console.error("Erro ao abrir URL:", error);
     }
@@ -121,18 +127,18 @@ export function SortableLinkItem({
         className="absolute right-0 top-0 bottom-0 flex-row items-center justify-center h-full"
         style={{ width: 100 }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => onEdit(link)}
           className="bg-gray-100 h-full w-1/2 items-center justify-center"
         >
           <Edit size={20} color="#374151" />
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Pressable>
+        <Pressable
           onPress={() => onDelete(link)}
           className="bg-red-100 h-full w-1/2 items-center justify-center"
         >
           <Trash size={20} color="#ef4444" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Card principal que desliza */}
@@ -157,7 +163,7 @@ export function SortableLinkItem({
               {isReordering ? (
                 <View className="h-12 w-12 bg-gray-50 rounded-lg justify-center items-center">
                   <View className="flex-row">
-                    <TouchableOpacity
+                    <Pressable
                       onPress={onMoveUp}
                       disabled={!onMoveUp}
                       className={`p-2 rounded-full ${
@@ -165,8 +171,8 @@ export function SortableLinkItem({
                       }`}
                     >
                       <ArrowUp size={16} color="#F4511E" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
+                    </Pressable>
+                    <Pressable
                       onPress={onMoveDown}
                       disabled={!onMoveDown}
                       className={`p-2 rounded-full ml-1 ${
@@ -174,7 +180,7 @@ export function SortableLinkItem({
                       }`}
                     >
                       <ArrowDown size={16} color="#F4511E" />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 </View>
               ) : (
@@ -206,7 +212,7 @@ export function SortableLinkItem({
               </Text>
 
               {/* URL com ícone de link externo */}
-              <TouchableOpacity
+              <Pressable
                 onPress={handleOpenUrl}
                 className="flex-row items-center mt-0.5 bg-gray-50 self-start px-1.5 py-0.5 rounded-md"
               >
@@ -214,17 +220,17 @@ export function SortableLinkItem({
                   {formatUrl(link.url)}
                 </Text>
                 <ExternalLink size={10} color="#6B7280" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Botão de mais opções - apenas visível quando não está reordenando */}
             {!isReordering && (
-              <TouchableOpacity
+              <Pressable
                 onPress={toggleActions}
                 className="p-1 ml-1 self-center"
               >
                 <MoreVertical size={18} color="#6B7280" />
-              </TouchableOpacity>
+              </Pressable>
             )}
           </View>
         </Card>
