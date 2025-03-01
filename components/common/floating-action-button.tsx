@@ -1,4 +1,5 @@
-// components/ui/floating-action-button.tsx
+// Path: components/common/floating-action-button.tsx
+
 import React from "react";
 import {
   TouchableOpacity,
@@ -21,6 +22,7 @@ interface FloatingActionButtonProps {
   fullWidth?: boolean;
   primaryColor?: string;
   secondaryColor?: string;
+  disabled?: boolean; // Nova propriedade
 }
 
 export function FloatingActionButton({
@@ -32,23 +34,30 @@ export function FloatingActionButton({
   fullWidth = false,
   primaryColor = "#F4511E",
   secondaryColor = "#6200EE",
+  disabled = false, // Valor padrão é false
 }: FloatingActionButtonProps) {
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 16);
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={onPress}
+      activeOpacity={disabled ? 1 : 0.8}
+      onPress={disabled ? undefined : onPress}
       style={[
         styles.container,
         fullWidth ? styles.fullWidth : styles.floating,
         { paddingBottom: bottomPadding },
+        disabled && styles.disabled, // Aplica estilo de desabilitado
         style,
       ]}
+      disabled={disabled}
     >
       <LinearGradient
-        colors={[primaryColor, secondaryColor]}
+        colors={
+          disabled
+            ? ["#CCCCCC", "#AAAAAA"] // Cores em escala de cinza quando desabilitado
+            : [primaryColor, secondaryColor]
+        }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={[
@@ -56,8 +65,18 @@ export function FloatingActionButton({
           fullWidth ? styles.fullWidthGradient : styles.floatingGradient,
         ]}
       >
-        {icon || <Plus size={24} color="white" />}
-        {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
+        {icon || <Plus size={24} color={disabled ? "#888888" : "white"} />}
+        {label && (
+          <Text
+            style={[
+              styles.label,
+              disabled && styles.disabledText, // Texto mais escuro quando desabilitado
+              labelStyle,
+            ]}
+          >
+            {label}
+          </Text>
+        )}
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -113,5 +132,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
     marginLeft: 8,
+  },
+  disabled: {
+    opacity: 0.7, // Botão levemente transparente quando desabilitado
+  },
+  disabledText: {
+    color: "#DDDDDD", // Tom mais claro para o texto quando desabilitado
   },
 });

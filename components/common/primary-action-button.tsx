@@ -1,4 +1,5 @@
-// components/ui/primary-action-button.tsx
+// Path: components/common/primary-action-button.tsx
+
 import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
 import { FloatingActionButton } from "./floating-action-button";
@@ -13,6 +14,7 @@ interface PrimaryActionButtonProps {
   position?: "bottom" | "top";
   primaryColor?: string;
   secondaryColor?: string;
+  disabled?: boolean; // Nova propriedade
 }
 
 export function PrimaryActionButton({
@@ -24,6 +26,7 @@ export function PrimaryActionButton({
   position = "bottom",
   primaryColor,
   secondaryColor,
+  disabled = false, // Valor padrão é false
 }: PrimaryActionButtonProps) {
   const insets = useSafeAreaInsets();
 
@@ -43,6 +46,7 @@ export function PrimaryActionButton({
         fullWidth={!floating}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
+        disabled={disabled}
       />
     </View>
   );
