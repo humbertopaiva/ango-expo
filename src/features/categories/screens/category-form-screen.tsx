@@ -12,6 +12,7 @@ import {
   Switch,
   VStack,
   HStack,
+  useToast,
 } from "@gluestack-ui/themed";
 import {
   categoryFormSchema,
@@ -20,6 +21,10 @@ import {
 import { useCategories } from "../hooks/use-categories";
 import { Category } from "../models/category";
 import ScreenHeader from "@/components/ui/screen-header";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/components/common/toast-helper";
 
 interface CategoryFormScreenProps {
   categoryId?: string;
@@ -29,6 +34,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
   const params = useLocalSearchParams<{ id: string }>();
   const id = categoryId || params.id;
   const isEditing = !!id;
+  const toast = useToast();
 
   const { categories, createCategory, updateCategory, isCreating, isUpdating } =
     useCategories();
@@ -73,18 +79,28 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
             categoria_ativa: data.categoria_ativa,
           },
         });
+        showSuccessToast(toast, "Categoria atualizada com sucesso!");
       } else {
         await createCategory({ data });
+        showSuccessToast(toast, "Categoria criada com sucesso!");
       }
       // Navega de volta para a listagem de categorias
       router.push("/admin/categories");
     } catch (error) {
       console.error("Error submitting form:", error);
+      showErrorToast(
+        toast,
+        `Erro ao ${isEditing ? "atualizar" : "criar"} a categoria`
+      );
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+      <ScreenHeader
+        title={isEditing ? "Editar Categoria" : "Nova Categoria"}
+        showBackButton={true}
+      />
       <View className="flex-1">
         {/* Form */}
         <ScrollView className="flex-1 px-4">

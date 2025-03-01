@@ -8,8 +8,7 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, router } from "expo-router";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProducts } from "../hooks/use-products";
 import { productFormSchema, ProductFormData } from "../schemas/product.schema";
@@ -30,8 +29,13 @@ import {
   Textarea,
   TextareaInput,
   Switch,
+  useToast,
 } from "@gluestack-ui/themed";
-import { useToast } from "@/src/hooks/use-toast";
+import { router, useLocalSearchParams } from "expo-router";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/components/common/toast-helper";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -107,21 +111,13 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           id,
           data: dataToSubmit,
         });
-        toast.show({
-          title: "Produto atualizado",
-          description: "O produto foi atualizado com sucesso!",
-          type: "success",
-        });
+        showSuccessToast(toast, "Produto atualizado com sucesso!");
       } else {
         await createProduct({
           ...dataToSubmit,
           estoque: 0,
         });
-        toast.show({
-          title: "Produto criado",
-          description: "O produto foi criado com sucesso!",
-          type: "success",
-        });
+        showSuccessToast(toast, "Produto criado com sucesso!");
       }
 
       // Aguarda um momento antes de voltar para evitar race conditions
@@ -130,13 +126,10 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       }, 100);
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.show({
-        title: "Erro",
-        description: `Ocorreu um erro ao ${
-          isEditing ? "atualizar" : "criar"
-        } o produto.`,
-        type: "error",
-      });
+      showErrorToast(
+        toast,
+        `Erro ao ${isEditing ? "atualizar" : "criar"} o produto`
+      );
       setIsSubmitting(false);
     }
   };
