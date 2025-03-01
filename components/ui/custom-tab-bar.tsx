@@ -336,13 +336,9 @@ export function CustomTabBar() {
           <View className="absolute -top-6 right-6">
             <TouchableOpacity
               onPress={() => setIsMenuOpen(true)}
-              className="w-12 h-12 bg-primary-500 rounded-full items-center justify-center"
+              className="w-12 h-12 bg-primary-500 rounded-full items-center justify-center shadow-md"
               style={{
                 elevation: 4,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 3.84,
               }}
             >
               <List size={24} color="white" />

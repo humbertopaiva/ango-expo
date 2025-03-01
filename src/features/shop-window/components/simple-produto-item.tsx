@@ -60,6 +60,7 @@ export function SimpleProdutoItem({
               <View className="flex-row">
                 {onMoveUp && (
                   <View
+                    className="shadow-md"
                     style={[
                       styles.arrowButton,
                       !onMoveUp && styles.disabledButton,
@@ -185,10 +186,6 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
     elevation: 2,
   },
   disabledButton: {

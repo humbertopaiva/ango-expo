@@ -43,19 +43,19 @@ export default function AdminLayout() {
             // Obtém o nome da rota atual
             const routeName = route.name;
 
-            // Para a tela dashboard, mostramos o botão do drawer
-            if (routeName === "dashboard/index") {
-              return (
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.dispatch(DrawerActions.toggleDrawer())
-                  }
-                  style={{ paddingLeft: 16 }}
-                >
-                  <Menu size={24} color="white" />
-                </TouchableOpacity>
-              );
-            }
+            // // Para a tela dashboard, mostramos o botão do drawer
+            // if (routeName === "dashboard/index") {
+            //   return (
+            //     <TouchableOpacity
+            //       onPress={() =>
+            //         navigation.dispatch(DrawerActions.toggleDrawer())
+            //       }
+            //       style={{ paddingLeft: 16 }}
+            //     >
+            //       <Menu size={24} color="white" />
+            //     </TouchableOpacity>
+            //   );
+            // }
 
             // Para as outras telas, mostramos o botão de voltar para o dashboard
             return (
@@ -90,12 +90,6 @@ export default function AdminLayout() {
           name="categories/new"
           options={{
             title: "Nova Categoria",
-          }}
-        />
-        <Stack.Screen
-          name="categories/[id]"
-          options={{
-            title: "Editar Categoria",
           }}
         />
 
@@ -148,12 +142,12 @@ export default function AdminLayout() {
             title: "Novo Encarte",
           }}
         />
-        <Stack.Screen
+        {/* <Stack.Screen
           name="leaflets/[id]"
           options={{
             title: "Editar Encarte",
           }}
-        />
+        /> */}
 
         {/* Perfil */}
         <Stack.Screen

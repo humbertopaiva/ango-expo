@@ -110,10 +110,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
         // Construa um estilo base que funcione bem em todas as plataformas
         const baseStyle = {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 3,
           elevation: 4,
           marginTop: 8,
           borderWidth: 1,
