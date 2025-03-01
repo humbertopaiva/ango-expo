@@ -1,4 +1,4 @@
-// components/navigation/custom-drawer-content.tsx
+// Path: components/navigation/custom-drawer-content.tsx
 import React from "react";
 import {
   View,
@@ -6,9 +6,7 @@ import {
   Image,
   TouchableOpacity,
   Platform,
-  StatusBar,
   ScrollView,
-  StyleSheet,
 } from "react-native";
 import {
   SafeAreaView,
@@ -19,7 +17,7 @@ import {
   DrawerContentScrollView,
   DrawerItem,
 } from "@react-navigation/drawer";
-import { router, useNavigation } from "expo-router";
+import { router, useNavigation, usePathname } from "expo-router";
 import useAuthStore from "@/src/stores/auth";
 import {
   Home,
@@ -30,15 +28,39 @@ import {
   Info,
   Package,
   X,
+  Store,
+  FileText,
+  BarChart2,
+  ShoppingBag,
+  User,
 } from "lucide-react-native";
 import { DrawerActions } from "@react-navigation/native";
+import { THEME_COLORS } from "@/src/styles/colors";
+import { Box, Divider, HStack, VStack } from "@gluestack-ui/themed";
+import { useCompanyData } from "@/src/hooks/use-company-data";
+import { ResilientImage } from "../common/resilient-image";
 
 export function CustomDrawerContent(props: DrawerContentComponentProps) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const pathname = usePathname();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
   const profile = useAuthStore((state) => state.profile);
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const { company } = useCompanyData();
+
+  const primaryColor = THEME_COLORS.primary;
+
+  // Handler para navegação
+  const handleNavigation = (path: string) => {
+    router.push(path as any);
+    navigation.dispatch(DrawerActions.closeDrawer());
+  };
+
+  // Verificar se um item está ativo
+  const isActive = (path: string) => {
+    return pathname.startsWith(path);
+  };
 
   const handleLogout = () => {
     clearAuth();
@@ -55,233 +77,202 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
     navigation.dispatch(DrawerActions.closeDrawer());
   };
 
-  const primaryColor = "#F4511E"; // Cor primária do app
-  const secondaryColor = "#6200EE"; // Cor secundária do app
-  const primaryLightColor = "#FBE9E7"; // Versão mais clara da cor primária
+  // Itens do menu para navegação pública
+  const publicMenuItems = [
+    {
+      label: "Início",
+      icon: Home,
+      path: "/(drawer)/(tabs)/comercio-local",
+    },
+    {
+      label: "Delivery",
+      icon: ShoppingBag,
+      path: "/(drawer)/(tabs)/delivery",
+    },
+    {
+      label: "Encartes",
+      icon: FileText,
+      path: "/(drawer)/(tabs)/encartes",
+    },
+    {
+      label: "Suporte",
+      icon: HelpCircle,
+      path: "/(drawer)/support",
+    },
+    {
+      label: "Quem Somos",
+      icon: Info,
+      path: "/(drawer)/about",
+    },
+  ];
+
+  // Itens do menu para área administrativa
+  const adminMenuItems = [
+    {
+      label: "Dashboard",
+      icon: BarChart2,
+      path: "/(drawer)/admin/dashboard",
+    },
+    {
+      label: "Categorias",
+      icon: Store,
+      path: "/(drawer)/admin/categories",
+    },
+    {
+      label: "Produtos",
+      icon: Package,
+      path: "/(drawer)/admin/products",
+    },
+    {
+      label: "Vitrine",
+      icon: ShoppingBag,
+      path: "/(drawer)/admin/vitrine",
+    },
+    {
+      label: "Encartes",
+      icon: FileText,
+      path: "/(drawer)/admin/leaflets",
+    },
+    {
+      label: "Configurações",
+      icon: Settings,
+      path: "/(drawer)/admin/profile",
+    },
+  ];
+
+  // Renderizar um item do menu
+  const renderMenuItem = (item: { label: string; icon: any; path: string }) => {
+    const active = isActive(item.path);
+    const Icon = item.icon;
+
+    return (
+      <TouchableOpacity
+        key={item.path}
+        onPress={() => handleNavigation(item.path)}
+        className={`flex-row items-center py-3 px-4 mb-1 ${
+          active ? "bg-primary-50 rounded-lg" : ""
+        }`}
+      >
+        <Icon size={20} color={active ? primaryColor : "#64748b"} />
+        <Text
+          className={`ml-3 ${
+            active ? "text-primary-600 font-medium" : "text-slate-600"
+          }`}
+        >
+          {item.label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop:
-            Platform.OS === "ios" ? insets.top : StatusBar.currentHeight,
-        },
-      ]}
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: "white",
+        paddingTop: Platform.OS === "android" ? insets.top : 0,
+      }}
     >
-      {/* Header com Logo e botão de fechar */}
-      <View style={[styles.header, { backgroundColor: primaryLightColor }]}>
+      {/* Header */}
+      <HStack
+        justifyContent="space-between"
+        alignItems="center"
+        borderBottomWidth={1}
+        borderBottomColor="#f1f5f9"
+        className="p-16"
+      >
         <Image
           source={require("@/assets/images/logo-white.png")}
-          style={styles.logo}
+          style={{ height: 32, width: 120 }}
+          resizeMode="contain"
         />
+
         <TouchableOpacity
           onPress={handleCloseDrawer}
-          style={styles.closeButton}
+          className="w-8 h-8 items-center justify-center rounded-full"
+          style={{ backgroundColor: "#f1f5f9" }}
         >
-          <X size={24} color={primaryColor} />
+          <X size={18} color="#64748b" />
         </TouchableOpacity>
-      </View>
+      </HStack>
 
-      {/* Perfil da Empresa (se autenticado) */}
-      {isAuthenticated && profile && (
-        <View style={styles.profileContainer}>
-          <View
-            style={[
-              styles.profileImage,
-              { backgroundColor: primaryLightColor },
-            ]}
-          >
-            <Package size={24} color={primaryColor} />
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>
-              {profile.company_id ? "Empresa" : "Usuário"}
-            </Text>
-            <Text style={styles.profileEmail}>
-              {profile.company_id || "Conta pessoal"}
-            </Text>
-          </View>
+      {/* Perfil (se autenticado) */}
+      {isAuthenticated && (
+        <View className="px-4 py-4 border-b border-slate-100">
+          <HStack space="md" alignItems="center">
+            <View className="bg-primary-50 w-12 h-12 rounded-full items-center justify-center overflow-hidden">
+              {company?.logo ? (
+                <ResilientImage
+                  source={company.logo}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <User size={22} color={primaryColor} />
+              )}
+            </View>
+
+            <VStack>
+              <Text className="font-semibold text-slate-800">
+                {company?.nome || "Minha Empresa"}
+              </Text>
+              <Text className="text-xs text-slate-500">
+                {profile?.plan || "Conta comercial"}
+              </Text>
+            </VStack>
+          </HStack>
         </View>
       )}
 
       <DrawerContentScrollView
         {...props}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingTop: 0 }}
       >
-        {/* Seção Principal */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>MENU PRINCIPAL</Text>
+        {/* Seção de navegação pública */}
+        <View className="px-2 pt-2">
+          <Text className="text-xs font-medium text-slate-400 px-4 py-2 uppercase">
+            Navegação
+          </Text>
 
-          <DrawerItem
-            label="Início"
-            labelStyle={styles.drawerItemLabel}
-            icon={({ size }) => <Home size={size} color={primaryColor} />}
-            onPress={() => {
-              router.replace("/(drawer)/(tabs)/comercio-local");
-              navigation.dispatch(DrawerActions.closeDrawer());
-            }}
-          />
-
-          {isAuthenticated && (
-            <DrawerItem
-              label="Gerenciar"
-              labelStyle={styles.drawerItemLabel}
-              icon={({ size }) => <Settings size={size} color={primaryColor} />}
-              onPress={() => {
-                router.push("/(drawer)/admin/dashboard");
-                navigation.dispatch(DrawerActions.closeDrawer());
-              }}
-            />
-          )}
-
-          <DrawerItem
-            label="Suporte"
-            labelStyle={styles.drawerItemLabel}
-            icon={({ size }) => <HelpCircle size={size} color={primaryColor} />}
-            onPress={() => {
-              router.push("/(drawer)/support");
-              navigation.dispatch(DrawerActions.closeDrawer());
-            }}
-          />
-
-          <DrawerItem
-            label="Quem Somos"
-            labelStyle={styles.drawerItemLabel}
-            icon={({ size }) => <Info size={size} color={primaryColor} />}
-            onPress={() => {
-              router.push("/(drawer)/about");
-              navigation.dispatch(DrawerActions.closeDrawer());
-            }}
-          />
+          {publicMenuItems.map(renderMenuItem)}
         </View>
 
-        {/* Linha divisória */}
-        <View style={styles.divider} />
+        {/* Seção de administração (se autenticado) */}
+        {isAuthenticated && (
+          <View className="mt-4 px-2">
+            <Text className="text-xs font-medium text-slate-400 px-4 py-2 uppercase">
+              Administração
+            </Text>
 
-        {/* Seção de Conta */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>CONTA</Text>
-
-          {isAuthenticated ? (
-            <DrawerItem
-              label="Sair"
-              labelStyle={[styles.drawerItemLabel, { color: "#EF4444" }]}
-              icon={({ size }) => <LogOut size={size} color="#EF4444" />}
-              onPress={handleLogout}
-            />
-          ) : (
-            <DrawerItem
-              label="Entrar"
-              labelStyle={styles.drawerItemLabel}
-              icon={({ size }) => <LogIn size={size} color={primaryColor} />}
-              onPress={handleLogin}
-            />
-          )}
-        </View>
+            {adminMenuItems.map(renderMenuItem)}
+          </View>
+        )}
       </DrawerContentScrollView>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.versionText}>Versão 1.0.0</Text>
+      {/* Footer com botão de login/logout */}
+      <View className="px-4 py-4 border-t border-slate-100">
+        {isAuthenticated ? (
+          <TouchableOpacity
+            onPress={handleLogout}
+            className="flex-row items-center py-3 px-2"
+          >
+            <LogOut size={20} color="#ef4444" />
+            <Text className="ml-3 text-red-500 font-medium">Sair da conta</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={handleLogin}
+            className="flex-row items-center py-3 px-2"
+          >
+            <LogIn size={20} color={primaryColor} />
+            <Text className="ml-3 text-primary-600 font-medium">Entrar</Text>
+          </TouchableOpacity>
+        )}
+
+        <Text className="text-center text-xs text-slate-400 mt-4">
+          Versão 1.0.0
+        </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  logo: {
-    height: 40,
-    width: 120,
-    resizeMode: "contain",
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-    ...Platform.select({
-      ios: {
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  profileContainer: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#374151",
-  },
-  profileEmail: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-  scrollContent: {
-    paddingTop: 0,
-  },
-  section: {
-    padding: 8,
-  },
-  sectionTitle: {
-    marginLeft: 16,
-    marginBottom: 8,
-    fontSize: 14,
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  drawerItemLabel: {
-    color: "#374151",
-    fontWeight: "500",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#E5E7EB",
-    marginVertical: 8,
-    marginHorizontal: 16,
-  },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-  },
-  versionText: {
-    textAlign: "center",
-    color: "#9CA3AF",
-    fontSize: 12,
-  },
-});
