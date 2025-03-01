@@ -1,4 +1,5 @@
-// Path: src/features/vitrine/view-models/vitrine.view-model.ts
+// Path: src/features/shop-window/view-models/vitrine.view-model.ts
+
 import { useState, useCallback } from "react";
 import { useVitrine } from "../hooks/use-vitrine";
 import { IVitrineViewModel } from "./vitrine.view-model.interface";
@@ -8,7 +9,11 @@ import {
   VitrineProdutoFormData,
   VitrineLinkFormData,
 } from "../models";
-import { Alert } from "react-native";
+import { useToast } from "@gluestack-ui/themed";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/components/common/toast-helper";
 
 export function useVitrineViewModel(): IVitrineViewModel {
   const {
@@ -33,6 +38,8 @@ export function useVitrineViewModel(): IVitrineViewModel {
     isReorderingProdutos,
     isReorderingLinks,
   } = useVitrine();
+
+  const toast = useToast(); // Use o toast do Gluestack
 
   const [state, setState] = useState({
     isCreateProductOpen: false,
@@ -63,8 +70,8 @@ export function useVitrineViewModel(): IVitrineViewModel {
   const setIsCreateProductOpen = useCallback(
     (isOpen: boolean) => {
       if (vitrineProdutos.length >= 10 && isOpen) {
-        Alert.alert(
-          "Limite Excedido",
+        showErrorToast(
+          toast,
           "Você atingiu o limite máximo de 10 produtos na vitrine."
         );
         return;
@@ -72,7 +79,7 @@ export function useVitrineViewModel(): IVitrineViewModel {
       setState((prev) => ({ ...prev, isCreateProductOpen: isOpen }));
       if (!isOpen) closeModals();
     },
-    [vitrineProdutos.length, closeModals]
+    [vitrineProdutos.length, closeModals, toast]
   );
 
   const setIsCreateLinkOpen = useCallback(
@@ -121,6 +128,7 @@ export function useVitrineViewModel(): IVitrineViewModel {
               sort: data.sort,
             },
           });
+          showSuccessToast(toast, "Produto atualizado com sucesso!");
         } else {
           const lastProduct = vitrineProdutos[vitrineProdutos.length - 1];
           const nextOrder = lastProduct
@@ -133,11 +141,12 @@ export function useVitrineViewModel(): IVitrineViewModel {
             ordem: nextOrder,
             sort: (vitrineProdutos.length + 1) * 10,
           });
+          showSuccessToast(toast, "Produto adicionado com sucesso!");
         }
         closeModals();
       } catch (error) {
-        Alert.alert(
-          "Erro",
+        showErrorToast(
+          toast,
           error instanceof Error ? error.message : "Erro ao salvar produto"
         );
       }
@@ -148,6 +157,7 @@ export function useVitrineViewModel(): IVitrineViewModel {
       updateVitrineProduto,
       closeModals,
       vitrineProdutos,
+      toast,
     ]
   );
 
@@ -159,18 +169,26 @@ export function useVitrineViewModel(): IVitrineViewModel {
             id: state.selectedLink.id,
             data,
           });
+          showSuccessToast(toast, "Link atualizado com sucesso!");
         } else {
           await createVitrineLink(data);
+          showSuccessToast(toast, "Link adicionado com sucesso!");
         }
         closeModals();
       } catch (error) {
-        Alert.alert(
-          "Erro",
+        showErrorToast(
+          toast,
           error instanceof Error ? error.message : "Erro ao salvar link"
         );
       }
     },
-    [state.selectedLink, createVitrineLink, updateVitrineLink, closeModals]
+    [
+      state.selectedLink,
+      createVitrineLink,
+      updateVitrineLink,
+      closeModals,
+      toast,
+    ]
   );
 
   // Delete handlers
@@ -212,8 +230,10 @@ export function useVitrineViewModel(): IVitrineViewModel {
       if (state.selectedItem) {
         if ("produto" in state.selectedItem) {
           await deleteVitrineProduto(state.selectedItem.id);
+          showSuccessToast(toast, "Produto removido com sucesso!");
         } else {
           await deleteVitrineLink(state.selectedItem.id);
+          showSuccessToast(toast, "Link removido com sucesso!");
         }
       }
       setState((prev) => ({
@@ -224,26 +244,36 @@ export function useVitrineViewModel(): IVitrineViewModel {
         selectedLink: null,
       }));
     } catch (error) {
-      Alert.alert(
-        "Erro",
+      showErrorToast(
+        toast,
         error instanceof Error ? error.message : "Erro ao excluir item"
       );
     }
-  }, [state.selectedItem, deleteVitrineProduto, deleteVitrineLink]);
+  }, [state.selectedItem, deleteVitrineProduto, deleteVitrineLink, toast]);
 
   // Reorder handlers
   const handleProductReorder = useCallback(
     (produtos: VitrineProduto[]) => {
-      reorderVitrineProdutos(produtos);
+      try {
+        reorderVitrineProdutos(produtos);
+        showSuccessToast(toast, "Ordem dos produtos atualizada!");
+      } catch (error) {
+        showErrorToast(toast, "Erro ao reordenar produtos");
+      }
     },
-    [reorderVitrineProdutos]
+    [reorderVitrineProdutos, toast]
   );
 
   const handleLinkReorder = useCallback(
     (links: VitrineLink[]) => {
-      reorderVitrineLinks(links);
+      try {
+        reorderVitrineLinks(links);
+        showSuccessToast(toast, "Ordem dos links atualizada!");
+      } catch (error) {
+        showErrorToast(toast, "Erro ao reordenar links");
+      }
     },
-    [reorderVitrineLinks]
+    [reorderVitrineLinks, toast]
   );
 
   return {

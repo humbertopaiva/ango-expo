@@ -1,9 +1,14 @@
-// src/features/profile/view-models/profile.view-model.ts
+// Path: src/features/profile/view-models/profile.view-model.ts
+
 import { useState, useCallback } from "react";
 import { IProfileViewModel } from "./profile.view-model.interface";
 import { useProfile } from "../hooks/use-profile";
 import { UpdateProfileDTO } from "../models/profile";
-import { useToast } from "@/src/hooks/use-toast";
+import { useToast } from "@gluestack-ui/themed";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/components/common/toast-helper";
 
 export function useProfileViewModel(companyId: string): IProfileViewModel {
   const { profile, isLoading, updateProfile, isUpdating } =
@@ -72,18 +77,13 @@ export function useProfileViewModel(companyId: string): IProfileViewModel {
       try {
         await updateProfile({ id: profile.id, data });
         closeModals();
-        toast?.show({
-          title: "Sucesso",
-          description: `${section} atualizado com sucesso!`,
-          type: "success",
-        });
+        showSuccessToast(toast, `${section} atualizado com sucesso!`);
       } catch (error) {
         console.error(`Erro ao atualizar ${section}:`, error);
-        toast?.show({
-          title: "Erro",
-          description: `Não foi possível atualizar ${section}. Tente novamente.`,
-          type: "error",
-        });
+        showErrorToast(
+          toast,
+          `Não foi possível atualizar ${section}. Tente novamente.`
+        );
       }
     },
     [profile, updateProfile, toast]
