@@ -1,10 +1,13 @@
 // Path: src/hooks/use-company-data.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/src/services/api";
 import useAuthStore from "@/src/stores/auth";
-import { storage } from "@/src/lib/storage"; // Já está usando o storage abstrato
 import { toastUtils } from "@/src/utils/toast.utils";
 import { useToast } from "@gluestack-ui/themed";
+import { cacheService } from "@/src/services/cache-service";
+
+// Tempo de expiração do cache em milissegundos (30 minutos)
+const CACHE_EXPIRATION = 30 * 60 * 1000;
 
 export interface Company {
   id: string;
@@ -21,37 +24,44 @@ export function useCompanyData() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const toast = useToast();
+  const initialized = useRef(false);
+  const fetchingRef = useRef(false);
 
   const companyId = useAuthStore((state) => state.getCompanyId());
 
   const fetchCompanyData = useCallback(
     async (forceRefresh = false) => {
       if (!companyId) {
-        console.log("CompanyId não encontrado:", companyId);
+        console.log("CompanyId não encontrado");
         return;
       }
 
-      // Verificamos se já temos dados em cache e não estamos forçando refresh
+      // Evitar múltiplas chamadas simultâneas
+      if (fetchingRef.current) {
+        console.log("Já existe uma requisição em andamento");
+        return;
+      }
+
+      const cacheKey = `company_${companyId}`;
+
+      // Verificar cache se não estiver forçando um refresh
       if (!forceRefresh) {
         try {
-          const cachedDataStr = await storage.getItem(`company_${companyId}`);
-          if (cachedDataStr) {
-            const parsedData = JSON.parse(cachedDataStr);
-            const cacheTime = parsedData.timestamp || 0;
-            const now = Date.now();
-
-            // Se o cache for mais recente que 30 minutos, use-o
-            if (now - cacheTime < 30 * 60 * 1000) {
-              console.log("Usando dados em cache para a empresa:", companyId);
-              setCompany(parsedData.company);
-              return;
-            }
+          const cachedData = await cacheService.get<Company>(
+            cacheKey,
+            CACHE_EXPIRATION
+          );
+          if (cachedData) {
+            setCompany(cachedData);
+            return;
           }
-        } catch (e) {
-          console.error("Erro ao ler cache:", e);
+        } catch (error) {
+          console.error("Erro ao verificar cache:", error);
         }
       }
 
+      // Marcar como em andamento
+      fetchingRef.current = true;
       setLoading(true);
 
       try {
@@ -60,45 +70,80 @@ export function useCompanyData() {
           `/api/companies/${companyId}`
         );
         const companyData = response.data.data;
-        console.log("Dados recebidos:", companyData);
 
-        // Salva no cache com timestamp
-        await storage.setItem(
-          `company_${companyId}`,
-          JSON.stringify({
-            company: companyData,
-            timestamp: Date.now(),
-          })
-        );
+        // Salvar no cache
+        await cacheService.set(cacheKey, companyData);
 
         setCompany(companyData);
         setError(null);
       } catch (err) {
         console.error("Erro ao buscar dados da empresa:", err);
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Erro ao buscar dados da empresa";
 
-        setError(new Error(errorMessage));
+        // Tentar usar dados em cache como fallback mesmo se forcedRefresh
+        try {
+          const cachedData = await cacheService.get<Company>(cacheKey);
+          if (cachedData && !company) {
+            setCompany(cachedData);
+            console.log("Usando cache como fallback após erro na API");
+          } else {
+            const errorMessage =
+              err instanceof Error
+                ? err.message
+                : "Erro ao buscar dados da empresa";
 
-        // Exibir toast de erro
-        toastUtils.error(toast, "Falha ao carregar dados da empresa");
+            setError(new Error(errorMessage));
+
+            // Exibir toast apenas se não temos dados
+            if (!company) {
+              toastUtils.error(toast, "Falha ao carregar dados da empresa");
+            }
+          }
+        } catch (cacheError) {
+          console.error(
+            "Erro ao verificar cache após falha na API:",
+            cacheError
+          );
+        }
       } finally {
         setLoading(false);
+        fetchingRef.current = false;
       }
     },
-    [companyId, toast]
+    [companyId, company, toast]
+  );
+
+  // Função para atualizar apenas certos campos da empresa
+  const updateCompanyFields = useCallback(
+    async (fields: Partial<Company>) => {
+      if (!companyId || !company) return;
+
+      const cacheKey = `company_${companyId}`;
+
+      // Atualizar estado local imediatamente para resposta instantânea na UI
+      const updatedCompany = { ...company, ...fields };
+      setCompany(updatedCompany);
+
+      // Atualizar no cache
+      await cacheService.set(cacheKey, updatedCompany);
+
+      return updatedCompany;
+    },
+    [companyId, company]
   );
 
   useEffect(() => {
-    fetchCompanyData();
-  }, [fetchCompanyData]);
+    // Evitar múltiplas chamadas durante a montagem do componente
+    if (!initialized.current && companyId) {
+      fetchCompanyData();
+      initialized.current = true;
+    }
+  }, [fetchCompanyData, companyId]);
 
   return {
     company,
     loading,
     error,
     refresh: () => fetchCompanyData(true),
+    updateCompanyFields,
   };
 }
