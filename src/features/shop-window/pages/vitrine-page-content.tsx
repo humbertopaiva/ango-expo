@@ -44,7 +44,7 @@ const CustomTabBar = ({ navigationState, position, jumpTo }: TabBarProps) => {
             key={route.key}
             style={{
               flex: 1,
-              paddingVertical: 16,
+              paddingVertical: 14,
               alignItems: "center",
               borderBottomWidth: isActive ? 2 : 0,
               borderBottomColor: isActive ? "#F4511E" : "transparent",
@@ -52,11 +52,11 @@ const CustomTabBar = ({ navigationState, position, jumpTo }: TabBarProps) => {
           >
             <Button
               onPress={() => jumpTo(route.key)}
-              style={{
-                backgroundColor: isActive ? "#F4511E" : "#6B7280",
-              }}
+              style={{ backgroundColor: "transparent" }}
             >
-              <ButtonText>{route.title}</ButtonText>
+              <ButtonText style={{ color: isActive ? "#F4511E" : "gray" }}>
+                {route.title}
+              </ButtonText>
             </Button>
           </View>
         );
