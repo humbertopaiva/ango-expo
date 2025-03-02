@@ -68,17 +68,6 @@ export function LeafletDetailsList({
           variant: "outline",
         },
       ]}
-      getMetadata={(leaflet) => [
-        { label: "Criado em", value: formatDate(leaflet.date_created) },
-        ...(leaflet.date_updated
-          ? [
-              {
-                label: "Atualizado em",
-                value: formatDate(leaflet.date_updated),
-              },
-            ]
-          : []),
-      ]}
       onEdit={onEdit}
       onDelete={onDelete}
       onItemPress={onView}

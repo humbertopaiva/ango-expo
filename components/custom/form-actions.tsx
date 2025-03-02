@@ -88,7 +88,7 @@ export function FormActions({
         variant={variant}
         onPress={onPress}
         disabled={isDisabled || isLoading}
-        className={`flex-1 ${buttonColorClass} ${className}`}
+        className={`flex-1 h-14 ${buttonColorClass} ${className}`}
       >
         <ButtonText>{isLoading ? "Processando..." : label}</ButtonText>
       </Button>

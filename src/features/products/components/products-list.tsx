@@ -27,12 +27,6 @@ export function ProductsList({
       emptyMessage="Nenhum produto encontrado. Crie um novo produto para começar."
       renderSkeleton={() => <ProductSkeletonList count={3} />}
       getTitle={(product) => product.nome}
-      getSubtitle={(product) =>
-        product.descricao
-          ? product.descricao.slice(0, 50) +
-            (product.descricao.length > 50 ? "..." : "")
-          : ""
-      }
       getPrice={(product) => product.preco}
       getPromotionalPrice={(product) => product.preco_promocional || undefined}
       getImageUri={(product) => product.imagem}
@@ -41,13 +35,6 @@ export function ProductsList({
       getStatusLabel={(product) =>
         product.status === "disponivel" ? "Disponível" : "Indisponível"
       }
-      getMetadata={(product) => {
-        const metadata = [];
-        if (product.categoria !== null && product.categoria !== undefined) {
-          metadata.push({ label: "Categoria", value: `#${product.categoria}` });
-        }
-        return metadata;
-      }}
       onEdit={onEdit}
       onDelete={onDelete}
       onItemPress={onItemPress}

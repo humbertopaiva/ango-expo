@@ -2,7 +2,14 @@
 
 import React from "react";
 import { LeafletFormScreen } from "@/src/features/leaflets/components/leaflet-form";
+import ScreenHeader from "@/components/ui/screen-header";
+import { View } from "@gluestack-ui/themed";
 
 export default function EditLeafletPage() {
-  return <LeafletFormScreen />;
+  return (
+    <View className="flex-1 bg-background">
+      <ScreenHeader title="Editar Encarte" backTo="/admin/leaflets" />
+      <LeafletFormScreen />
+    </View>
+  );
 }

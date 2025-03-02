@@ -1,7 +1,13 @@
 // src/features/leaflets/components/leaflet-form.tsx
 
 import React, { useEffect, useState } from "react";
-import { View, ScrollView, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,28 +15,22 @@ import { router, useLocalSearchParams } from "expo-router";
 import {
   Input,
   FormControl,
-  Button,
   VStack,
-  Select,
-  SelectTrigger,
-  SelectInput,
-  SelectIcon,
-  SelectPortal,
-  SelectBackdrop,
-  SelectContent,
-  SelectDragIndicator,
-  SelectItem,
-  ChevronDownIcon,
   Alert,
   AlertText,
   AlertIcon,
+  useToast,
+  Switch,
+  HStack,
 } from "@gluestack-ui/themed";
-import { ArrowLeft, AlertCircle, FileText } from "lucide-react-native";
+import { AlertCircle, FileText, Check, X } from "lucide-react-native";
 import { leafletFormSchema, LeafletFormData } from "../schemas/leaflet.schema";
-import { Leaflet } from "../models/leaflet";
 import { ImageUpload } from "@/components/common/image-upload";
 import { DatePicker } from "@/components/common/date-picker";
 import { useLeafletsContext } from "../contexts/use-leaflets-context";
+import { THEME_COLORS } from "@/src/styles/colors";
+import { toastUtils } from "@/src/utils/toast.utils";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 
 interface LeafletFormScreenProps {
   leafletId?: string;
@@ -40,6 +40,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
   const params = useLocalSearchParams<{ id: string }>();
   const id = leafletId || params.id;
   const isEditing = !!id;
+  const toast = useToast();
 
   const vm = useLeafletsContext();
   const {
@@ -52,9 +53,12 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
 
   const leaflet = leaflets.find((l) => l.id === id);
   const isLoading = isCreating || isUpdating;
+  const primaryColor = THEME_COLORS.primary;
 
   // Gerenciamento de abas simples
   const [activeTab, setActiveTab] = useState("info");
+  // Estado local para rastrear o status atual
+  const [statusValue, setStatusValue] = useState("ativo");
 
   const form = useForm<LeafletFormData>({
     resolver: zodResolver(leafletFormSchema),
@@ -80,6 +84,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
     formState: { errors },
     reset,
     getValues,
+    setValue,
   } = form;
 
   useEffect(() => {
@@ -98,24 +103,37 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
         imagem_07: leaflet.imagem_07,
         imagem_08: leaflet.imagem_08,
       });
+      setStatusValue(leaflet.status); // Atualiza o estado local
     }
   }, [leaflet, reset]);
 
+  // Efeito para sincronizar o estado local com o valor do formulário
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "status") {
+        setStatusValue(value.status || "ativo");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
+
   const onSubmit = async (data: LeafletFormData) => {
     try {
-      console.log("Formulário submetido:", data);
-
       if (isEditing && id) {
-        console.log("Atualizando encarte existente");
         await handleUpdateLeaflet(id, data);
+        toastUtils.success(toast, "Encarte atualizado com sucesso!");
       } else {
-        console.log("Criando novo encarte");
         await handleCreateLeaflet(data);
+        toastUtils.success(toast, "Encarte criado com sucesso!");
       }
-      console.log("Operação concluída, voltando...");
       router.back();
     } catch (error) {
       console.error("Erro ao submeter formulário:", error);
+      toastUtils.error(
+        toast,
+        `Erro ao ${isEditing ? "atualizar" : "criar"} encarte`
+      );
     }
   };
 
@@ -134,28 +152,13 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      {/* Header */}
-      <View className="px-4 py-4 border-b border-gray-200">
-        <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <ArrowLeft size={24} color="#000" />
-          </TouchableOpacity>
-          <View className="flex-row items-center ml-2">
-            <FileText size={22} color="#000" className="mr-2" />
-            <Text className="text-xl font-semibold">
-              {isEditing ? "Editar Encarte" : "Novo Encarte"}
-            </Text>
-          </View>
-        </View>
-      </View>
-
+    <SafeAreaView className="flex-1 bg-background">
       {/* Tabs Nav */}
-      <View className="flex-row border-b border-gray-200">
+      <View className="flex-row border-b border-gray-200 bg-white">
         <TouchableOpacity
           onPress={() => setActiveTab("info")}
-          className={`flex-1 py-3 ${
-            activeTab === "info" ? "border-b-2 border-primary-500" : ""
+          className={`flex-1 py-6 ${
+            activeTab === "info" ? `border-b-2 border-primary-500` : ""
           }`}
         >
           <Text
@@ -170,8 +173,8 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setActiveTab("images")}
-          className={`flex-1 py-3 ${
-            activeTab === "images" ? "border-b-2 border-primary-500" : ""
+          className={`flex-1 py-6 ${
+            activeTab === "images" ? `border-b-2 border-primary-500` : ""
           }`}
         >
           <Text
@@ -188,7 +191,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
 
       {/* Tab Content */}
       {activeTab === "info" ? (
-        <ScrollView className="flex-1 px-4">
+        <ScrollView className="flex-1 px-4 bg-white">
           <VStack space="lg" className="py-6">
             {/* Nome */}
             <FormControl isInvalid={!!errors.nome}>
@@ -206,6 +209,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                       placeholder="Ex: Ofertas da Semana"
                       onChangeText={onChange}
                       value={value}
+                      className="bg-white border border-gray-200"
                     />
                   </Input>
                 )}
@@ -249,35 +253,65 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
               )}
             </FormControl>
 
-            {/* Status */}
-            <FormControl isInvalid={!!errors.status}>
+            {/* Status como Switch/Toggle */}
+            <FormControl isInvalid={!!errors.status} className="mb-2">
               <FormControl.Label>
-                <Text className="text-sm font-medium text-gray-700">
-                  Status
+                <Text className="text-sm font-medium text-gray-700 mb-2">
+                  Status do Encarte
                 </Text>
               </FormControl.Label>
+
               <Controller
                 control={control}
                 name="status"
                 render={({ field: { onChange, value } }) => (
-                  <Select selectedValue={value} onValueChange={onChange}>
-                    <SelectTrigger>
-                      <SelectInput placeholder="Selecione o status" />
-                      <SelectIcon>
-                        <ChevronDownIcon />
-                      </SelectIcon>
-                    </SelectTrigger>
-                    <SelectPortal>
-                      <SelectBackdrop />
-                      <SelectContent>
-                        <SelectDragIndicator />
-                        <SelectItem label="Ativo" value="ativo" />
-                        <SelectItem label="Inativo" value="inativo" />
-                      </SelectContent>
-                    </SelectPortal>
-                  </Select>
+                  <View className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <HStack justifyContent="space-between" alignItems="center">
+                      <HStack space="sm" alignItems="center">
+                        {statusValue === "ativo" ? (
+                          <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center">
+                            <Check size={14} color="#10B981" />
+                          </View>
+                        ) : (
+                          <View className="w-6 h-6 rounded-full bg-red-100 items-center justify-center">
+                            <X size={14} color="#EF4444" />
+                          </View>
+                        )}
+                        <Text
+                          className={`font-medium ${
+                            statusValue === "ativo"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {statusValue === "ativo" ? "Ativo" : "Inativo"}
+                        </Text>
+                      </HStack>
+
+                      <Switch
+                        value={statusValue === "ativo"}
+                        onValueChange={(newValue) => {
+                          const newStatus = newValue ? "ativo" : "inativo";
+                          setStatusValue(newStatus);
+                          onChange(newStatus);
+                        }}
+                        disabled={isLoading}
+                        trackColor={{ false: "#EF4444", true: "#10B981" }}
+                        thumbColor={
+                          statusValue === "ativo" ? "#ffffff" : "#ffffff"
+                        }
+                      />
+                    </HStack>
+
+                    <Text className="text-xs text-gray-500 mt-2">
+                      {statusValue === "ativo"
+                        ? "O encarte está visível para os clientes."
+                        : "O encarte está oculto e não aparecerá para os clientes."}
+                    </Text>
+                  </View>
                 )}
               />
+
               {errors.status && (
                 <FormControl.Error>
                   <Text className="text-sm text-red-500">
@@ -319,11 +353,11 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
           </VStack>
         </ScrollView>
       ) : (
-        <ScrollView className="flex-1 px-4">
+        <ScrollView className="flex-1 px-4 bg-white">
           <VStack space="lg" className="py-6">
-            <Alert className="mb-4">
-              <AlertIcon as={AlertCircle} />
-              <AlertText>
+            <Alert className="mb-4 bg-blue-50 border border-blue-200">
+              <AlertIcon as={AlertCircle} color="#3B82F6" />
+              <AlertText className="ml-3 text-blue-700">
                 Recomendamos utilizar imagens no formato vertical (3:4) para
                 melhor visualização
               </AlertText>
@@ -341,6 +375,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                     )}` as keyof LeafletFormData
                   ]
                 }
+                className="mb-6"
               >
                 <FormControl.Label>
                   <Text className="text-sm font-medium text-gray-700">
@@ -389,22 +424,36 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
       )}
 
       {/* Footer */}
-      <View className="px-4 py-4 border-t border-gray-200">
-        <View className="flex-row gap-4 justify-end">
+      <View
+        className="px-4 py-4 border-t border-gray-200 bg-white"
+        style={{
+          paddingBottom: Platform.OS === "ios" ? 24 : 16,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          elevation: 5,
+        }}
+      >
+        <View className="flex-row gap-4">
           <Button
             variant="outline"
             onPress={() => router.back()}
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 border-gray-300 h-14"
+            style={{ borderColor: primaryColor }}
           >
-            <Button.Text>Cancelar</Button.Text>
+            <ButtonText>Cancelar</ButtonText>
           </Button>
           <Button
             onPress={handleSubmit(onSubmit)}
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 bg-primary-500 h-14"
+            style={{ backgroundColor: primaryColor }}
           >
-            <Button.Text>{isLoading ? "Salvando..." : "Salvar"}</Button.Text>
+            <ButtonText>
+              {isLoading ? "Salvando..." : "Salvar Encarte"}
+            </ButtonText>
           </Button>
         </View>
       </View>
