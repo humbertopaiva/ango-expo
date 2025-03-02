@@ -46,7 +46,7 @@ export function SimpleProdutoItem({
       {/* Posição do item como "tag" no canto superior direito */}
       {!isReordering && position && (
         <View className="absolute top-0 right-0 bg-primary-100 rounded-bl-lg px-1.5 py-0.5 z-10">
-          <Text className="text-xs font-bold text-primary-700">
+          <Text className="text-xs font-bold text-primary-500">
             #{position}
           </Text>
         </View>
@@ -158,18 +158,12 @@ export function SimpleProdutoItem({
 
         {/* Botões de ação */}
         {!isReordering && (
-          <View className="flex-row">
+          <View className="flex-row absolute right-0 bottom-0">
             <View
-              style={styles.actionButton}
-              onTouchEnd={() => onEdit(produto)}
-            >
-              <Edit size={20} color="#374151" />
-            </View>
-            <View
-              style={[styles.actionButton, { backgroundColor: "#FEE2E2" }]}
+              style={[styles.actionButton]}
               onTouchEnd={() => onDelete(produto)}
             >
-              <Trash size={20} color="#EF4444" />
+              <Trash size={18} color="#EF4444" />
             </View>
           </View>
         )}
@@ -192,8 +186,8 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   actionButton: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 8,
     backgroundColor: "#F3F4F6",
     alignItems: "center",
