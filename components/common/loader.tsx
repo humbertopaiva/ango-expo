@@ -1,40 +1,27 @@
-// Path: src/components/common/global-loader.tsx (corrigido)
+// Path: src/components/common/loader.tsx
 import React from "react";
 import {
   View,
-  ActivityIndicator,
   StyleSheet,
+  ActivityIndicator,
   Modal,
-  Platform,
+  Dimensions,
 } from "react-native";
-import { useQueryLoading } from "@/src/providers/query-loading-provider";
+import { useLoading } from "@/src/providers/loading-provider";
 import { THEME_COLORS } from "@/src/styles/colors";
 
-interface GlobalLoaderProps {
-  color?: string;
-  size?: "small" | "large";
-  opacity?: number;
-}
+const { width, height } = Dimensions.get("window");
 
-export function GlobalLoader({
-  color = THEME_COLORS.primary,
-  size = "large",
-  opacity = 0.4,
-}: GlobalLoaderProps) {
-  const { isLoading } = useQueryLoading();
+export function Loader() {
+  const { isLoading } = useLoading();
 
   if (!isLoading) return null;
 
   return (
     <Modal transparent visible={isLoading} animationType="fade">
-      <View
-        style={[
-          styles.container,
-          { backgroundColor: `rgba(0, 0, 0, ${opacity})` },
-        ]}
-      >
+      <View style={styles.container}>
         <View style={styles.loaderContainer}>
-          <ActivityIndicator size={size} color={color} />
+          <ActivityIndicator size="large" color={THEME_COLORS.primary} />
         </View>
       </View>
     </Modal>
@@ -46,15 +33,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    width: "100%",
-    height: "100%",
+    width: width,
+    height: height,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
     zIndex: 9999,
   },
   loaderContainer: {
+    width: 80,
+    height: 80,
     backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
@@ -63,5 +51,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

@@ -1,6 +1,7 @@
 // Path: src/providers/query-loading-provider.tsx (atualizado)
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
+import { useNavigationLoading } from "./navigation-loading-provider";
 
 interface QueryLoadingContextType {
   isLoading: boolean;
@@ -30,6 +31,9 @@ export function QueryLoadingProvider({
   const [isLoading, setIsLoading] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
 
+  // Obtém o estado de navegação
+  const { isNavigating } = useNavigationLoading();
+
   // Monitorar se há queries em andamento
   const isFetching = useIsFetching();
 
@@ -39,11 +43,13 @@ export function QueryLoadingProvider({
   // Combinar os estados para determinar se algo está carregando
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsLoading(isFetching > 0 || isMutating > 0 || manualLoading);
+      setIsLoading(
+        isFetching > 0 || isMutating > 0 || manualLoading || isNavigating
+      );
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [isFetching, isMutating, manualLoading]);
+  }, [isFetching, isMutating, manualLoading, isNavigating]);
 
   const showManualLoader = () => setManualLoading(true);
   const hideManualLoader = () => setManualLoading(false);

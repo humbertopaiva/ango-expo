@@ -1,4 +1,4 @@
-// Path: app/_layout.tsx (modificado)
+// Path: app/_layout.tsx (simplificado)
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useEffect } from "react";
 import "@/global.css";
@@ -11,14 +11,13 @@ import useAuthStore from "@/src/stores/auth";
 import { useCustomFonts } from "@/src/styles/fonts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DrawerProvider } from "@/src/providers/drawer-provider";
-import { QueryLoadingProvider } from "@/src/providers/query-loading-provider";
-import { GlobalLoader } from "@/components/common/global-loader";
+import { LoadingProvider } from "@/src/providers/loading-provider";
+import { Loader } from "@/components/common/loader";
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const fontsLoaded = useCustomFonts();
-
   const segments = useSegments();
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
@@ -41,16 +40,16 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <QueryLoadingProvider>
+        <LoadingProvider>
           <GluestackUIProvider config={config}>
             <DrawerProvider>
+              <Loader />
               <View className="flex-1 bg-background">
                 <Slot />
-                <GlobalLoader />
               </View>
             </DrawerProvider>
           </GluestackUIProvider>
-        </QueryLoadingProvider>
+        </LoadingProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
