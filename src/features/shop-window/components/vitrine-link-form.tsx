@@ -26,7 +26,20 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 import { VitrineLink } from "../models";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { Globe, Instagram, Facebook, MessageCircle } from "lucide-react-native";
+import {
+  Globe,
+  Instagram,
+  Facebook,
+  MessageCircle,
+  MapPin,
+  FileText,
+  ShoppingBag,
+  ShoppingCart,
+  Video,
+  Twitter,
+  Send,
+  Phone,
+} from "lucide-react-native";
 import { FormControlHelperText } from "@/components/ui/form-control";
 
 const formSchema = z.object({
@@ -46,11 +59,31 @@ interface VitrineLinkFormProps {
   link?: VitrineLink;
 }
 
+// Lista expandida com todos os tipos de link
 const TIPOS_LINK = [
   { id: "whatsapp", label: "WhatsApp", icon: MessageCircle, color: "#25D366" },
   { id: "instagram", label: "Instagram", icon: Instagram, color: "#E1306C" },
   { id: "facebook", label: "Facebook", icon: Facebook, color: "#1877F2" },
+  { id: "tiktok", label: "TikTok", icon: Video, color: "#000000" },
+  { id: "youtube", label: "YouTube", icon: Video, color: "#FF0000" },
+  { id: "twitter", label: "Twitter", icon: Twitter, color: "#1DA1F2" },
+  { id: "telegram", label: "Telegram", icon: Send, color: "#0088CC" },
+  { id: "shopee", label: "Shopee", icon: ShoppingBag, color: "#EE4D2D" },
+  {
+    id: "mercado_livre",
+    label: "Mercado Livre",
+    icon: ShoppingCart,
+    color: "#FFE600",
+  },
+  {
+    id: "catalogo_pdf",
+    label: "Catálogo PDF",
+    icon: FileText,
+    color: "#F40F02",
+  },
+  { id: "google_maps", label: "Google Maps", icon: MapPin, color: "#4285F4" },
   { id: "site", label: "Site", icon: Globe, color: THEME_COLORS.primary },
+  { id: "telefone", label: "Telefone", icon: Phone, color: "#0CA789" },
   { id: "outro", label: "Outro", icon: Globe, color: "#6B7280" },
 ];
 
@@ -107,6 +140,30 @@ export function VitrineLinkForm({
     );
   };
 
+  // Função para gerar dica de ajuda baseada no tipo selecionado
+  const getLinkHelper = (type: string) => {
+    switch (type) {
+      case "whatsapp":
+        return "Formato: https://wa.me/5511912345678";
+      case "instagram":
+        return "Formato: https://instagram.com/seu_perfil";
+      case "facebook":
+        return "Formato: https://facebook.com/seu_perfil";
+      case "tiktok":
+        return "Formato: https://tiktok.com/@seu_usuario";
+      case "youtube":
+        return "Formato: https://youtube.com/@seu_canal";
+      case "telegram":
+        return "Formato: https://t.me/seu_usuario";
+      case "google_maps":
+        return "URL da localização do seu estabelecimento no Google Maps";
+      case "telefone":
+        return "Formato: tel:+5511912345678";
+      default:
+        return "";
+    }
+  };
+
   return (
     <Modal isOpen={open} onClose={onClose}>
       <Modal.Content maxWidth={400} bg="$white" borderRadius="$lg">
@@ -151,16 +208,13 @@ export function VitrineLinkForm({
                         <SelectDragIndicatorWrapper>
                           <SelectDragIndicator />
                         </SelectDragIndicatorWrapper>
-                        {TIPOS_LINK.map((tipo) => {
-                          const Icon = tipo.icon;
-                          return (
-                            <SelectItem
-                              key={tipo.id}
-                              label={tipo.label}
-                              value={tipo.id}
-                            />
-                          );
-                        })}
+                        {TIPOS_LINK.map((tipo) => (
+                          <SelectItem
+                            key={tipo.id}
+                            label={tipo.label}
+                            value={tipo.id}
+                          />
+                        ))}
                       </SelectContent>
                     </SelectPortal>
                   </Select>
@@ -223,9 +277,10 @@ export function VitrineLinkForm({
                     <Input.Input
                       placeholder="https://..."
                       onChangeText={onChange}
-                      value={value}
+                      value={value || ""}
+                      keyboardType="url"
+                      className="bg-white"
                       borderColor={error ? "$red500" : "$gray200"}
-                      backgroundColor="$white"
                     />
                   </Input>
                   {error && (
@@ -235,17 +290,10 @@ export function VitrineLinkForm({
                       </FormControl.Error.Text>
                     </FormControl.Error>
                   )}
-                  {selectedLinkType?.id === "whatsapp" && (
+                  {selectedLinkType && getLinkHelper(selectedLinkType.id) && (
                     <FormControlHelperText>
                       <Text className="text-xs text-gray-500">
-                        Formato: https://wa.me/5511912345678
-                      </Text>
-                    </FormControlHelperText>
-                  )}
-                  {selectedLinkType?.id === "instagram" && (
-                    <FormControlHelperText>
-                      <Text className="text-xs text-gray-500">
-                        Formato: https://instagram.com/seu_perfil
+                        {getLinkHelper(selectedLinkType.id)}
                       </Text>
                     </FormControlHelperText>
                   )}

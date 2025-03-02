@@ -1,5 +1,4 @@
 // Path: src/features/shop-window/components/sortable-link-item.tsx
-
 import React, { useRef, useState } from "react";
 import { View, Text, Pressable, Animated, Linking } from "react-native";
 import { Card } from "@gluestack-ui/themed";
@@ -14,11 +13,19 @@ import {
   MessageCircle,
   Facebook,
   Instagram,
+  Video,
+  Twitter,
+  Send,
+  MapPin,
+  FileText,
+  ShoppingBag,
+  ShoppingCart,
+  Phone,
   MoreVertical,
 } from "lucide-react-native";
 import { VitrineLink } from "../models";
+import { ReorderButtons } from "@/components/common/reorder-buttons";
 
-// Importante: Substitui TouchableOpacity por Pressable
 interface SortableLinkItemProps {
   link: VitrineLink;
   onEdit: (link: VitrineLink) => void;
@@ -81,8 +88,26 @@ export function SortableLinkItem({
         return <Instagram size={20} color="#E1306C" />;
       case "facebook":
         return <Facebook size={20} color="#1877F2" />;
+      case "tiktok":
+        return <Video size={20} color="#000000" />;
+      case "youtube":
+        return <Video size={20} color="#FF0000" />;
+      case "twitter":
+        return <Twitter size={20} color="#1DA1F2" />;
+      case "telegram":
+        return <Send size={20} color="#0088CC" />;
+      case "shopee":
+        return <ShoppingBag size={20} color="#EE4D2D" />;
+      case "mercado_livre":
+        return <ShoppingCart size={20} color="#FFE600" />;
+      case "catalogo_pdf":
+        return <FileText size={20} color="#F40F02" />;
+      case "google_maps":
+        return <MapPin size={20} color="#4285F4" />;
       case "site":
         return <Globe size={20} color="#0891B2" />;
+      case "telefone":
+        return <Phone size={20} color="#0CA789" />;
       default:
         return <LinkIcon size={20} color="#6B7280" />;
     }
@@ -97,8 +122,26 @@ export function SortableLinkItem({
         return "bg-pink-50";
       case "facebook":
         return "bg-blue-50";
+      case "tiktok":
+        return "bg-gray-50";
+      case "youtube":
+        return "bg-red-50";
+      case "twitter":
+        return "bg-blue-50";
+      case "telegram":
+        return "bg-blue-50";
+      case "shopee":
+        return "bg-orange-50";
+      case "mercado_livre":
+        return "bg-yellow-50";
+      case "catalogo_pdf":
+        return "bg-red-50";
+      case "google_maps":
+        return "bg-blue-50";
       case "site":
         return "bg-primary-50";
+      case "telefone":
+        return "bg-emerald-50";
       default:
         return "bg-gray-50";
     }
@@ -161,28 +204,7 @@ export function SortableLinkItem({
             {/* Área de reordenação ou ícone do tipo de link */}
             <View className="pr-2">
               {isReordering ? (
-                <View className="h-12 w-12 bg-gray-50 rounded-lg justify-center items-center">
-                  <View className="flex-row">
-                    <Pressable
-                      onPress={onMoveUp}
-                      disabled={!onMoveUp}
-                      className={`p-2 rounded-full ${
-                        !onMoveUp ? "opacity-30" : "bg-white shadow-sm"
-                      }`}
-                    >
-                      <ArrowUp size={16} color="#F4511E" />
-                    </Pressable>
-                    <Pressable
-                      onPress={onMoveDown}
-                      disabled={!onMoveDown}
-                      className={`p-2 rounded-full ml-1 ${
-                        !onMoveDown ? "opacity-30" : "bg-white shadow-sm"
-                      }`}
-                    >
-                      <ArrowDown size={16} color="#F4511E" />
-                    </Pressable>
-                  </View>
-                </View>
+                <ReorderButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
               ) : (
                 <View
                   className={`h-12 w-12 rounded-lg items-center justify-center ${getLinkBgColor()}`}

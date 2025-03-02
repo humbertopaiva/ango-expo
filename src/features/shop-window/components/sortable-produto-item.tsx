@@ -1,5 +1,4 @@
 // Path: src/features/shop-window/components/sortable-produto-item.tsx
-
 import React, { useRef, useState } from "react";
 import { View, Text, Pressable, Animated } from "react-native";
 import { Card } from "@gluestack-ui/themed";
@@ -8,17 +7,15 @@ import {
   ArrowUp,
   ArrowDown,
   Trash,
-  Edit,
   DollarSign,
   MoreVertical,
 } from "lucide-react-native";
 import { VitrineProduto } from "../models";
 import { ResilientImage } from "@/components/common/resilient-image";
+import { ReorderButtons } from "@/components/common/reorder-buttons";
 
-// Importante: Substitui TouchableOpacity por Pressable para evitar problemas com contexto de navegação
 interface SortableProdutoItemProps {
   produto: VitrineProduto;
-  onEdit: (produto: VitrineProduto) => void;
   onDelete: (produto: VitrineProduto) => void;
   isReordering?: boolean;
   onMoveUp?: () => void;
@@ -28,7 +25,6 @@ interface SortableProdutoItemProps {
 
 export function SortableProdutoItem({
   produto,
-  onEdit,
   onDelete,
   isReordering,
   onMoveUp,
@@ -67,20 +63,14 @@ export function SortableProdutoItem({
 
   return (
     <View className="overflow-hidden relative">
-      {/* Botões de ação que aparecem ao deslizar */}
+      {/* Botões de ação que aparecem ao deslizar - apenas delete neste caso */}
       <View
         className="absolute right-0 top-0 bottom-0 flex-row items-center justify-center h-full"
         style={{ width: 100 }}
       >
         <Pressable
-          onPress={() => onEdit(produto)}
-          className="bg-gray-100 h-full w-1/2 items-center justify-center"
-        >
-          <Edit size={20} color="#374151" />
-        </Pressable>
-        <Pressable
           onPress={() => onDelete(produto)}
-          className="bg-red-100 h-full w-1/2 items-center justify-center"
+          className="bg-red-100 h-full w-full items-center justify-center"
         >
           <Trash size={20} color="#ef4444" />
         </Pressable>
@@ -109,28 +99,7 @@ export function SortableProdutoItem({
             {/* Área de reordenação ou imagem */}
             <View className="pr-2">
               {isReordering ? (
-                <View className="h-12 w-12 bg-gray-50 rounded-lg justify-center items-center">
-                  <View className="flex-row">
-                    <Pressable
-                      onPress={onMoveUp}
-                      disabled={!onMoveUp}
-                      className={`p-2 rounded-full ${
-                        !onMoveUp ? "opacity-30" : "bg-white shadow-sm"
-                      }`}
-                    >
-                      <ArrowUp size={16} color="#F4511E" />
-                    </Pressable>
-                    <Pressable
-                      onPress={onMoveDown}
-                      disabled={!onMoveDown}
-                      className={`p-2 rounded-full ml-1 ${
-                        !onMoveDown ? "opacity-30" : "bg-white shadow-sm"
-                      }`}
-                    >
-                      <ArrowDown size={16} color="#F4511E" />
-                    </Pressable>
-                  </View>
-                </View>
+                <ReorderButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
               ) : (
                 <View className="h-12 w-12 bg-gray-100 rounded-lg overflow-hidden">
                   {produto.produto.imagem ? (

@@ -11,7 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react-native";
 import { VitrineProduto } from "../models";
-import { SimpleProdutoItem } from "./simple-produto-item";
+import { SortableProdutoItem } from "./sortable-produto-item";
 
 interface VitrineProdutoListProps {
   produtos: VitrineProduto[];
@@ -149,10 +149,9 @@ export function VitrineProdutoList({
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {orderedProducts.map((produto, index) => (
-          <SimpleProdutoItem
+          <SortableProdutoItem
             key={produto.id.toString()}
             produto={produto}
-            onEdit={onEdit}
             onDelete={onDelete}
             isReordering={isEditingOrder}
             onMoveUp={index > 0 ? () => moveItem(index, "up") : undefined}

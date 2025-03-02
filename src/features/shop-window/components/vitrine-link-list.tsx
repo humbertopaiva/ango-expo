@@ -5,7 +5,7 @@ import { View, Text, ScrollView, Button } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Link2, PanelRight } from "lucide-react-native";
 import { VitrineLink } from "../models";
-import { SimpleLinkItem } from "./simple-link-item"; // Importando o novo componente
+import { SortableLinkItem } from "./sortable-link-item";
 
 interface VitrineLinkListProps {
   links: VitrineLink[];
@@ -141,7 +141,7 @@ export function VitrineLinkList({
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         {orderedLinks.map((link, index) => (
-          <SimpleLinkItem
+          <SortableLinkItem
             key={link.id}
             link={link}
             onEdit={onEdit}
