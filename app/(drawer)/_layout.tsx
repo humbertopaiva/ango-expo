@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCallback } from "react";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
+import {} from "@react-navigation/drawer";
 
 const { width } = Dimensions.get("window");
 
@@ -38,7 +39,7 @@ export default function DrawerLayout() {
             borderRightColor: "#e2e8f0",
           },
           overlayColor: "rgba(0, 0, 0, 0.5)",
-          swipeEnabled: !isPermanentDrawer, // Permitir swipe apenas em dispositivos móveis e web em telas pequenas
+          swipeEnabled: !isPermanentDrawer,
         }}
       >
         <Drawer.Screen
