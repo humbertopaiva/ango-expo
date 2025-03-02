@@ -26,7 +26,7 @@ export interface VitrineProduto {
       };
     };
   };
-  disponivel: boolean;
+  disponivel?: boolean;
   ordem: string;
   empresa: string;
 }

@@ -67,20 +67,6 @@ export function LeafletsList({
               variant: "outline",
             },
           ]}
-          metadata={[
-            {
-              label: "Criado em",
-              value: formatDate(leaflet.date_created),
-            },
-            ...(leaflet.date_updated
-              ? [
-                  {
-                    label: "Atualizado em",
-                    value: formatDate(leaflet.date_updated),
-                  },
-                ]
-              : []),
-          ]}
         />
       )}
     />

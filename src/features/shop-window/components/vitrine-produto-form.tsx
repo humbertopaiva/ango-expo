@@ -26,7 +26,6 @@ const formSchema = z.object({
       required_error: "Produto é obrigatório",
     })
     .min(1, "Produto é obrigatório"),
-  disponivel: z.boolean().default(true),
   ordem: z.string().optional(),
   sort: z.number().optional(),
 });
@@ -56,7 +55,6 @@ export function VitrineProdutoForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       produto: "",
-      disponivel: true,
       ordem: "",
       sort: 0,
     },
@@ -66,7 +64,6 @@ export function VitrineProdutoForm({
     if (produto) {
       form.reset({
         produto: produto.produto.id,
-        disponivel: produto.disponivel,
         ordem: produto.ordem || "",
         sort: produto.sort || 0,
       });
@@ -79,7 +76,6 @@ export function VitrineProdutoForm({
     } else {
       form.reset({
         produto: "",
-        disponivel: true,
         ordem: "",
         sort: 0,
       });
@@ -211,37 +207,6 @@ export function VitrineProdutoForm({
                   )}
                 />
               </FormControl>
-
-              <Controller
-                control={form.control}
-                name="disponivel"
-                render={({ field: { onChange, value } }) => (
-                  <FormControl>
-                    <View className="flex-row justify-between items-center bg-gray-50 p-3 rounded-lg">
-                      <FormControl.Label margin="$0">
-                        <Text className="text-gray-700 font-medium">
-                          {value
-                            ? "Disponível na Vitrine"
-                            : "Indisponível na Vitrine"}
-                        </Text>
-                      </FormControl.Label>
-                      <Switch
-                        value={value}
-                        onValueChange={onChange}
-                        trackColor={{
-                          true: THEME_COLORS.primary,
-                          false: "$gray300",
-                        }}
-                      />
-                    </View>
-                    <Text className="text-xs text-gray-500 mt-1 ml-1">
-                      {value
-                        ? "O produto será exibido na vitrine para seus clientes"
-                        : "O produto não será exibido na vitrine para seus clientes"}
-                    </Text>
-                  </FormControl>
-                )}
-              />
             </VStack>
           </Modal.Body>
           <Modal.Footer>
