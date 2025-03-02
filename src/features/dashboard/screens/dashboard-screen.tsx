@@ -148,7 +148,6 @@ export default function DashboardScreen() {
         ]}
       >
         <View style={styles.headerContent}>
-          {/* Logo da empresa */}
           <View style={styles.logoContainer}>
             {company?.logo ? (
               <ResilientImage
@@ -323,7 +322,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     height: 40,
-    width: 150,
+    width: 80,
   },
   menuButton: {
     width: 40,
