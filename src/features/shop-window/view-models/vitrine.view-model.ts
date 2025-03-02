@@ -253,9 +253,16 @@ export function useVitrineViewModel(): IVitrineViewModel {
 
   // Reorder handlers
   const handleProductReorder = useCallback(
-    (produtos: VitrineProduto[]) => {
+    async (produtos: VitrineProduto[]) => {
       try {
-        reorderVitrineProdutos(produtos);
+        // Atualize os valores de ordem e sort baseados na posição na lista
+        const updatedProducts = produtos.map((produto, index) => ({
+          ...produto,
+          ordem: String.fromCharCode(65 + index), // A, B, C...
+          sort: index + 1,
+        }));
+
+        await reorderVitrineProdutos(updatedProducts);
         showSuccessToast(toast, "Ordem dos produtos atualizada!");
       } catch (error) {
         showErrorToast(toast, "Erro ao reordenar produtos");
@@ -265,9 +272,15 @@ export function useVitrineViewModel(): IVitrineViewModel {
   );
 
   const handleLinkReorder = useCallback(
-    (links: VitrineLink[]) => {
+    async (links: VitrineLink[]) => {
       try {
-        reorderVitrineLinks(links);
+        // Atualize os valores de ordem baseados na posição na lista
+        const updatedLinks = links.map((link, index) => ({
+          ...link,
+          ordem: index + 1,
+        }));
+
+        await reorderVitrineLinks(updatedLinks);
         showSuccessToast(toast, "Ordem dos links atualizada!");
       } catch (error) {
         showErrorToast(toast, "Erro ao reordenar links");

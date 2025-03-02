@@ -91,8 +91,16 @@ export function useVitrine() {
 
   const reorderProdutosMutation = useMutation({
     mutationFn: (produtos: VitrineProduto[]) => {
+      // Ordenar os produtos com base em sua nova posição
+      const updatedProdutos = produtos.map((produto, index) => ({
+        ...produto,
+        ordem: String.fromCharCode(65 + index), // A, B, C...
+        sort: index + 1, // 1, 2, 3...
+      }));
+
+      // Retornar as promessas de atualização de cada produto
       return Promise.all(
-        produtos.map((produto) =>
+        updatedProdutos.map((produto) =>
           vitrineService.updateVitrineProduto(produto.id, {
             ordem: produto.ordem,
             sort: produto.sort ?? undefined,
