@@ -1,9 +1,14 @@
 // Path: src/features/shop-window/components/vitrine-link-list.tsx
-
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Button } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Link2, PanelRight } from "lucide-react-native";
+import {
+  Link2,
+  PanelRight,
+  Check,
+  ChevronsUpDown,
+  AlertCircle,
+} from "lucide-react-native";
 import { VitrineLink } from "../models";
 import { SortableLinkItem } from "./sortable-link-item";
 
@@ -88,51 +93,37 @@ export function VitrineLinkList({
 
   return (
     <View className="flex-1">
-      {/* Controles de Ordenação */}
-      <View className="flex-row items-center justify-between mb-3">
+      {/* Controles de Ordenação - Estilo padronizado com o da tab produtos */}
+      <View className="flex-row justify-between items-center mb-3">
         <Text className="text-sm text-gray-500">
           {links.length} {links.length === 1 ? "link" : "links"} na vitrine
         </Text>
 
         {!isEditingOrder ? (
-          <View>
-            <Button
-              title="Ordenar"
-              onPress={() => setIsEditingOrder(true)}
-              color="#F4511E"
-            />
+          <View
+            style={styles.orderButton}
+            onTouchEnd={() => setIsEditingOrder(true)}
+          >
+            <ChevronsUpDown size={16} color="#F4511E" />
+            <Text className="text-primary-500 ml-1 font-medium">Ordenar</Text>
           </View>
         ) : (
-          <View className="flex-row">
-            <Button
-              title="Cancelar"
-              onPress={() => {
-                setOrderedLinks(links);
-                setIsEditingOrder(false);
-              }}
-              color="#6B7280"
-            />
-            <View style={{ width: 8 }} />
-            <Button
-              title="Salvar Ordem"
-              onPress={handleSaveOrder}
-              color="#F4511E"
-            />
+          <View style={styles.saveOrderButton} onTouchEnd={handleSaveOrder}>
+            <Check size={16} color="white" />
+            <Text className="text-white ml-1 font-medium">Salvar Ordem</Text>
           </View>
         )}
       </View>
 
       {/* Banner de instrução para ordenação */}
       {isEditingOrder && (
-        <Card className="mb-3 bg-blue-50 border-blue-200 border">
-          <View className="p-3 flex-row items-center">
-            <PanelRight size={20} color="#3B82F6" />
-            <Text className="ml-2 text-blue-700 flex-1">
-              Use as setas para cima e para baixo para reorganizar a ordem dos
-              links.
-            </Text>
-          </View>
-        </Card>
+        <View className="mb-3 bg-primary-50 p-3 rounded-lg border border-primary-100 flex-row items-center">
+          <PanelRight size={20} color="#F4511E" />
+          <Text className="ml-2 text-primary-700 flex-1">
+            Arraste os itens para cima ou para baixo para reorganizar a ordem em
+            que aparecerão na vitrine.
+          </Text>
+        </View>
       )}
 
       {/* Lista de links */}
@@ -160,3 +151,24 @@ export function VitrineLinkList({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  orderButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "white",
+    borderColor: "#F4511E",
+    borderWidth: 1,
+    borderRadius: 4,
+  },
+  saveOrderButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#F4511E",
+    borderRadius: 4,
+  },
+});
