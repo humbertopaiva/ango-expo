@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useNavigation } from "expo-router";
@@ -22,19 +21,19 @@ import {
   Grid2X2,
 } from "lucide-react-native";
 import { DrawerActions } from "@react-navigation/native";
-import useAuthStore from "@/src/stores/auth";
 
 import { ResilientImage } from "@/components/common/resilient-image";
-import { useCompanyData } from "@/src/hooks/use-company-data";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { DashboardMenuCard } from "../components/dashboard-menu-card";
 import { DashboardSupportCard } from "../components/dashboard-support-card";
+import { useCompanyDetails } from "../hooks/use-company-details";
+import { SimpleDashboardCompanyCard } from "../components/dashboard-company-card";
 
 const { width } = Dimensions.get("window");
 const cardWidth = (width - 48) / 2; // 2 cards por linha com margem total de 48
 
 export default function DashboardScreen() {
-  const { company } = useCompanyData();
+  const { company, isLoading, error } = useCompanyDetails();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -84,35 +83,22 @@ export default function DashboardScreen() {
     },
   ];
 
-  // Determinar a cor primária da empresa ou usar o padrão
-  const primaryColor = THEME_COLORS.primary;
-
   return (
     <View style={styles.container}>
-      {/* Header personalizado */}
+      {/* Header personalizado com cor fixa */}
       <View
         style={[
           styles.header,
-          { backgroundColor: primaryColor, paddingTop: insets.top },
+          { backgroundColor: THEME_COLORS.primary, paddingTop: insets.top },
         ]}
       >
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
-            {company?.logo ? (
-              <ResilientImage
-                source={require("@/assets/images/logo-white.png")}
-                style={styles.logo}
-                resizeMode="contain"
-                fallbackSource={require("@/assets/images/logo-white.png")}
-                className="w-14"
-              />
-            ) : (
-              <Image
-                source={require("@/assets/images/logo-white.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            )}
+            <Image
+              source={require("@/assets/images/logo-white.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
 
           {/* Botão do menu */}
@@ -129,51 +115,16 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Greeting Section */}
-        <View style={styles.greetingContainer}>
-          <Text style={styles.greeting}>Bem-vindo,</Text>
-
-          {/* Empresa com Logo */}
-          <View style={styles.companyContainer}>
-            {/* Logo pequena */}
-            {company?.logo ? (
-              <View style={styles.companyLogoContainer}>
-                <ResilientImage
-                  source={company.logo}
-                  style={styles.companyLogo}
-                  resizeMode="cover"
-                  fallbackSource={require("@/assets/images/logo-white.png")}
-                />
-              </View>
-            ) : (
-              <View
-                style={[
-                  styles.companyLogoContainer,
-                  { backgroundColor: primaryColor + "20" },
-                ]}
-              >
-                <Package size={20} color={primaryColor} />
-              </View>
-            )}
-
-            {/* Nome da empresa */}
-            <Text style={styles.userName}>{company?.nome || "Empresa"}</Text>
-          </View>
-
-          {/* Badge de categoria */}
-          {company?.categoria?.nome && (
-            <View
-              style={[
-                styles.categoryBadge,
-                { backgroundColor: primaryColor + "15" },
-              ]}
-            >
-              <Text style={[styles.categoryText, { color: primaryColor }]}>
-                {company.categoria.nome}
-              </Text>
-            </View>
-          )}
-        </View>
+        {/* Empresa Card - Versão simplificada que não tenta usar navegação */}
+        <SimpleDashboardCompanyCard
+          name={company?.nome || "Minha Empresa"}
+          categoryName={company?.categoria?.nome}
+          subcategoryName={
+            company?.subcategorias?.[0]?.subcategorias_empresas_id?.nome
+          }
+          planName={company?.plano?.nome}
+          primaryColor={THEME_COLORS.primary}
+        />
 
         {/* Menu Grid */}
         <View style={styles.menuGrid}>
@@ -192,7 +143,7 @@ export default function DashboardScreen() {
         {/* Support Card */}
         <View style={styles.supportCardContainer}>
           <DashboardSupportCard
-            primaryColor={primaryColor}
+            primaryColor={THEME_COLORS.primary}
             onPress={() => router.push("/(drawer)/support")}
           />
         </View>
@@ -237,20 +188,6 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
-  greetingContainer: {
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  greeting: {
-    fontSize: 16,
-    color: "#6B7280",
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111827",
-    flex: 1,
-  },
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -263,37 +200,5 @@ const styles = StyleSheet.create({
   },
   supportCardContainer: {
     marginBottom: 16,
-  },
-  // Estilos para a empresa com logo
-  companyContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  companyLogoContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#f3f4f6",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    overflow: "hidden",
-  },
-  companyLogo: {
-    width: 36,
-    height: 36,
-  },
-  // Estilo para o badge de categoria
-  categoryBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginTop: 8,
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: "500",
   },
 });
