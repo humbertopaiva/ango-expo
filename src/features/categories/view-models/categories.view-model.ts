@@ -1,4 +1,4 @@
-// src/features/categories/view-models/categories.view-model.ts
+// Path: src/features/categories/view-models/categories.view-model.ts
 
 import { useState, useCallback } from "react";
 import {
@@ -27,6 +27,9 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
+  // Estado para controlar carregamento de imagem
+  const [isImageLoading, setIsImageLoading] = useState(false);
+
   const {
     categories,
     isLoading,
@@ -36,10 +39,32 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     isCreating,
     isUpdating,
     isDeleting,
+    getCategoryById,
   } = useCategories();
 
   const filteredCategories = categories.filter((category) =>
     category.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Função para carregar detalhes de uma categoria por ID
+  const loadCategoryDetails = useCallback(
+    async (id: string) => {
+      try {
+        const category = await getCategoryById(id);
+        if (category) {
+          setSelectedCategory(category);
+        }
+        return category;
+      } catch (error) {
+        console.error("Erro ao carregar detalhes da categoria:", error);
+        showErrorToast(
+          toast,
+          "Não foi possível carregar os detalhes da categoria"
+        );
+        return null;
+      }
+    },
+    [getCategoryById, toast]
   );
 
   const handleCreateCategory = useCallback(
@@ -48,9 +73,11 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
         await createCategory({ data });
         setIsFormVisible(false);
         showSuccessToast(toast, "Categoria criada com sucesso!");
+        return true;
       } catch (error) {
         console.error("Error creating category:", error);
         showErrorToast(toast, "Não foi possível criar a categoria");
+        return false;
       }
     },
     [createCategory, toast]
@@ -64,10 +91,11 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
         setIsFormVisible(false);
         showSuccessToast(toast, "Categoria atualizada com sucesso!");
         // Navegar de volta para a listagem após atualização
-        router.push("/admin/categories");
+        return true;
       } catch (error) {
         console.error("Error updating category:", error);
         showErrorToast(toast, "Não foi possível atualizar a categoria");
+        return false;
       }
     },
     [updateCategory, toast]
@@ -87,9 +115,11 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
         setIsDeleteDialogOpen(false);
         setCategoryToDelete(null);
         showSuccessToast(toast, "Categoria excluída com sucesso");
+        return true;
       } catch (error) {
         console.error("Error deleting category:", error);
         showErrorToast(toast, "Não foi possível excluir a categoria");
+        return false;
       }
     },
     [deleteCategory, toast]
@@ -107,6 +137,17 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     setIsFormVisible(true);
   }, []);
 
+  // Função para abrir o modal de edição
+  const openEditCategoryModal = useCallback((category: Category) => {
+    setSelectedCategory(category);
+    setIsFormVisible(true);
+  }, []);
+
+  // Handlers para estados de imagem
+  const setImageLoadingState = useCallback((isLoading: boolean) => {
+    setIsImageLoading(isLoading);
+  }, []);
+
   return {
     categories: filteredCategories,
     isLoading,
@@ -118,6 +159,7 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     isDeleting,
     isDeleteDialogOpen,
     categoryToDelete,
+    isImageLoading,
     setSearchTerm,
     setSelectedCategory,
     setIsFormVisible,
@@ -127,5 +169,8 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     confirmDeleteCategory,
     cancelDeleteCategory,
     openCreateCategoryModal,
+    openEditCategoryModal,
+    loadCategoryDetails,
+    setImageLoadingState,
   };
 }

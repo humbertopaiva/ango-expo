@@ -33,6 +33,7 @@ export function CategoriesList({
       onEdit={onEdit}
       onDelete={onDelete}
       onItemPress={onItemPress}
+      getImageUri={(category) => category.imagem}
     />
   );
 }

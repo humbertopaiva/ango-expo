@@ -1,14 +1,13 @@
-// src/features/categories/components/category-form-modal.tsx
+// Path: src/features/categories/components/category-form-modal.tsx
 
 import React, { useEffect } from "react";
-import { View } from "react-native";
+import { View, Text } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal, ModalContent, ModalHeader } from "@/components/ui/modal";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Switch } from "@/components/ui/switch";
-import { Text } from "@/components/ui/text";
 import { Input, InputField } from "@/components/ui/input";
 import {
   FormControl,
@@ -22,6 +21,9 @@ import {
   CategoryFormData,
 } from "../schemas/category.schema";
 import { Category } from "../models/category";
+import { CategoryImageUploader } from "./category-image-uploader";
+import { HStack, VStack } from "@gluestack-ui/themed";
+import { Check, X } from "lucide-react-native";
 
 interface CategoryFormModalProps {
   isOpen: boolean;
@@ -39,6 +41,8 @@ export function CategoryFormModal({
   category,
 }: CategoryFormModalProps) {
   const isEditing = !!category;
+  const [imageLoading, setImageLoading] = React.useState(false);
+  const [statusValue, setStatusValue] = React.useState(true);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categoryFormSchema),
@@ -54,6 +58,8 @@ export function CategoryFormModal({
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
+    watch,
   } = form;
 
   useEffect(() => {
@@ -64,15 +70,28 @@ export function CategoryFormModal({
           imagem: category.imagem,
           categoria_ativa: category.categoria_ativa,
         });
+        setStatusValue(category.categoria_ativa);
       } else {
         reset({
           nome: "",
           imagem: null,
           categoria_ativa: true,
         });
+        setStatusValue(true);
       }
     }
   }, [category, reset, isOpen]);
+
+  // Handler para quando a imagem é alterada ou removida
+  const handleImageChange = (imageUrl: string | null) => {
+    setValue("imagem", imageUrl);
+  };
+
+  // Handler para receber o caminho da imagem (para possíveis remoções futuras)
+  const handleImagePathChange = (path: string | null) => {
+    // Você pode fazer algo com este path se necessário
+    console.log("Caminho da imagem alterado:", path);
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -83,7 +102,8 @@ export function CategoryFormModal({
           </Heading>
         </ModalHeader>
 
-        <View className="p-4 space-y-4">
+        <View className="p-4 gap-4">
+          {/* Nome */}
           <FormControl isInvalid={!!errors.nome}>
             <FormControlLabel>
               <FormControlLabelText className="text-sm font-medium text-gray-700">
@@ -113,20 +133,82 @@ export function CategoryFormModal({
             )}
           </FormControl>
 
+          {/* Imagem - usando o novo componente */}
           <FormControl>
             <FormControlLabel>
               <FormControlLabelText className="text-sm font-medium text-gray-700">
-                Status
+                Imagem da Categoria
+              </FormControlLabelText>
+            </FormControlLabel>
+            <Text className="text-xs text-gray-500 mb-2">
+              Esta imagem será exibida nos menus e listagens
+            </Text>
+            <Controller
+              control={control}
+              name="imagem"
+              render={({ field: { value } }) => (
+                <CategoryImageUploader
+                  value={value}
+                  onChange={(url) => {
+                    handleImageChange(url);
+                    setImageLoading(false);
+                  }}
+                  onPathChange={handleImagePathChange}
+                  disabled={isLoading || imageLoading}
+                  showEditOption={isEditing}
+                />
+              )}
+            />
+          </FormControl>
+
+          {/* Status com visual melhorado */}
+          <FormControl>
+            <FormControlLabel>
+              <FormControlLabelText className="text-sm font-medium text-gray-700 mb-2">
+                Status da Categoria
               </FormControlLabelText>
             </FormControlLabel>
             <Controller
               control={control}
               name="categoria_ativa"
               render={({ field: { onChange, value } }) => (
-                <View className="flex-row items-center space-x-2">
-                  <Switch value={value} onValueChange={onChange} />
-                  <Text className="text-sm text-gray-600">
-                    {value ? "Ativa" : "Inativa"}
+                <View className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <HStack justifyContent="space-between" alignItems="center">
+                    <HStack space="sm" alignItems="center">
+                      {statusValue ? (
+                        <View className="w-6 h-6 rounded-full bg-green-100 items-center justify-center">
+                          <Check size={14} color="#10B981" />
+                        </View>
+                      ) : (
+                        <View className="w-6 h-6 rounded-full bg-red-100 items-center justify-center">
+                          <X size={14} color="#EF4444" />
+                        </View>
+                      )}
+                      <Text
+                        className={`font-medium ${
+                          statusValue ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {statusValue ? "Ativa" : "Inativa"}
+                      </Text>
+                    </HStack>
+
+                    <Switch
+                      value={statusValue}
+                      onValueChange={(newValue) => {
+                        setStatusValue(newValue);
+                        onChange(newValue);
+                      }}
+                      disabled={isLoading}
+                      trackColor={{ false: "#EF4444", true: "#10B981" }}
+                      thumbColor={statusValue ? "#ffffff" : "#ffffff"}
+                    />
+                  </HStack>
+
+                  <Text className="text-xs text-gray-500 mt-2">
+                    {statusValue
+                      ? "A categoria estará visível para os clientes."
+                      : "A categoria estará oculta e não aparecerá para os clientes."}
                   </Text>
                 </View>
               )}
@@ -137,14 +219,14 @@ export function CategoryFormModal({
             <Button
               variant="outline"
               onPress={onClose}
-              disabled={isLoading}
+              disabled={isLoading || imageLoading}
               className="flex-1"
             >
               <ButtonText>Cancelar</ButtonText>
             </Button>
             <Button
               onPress={handleSubmit(onSubmit)}
-              disabled={isLoading}
+              disabled={isLoading || imageLoading}
               className="flex-1"
             >
               <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>

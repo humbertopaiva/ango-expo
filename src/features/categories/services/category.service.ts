@@ -1,4 +1,4 @@
-// src/features/categories/services/category.service.ts
+// Path: src/features/categories/services/category.service.ts
 import { api } from "@/src/services/api";
 import {
   Category,
@@ -6,23 +6,75 @@ import {
   UpdateCategoryDTO,
 } from "../models/category";
 import useAuthStore from "@/src/stores/auth";
+import { cacheService } from "@/src/services/cache-service";
+
+const CATEGORIES_CACHE_KEY = "categories";
 
 class CategoryService {
   async getCategories() {
     try {
+      const companyId = useAuthStore.getState().getCompanyId();
+      if (!companyId) {
+        throw new Error("ID da empresa não encontrado");
+      }
+
+      const cacheKey = `${CATEGORIES_CACHE_KEY}_${companyId}`;
+
+      // Tentar obter do cache primeiro
+      const cachedData = await cacheService.get<Category[]>(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+
       const response = await api.get<{ data: Category[] }>(
         "/api/product-categories",
         {
           params: {
-            company: useAuthStore.getState().getCompanyId(),
+            company: companyId,
             _t: Date.now(), // Cache buster
           },
         }
       );
 
-      return response.data.data;
+      const categories = response.data.data;
+
+      // Salvar no cache
+      await cacheService.set(cacheKey, categories);
+
+      return categories;
     } catch (error) {
       console.error("Erro ao buscar categorias:", error);
+      throw error;
+    }
+  }
+
+  async getCategoryById(id: string) {
+    try {
+      const companyId = useAuthStore.getState().getCompanyId();
+      if (!companyId) {
+        throw new Error("ID da empresa não encontrado");
+      }
+
+      const cacheKey = `${CATEGORIES_CACHE_KEY}_${companyId}_${id}`;
+
+      // Tentar obter do cache primeiro
+      const cachedData = await cacheService.get<Category>(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+
+      const response = await api.get<{ data: Category }>(
+        `/api/product-categories/${id}`
+      );
+
+      const category = response.data.data;
+
+      // Salvar no cache
+      await cacheService.set(cacheKey, category);
+
+      return category;
+    } catch (error) {
+      console.error(`Erro ao buscar categoria ${id}:`, error);
       throw error;
     }
   }
@@ -33,6 +85,15 @@ class CategoryService {
         "/api/product-categories",
         data
       );
+
+      // Invalidar cache
+      const companyId = useAuthStore.getState().getCompanyId();
+      if (companyId) {
+        await cacheService.invalidateWithPrefix(
+          `${CATEGORIES_CACHE_KEY}_${companyId}`
+        );
+      }
+
       return response.data.data;
     } catch (error) {
       console.error("Erro ao criar categoria:", error);
@@ -46,6 +107,16 @@ class CategoryService {
         `/api/product-categories/${id}`,
         data
       );
+
+      // Invalidar cache
+      const companyId = useAuthStore.getState().getCompanyId();
+      if (companyId) {
+        await cacheService.invalidateWithPrefix(
+          `${CATEGORIES_CACHE_KEY}_${companyId}`
+        );
+        await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}_${id}`);
+      }
+
       return response.data.data;
     } catch (error) {
       console.error("Erro ao atualizar categoria:", error);
@@ -56,6 +127,15 @@ class CategoryService {
   async deleteCategory(id: string) {
     try {
       await api.delete(`/api/product-categories/${id}`);
+
+      // Invalidar cache
+      const companyId = useAuthStore.getState().getCompanyId();
+      if (companyId) {
+        await cacheService.invalidateWithPrefix(
+          `${CATEGORIES_CACHE_KEY}_${companyId}`
+        );
+        await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}_${id}`);
+      }
     } catch (error) {
       console.error("Erro ao excluir categoria:", error);
       throw error;
