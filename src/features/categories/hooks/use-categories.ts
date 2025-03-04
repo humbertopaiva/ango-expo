@@ -19,7 +19,7 @@ export function useCategories() {
     queryKey,
     queryFn: categoryService.getCategories,
     enabled: !!companyId,
-    staleTime: 5 * 60 * 1000, // 5 minutos antes de considerar os dados obsoletos
+    staleTime: 1000 * 60, // 1 minuto
   });
 
   const getCategoryById = async (id: string) => {
@@ -50,11 +50,8 @@ export function useCategories() {
       });
     },
     onSuccess: () => {
-      // Invalidar a consulta para forçar uma atualização
+      // Invalidar a query para forçar recarregamento dos dados
       queryClient.invalidateQueries({ queryKey });
-    },
-    onError: (error: any) => {
-      console.error("Erro ao criar categoria:", error);
     },
   });
 
@@ -62,22 +59,16 @@ export function useCategories() {
     mutationFn: ({ id, data }: { id: string; data: UpdateCategoryDTO }) =>
       categoryService.updateCategory(id, data),
     onSuccess: () => {
-      // Invalidar a consulta para forçar uma atualização
+      // Invalidar a query para forçar recarregamento dos dados
       queryClient.invalidateQueries({ queryKey });
-    },
-    onError: (error: any) => {
-      console.error("Erro ao atualizar categoria:", error);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: categoryService.deleteCategory,
     onSuccess: () => {
-      // Invalidar a consulta para forçar uma atualização
+      // Invalidar a query para forçar recarregamento dos dados
       queryClient.invalidateQueries({ queryKey });
-    },
-    onError: (error: any) => {
-      console.error("Erro ao excluir categoria:", error);
     },
   });
 

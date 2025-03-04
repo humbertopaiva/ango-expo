@@ -1,6 +1,5 @@
 // Path: src/features/categories/components/category-form-modal.tsx
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +27,7 @@ import { Check, X } from "lucide-react-native";
 interface CategoryFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CategoryFormData) => void;
+  onSubmit: (data: CategoryFormData) => Promise<void>;
   isLoading: boolean;
   category?: Category | null;
 }
@@ -41,8 +40,9 @@ export function CategoryFormModal({
   category,
 }: CategoryFormModalProps) {
   const isEditing = !!category;
-  const [imageLoading, setImageLoading] = React.useState(false);
-  const [statusValue, setStatusValue] = React.useState(true);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [statusValue, setStatusValue] = useState(true);
+  const [localIsSubmitting, setLocalIsSubmitting] = useState(false);
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categoryFormSchema),
@@ -59,9 +59,9 @@ export function CategoryFormModal({
     formState: { errors },
     reset,
     setValue,
-    watch,
   } = form;
 
+  // Reset form when modal opens with category data
   useEffect(() => {
     if (isOpen) {
       if (category) {
@@ -79,6 +79,7 @@ export function CategoryFormModal({
         });
         setStatusValue(true);
       }
+      setLocalIsSubmitting(false);
     }
   }, [category, reset, isOpen]);
 
@@ -87,11 +88,26 @@ export function CategoryFormModal({
     setValue("imagem", imageUrl);
   };
 
-  // Handler para receber o caminho da imagem (para possíveis remoções futuras)
+  // Handler para receber o caminho da imagem
   const handleImagePathChange = (path: string | null) => {
     // Você pode fazer algo com este path se necessário
     console.log("Caminho da imagem alterado:", path);
   };
+
+  // Handler para o submit do formulário
+  const handleFormSubmit = async (data: CategoryFormData) => {
+    try {
+      setLocalIsSubmitting(true);
+      await onSubmit(data);
+      // O fechamento do modal será gerenciado pelo componente pai
+    } catch (error) {
+      console.error("Erro ao submeter formulário:", error);
+      setLocalIsSubmitting(false);
+    }
+  };
+
+  // Determinar se o botão deve estar desabilitado
+  const isButtonDisabled = isLoading || imageLoading || localIsSubmitting;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -118,7 +134,7 @@ export function CategoryFormModal({
                   <InputField
                     placeholder="Digite o nome da categoria"
                     onChangeText={onChange}
-                    value={value}
+                    value={value || ""}
                     className="bg-white"
                   />
                 </Input>
@@ -133,7 +149,7 @@ export function CategoryFormModal({
             )}
           </FormControl>
 
-          {/* Imagem - usando o novo componente */}
+          {/* Imagem */}
           <FormControl>
             <FormControlLabel>
               <FormControlLabelText className="text-sm font-medium text-gray-700">
@@ -154,7 +170,7 @@ export function CategoryFormModal({
                     setImageLoading(false);
                   }}
                   onPathChange={handleImagePathChange}
-                  disabled={isLoading || imageLoading}
+                  disabled={isButtonDisabled}
                   showEditOption={isEditing}
                 />
               )}
@@ -199,7 +215,7 @@ export function CategoryFormModal({
                         setStatusValue(newValue);
                         onChange(newValue);
                       }}
-                      disabled={isLoading}
+                      disabled={isButtonDisabled}
                       trackColor={{ false: "#EF4444", true: "#10B981" }}
                       thumbColor={statusValue ? "#ffffff" : "#ffffff"}
                     />
@@ -219,17 +235,19 @@ export function CategoryFormModal({
             <Button
               variant="outline"
               onPress={onClose}
-              disabled={isLoading || imageLoading}
+              disabled={isButtonDisabled}
               className="flex-1"
             >
               <ButtonText>Cancelar</ButtonText>
             </Button>
             <Button
-              onPress={handleSubmit(onSubmit)}
-              disabled={isLoading || imageLoading}
+              onPress={handleSubmit(handleFormSubmit)}
+              disabled={isButtonDisabled}
               className="flex-1"
             >
-              <ButtonText>{isLoading ? "Salvando..." : "Salvar"}</ButtonText>
+              <ButtonText>
+                {isButtonDisabled ? "Salvando..." : "Salvar"}
+              </ButtonText>
             </Button>
           </View>
         </View>

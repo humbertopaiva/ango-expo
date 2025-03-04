@@ -1,5 +1,5 @@
 // Path: src/features/categories/screens/categories-content.tsx
-import React from "react";
+import React, { useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
@@ -7,18 +7,44 @@ import { useCategoriesContext } from "../contexts/use-categories-context";
 import { CategoriesList } from "../components/categories-list";
 import { SearchInput } from "@/components/custom/search-input";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
+import { CategoryFormModal } from "../components/category-form-modal";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { router } from "expo-router";
+import { CategoryFormData } from "../schemas/category.schema";
 
 export function CategoriesContent() {
   const vm = useCategoriesContext();
+  const [showNewButton, setShowNewButton] = useState(true);
 
+  // Função para abrir o modal de criação
   const handleAddCategory = () => {
-    router.push("/admin/categories/new");
+    vm.setSelectedCategory(null);
+    vm.setIsFormVisible(true);
+    setShowNewButton(false);
   };
 
-  const handleEditCategory = (categoryId: string) => {
-    router.push(`/admin/categories/${categoryId}`);
+  // Função para lidar com o fechamento do modal
+  const handleCloseModal = () => {
+    vm.setIsFormVisible(false);
+    vm.setSelectedCategory(null);
+    setShowNewButton(true);
+  };
+
+  // Função para lidar com envio do formulário no modal
+  const handleFormSubmit = async (data: CategoryFormData) => {
+    let success = false;
+
+    if (vm.selectedCategory) {
+      // Edição
+      success = await vm.handleUpdateCategory(vm.selectedCategory.id, data);
+    } else {
+      // Criação
+      success = await vm.handleCreateCategory(data);
+    }
+
+    if (success) {
+      handleCloseModal();
+    }
   };
 
   return (
@@ -40,17 +66,32 @@ export function CategoriesContent() {
           <CategoriesList
             categories={vm.categories}
             isLoading={vm.isLoading}
-            onEdit={(category) => handleEditCategory(category.id)}
+            onEdit={(category) => {
+              vm.setSelectedCategory(category);
+              vm.setIsFormVisible(true);
+              setShowNewButton(false);
+            }}
             onDelete={(category) => vm.confirmDeleteCategory(category.id)}
           />
         </View>
 
-        {/* Primary Action Button */}
-        <PrimaryActionButton
-          onPress={handleAddCategory}
-          label="Nova Categoria"
-          icon={<Plus size={20} color="white" />}
+        {/* Category Form Modal */}
+        <CategoryFormModal
+          isOpen={vm.isFormVisible}
+          onClose={handleCloseModal}
+          onSubmit={handleFormSubmit}
+          isLoading={vm.isCreating || vm.isUpdating}
+          category={vm.selectedCategory}
         />
+
+        {/* Primary Action Button - show conditionally */}
+        {showNewButton && (
+          <PrimaryActionButton
+            onPress={handleAddCategory}
+            label="Nova Categoria"
+            icon={<Plus size={20} color="white" />}
+          />
+        )}
 
         {/* Confirmation Dialog */}
         <ConfirmationDialog

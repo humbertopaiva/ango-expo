@@ -7,7 +7,6 @@ import {
 } from "../models/category";
 import { useCategories } from "../hooks/use-categories";
 import { ICategoriesViewModel } from "./categories.view-model.interface";
-import { router } from "expo-router";
 import { useToast } from "@gluestack-ui/themed";
 import {
   showErrorToast,
@@ -70,10 +69,7 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     async (data: Omit<CreateCategoryDTO, "empresa">) => {
       try {
         await createCategory(data);
-        setIsFormVisible(false);
         showSuccessToast(toast, "Categoria criada com sucesso!");
-        // Redirecionar para a lista após criar com sucesso
-        router.push("/admin/categories");
         return true;
       } catch (error) {
         console.error("Error creating category:", error);
@@ -88,11 +84,7 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     async (id: string, data: UpdateCategoryDTO) => {
       try {
         await updateCategory({ id, data });
-        setSelectedCategory(null);
-        setIsFormVisible(false);
         showSuccessToast(toast, "Categoria atualizada com sucesso!");
-        // Redirecionar para a lista após atualizar com sucesso
-        router.push("/admin/categories");
         return true;
       } catch (error) {
         console.error("Error updating category:", error);
@@ -128,7 +120,7 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
   );
 
   // Função para cancelar a exclusão
-  const cancelDeleteCategory = useCallback(() => {
+  const cancelDeleteProduct = useCallback(() => {
     setIsDeleteDialogOpen(false);
     setCategoryToDelete(null);
   }, []);
@@ -169,7 +161,7 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     handleUpdateCategory,
     handleDeleteCategory,
     confirmDeleteCategory,
-    cancelDeleteCategory,
+    cancelDeleteCategory: cancelDeleteProduct,
     openCreateCategoryModal,
     openEditCategoryModal,
     loadCategoryDetails,
