@@ -1,7 +1,6 @@
 // Path: src/features/categories/screens/categories-content.tsx
-
 import React from "react";
-import { View, ScrollView } from "react-native";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
 import { useCategoriesContext } from "../contexts/use-categories-context";
@@ -14,7 +13,6 @@ import { router } from "expo-router";
 export function CategoriesContent() {
   const vm = useCategoriesContext();
 
-  // Funções para navegação direta em vez de usar modal
   const handleAddCategory = () => {
     router.push("/admin/categories/new");
   };
@@ -27,7 +25,7 @@ export function CategoriesContent() {
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <View className="flex-1">
         {/* Conteúdo fixo superior */}
-        <View className="px-4 pt-3 pb-2 bg-background-100">
+        <View className="px-4 pt-3 bg-background-100">
           {/* Search */}
           <SearchInput
             value={vm.searchTerm}
@@ -37,19 +35,15 @@ export function CategoriesContent() {
           />
         </View>
 
-        {/* Conteúdo rolável */}
-        <ScrollView
-          className="flex-1 px-4 flex-grow bg-background-100"
-          showsVerticalScrollIndicator={true}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        >
+        {/* Lista de categorias */}
+        <View className="flex-1 px-4 pt-2 pb-20 bg-background-100">
           <CategoriesList
             categories={vm.categories}
             isLoading={vm.isLoading}
             onEdit={(category) => handleEditCategory(category.id)}
             onDelete={(category) => vm.confirmDeleteCategory(category.id)}
           />
-        </ScrollView>
+        </View>
 
         {/* Primary Action Button */}
         <PrimaryActionButton
@@ -61,7 +55,7 @@ export function CategoriesContent() {
         {/* Confirmation Dialog */}
         <ConfirmationDialog
           isOpen={vm.isDeleteDialogOpen}
-          onClose={vm.cancelDeleteCategory} // Correção aqui - era cancelDeleteProduct
+          onClose={vm.cancelDeleteCategory}
           onConfirm={() =>
             vm.categoryToDelete && vm.handleDeleteCategory(vm.categoryToDelete)
           }

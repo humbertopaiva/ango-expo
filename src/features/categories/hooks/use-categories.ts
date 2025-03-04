@@ -1,5 +1,4 @@
 // Path: src/features/categories/hooks/use-categories.ts
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { categoryService } from "../services/category.service";
 import {
@@ -8,13 +7,11 @@ import {
   Category,
 } from "../models/category";
 import useAuthStore from "@/src/stores/auth";
-import { useState } from "react";
 
 export function useCategories() {
   const queryClient = useQueryClient();
   const getCompanyId = useAuthStore((state) => state.getCompanyId);
   const companyId = getCompanyId();
-  const [categoryDetails, setCategoryDetails] = useState<Category | null>(null);
 
   const queryKey = ["categories", companyId];
 
@@ -22,9 +19,9 @@ export function useCategories() {
     queryKey,
     queryFn: categoryService.getCategories,
     enabled: !!companyId,
+    staleTime: 5 * 60 * 1000, // 5 minutos antes de considerar os dados obsoletos
   });
 
-  // Nova query para obter uma categoria específica pelo ID
   const getCategoryById = async (id: string) => {
     if (!id || !companyId) return null;
 
@@ -32,14 +29,11 @@ export function useCategories() {
       // Primeiro, tenta encontrar nos dados já carregados
       const existingCategory = categories.find((cat) => cat.id === id);
       if (existingCategory) {
-        setCategoryDetails(existingCategory);
         return existingCategory;
       }
 
       // Se não encontrar, busca do servidor
-      const category = await categoryService.getCategoryById(id);
-      setCategoryDetails(category);
-      return category;
+      return await categoryService.getCategoryById(id);
     } catch (error) {
       console.error(`Erro ao buscar categoria ${id}:`, error);
       return null;
@@ -47,15 +41,16 @@ export function useCategories() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (params: { data: Omit<CreateCategoryDTO, "empresa"> }) => {
+    mutationFn: (data: Omit<CreateCategoryDTO, "empresa">) => {
       if (!companyId) throw new Error("ID da empresa não encontrado");
 
       return categoryService.createCategory({
-        ...params.data,
+        ...data,
         empresa: companyId,
       });
     },
     onSuccess: () => {
+      // Invalidar a consulta para forçar uma atualização
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: any) => {
@@ -67,8 +62,8 @@ export function useCategories() {
     mutationFn: ({ id, data }: { id: string; data: UpdateCategoryDTO }) =>
       categoryService.updateCategory(id, data),
     onSuccess: () => {
+      // Invalidar a consulta para forçar uma atualização
       queryClient.invalidateQueries({ queryKey });
-      setCategoryDetails(null); // Limpa os detalhes em cache
     },
     onError: (error: any) => {
       console.error("Erro ao atualizar categoria:", error);
@@ -78,6 +73,7 @@ export function useCategories() {
   const deleteMutation = useMutation({
     mutationFn: categoryService.deleteCategory,
     onSuccess: () => {
+      // Invalidar a consulta para forçar uma atualização
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: any) => {
@@ -87,7 +83,6 @@ export function useCategories() {
 
   return {
     categories: Array.isArray(categories) ? categories : [],
-    categoryDetails,
     isLoading,
     createCategory: createMutation.mutate,
     updateCategory: updateMutation.mutate,

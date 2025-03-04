@@ -1,5 +1,4 @@
 // Path: src/features/categories/services/category.service.ts
-
 import { api } from "@/src/services/api";
 import {
   Category,
@@ -21,14 +20,13 @@ class CategoryService {
 
       const cacheKey = `${CATEGORIES_CACHE_KEY}_${companyId}`;
 
-      // Tentar obter do cache primeiro
-      const cachedData = await cacheService.get<Category[]>(cacheKey);
+      // Tentar obter do cache primeiro com curto tempo de expiração
+      const cachedData = await cacheService.get<Category[]>(cacheKey, 60000); // 1 minuto
       if (cachedData) {
-        console.log("Obtendo categorias do cache");
+        console.log("Usando dados em cache para categorias");
         return cachedData;
       }
 
-      console.log("Buscando categorias da API...");
       const response = await api.get<{ data: Category[] }>(
         "/api/product-categories",
         {
@@ -60,9 +58,10 @@ class CategoryService {
 
       const cacheKey = `${CATEGORIES_CACHE_KEY}_${companyId}_${id}`;
 
-      // Tentar obter do cache primeiro
-      const cachedData = await cacheService.get<Category>(cacheKey);
+      // Tentar obter do cache primeiro com curto tempo de expiração
+      const cachedData = await cacheService.get<Category>(cacheKey, 60000); // 1 minuto
       if (cachedData) {
+        console.log(`Usando cache para categoria ${id}`);
         return cachedData;
       }
 
@@ -89,13 +88,10 @@ class CategoryService {
         data
       );
 
-      // Invalidar cache de categorias
+      // Invalidar cache
       const companyId = useAuthStore.getState().getCompanyId();
       if (companyId) {
-        console.log("Invalidando cache após criar categoria");
-        await cacheService.invalidateWithPrefix(
-          `${CATEGORIES_CACHE_KEY}_${companyId}`
-        );
+        await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}`);
       }
 
       return response.data.data;
@@ -112,13 +108,10 @@ class CategoryService {
         data
       );
 
-      // Invalidar cache de categorias
+      // Invalidar cache
       const companyId = useAuthStore.getState().getCompanyId();
       if (companyId) {
-        console.log("Invalidando cache após atualizar categoria");
-        await cacheService.invalidateWithPrefix(
-          `${CATEGORIES_CACHE_KEY}_${companyId}`
-        );
+        await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}`);
         await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}_${id}`);
       }
 
@@ -133,13 +126,10 @@ class CategoryService {
     try {
       await api.delete(`/api/product-categories/${id}`);
 
-      // Invalidar cache de categorias
+      // Invalidar cache
       const companyId = useAuthStore.getState().getCompanyId();
       if (companyId) {
-        console.log("Invalidando cache após excluir categoria");
-        await cacheService.invalidateWithPrefix(
-          `${CATEGORIES_CACHE_KEY}_${companyId}`
-        );
+        await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}`);
         await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}_${id}`);
       }
     } catch (error) {
