@@ -1,229 +1,186 @@
-// Path: src/features/dashboard/components/dashboard-company-card-simple.tsx
+// Path: src/features/dashboard/components/dashboard-company-card.tsx
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Card } from "@gluestack-ui/themed";
-import { User, Tag, Award } from "lucide-react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  Platform,
+  Linking,
+} from "react-native";
+import { User, Tag, ExternalLink, Link } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ResilientImage } from "@/components/common/resilient-image";
+import { router } from "expo-router";
+import * as Clipboard from "expo-clipboard";
 
 interface SimpleDashboardCompanyCardProps {
   name: string;
-  logo?: string;
+  logo?: string | null;
   categoryName?: string;
-  subcategoryName?: string;
-  planName?: string;
+  subcategoryNames?: string[];
   primaryColor?: string;
+  slug?: string;
 }
 
 export function SimpleDashboardCompanyCard({
   name = "Minha Empresa",
   logo,
   categoryName,
-  subcategoryName,
-  planName,
+  subcategoryNames = [],
   primaryColor = THEME_COLORS.primary,
+  slug,
 }: SimpleDashboardCompanyCardProps) {
+  // Função para navegar para a página de perfil da empresa no marketplace
+  const navigateToProfile = () => {
+    if (slug) {
+      // Você pode ajustar este caminho para a rota correta do seu aplicativo
+      // router.push(`/marketplace/empresa/${slug}`);
+      Alert.alert("Informação", "Navegando para o perfil da empresa: " + slug);
+    } else {
+      Alert.alert("Informação", "O perfil público ainda não está disponível");
+    }
+  };
+
+  // Função para abrir a página de links da empresa
+  const navigateToLinks = async () => {
+    if (slug) {
+      const externalLink = `https://limei.links/${slug}`;
+      try {
+        const canOpen = await Linking.canOpenURL(externalLink);
+        if (canOpen) {
+          await Linking.openURL(externalLink);
+        } else {
+          // Se não puder abrir, copiar para área de transferência como fallback
+          await copyExternalLink();
+        }
+      } catch (error) {
+        console.error("Erro ao abrir link externo:", error);
+        Alert.alert(
+          "Erro",
+          "Não foi possível abrir a página de links. O link foi copiado para a área de transferência.",
+          [
+            {
+              text: "OK",
+              onPress: () => copyExternalLink(),
+            },
+          ]
+        );
+      }
+    } else {
+      Alert.alert("Erro", "Não foi possível gerar o link externo");
+    }
+  };
+
+  // Função para copiar o link para a área de transferência (como fallback)
+  const copyExternalLink = async () => {
+    if (slug) {
+      const externalLink = `https://limei.links/${slug}`;
+      try {
+        await Clipboard.setStringAsync(externalLink);
+        Alert.alert("Sucesso", "Link copiado para a área de transferência");
+      } catch (error) {
+        console.error("Erro ao copiar para clipboard:", error);
+        if (Platform.OS === "web") {
+          try {
+            navigator.clipboard.writeText(externalLink);
+            Alert.alert("Sucesso", "Link copiado para a área de transferência");
+          } catch (webError) {
+            Alert.alert("Erro", "Não foi possível copiar o link");
+          }
+        } else {
+          Alert.alert("Erro", "Não foi possível copiar o link");
+        }
+      }
+    }
+  };
+
+  // Processar subcategorias
+  const displaySubcategories =
+    subcategoryNames && subcategoryNames.length > 0
+      ? subcategoryNames.join(", ")
+      : null;
+
   return (
-    <Card className="overflow-hidden mb-6 shadow-sm">
-      {/* Cabeçalho com cor fixa */}
-      <View style={[styles.header, { backgroundColor: "#F4511E" }]}>
-        <View style={styles.waveOverlay} />
-      </View>
-
-      {/* Conteúdo principal */}
-      <View style={styles.cardContent}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          {logo ? (
-            <ResilientImage
-              source={logo}
-              style={styles.logo}
-              resizeMode="cover"
-              fallbackSource={<User size={40} color={primaryColor} />}
-            />
-          ) : (
-            <View
-              style={[
-                styles.logoPlaceholder,
-                { backgroundColor: `${primaryColor}20` },
-              ]}
-            >
-              <User size={40} color={primaryColor} />
-            </View>
-          )}
-        </View>
-
-        {/* Informações da empresa */}
-        <View style={styles.companyInfo}>
-          <Text style={styles.companyName}>{name}</Text>
-
-          <View style={styles.categoryContainer}>
-            {/* Badge do plano */}
-            {planName && (
+    <View
+      className="bg-white rounded-xl mb-4 shadow-sm border border-gray-100 overflow-hidden"
+      style={{ borderTopColor: primaryColor, borderTopWidth: 4 }}
+    >
+      <View className="p-4">
+        {/* Conteúdo principal - layout horizontal */}
+        <View className="flex-row">
+          {/* Logo à esquerda */}
+          <View className="w-16 h-16 rounded-lg bg-white shadow-sm overflow-hidden border border-gray-100 items-center justify-center mr-3">
+            {logo ? (
+              <ResilientImage
+                source={logo}
+                width={60}
+                height={60}
+                resizeMode="cover"
+              />
+            ) : (
               <View
-                style={[
-                  styles.planBadge,
-                  { backgroundColor: `${primaryColor}20` },
-                ]}
+                className="w-full h-full flex items-center justify-center rounded-md"
+                style={{ backgroundColor: `${primaryColor}15` }}
               >
-                <Award size={14} color={primaryColor} />
-                <Text style={[styles.planText, { color: primaryColor }]}>
-                  {planName.charAt(0).toUpperCase() + planName.slice(1)}
-                </Text>
-              </View>
-            )}
-
-            {/* Badge da categoria */}
-            {categoryName && (
-              <View style={styles.badge}>
-                <Tag size={12} color="#4B5563" style={{ marginRight: 4 }} />
-                <Text style={styles.badgeText}>{categoryName}</Text>
-              </View>
-            )}
-
-            {/* Badge da subcategoria */}
-            {subcategoryName && (
-              <View style={styles.badgeSecondary}>
-                <Text style={styles.badgeSecondaryText}>{subcategoryName}</Text>
+                <User size={30} color={primaryColor} />
               </View>
             )}
           </View>
 
-          {/* Texto informativo estático em vez de links */}
-          <View style={styles.infoSection}>
-            <Text style={styles.infoTitle}>Perfil da Empresa</Text>
-            <Text style={styles.infoText}>
-              Compartilhe sua página com seus clientes e aumente sua
-              visibilidade no marketplace.
-            </Text>
+          {/* Informações da empresa à direita */}
+          <View className="flex-1">
+            <Text className="text-lg font-bold text-gray-800 mb-1">{name}</Text>
+
+            <View className="flex-row flex-wrap gap-1 mb-1">
+              {/* Badge da categoria */}
+              {categoryName && (
+                <View className="flex-row items-center px-2 py-1 rounded-full bg-gray-100">
+                  <Tag size={10} color="#4B5563" className="mr-1" />
+                  <Text className="text-xs text-gray-600">{categoryName}</Text>
+                </View>
+              )}
+
+              {/* Subcategorias */}
+              {displaySubcategories && (
+                <View className="flex-row items-center px-2 py-1 rounded-full bg-gray-50">
+                  <Text className="text-xs text-gray-500">
+                    {displaySubcategories}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
+
+        {/* Botões de ação */}
+        <View className="flex-row mt-3 pt-3 gap-2 border-t border-gray-100">
+          <TouchableOpacity
+            className="flex-1 flex-row items-center justify-center py-2 rounded-lg"
+            style={{ backgroundColor: `${primaryColor}15` }}
+            onPress={navigateToProfile}
+          >
+            <ExternalLink size={14} color={primaryColor} className="mr-1" />
+            <Text
+              style={{ color: primaryColor }}
+              className="text-xs font-medium ml-2"
+            >
+              Ver Perfil
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="flex-1 flex-row items-center justify-center py-2 bg-gray-50 rounded-lg"
+            onPress={navigateToLinks}
+            onLongPress={copyExternalLink} // Mantém a funcionalidade de cópia em pressão longa
+          >
+            <Link size={14} color="#6B7280" className="mr-1" />
+            <Text className="text-xs font-medium text-gray-600 ml-2">
+              Página de Links
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </Card>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    height: 90,
-    width: "100%",
-    position: "relative",
-    overflow: "hidden",
-  },
-  waveOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 40,
-    backgroundColor: "white",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  cardContent: {
-    padding: 16,
-    paddingBottom: 12,
-  },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 16,
-    backgroundColor: "white",
-    position: "absolute",
-    top: -40,
-    left: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-    overflow: "hidden",
-    zIndex: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 4,
-    borderColor: "white",
-  },
-  logo: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
-  },
-  logoPlaceholder: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F3F4F6",
-  },
-  companyInfo: {
-    marginLeft: 100,
-    paddingTop: 8,
-  },
-  companyName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 8,
-  },
-  categoryContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 16,
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-    backgroundColor: "#F3F4F6",
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#4B5563",
-  },
-  badgeSecondary: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-    backgroundColor: "#F3F4F6",
-  },
-  badgeSecondaryText: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  planBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-    gap: 4,
-  },
-  planText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  infoSection: {
-    marginTop: 4,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-  },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 13,
-    color: "#6B7280",
-  },
-});

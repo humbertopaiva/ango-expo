@@ -83,6 +83,14 @@ export default function DashboardScreen() {
     },
   ];
 
+  const subcategoryNames = React.useMemo(() => {
+    if (!company?.subcategorias?.length) return [];
+
+    return company.subcategorias
+      .filter((item) => item.subcategorias_empresas_id?.nome)
+      .map((item) => item.subcategorias_empresas_id.nome);
+  }, [company?.subcategorias]);
+
   return (
     <View style={styles.container}>
       {/* Header personalizado com cor fixa */}
@@ -118,12 +126,11 @@ export default function DashboardScreen() {
         {/* Empresa Card - Versão simplificada que não tenta usar navegação */}
         <SimpleDashboardCompanyCard
           name={company?.nome || "Minha Empresa"}
+          logo={company?.logo}
           categoryName={company?.categoria?.nome}
-          subcategoryName={
-            company?.subcategorias?.[0]?.subcategorias_empresas_id?.nome
-          }
-          planName={company?.plano?.nome}
-          primaryColor={THEME_COLORS.primary}
+          subcategoryNames={subcategoryNames}
+          primaryColor={company?.cor_primaria}
+          slug={company?.slug}
         />
 
         {/* Menu Grid */}
