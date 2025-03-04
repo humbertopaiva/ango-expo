@@ -57,8 +57,14 @@ export function CategoriesContent() {
           onClose={() => vm.setIsFormVisible(false)}
           onSubmit={
             vm.selectedCategory
-              ? (data) => vm.handleUpdateCategory(vm.selectedCategory!.id, data)
-              : vm.handleCreateCategory
+              ? (data) => {
+                  vm.handleUpdateCategory(vm.selectedCategory!.id, data);
+                  return; // O resultado do Promise é tratado no ViewModel
+                }
+              : (data) => {
+                  vm.handleCreateCategory(data);
+                  return; // O resultado do Promise é tratado no ViewModel
+                }
           }
           isLoading={vm.isCreating || vm.isUpdating}
           category={vm.selectedCategory}

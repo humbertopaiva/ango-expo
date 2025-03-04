@@ -1,13 +1,19 @@
-// src/features/categories/hooks/use-categories.ts
+// Path: src/features/categories/hooks/use-categories.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { categoryService } from "../services/category.service";
-import { CreateCategoryDTO, UpdateCategoryDTO } from "../models/category";
+import {
+  CreateCategoryDTO,
+  UpdateCategoryDTO,
+  Category,
+} from "../models/category";
 import useAuthStore from "@/src/stores/auth";
+import { useState } from "react";
 
 export function useCategories() {
   const queryClient = useQueryClient();
   const getCompanyId = useAuthStore((state) => state.getCompanyId);
   const companyId = getCompanyId();
+  const [categoryDetails, setCategoryDetails] = useState<Category | null>(null);
 
   const queryKey = ["categories", companyId];
 
@@ -16,6 +22,28 @@ export function useCategories() {
     queryFn: categoryService.getCategories,
     enabled: !!companyId,
   });
+
+  // Nova query para obter uma categoria específica pelo ID
+  const getCategoryById = async (id: string) => {
+    if (!id || !companyId) return null;
+
+    try {
+      // Primeiro, tenta encontrar nos dados já carregados
+      const existingCategory = categories.find((cat) => cat.id === id);
+      if (existingCategory) {
+        setCategoryDetails(existingCategory);
+        return existingCategory;
+      }
+
+      // Se não encontrar, busca do servidor
+      const category = await categoryService.getCategoryById(id);
+      setCategoryDetails(category);
+      return category;
+    } catch (error) {
+      console.error(`Erro ao buscar categoria ${id}:`, error);
+      return null;
+    }
+  };
 
   interface CreateCategoryMutationVariables {
     data: Omit<CreateCategoryDTO, "empresa">;
@@ -43,11 +71,9 @@ export function useCategories() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      // Aqui você pode adicionar um Toast de sucesso
     },
     onError: (error: any) => {
       console.error("Erro ao criar categoria:", error);
-      // Aqui você pode adicionar um Toast de erro
     },
   });
 
@@ -56,11 +82,10 @@ export function useCategories() {
       categoryService.updateCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      // Toast de sucesso
+      setCategoryDetails(null); // Limpa os detalhes em cache
     },
     onError: (error: any) => {
       console.error("Erro ao atualizar categoria:", error);
-      // Toast de erro
     },
   });
 
@@ -68,16 +93,15 @@ export function useCategories() {
     mutationFn: categoryService.deleteCategory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
-      // Toast de sucesso
     },
     onError: (error: any) => {
       console.error("Erro ao excluir categoria:", error);
-      // Toast de erro
     },
   });
 
   return {
     categories: Array.isArray(categories) ? categories : [],
+    categoryDetails,
     isLoading,
     createCategory: createMutation.mutate,
     updateCategory: updateMutation.mutate,
@@ -85,5 +109,6 @@ export function useCategories() {
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    getCategoryById,
   };
 }

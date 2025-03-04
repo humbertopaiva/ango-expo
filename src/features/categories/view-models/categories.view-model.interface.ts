@@ -1,4 +1,4 @@
-// src/features/categories/view-models/categories.view-model.interface.ts
+// Path: src/features/categories/view-models/categories.view-model.interface.ts
 
 import {
   Category,
@@ -21,22 +21,35 @@ export interface ICategoriesViewModel {
   isDeleteDialogOpen: boolean;
   categoryToDelete: string | null;
 
+  // Estado para controle de carregamento de imagem
+  isImageLoading: boolean;
+
   // Setters existentes...
   setSearchTerm: (term: string) => void;
   setSelectedCategory: (category: Category | null) => void;
   setIsFormVisible: (visible: boolean) => void;
 
+  // Novo setter para estado de carregamento de imagem
+  setImageLoadingState: (isLoading: boolean) => void;
+
   // Handlers existentes e novos...
   handleCreateCategory: (
     data: Omit<CreateCategoryDTO, "empresa">
-  ) => Promise<void>;
-  handleUpdateCategory: (id: string, data: UpdateCategoryDTO) => Promise<void>;
-  handleDeleteCategory: (id: string) => Promise<void>;
+  ) => Promise<boolean>;
+  handleUpdateCategory: (
+    id: string,
+    data: UpdateCategoryDTO
+  ) => Promise<boolean>;
+  handleDeleteCategory: (id: string) => Promise<boolean>;
 
   // Novos handlers para confirmação
   confirmDeleteCategory: (id: string) => void;
   cancelDeleteCategory: () => void;
 
-  // Novo handler para abrir modal de criação
+  // Funções para abrir modais
   openCreateCategoryModal: () => void;
+  openEditCategoryModal: (category: Category) => void;
+
+  // Função para carregar detalhes de categoria
+  loadCategoryDetails: (id: string) => Promise<Category | null>;
 }
