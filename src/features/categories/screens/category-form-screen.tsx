@@ -1,4 +1,5 @@
-// src/features/categories/screens/category-form-screen.tsx
+// Path: src/features/categories/screens/category-form-screen.tsx
+
 import React, { useEffect, useState } from "react";
 import { View, ScrollView, Text, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,6 +25,7 @@ import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Check, X, FolderIcon } from "lucide-react-native";
 import { ImageUpload } from "@/components/common/image-upload";
 import { Switch } from "@/components/ui/switch";
+import { FormActions } from "@/components/custom/form-actions";
 
 interface CategoryFormScreenProps {
   categoryId?: string;
@@ -34,13 +36,11 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
   const id = categoryId || params.id;
   const isEditing = !!id;
   const toast = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { categories, createCategory, updateCategory, isCreating, isUpdating } =
+  const { categories, createCategory, updateCategory, isLoading } =
     useCategories();
-
   const category = categories.find((c) => c.id === id);
-  const isLoading = isCreating || isUpdating;
-  const primaryColor = THEME_COLORS.primary;
 
   // Estado local para status
   const [statusValue, setStatusValue] = useState(true);
@@ -54,37 +54,21 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
     },
   });
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = form;
-
   useEffect(() => {
-    if (category) {
-      reset({
+    if (category && !isSubmitting) {
+      form.reset({
         nome: category.nome,
         imagem: category.imagem,
         categoria_ativa: category.categoria_ativa,
       });
       setStatusValue(category.categoria_ativa);
     }
-  }, [category, reset]);
+  }, [category, form.reset, isSubmitting]);
 
-  // Efeito para sincronizar o estado local com o valor do formulário
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "categoria_ativa") {
-        setStatusValue(value.categoria_ativa || true);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form.watch]);
-
-  const onSubmit = async (data: CategoryFormData) => {
+  const handleSubmit = async (data: CategoryFormData) => {
     try {
+      setIsSubmitting(true);
+
       if (isEditing && id) {
         await updateCategory({
           id,
@@ -96,22 +80,46 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
         });
         toastUtils.success(toast, "Categoria atualizada com sucesso!");
       } else {
-        await createCategory({ data });
+        await createCategory({
+          data: {
+            nome: data.nome,
+            imagem: data.imagem,
+            categoria_ativa: data.categoria_ativa,
+          },
+        });
         toastUtils.success(toast, "Categoria criada com sucesso!");
       }
-      // Navega de volta para a listagem de categorias
-      router.push("/admin/categories");
+
+      // Aguarda um momento antes de voltar para evitar race conditions
+      setTimeout(() => {
+        router.push("/admin/categories");
+      }, 100);
     } catch (error) {
       console.error("Error submitting form:", error);
       toastUtils.error(
         toast,
         `Erro ao ${isEditing ? "atualizar" : "criar"} a categoria`
       );
+      setIsSubmitting(false);
     }
   };
 
+  if (isEditing && isLoading && !category) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <ScreenHeader
+          title={isEditing ? "Editar Categoria" : "Nova Categoria"}
+          showBackButton={true}
+        />
+        <View className="flex-1 justify-center items-center">
+          <Text>Carregando...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
       <ScreenHeader
         title={isEditing ? "Editar Categoria" : "Nova Categoria"}
         subtitle="Crie ou atualize informações da categoria"
@@ -119,15 +127,20 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
       />
       <View className="flex-1">
         {/* Form */}
-        <ScrollView className="flex-1 px-4 bg-white">
+        <ScrollView
+          className="flex-1 px-4 bg-white"
+          contentContainerStyle={{
+            paddingBottom: Platform.OS === "ios" ? 180 : 160,
+          }}
+        >
           <VStack space="lg" className="py-6">
             {/* Nome */}
-            <FormControl isInvalid={!!errors.nome}>
+            <FormControl isInvalid={!!form.formState.errors.nome}>
               <FormControl.Label>
                 <Text className="text-sm font-medium text-gray-700">Nome</Text>
               </FormControl.Label>
               <Controller
-                control={control}
+                control={form.control}
                 name="nome"
                 render={({ field: { onChange, value, onBlur } }) => (
                   <Input>
@@ -141,17 +154,17 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                   </Input>
                 )}
               />
-              {errors.nome && (
+              {form.formState.errors.nome && (
                 <FormControl.Error>
                   <FormControl.Error.Text>
-                    {errors.nome.message}
+                    {form.formState.errors.nome.message}
                   </FormControl.Error.Text>
                 </FormControl.Error>
               )}
             </FormControl>
 
             {/* Imagem */}
-            <FormControl isInvalid={!!errors.imagem}>
+            <FormControl isInvalid={!!form.formState.errors.imagem}>
               <FormControl.Label>
                 <Text className="text-sm font-medium text-gray-700">
                   Imagem da Categoria
@@ -161,20 +174,20 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                 Esta imagem será exibida nos menus e listagens
               </Text>
               <Controller
-                control={control}
+                control={form.control}
                 name="imagem"
                 render={({ field: { onChange, value } }) => (
                   <ImageUpload
                     value={value || ""}
                     onChange={onChange}
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   />
                 )}
               />
-              {errors.imagem && (
+              {form.formState.errors.imagem && (
                 <FormControl.Error>
                   <FormControl.Error.Text>
-                    {errors.imagem.message}
+                    {form.formState.errors.imagem.message}
                   </FormControl.Error.Text>
                 </FormControl.Error>
               )}
@@ -188,7 +201,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                 </Text>
               </FormControl.Label>
               <Controller
-                control={control}
+                control={form.control}
                 name="categoria_ativa"
                 render={({ field: { onChange, value } }) => (
                   <View className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -218,7 +231,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                           setStatusValue(newValue);
                           onChange(newValue);
                         }}
-                        disabled={isLoading}
+                        disabled={isSubmitting}
                         trackColor={{ false: "#EF4444", true: "#10B981" }}
                         thumbColor={statusValue ? "#ffffff" : "#ffffff"}
                       />
@@ -238,40 +251,24 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
 
         {/* Footer */}
         <View
-          className="px-4 py-4 border-t border-gray-200 bg-white"
-          style={{
-            paddingBottom: Platform.OS === "ios" ? 24 : 16,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-            elevation: 5,
-          }}
+          className="absolute bottom-0 left-0 right-0 w-full pb-6 pt-3 bg-white border-t border-gray-200 shadow-lg"
+          style={{ paddingBottom: Platform.OS === "ios" ? 24 : 16 }}
         >
-          <View className="flex-row gap-4">
-            <Button
-              variant="outline"
-              onPress={() => router.push("/admin/categories")}
-              disabled={isLoading}
-              className="flex-1 border-gray-300 h-14"
-              style={{ borderColor: primaryColor }}
-            >
-              <ButtonText>Cancelar</ButtonText>
-            </Button>
-            <Button
-              onPress={handleSubmit(onSubmit)}
-              disabled={isLoading}
-              className="flex-1 bg-primary-500 h-14"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <ButtonIcon>
-                {isLoading ? null : <FolderIcon size={18} color="white" />}
-              </ButtonIcon>
-              <ButtonText>
-                {isLoading ? "Salvando..." : "Salvar Categoria"}
-              </ButtonText>
-            </Button>
-          </View>
+          <FormActions
+            primaryAction={{
+              label: isSubmitting ? "Salvando..." : "Salvar",
+              onPress: form.handleSubmit(handleSubmit),
+              isLoading: isSubmitting,
+            }}
+            secondaryAction={{
+              label: "Cancelar",
+              onPress: () => router.back(),
+              variant: "outline",
+              isDisabled: isSubmitting,
+            }}
+            className="px-4 w-full"
+            spacing="sm"
+          />
         </View>
       </View>
     </SafeAreaView>

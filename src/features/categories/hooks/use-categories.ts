@@ -1,4 +1,5 @@
 // Path: src/features/categories/hooks/use-categories.ts
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { categoryService } from "../services/category.service";
 import {
@@ -45,29 +46,14 @@ export function useCategories() {
     }
   };
 
-  interface CreateCategoryMutationVariables {
-    data: Omit<CreateCategoryDTO, "empresa">;
-  }
-
-  interface UpdateCategoryMutationVariables {
-    id: string;
-    data: UpdateCategoryDTO;
-  }
-
-  const createMutation = useMutation<
-    void,
-    Error,
-    CreateCategoryMutationVariables
-  >({
-    mutationFn: ({ data }: CreateCategoryMutationVariables) => {
+  const createMutation = useMutation({
+    mutationFn: (params: { data: Omit<CreateCategoryDTO, "empresa"> }) => {
       if (!companyId) throw new Error("ID da empresa não encontrado");
 
-      return categoryService
-        .createCategory({
-          ...data,
-          empresa: companyId,
-        })
-        .then(() => {});
+      return categoryService.createCategory({
+        ...params.data,
+        empresa: companyId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });

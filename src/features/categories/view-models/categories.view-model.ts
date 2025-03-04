@@ -1,6 +1,6 @@
 // Path: src/features/categories/view-models/categories.view-model.ts
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   Category,
   CreateCategoryDTO,
@@ -8,7 +8,6 @@ import {
 } from "../models/category";
 import { useCategories } from "../hooks/use-categories";
 import { ICategoriesViewModel } from "./categories.view-model.interface";
-import { router } from "expo-router";
 import { useToast } from "@gluestack-ui/themed";
 import {
   showErrorToast,
@@ -16,16 +15,16 @@ import {
 } from "@/components/common/toast-helper";
 
 export function useCategoriesViewModel(): ICategoriesViewModel {
+  const [searchTerm, setSearchTerm] = useState("");
+  const toast = useToast();
+
+  // Estados para o diálogo de confirmação
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
   const [isFormVisible, setIsFormVisible] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const toast = useToast();
-
-  // Novos estados para o diálogo de confirmação
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
   // Estado para controlar carregamento de imagem
   const [isImageLoading, setIsImageLoading] = useState(false);
@@ -42,9 +41,12 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     getCategoryById,
   } = useCategories();
 
-  const filteredCategories = categories.filter((category) =>
-    category.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar categorias com base no termo de busca
+  const filteredCategories = useMemo(() => {
+    return categories.filter((category) =>
+      category.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [categories, searchTerm]);
 
   // Função para carregar detalhes de uma categoria por ID
   const loadCategoryDetails = useCallback(
@@ -67,6 +69,37 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     [getCategoryById, toast]
   );
 
+  // Função para abrir o diálogo de confirmação
+  const confirmDeleteCategory = useCallback((id: string) => {
+    setCategoryToDelete(id);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  // Função para cancelar a exclusão
+  const cancelDeleteCategory = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+    setCategoryToDelete(null);
+  }, []);
+
+  // Função de exclusão real que será chamada após a confirmação
+  const handleDeleteCategory = useCallback(
+    async (id: string) => {
+      try {
+        await deleteCategory(id);
+        setIsDeleteDialogOpen(false);
+        setCategoryToDelete(null);
+        showSuccessToast(toast, "Categoria excluída com sucesso");
+        return true;
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        showErrorToast(toast, "Não foi possível excluir a categoria");
+        return false;
+      }
+    },
+    [deleteCategory, toast]
+  );
+
+  // Funções para criar e atualizar categorias
   const handleCreateCategory = useCallback(
     async (data: Omit<CreateCategoryDTO, "empresa">) => {
       try {
@@ -90,7 +123,6 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
         setSelectedCategory(null);
         setIsFormVisible(false);
         showSuccessToast(toast, "Categoria atualizada com sucesso!");
-        // Navegar de volta para a listagem após atualização
         return true;
       } catch (error) {
         console.error("Error updating category:", error);
@@ -100,36 +132,6 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     },
     [updateCategory, toast]
   );
-
-  // Função para abrir o diálogo de confirmação
-  const confirmDeleteCategory = useCallback((id: string) => {
-    setCategoryToDelete(id);
-    setIsDeleteDialogOpen(true);
-  }, []);
-
-  // Função de exclusão real que será chamada após a confirmação
-  const handleDeleteCategory = useCallback(
-    async (id: string) => {
-      try {
-        await deleteCategory(id);
-        setIsDeleteDialogOpen(false);
-        setCategoryToDelete(null);
-        showSuccessToast(toast, "Categoria excluída com sucesso");
-        return true;
-      } catch (error) {
-        console.error("Error deleting category:", error);
-        showErrorToast(toast, "Não foi possível excluir a categoria");
-        return false;
-      }
-    },
-    [deleteCategory, toast]
-  );
-
-  // Função para cancelar a exclusão
-  const cancelDeleteCategory = useCallback(() => {
-    setIsDeleteDialogOpen(false);
-    setCategoryToDelete(null);
-  }, []);
 
   // Função para abrir o modal de criação
   const openCreateCategoryModal = useCallback(() => {
