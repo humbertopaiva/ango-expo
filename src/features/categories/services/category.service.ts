@@ -20,9 +20,10 @@ class CategoryService {
 
       const cacheKey = `${CATEGORIES_CACHE_KEY}_${companyId}`;
 
-      // Tentar obter do cache primeiro
-      const cachedData = await cacheService.get<Category[]>(cacheKey);
+      // Tentar obter do cache primeiro com curto tempo de expiração
+      const cachedData = await cacheService.get<Category[]>(cacheKey, 60000); // 1 minuto
       if (cachedData) {
+        console.log("Usando dados em cache para categorias");
         return cachedData;
       }
 
@@ -57,9 +58,10 @@ class CategoryService {
 
       const cacheKey = `${CATEGORIES_CACHE_KEY}_${companyId}_${id}`;
 
-      // Tentar obter do cache primeiro
-      const cachedData = await cacheService.get<Category>(cacheKey);
+      // Tentar obter do cache primeiro com curto tempo de expiração
+      const cachedData = await cacheService.get<Category>(cacheKey, 60000); // 1 minuto
       if (cachedData) {
+        console.log(`Usando cache para categoria ${id}`);
         return cachedData;
       }
 
@@ -89,9 +91,7 @@ class CategoryService {
       // Invalidar cache
       const companyId = useAuthStore.getState().getCompanyId();
       if (companyId) {
-        await cacheService.invalidateWithPrefix(
-          `${CATEGORIES_CACHE_KEY}_${companyId}`
-        );
+        await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}`);
       }
 
       return response.data.data;
@@ -111,9 +111,7 @@ class CategoryService {
       // Invalidar cache
       const companyId = useAuthStore.getState().getCompanyId();
       if (companyId) {
-        await cacheService.invalidateWithPrefix(
-          `${CATEGORIES_CACHE_KEY}_${companyId}`
-        );
+        await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}`);
         await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}_${id}`);
       }
 
@@ -131,9 +129,7 @@ class CategoryService {
       // Invalidar cache
       const companyId = useAuthStore.getState().getCompanyId();
       if (companyId) {
-        await cacheService.invalidateWithPrefix(
-          `${CATEGORIES_CACHE_KEY}_${companyId}`
-        );
+        await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}`);
         await cacheService.remove(`${CATEGORIES_CACHE_KEY}_${companyId}_${id}`);
       }
     } catch (error) {

@@ -1,6 +1,6 @@
-// src/features/categories/screens/category-form-screen.tsx
+// Path: src/features/categories/screens/category-form-screen.tsx
 import React, { useEffect, useState } from "react";
-import { View, ScrollView, Text, Platform } from "react-native";
+import { View, Text, Platform, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,9 +21,10 @@ import ScreenHeader from "@/components/ui/screen-header";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Check, X, FolderIcon } from "lucide-react-native";
+import { Check, FolderIcon, X } from "lucide-react-native";
 import { ImageUpload } from "@/components/common/image-upload";
 import { Switch } from "@/components/ui/switch";
+import { ScrollView } from "react-native";
 
 interface CategoryFormScreenProps {
   categoryId?: string;
@@ -34,12 +35,20 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
   const id = categoryId || params.id;
   const isEditing = !!id;
   const toast = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { categories, createCategory, updateCategory, isCreating, isUpdating } =
-    useCategories();
+  const {
+    categories,
+    createCategory,
+    updateCategory,
+    isCreating,
+    isUpdating,
+    isLoading,
+    getCategoryById,
+  } = useCategories();
 
   const category = categories.find((c) => c.id === id);
-  const isLoading = isCreating || isUpdating;
+  const isPending = isCreating || isUpdating || isSubmitting;
   const primaryColor = THEME_COLORS.primary;
 
   // Estado local para status
@@ -54,23 +63,44 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
     },
   });
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = form;
-
+  // Carregar detalhes da categoria ao iniciar
   useEffect(() => {
-    if (category) {
-      reset({
-        nome: category.nome,
-        imagem: category.imagem,
-        categoria_ativa: category.categoria_ativa,
-      });
-      setStatusValue(category.categoria_ativa);
-    }
-  }, [category, reset]);
+    const loadCategory = async () => {
+      if (isEditing && id) {
+        // Primeiro tenta usar os dados do estado global
+        if (category) {
+          form.reset({
+            nome: category.nome,
+            imagem: category.imagem,
+            categoria_ativa: category.categoria_ativa,
+          });
+          setStatusValue(category.categoria_ativa);
+          return;
+        }
+
+        // Caso não encontre, busca do servidor
+        try {
+          const fetchedCategory = await getCategoryById(id);
+          if (fetchedCategory) {
+            form.reset({
+              nome: fetchedCategory.nome,
+              imagem: fetchedCategory.imagem,
+              categoria_ativa: fetchedCategory.categoria_ativa,
+            });
+            setStatusValue(fetchedCategory.categoria_ativa);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar categoria:", error);
+          toastUtils.error(
+            toast,
+            "Não foi possível carregar os dados da categoria"
+          );
+        }
+      }
+    };
+
+    loadCategory();
+  }, [id, isEditing, category, form.reset, getCategoryById, toast]);
 
   // Efeito para sincronizar o estado local com o valor do formulário
   useEffect(() => {
@@ -85,6 +115,8 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
 
   const onSubmit = async (data: CategoryFormData) => {
     try {
+      setIsSubmitting(true);
+
       if (isEditing && id) {
         await updateCategory({
           id,
@@ -96,19 +128,42 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
         });
         toastUtils.success(toast, "Categoria atualizada com sucesso!");
       } else {
-        await createCategory({ data });
+        await createCategory({
+          nome: data.nome,
+          imagem: data.imagem,
+          categoria_ativa: data.categoria_ativa,
+        });
         toastUtils.success(toast, "Categoria criada com sucesso!");
       }
-      // Navega de volta para a listagem de categorias
-      router.push("/admin/categories");
+
+      // Tempo para que a navegação ocorra após a animação do toast
+      setTimeout(() => {
+        router.push("/admin/categories");
+      }, 100);
     } catch (error) {
       console.error("Error submitting form:", error);
       toastUtils.error(
         toast,
         `Erro ao ${isEditing ? "atualizar" : "criar"} a categoria`
       );
+      setIsSubmitting(false);
     }
   };
+
+  // Renderiza um indicador de carregamento enquanto busca os dados
+  if (isEditing && isLoading && !category) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <ScreenHeader
+          title={isEditing ? "Editar Categoria" : "Nova Categoria"}
+          showBackButton={true}
+        />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
@@ -119,15 +174,18 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
       />
       <View className="flex-1">
         {/* Form */}
-        <ScrollView className="flex-1 px-4 bg-white">
+        <ScrollView
+          className="flex-1 px-4 bg-white"
+          contentContainerStyle={{ paddingBottom: 100 }}
+        >
           <VStack space="lg" className="py-6">
             {/* Nome */}
-            <FormControl isInvalid={!!errors.nome}>
+            <FormControl isInvalid={!!form.formState.errors.nome}>
               <FormControl.Label>
                 <Text className="text-sm font-medium text-gray-700">Nome</Text>
               </FormControl.Label>
               <Controller
-                control={control}
+                control={form.control}
                 name="nome"
                 render={({ field: { onChange, value, onBlur } }) => (
                   <Input>
@@ -141,17 +199,17 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                   </Input>
                 )}
               />
-              {errors.nome && (
+              {form.formState.errors.nome && (
                 <FormControl.Error>
                   <FormControl.Error.Text>
-                    {errors.nome.message}
+                    {form.formState.errors.nome.message}
                   </FormControl.Error.Text>
                 </FormControl.Error>
               )}
             </FormControl>
 
             {/* Imagem */}
-            <FormControl isInvalid={!!errors.imagem}>
+            <FormControl isInvalid={!!form.formState.errors.imagem}>
               <FormControl.Label>
                 <Text className="text-sm font-medium text-gray-700">
                   Imagem da Categoria
@@ -161,20 +219,20 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                 Esta imagem será exibida nos menus e listagens
               </Text>
               <Controller
-                control={control}
+                control={form.control}
                 name="imagem"
                 render={({ field: { onChange, value } }) => (
                   <ImageUpload
                     value={value || ""}
                     onChange={onChange}
-                    disabled={isLoading}
+                    disabled={isPending}
                   />
                 )}
               />
-              {errors.imagem && (
+              {form.formState.errors.imagem && (
                 <FormControl.Error>
                   <FormControl.Error.Text>
-                    {errors.imagem.message}
+                    {form.formState.errors.imagem.message}
                   </FormControl.Error.Text>
                 </FormControl.Error>
               )}
@@ -188,7 +246,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                 </Text>
               </FormControl.Label>
               <Controller
-                control={control}
+                control={form.control}
                 name="categoria_ativa"
                 render={({ field: { onChange, value } }) => (
                   <View className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -218,7 +276,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                           setStatusValue(newValue);
                           onChange(newValue);
                         }}
-                        disabled={isLoading}
+                        disabled={isPending}
                         trackColor={{ false: "#EF4444", true: "#10B981" }}
                         thumbColor={statusValue ? "#ffffff" : "#ffffff"}
                       />
@@ -252,23 +310,23 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
             <Button
               variant="outline"
               onPress={() => router.push("/admin/categories")}
-              disabled={isLoading}
+              disabled={isPending}
               className="flex-1 border-gray-300 h-14"
               style={{ borderColor: primaryColor }}
             >
               <ButtonText>Cancelar</ButtonText>
             </Button>
             <Button
-              onPress={handleSubmit(onSubmit)}
-              disabled={isLoading}
+              onPress={form.handleSubmit(onSubmit)}
+              disabled={isPending}
               className="flex-1 bg-primary-500 h-14"
               style={{ backgroundColor: primaryColor }}
             >
               <ButtonIcon>
-                {isLoading ? null : <FolderIcon size={18} color="white" />}
+                {isPending ? null : <FolderIcon size={18} color="white" />}
               </ButtonIcon>
               <ButtonText>
-                {isLoading ? "Salvando..." : "Salvar Categoria"}
+                {isPending ? "Salvando..." : "Salvar Categoria"}
               </ButtonText>
             </Button>
           </View>

@@ -7,13 +7,11 @@ import {
   Category,
 } from "../models/category";
 import useAuthStore from "@/src/stores/auth";
-import { useState } from "react";
 
 export function useCategories() {
   const queryClient = useQueryClient();
   const getCompanyId = useAuthStore((state) => state.getCompanyId);
   const companyId = getCompanyId();
-  const [categoryDetails, setCategoryDetails] = useState<Category | null>(null);
 
   const queryKey = ["categories", companyId];
 
@@ -21,9 +19,9 @@ export function useCategories() {
     queryKey,
     queryFn: categoryService.getCategories,
     enabled: !!companyId,
+    staleTime: 1000 * 60, // 1 minuto
   });
 
-  // Nova query para obter uma categoria específica pelo ID
   const getCategoryById = async (id: string) => {
     if (!id || !companyId) return null;
 
@@ -31,49 +29,29 @@ export function useCategories() {
       // Primeiro, tenta encontrar nos dados já carregados
       const existingCategory = categories.find((cat) => cat.id === id);
       if (existingCategory) {
-        setCategoryDetails(existingCategory);
         return existingCategory;
       }
 
       // Se não encontrar, busca do servidor
-      const category = await categoryService.getCategoryById(id);
-      setCategoryDetails(category);
-      return category;
+      return await categoryService.getCategoryById(id);
     } catch (error) {
       console.error(`Erro ao buscar categoria ${id}:`, error);
       return null;
     }
   };
 
-  interface CreateCategoryMutationVariables {
-    data: Omit<CreateCategoryDTO, "empresa">;
-  }
-
-  interface UpdateCategoryMutationVariables {
-    id: string;
-    data: UpdateCategoryDTO;
-  }
-
-  const createMutation = useMutation<
-    void,
-    Error,
-    CreateCategoryMutationVariables
-  >({
-    mutationFn: ({ data }: CreateCategoryMutationVariables) => {
+  const createMutation = useMutation({
+    mutationFn: (data: Omit<CreateCategoryDTO, "empresa">) => {
       if (!companyId) throw new Error("ID da empresa não encontrado");
 
-      return categoryService
-        .createCategory({
-          ...data,
-          empresa: companyId,
-        })
-        .then(() => {});
+      return categoryService.createCategory({
+        ...data,
+        empresa: companyId,
+      });
     },
     onSuccess: () => {
+      // Invalidar a query para forçar recarregamento dos dados
       queryClient.invalidateQueries({ queryKey });
-    },
-    onError: (error: any) => {
-      console.error("Erro ao criar categoria:", error);
     },
   });
 
@@ -81,27 +59,21 @@ export function useCategories() {
     mutationFn: ({ id, data }: { id: string; data: UpdateCategoryDTO }) =>
       categoryService.updateCategory(id, data),
     onSuccess: () => {
+      // Invalidar a query para forçar recarregamento dos dados
       queryClient.invalidateQueries({ queryKey });
-      setCategoryDetails(null); // Limpa os detalhes em cache
-    },
-    onError: (error: any) => {
-      console.error("Erro ao atualizar categoria:", error);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: categoryService.deleteCategory,
     onSuccess: () => {
+      // Invalidar a query para forçar recarregamento dos dados
       queryClient.invalidateQueries({ queryKey });
-    },
-    onError: (error: any) => {
-      console.error("Erro ao excluir categoria:", error);
     },
   });
 
   return {
     categories: Array.isArray(categories) ? categories : [],
-    categoryDetails,
     isLoading,
     createCategory: createMutation.mutate,
     updateCategory: updateMutation.mutate,
