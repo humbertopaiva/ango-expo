@@ -73,33 +73,16 @@ export function AppBar({
       <View
         style={{
           backgroundColor: backgroundColor,
-          paddingTop: statusBarHeight,
         }}
       >
         <HStack
           alignItems="center"
           justifyContent="space-between"
-          className="px-12 py-16"
-          height={56 + statusBarHeight}
+          className="px-4 py-4"
+          // height={statusBarHeight}
         >
           {/* Lado esquerdo: Botão de menu/voltar e título */}
-          <HStack alignItems="center" space="md" flex={1}>
-            {showBackButton ? (
-              <TouchableOpacity
-                onPress={handleBackPress}
-                className="p-2 -ml-2 rounded-full active:bg-white/20"
-              >
-                <ArrowLeft size={24} color="white" />
-              </TouchableOpacity>
-            ) : showMenuButton ? (
-              <TouchableOpacity
-                onPress={handleMenuPress}
-                className="p-2 -ml-2 rounded-full active:bg-white/20"
-              >
-                <Menu size={24} color="white" />
-              </TouchableOpacity>
-            ) : null}
-
+          <HStack alignItems="center" className="flex-1 justify-between">
             {/* Logo ou título */}
             {!title ? (
               <Image
@@ -117,6 +100,22 @@ export function AppBar({
                 )}
               </View>
             )}
+
+            {showBackButton ? (
+              <TouchableOpacity
+                onPress={handleBackPress}
+                className="p-2 -ml-2 rounded-full active:bg-white/20"
+              >
+                <ArrowLeft size={24} color="white" />
+              </TouchableOpacity>
+            ) : showMenuButton ? (
+              <TouchableOpacity
+                onPress={handleMenuPress}
+                className="p-2 -ml-2 rounded-full active:bg-white/20 bg-white/20"
+              >
+                <Menu size={24} color="white" />
+              </TouchableOpacity>
+            ) : null}
           </HStack>
 
           {/* Conteúdo do lado direito (opcional) */}
