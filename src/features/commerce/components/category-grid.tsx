@@ -1,4 +1,4 @@
-// src/features/commerce/components/category-grid.tsx
+// Path: src/features/commerce/components/category-grid.tsx (atualização)
 import React from "react";
 import { View, Text, FlatList, TouchableOpacity, Platform } from "react-native";
 import { Category } from "../models/category";
@@ -33,8 +33,7 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
       renderItem={({ item }) => (
         <View className="w-1/2 md:w-1/4 p-2">
           <TouchableOpacity
-            // onPress={() => router.push(`/comercio-local/${item.slug}`)}
-            onPress={() => console.log(`/comercio-local/${item.slug}`)}
+            onPress={() => router.push(`/(drawer)/categoria/${item.slug}`)}
             className="w-full aspect-square"
           >
             <Card className="w-full h-full overflow-hidden">
