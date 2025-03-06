@@ -1,12 +1,12 @@
 // Path: src/features/commerce/components/category-grid.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   Platform,
-  ImageBackground,
+  useWindowDimensions,
 } from "react-native";
 import { Category } from "../models/category";
 import { Grid, Sparkles } from "lucide-react-native";
@@ -19,21 +19,31 @@ interface CategoryGridProps {
 }
 
 export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
+  // Cria uma chave única para o FlatList que irá mudar apenas quando o número de colunas mudar
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === "web";
+  const numColumns = isWeb ? 4 : 3;
+
+  // Criando um ID único baseado no número de colunas
+  const flatListKey = `category-grid-${numColumns}`;
+
   if (isLoading) {
     return (
       <View>
         <View className="inline-flex items-center gap-2 bg-primary-100 mb-4 px-4 py-2 rounded-full">
           <Sparkles className="h-4 w-4 text-primary-600" />
-          <Text className="text-sm font-gothic text-primary-600">
+          <Text className="text-sm font-medium text-primary-600">
             Categorias em Destaque
           </Text>
         </View>
 
         <View className="flex-row flex-wrap gap-3">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <View
               key={i}
-              className="w-1/2 md:w-1/4 aspect-square animate-pulse bg-gray-200 rounded-xl"
+              className={`${
+                isWeb ? "w-1/4" : "w-1/3"
+              } aspect-square animate-pulse bg-gray-200 rounded-xl p-2`}
             />
           ))}
         </View>
@@ -60,48 +70,44 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
         </Text>
       </View>
 
+      {/* Renderização do grid com FlatList */}
       <FlatList
+        key={flatListKey}
         data={categories}
         keyExtractor={(item) => item.id}
-        numColumns={Platform.OS === "web" ? 4 : 2}
+        numColumns={numColumns}
         scrollEnabled={false}
         renderItem={({ item }) => (
-          <View className="w-1/2 md:w-1/4 p-2">
+          <View className={`${isWeb ? "w-1/4" : "w-1/3"} p-2`}>
             <TouchableOpacity
               onPress={() => router.push(`/(drawer)/categoria/${item.slug}`)}
               className="w-full aspect-square"
             >
-              {item.imagem ? (
-                <View className="relative w-full h-full overflow-hidden rounded-xl">
-                  <ImagePreview
-                    uri={item.imagem}
-                    width="100%"
-                    height="100%"
-                    resizeMode="cover"
-                    containerClassName="rounded-xl"
-                  />
-                  <View className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <View className="absolute inset-x-0 bottom-0 p-3">
-                    <Text className="text-white font-semibold text-center">
-                      {item.nome}
-                    </Text>
+              <View className="w-full h-full flex items-center justify-center">
+                <View className="w-full aspect-square bg-white border border-gray-100 rounded-2xl shadow-sm p-2 flex items-center justify-center">
+                  <View className="w-12 h-12 rounded-xl bg-primary-50 items-center justify-center mb-2">
+                    {item.imagem ? (
+                      <ImagePreview
+                        uri={item.imagem}
+                        width={28}
+                        height={28}
+                        resizeMode="contain"
+                        containerClassName="rounded-lg"
+                      />
+                    ) : (
+                      <Grid size={20} color="#F4511E" />
+                    )}
                   </View>
-                </View>
-              ) : (
-                <View className="w-full h-full bg-primary-50 border border-primary-100 rounded-xl flex items-center justify-center">
-                  <View className="w-12 h-12 rounded-full bg-primary-100 items-center justify-center mb-2">
-                    <Grid size={20} color="#F4511E" />
-                  </View>
-                  <Text className="text-primary-800 font-medium text-center px-2">
+                  <Text className="text-center text-xs font-medium text-gray-800 line-clamp-2 px-1">
                     {item.nome}
                   </Text>
                 </View>
-              )}
+              </View>
             </TouchableOpacity>
           </View>
         )}
         contentContainerStyle={{
-          flexGrow: Platform.OS === "web" ? 0 : 1,
+          flexGrow: 0,
         }}
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center p-8">
