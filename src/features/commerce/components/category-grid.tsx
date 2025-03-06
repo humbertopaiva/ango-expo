@@ -33,7 +33,7 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
   if (isLoading) {
     return (
       <View>
-        <HStack className="inline-flex items-center justify-center mb-4">
+        <HStack className="inline-flex items-center justify-center mb-6">
           <HStack className="bg-primary-100/60 px-4 py-2 rounded-full flex items-center gap-2">
             <Sparkles size={18} color={THEME_COLORS.primary} />
             <Text className="text-sm font-medium text-primary-500">
@@ -59,7 +59,7 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
   return (
     <View>
       <View className="mb-6 px-4">
-        <HStack className="inline-flex items-center justify-center mb-4">
+        <HStack className="inline-flex items-center justify-center mb-6">
           <HStack className="bg-primary-100/60 px-4 py-2 rounded-full flex items-center gap-2">
             <Sparkles size={18} color={THEME_COLORS.primary} />
             <Text className="text-sm font-medium text-primary-500">

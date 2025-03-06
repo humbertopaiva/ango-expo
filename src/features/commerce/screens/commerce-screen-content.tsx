@@ -26,12 +26,12 @@ export function CommerceScreenContent() {
         </View>
 
         {/* Categorias */}
-        <Section className="mt-4">
+        <Section className="my-6">
           <CategoryGrid categories={vm.categories} isLoading={vm.isLoading} />
         </Section>
 
         {/* Últimos Encartes */}
-        <Section className="mt-8 bg-secondary-50/30 py-8">
+        <Section className="my-6">
           <LeafletCarousel
             leaflets={vm.latestLeaflets}
             isLoading={vm.isLoading}
@@ -39,7 +39,7 @@ export function CommerceScreenContent() {
         </Section>
 
         {/* Vitrines Atualizadas */}
-        <Section className="mt-8">
+        <Section className="my-6">
           <ShowcaseGrid
             companies={vm.showcaseCompanies}
             isLoading={vm.isLoading}

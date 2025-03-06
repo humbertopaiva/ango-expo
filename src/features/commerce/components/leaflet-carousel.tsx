@@ -2,10 +2,12 @@
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { FileText, ChevronRight } from "lucide-react-native";
-import { Card } from "@gluestack-ui/themed";
+import { Card, HStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { Leaflet } from "../models/leaflet";
 import { router } from "expo-router";
+import { Box } from "@/components/ui/box";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface LeafletCarouselProps {
   leaflets: Leaflet[];
@@ -17,14 +19,16 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
     return (
       <View>
         <View className="mb-6">
-          <View className="inline-flex items-center gap-2 bg-secondary-100 mb-4 px-4 py-2 rounded-full">
-            <FileText className="h-4 w-4 text-secondary-600" />
-            <Text className="text-sm font-medium text-secondary-600">
-              Encartes Promocionais
-            </Text>
+          <View className="inline-flex items-center gap-2  mb-4 px-4 py-2 rounded-full">
+            <HStack className="bg-secondary-100">
+              <FileText size={20} color={THEME_COLORS.secondary} />
+              <Text className="text-sm font-medium text-secondary-600">
+                Encartes Promocionais
+              </Text>
+            </HStack>
           </View>
 
-          <Text className="text-2xl font-bold mb-2 text-secondary-600">
+          <Text className="text-3xl font-semibold mb-2 text-secondary-600">
             Ofertas Imperdíveis
           </Text>
 
@@ -59,19 +63,21 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
 
   return (
     <View>
-      <View className="mb-6">
-        <View className="inline-flex items-center gap-2 bg-secondary-100 mb-4 px-4 py-2 rounded-full">
-          <FileText className="h-4 w-4 text-secondary-600" />
-          <Text className="text-sm font-medium text-secondary-600">
-            Encartes Promocionais
-          </Text>
+      <View className="mb-6 px-4">
+        <View className="inline-flex items-center mb-2">
+          <HStack className="bg-secondary-100 gap-2 mb-4 px-4 py-2 rounded-full">
+            <FileText size={20} color={THEME_COLORS.secondary} />
+            <Text className="text-sm font-medium text-secondary-600">
+              Encartes Promocionais
+            </Text>
+          </HStack>
         </View>
 
-        <Text className="text-2xl font-bold mb-2 text-secondary-600">
+        <Text className="text-3xl font-semibold mb-2 text-secondary-600 text-center">
           Ofertas Imperdíveis
         </Text>
 
-        <Text className="text-gray-600 mb-6">
+        <Text className="text-gray-600 mb-6 font-sans text-center">
           Confira os melhores preços e promoções dos estabelecimentos da sua
           região
         </Text>

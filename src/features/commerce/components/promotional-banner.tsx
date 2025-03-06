@@ -87,13 +87,6 @@ export const PromotionalBanner = () => {
               className="w-full h-full object-cover"
               style={{ resizeMode: "cover" }}
             />
-            {banner.title ? (
-              <View className="absolute bottom-8 left-4">
-                <Text className="text-white bg-black/40 px-4 py-2 rounded-lg text-lg font-bold">
-                  {banner.title}
-                </Text>
-              </View>
-            ) : null}
           </View>
         ))}
       </ScrollView>
