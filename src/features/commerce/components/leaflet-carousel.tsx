@@ -13,7 +13,6 @@ import { Card, HStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { Leaflet } from "../models/leaflet";
 import { router } from "expo-router";
-import { Box } from "@/components/ui/box";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 interface LeafletCarouselProps {
@@ -29,7 +28,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
 
   // Atualizar largura da tela quando houver mudanças (importante para web)
   useEffect(() => {
-    const handleDimensionsChange = ({ window }) => {
+    const handleDimensionsChange = ({ window }: any) => {
       setScreenWidth(window.width);
     };
 
