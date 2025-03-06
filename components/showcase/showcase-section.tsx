@@ -15,7 +15,7 @@ export function EnhancedVitrineSection() {
     return (
       <View className="py-8">
         <View className="mb-6 items-center">
-          <HStack className="bg-primary-100 px-4 py-2 rounded-full items-center space-x-2 mb-4">
+          <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
             <Sparkles size={16} color={THEME_COLORS.primary} />
             <Text className="text-sm font-medium text-primary-600">
               Vitrines em Destaque
@@ -52,23 +52,23 @@ export function EnhancedVitrineSection() {
   return (
     <View className="py-8">
       <View className="mb-6 items-center px-4">
-        <HStack className="bg-primary-100 px-4 py-2 rounded-full items-center space-x-2 mb-4">
+        <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
           <Sparkles size={16} color={THEME_COLORS.primary} />
           <Text className="text-sm font-medium text-primary-600">
             Vitrines em Destaque
           </Text>
         </HStack>
 
-        <Text className="text-3xl font-bold text-center mb-2">
+        <Text className="text-3xl font-semibold text-center mb-2 text-primary-500">
           Últimas Novidades
         </Text>
 
-        <Text className="text-gray-600 text-center">
+        <Text className="text-gray-600 text-center font-sans">
           Confira os produtos mais recentes das lojas da nossa cidade
         </Text>
       </View>
 
-      <View className="px-4 space-y-6">
+      <View>
         {companiesWithVitrine.map((company: any) => (
           <CompanyVitrineCard key={company.id} company={company} />
         ))}

@@ -1,4 +1,4 @@
-// Path: src/features/commerce/components/enhanced-vitrine/CompanyVitrineCard.tsx
+// Path: components/showcase/company-showcase-card.tsx
 import React, { useRef } from "react";
 import { View, ScrollView, TouchableOpacity, Text } from "react-native";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react-native";
@@ -9,6 +9,7 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { CompanyWithVitrine } from "@/src/features/commerce/hooks/use-vitrine";
 import { CompanyHeader } from "./company-header";
 import { ProductCard } from "./product-card";
+import { Box } from "../ui/box";
 
 interface CompanyVitrineCardProps {
   company: CompanyWithVitrine;
@@ -48,7 +49,10 @@ export function CompanyVitrineCard({ company }: CompanyVitrineCardProps) {
     : false;
 
   return (
-    <View className="mb-8 rounded-xl overflow-hidden shadow-md elevation-2">
+    <View
+      className="md:mb-8 md:rounded-xl overflow-hidden shadow-md elevation-2 py-6"
+      style={{ backgroundColor: company.cor_primaria || THEME_COLORS.primary }}
+    >
       <CompanyHeader company={company} onViewAll={handleNavigateToCompany} />
 
       <View className="relative">
@@ -66,45 +70,40 @@ export function CompanyVitrineCard({ company }: CompanyVitrineCardProps) {
             />
           ))}
 
-          {/* Cartão "Ver Mais" */}
+          {/* Cartão "Ver Mais" - com a mesma altura dos cartões de produto */}
           <TouchableOpacity
             key={`view-more-${company.id}`}
             onPress={handleNavigateToCompany}
             className="w-48 flex-shrink-0"
           >
-            <Card
-              className="h-full border border-gray-200 rounded-xl p-4 items-center justify-center"
-              style={{
-                backgroundColor: company.cor_primaria
-                  ? `${company.cor_primaria}10`
-                  : "#F3F4F6",
-                borderColor: company.cor_primaria || "#E5E7EB",
-                height: 320, // Aproximar a altura dos outros cartões
-              }}
-            >
-              <View className="items-center justify-center space-y-4">
-                <View
-                  className="w-16 h-16 rounded-full items-center justify-center"
-                  style={{
-                    backgroundColor:
-                      company.cor_primaria || THEME_COLORS.primary,
-                  }}
-                >
+            <Box className="h-96 rounded-xl p-4 items-center justify-center">
+              <View className="items-center justify-center gap-4">
+                <View className="w-14 h-14 rounded-full items-center justify-center bg-white/20">
                   <ArrowRight
                     size={24}
                     color={isDarkBackground ? "#ffffff" : "#374151"}
                   />
                 </View>
 
-                <Text className="text-center text-gray-800 font-medium">
+                <Text
+                  className="text-center font-medium"
+                  style={{
+                    color: isDarkBackground ? "#ffffff" : "#374151",
+                  }}
+                >
                   Ver todos os produtos
                 </Text>
 
-                <Text className="text-center text-gray-600 text-sm">
+                <Text
+                  className="text-center text-sm mt-4"
+                  style={{
+                    color: isDarkBackground ? "#ffffff" : "#374151",
+                  }}
+                >
                   Acesse o catálogo completo da empresa
                 </Text>
               </View>
-            </Card>
+            </Box>
           </TouchableOpacity>
         </ScrollView>
 
