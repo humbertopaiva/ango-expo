@@ -4,7 +4,7 @@ import { DeliveryContext } from "./delivery-page.context-value";
 
 export const useDeliveryContext = () => {
   const context = useContext(DeliveryContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error(
       "useDeliveryContext must be used within a DeliveryProvider"
     );

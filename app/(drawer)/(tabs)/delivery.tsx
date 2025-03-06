@@ -1,4 +1,1 @@
-// Path: app/(drawer)/(tabs)/delivery.tsx
-import { DeliveryScreen } from "@/src/features/delivery/screens/delivery-screen";
-
-export default DeliveryScreen;
+export { DeliveryScreen as default } from "@/src/features/delivery/screens/delivery-screen";
