@@ -9,6 +9,7 @@ import { ShowcaseProducts } from "../components/showcase-products";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Section } from "@/components/custom/section";
 import { PromotionalBanner } from "../components/promotional-banner";
+import { LatestCompaniesCarousel } from "../components/latest-companies-carousel";
 
 export function CommerceScreenContent() {
   const vm = useCommerceContext();
@@ -40,10 +41,10 @@ export function CommerceScreenContent() {
 
         {/* Vitrines Atualizadas */}
         <Section className="my-6">
-          <ShowcaseGrid
+          {/* <ShowcaseGrid
             companies={vm.showcaseCompanies}
             isLoading={vm.isLoading}
-          />
+          /> */}
 
           {vm.showcaseCompanies.map((company) => (
             <ShowcaseProducts
