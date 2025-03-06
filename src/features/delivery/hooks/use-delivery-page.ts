@@ -119,7 +119,7 @@ export function useDeliveryPage() {
             profile.empresa.subcategorias &&
             Array.isArray(profile.empresa.subcategorias) &&
             profile.empresa.subcategorias.some(
-              (sub) =>
+              (sub: any) =>
                 sub &&
                 sub.subcategorias_empresas_id &&
                 typeof sub.subcategorias_empresas_id === "object" &&

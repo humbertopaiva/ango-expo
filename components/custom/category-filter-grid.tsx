@@ -5,6 +5,7 @@ import { View, Text, FlatList, TouchableOpacity, Platform } from "react-native";
 import { Tag, Sparkles } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { Subcategory } from "@/src/features/delivery/models/subcategory";
 
 interface Category {
   id: string;
@@ -17,7 +18,7 @@ interface Category {
 interface CategoryFilterGridProps {
   title?: string;
   description?: string;
-  categories: Category[];
+  categories: Category[] | Subcategory[];
   selectedItem?: string | null;
   onSelect: (slug: string | null) => void;
 }
@@ -122,7 +123,7 @@ export function CategoryFilterGrid({
         key={flatListKey}
         data={allCategories}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id || item.slug || item.nome}
         numColumns={numColumns}
         scrollEnabled={false}
         contentContainerStyle={{ paddingHorizontal: 16 }}
