@@ -68,7 +68,7 @@ export function EnhancedVitrineSection() {
         </Text>
       </View>
 
-      <View className="px-4 space-y-6">
+      <View>
         {companiesWithVitrine.map((company: any) => (
           <CompanyVitrineCard key={company.id} company={company} />
         ))}

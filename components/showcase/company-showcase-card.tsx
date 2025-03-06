@@ -48,7 +48,10 @@ export function CompanyVitrineCard({ company }: CompanyVitrineCardProps) {
     : false;
 
   return (
-    <View className="mb-8 rounded-xl overflow-hidden shadow-md elevation-2">
+    <View
+      className="md:mb-8 mb-0 md:rounded-xl overflow-hidden shadow-md elevation-2 py-6"
+      style={{ backgroundColor: company.cor_primaria || "#F3F4F6" }}
+    >
       <CompanyHeader company={company} onViewAll={handleNavigateToCompany} />
 
       <View className="relative">
