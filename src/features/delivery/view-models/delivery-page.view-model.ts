@@ -1,23 +1,32 @@
-// src/features/delivery/view-models/delivery-page.view-model.ts
-import { useDeliveryPage } from "../hooks/use-delivery-page";
-import { IDeliveryPageViewModel } from "./delivery-page.view-model.interface";
+// Path: src/features/delivery/view-models/delivery.view-model.ts
 
-export function useDeliveryPageViewModel(): IDeliveryPageViewModel {
+import { useDeliveryPage } from "../hooks/use-delivery-page";
+import { IDeliveryViewModel } from "./delivery-page.view-model.interface";
+
+export function useDeliveryViewModel(): IDeliveryViewModel {
   const {
-    profiles,
-    subcategories,
-    showcaseProducts,
-    selectedSubcategory,
+    searchQuery,
+    setSearchQuery,
+    selectedSubcategories,
+    toggleSubcategory,
     setSelectedSubcategory,
+    subcategories,
+    profiles,
+    filteredProfiles,
     isLoading,
+    refetchProfiles,
   } = useDeliveryPage();
 
   return {
-    profiles,
-    subcategories,
-    showcaseProducts,
-    selectedSubcategory,
+    searchQuery,
+    setSearchQuery,
+    selectedSubcategories,
+    toggleSubcategory,
     setSelectedSubcategory,
+    subcategories,
+    profiles,
+    filteredProfiles,
     isLoading,
+    refetchProfiles,
   };
 }

@@ -1,57 +1,18 @@
-// src/features/delivery/contexts/delivery-page-provider.tsx
+// Path: src/features/delivery/contexts/delivery-provider.tsx
 import React, { ReactNode } from "react";
-import { DeliveryPageContext } from "./delivery-page.context-value";
-import { useDeliveryPageViewModel } from "../view-models/delivery-page.view-model";
+import { useDeliveryViewModel } from "../view-models/delivery-page.view-model";
+import { DeliveryContext } from "./delivery-page.context-value";
 
-interface DeliveryPageProviderProps {
+interface DeliveryProviderProps {
   children: ReactNode;
 }
 
-export function DeliveryPageProvider({ children }: DeliveryPageProviderProps) {
-  try {
-    const viewModel = useDeliveryPageViewModel();
+export function DeliveryProvider({ children }: DeliveryProviderProps) {
+  const viewModel = useDeliveryViewModel();
 
-    // Adicione um fallback para caso o viewModel falhe
-    if (!viewModel) {
-      console.error("DeliveryPageViewModel failed to initialize");
-      return (
-        <DeliveryPageContext.Provider
-          value={{
-            profiles: [],
-            subcategories: [],
-            showcaseProducts: {},
-            selectedSubcategory: null,
-            setSelectedSubcategory: () => {},
-            isLoading: true,
-          }}
-        >
-          {children}
-        </DeliveryPageContext.Provider>
-      );
-    }
-
-    return (
-      <DeliveryPageContext.Provider value={viewModel}>
-        {children}
-      </DeliveryPageContext.Provider>
-    );
-  } catch (error) {
-    console.error("Error in DeliveryPageProvider:", error);
-
-    // Fallback em caso de erro
-    return (
-      <DeliveryPageContext.Provider
-        value={{
-          profiles: [],
-          subcategories: [],
-          showcaseProducts: {},
-          selectedSubcategory: null,
-          setSelectedSubcategory: () => {},
-          isLoading: true,
-        }}
-      >
-        {children}
-      </DeliveryPageContext.Provider>
-    );
-  }
+  return (
+    <DeliveryContext.Provider value={viewModel}>
+      {children}
+    </DeliveryContext.Provider>
+  );
 }

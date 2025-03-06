@@ -1,135 +1,112 @@
-// src/features/delivery/hooks/use-delivery-page.ts
-import { useState, useMemo } from "react";
+// Path: src/features/delivery/hooks/use-delivery.ts
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { deliveryService } from "../services/delivery.service";
-import _ from "lodash";
+import { DeliveryProfile } from "../models/delivery-profile";
 
-export function useDeliveryPage() {
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
-    null
-  );
-
-  // Busca perfis de delivery com tratamento de erros
-  const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
-    queryKey: ["delivery-profiles"],
-    queryFn: async () => {
-      try {
-        return await deliveryService.getDeliveryProfiles();
-      } catch (error) {
-        console.error("Erro ao buscar perfis de delivery:", error);
-        return [];
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
+// Utilidade para verificar se o estabelecimento está aberto
+export const checkIfOpen = (profile: DeliveryProfile): boolean => {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const currentTime = now.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
-  // Busca subcategorias com tratamento de erros
+  const days = [
+    "domingo",
+    "segunda",
+    "terca",
+    "quarta",
+    "quinta",
+    "sexta",
+    "sabado",
+  ];
+
+  const currentDay = days[dayOfWeek];
+
+  if (!profile.dias_funcionamento.includes(currentDay)) {
+    return false;
+  }
+
+  const opening = profile[`abertura_${currentDay}` as keyof typeof profile];
+  const closing = profile[`fechamento_${currentDay}` as keyof typeof profile];
+
+  return Boolean(
+    opening && closing && currentTime >= opening && currentTime <= closing
+  );
+};
+
+export function useDeliveryPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(
+    []
+  );
+
   const { data: subcategories = [], isLoading: isLoadingSubcategories } =
     useQuery({
-      queryKey: ["delivery-subcategories"],
-      queryFn: async () => {
-        try {
-          return await deliveryService.getDeliverySubcategories();
-        } catch (error) {
-          console.error("Erro ao buscar subcategorias:", error);
-          return [];
-        }
-      },
-      staleTime: 5 * 60 * 1000,
-      retry: 1,
+      queryKey: ["delivery", "subcategories"],
+      queryFn: deliveryService.getSubcategories,
     });
 
-  // Busca produtos com tratamento de erros
-  const { data: showcaseProducts = [], isLoading: isLoadingShowcase } =
-    useQuery({
-      queryKey: ["delivery-showcase"],
-      queryFn: async () => {
-        try {
-          return await deliveryService.getDeliveryShowcase();
-        } catch (error) {
-          console.error("Erro ao buscar produtos em destaque:", error);
-          return [];
-        }
-      },
-      staleTime: 5 * 60 * 1000,
-      retry: 1,
+  const {
+    data: profiles = [],
+    isLoading: isLoadingProfiles,
+    refetch: refetchProfiles,
+  } = useQuery({
+    queryKey: ["delivery", "profiles"],
+    queryFn: deliveryService.getProfiles,
+  });
+
+  // Filtrar perfis com base na pesquisa e subcategorias selecionadas
+  const filteredProfiles = profiles
+    .filter((profile) => {
+      const matchesSearch = profile.nome
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+      const matchesSubcategories =
+        selectedSubcategories.length === 0 ||
+        profile.empresa.subcategorias.some((sub) =>
+          selectedSubcategories.includes(sub.subcategorias_empresas_id.slug)
+        );
+
+      return matchesSearch && matchesSubcategories;
+    })
+    .sort((a, b) => {
+      // Estabelecimentos abertos aparecem primeiro
+      const isOpenA = checkIfOpen(a);
+      const isOpenB = checkIfOpen(b);
+
+      if (isOpenA && !isOpenB) return -1;
+      if (!isOpenA && isOpenB) return 1;
+      return 0;
     });
 
-  // Filtra os estabelecimentos baseado na subcategoria selecionada com validação
-  const filteredProfiles = useMemo(() => {
-    try {
-      if (!Array.isArray(profiles) || profiles.length === 0) return [];
-      if (!selectedSubcategory) return profiles;
-
-      return profiles.filter((profile) => {
-        if (
-          !profile ||
-          !profile.empresa ||
-          !Array.isArray(profile.empresa.subcategorias)
-        ) {
-          return false;
-        }
-
-        return profile.empresa.subcategorias
-          .filter(
-            (sub) =>
-              sub &&
-              sub.subcategorias_empresas_id &&
-              sub.subcategorias_empresas_id.slug !== "delivery"
-          )
-          .some(
-            (sub) =>
-              sub &&
-              sub.subcategorias_empresas_id &&
-              sub.subcategorias_empresas_id.slug === selectedSubcategory
-          );
-      });
-    } catch (error) {
-      console.error("Erro ao filtrar perfis:", error);
-      return [];
-    }
-  }, [profiles, selectedSubcategory]);
-
-  // Agrupa produtos por empresa com validação
-  const groupedShowcaseProducts = useMemo(() => {
-    try {
-      if (
-        !Array.isArray(filteredProfiles) ||
-        !Array.isArray(showcaseProducts) ||
-        filteredProfiles.length === 0 ||
-        showcaseProducts.length === 0
-      ) {
-        return {};
-      }
-
-      const filteredCompanySlugs = filteredProfiles
-        .filter((profile) => profile && profile.empresa && profile.empresa.slug)
-        .map((profile) => profile.empresa.slug);
-
-      if (filteredCompanySlugs.length === 0) return {};
-
-      const filteredProducts = showcaseProducts.filter(
-        (product) =>
-          product &&
-          product.empresa &&
-          product.empresa.slug &&
-          filteredCompanySlugs.includes(product.empresa.slug)
+  const toggleSubcategory = (slug: string | null) => {
+    if (slug === null) {
+      setSelectedSubcategories([]);
+    } else {
+      setSelectedSubcategories((prev) =>
+        prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
       );
-
-      return _.groupBy(filteredProducts, "empresa.slug");
-    } catch (error) {
-      console.error("Erro ao agrupar produtos:", error);
-      return {};
     }
-  }, [showcaseProducts, filteredProfiles]);
+  };
+
+  const setSelectedSubcategory = (slug: string | null) => {
+    setSelectedSubcategories(slug ? [slug] : []);
+  };
 
   return {
-    profiles: filteredProfiles || [],
-    subcategories: subcategories || [],
-    selectedSubcategory,
+    searchQuery,
+    setSearchQuery,
+    selectedSubcategories,
+    toggleSubcategory,
     setSelectedSubcategory,
-    showcaseProducts: groupedShowcaseProducts || {},
-    isLoading: isLoadingProfiles || isLoadingSubcategories || isLoadingShowcase,
+    subcategories,
+    profiles,
+    filteredProfiles,
+    isLoading: isLoadingSubcategories || isLoadingProfiles,
+    refetchProfiles,
   };
 }
