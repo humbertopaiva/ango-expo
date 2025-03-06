@@ -59,11 +59,11 @@ export function EnhancedVitrineSection() {
           </Text>
         </HStack>
 
-        <Text className="text-3xl font-bold text-center mb-2">
+        <Text className="text-3xl font-semibold text-center mb-2 text-primary-500">
           Últimas Novidades
         </Text>
 
-        <Text className="text-gray-600 text-center">
+        <Text className="text-gray-600 text-center font-sans">
           Confira os produtos mais recentes das lojas da nossa cidade
         </Text>
       </View>
