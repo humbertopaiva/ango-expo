@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Section } from "@/components/custom/section";
 import { PromotionalBanner } from "../components/promotional-banner";
 import { LatestCompaniesCarousel } from "../components/latest-companies-carousel";
+import { EnhancedVitrineSection } from "@/components/showcase/showcase-section";
 
 export function CommerceScreenContent() {
   const vm = useCommerceContext();
@@ -32,30 +33,15 @@ export function CommerceScreenContent() {
         </Section>
 
         {/* Últimos Encartes */}
-        <Section className="my-6">
+        <Section className="my-6 bg-secondary-50 py-10">
           <LeafletCarousel
             leaflets={vm.latestLeaflets}
             isLoading={vm.isLoading}
           />
         </Section>
 
-        {/* Vitrines Atualizadas */}
-        <Section className="my-6">
-          {/* <ShowcaseGrid
-            companies={vm.showcaseCompanies}
-            isLoading={vm.isLoading}
-          /> */}
-
-          {vm.showcaseCompanies.map((company) => (
-            <ShowcaseProducts
-              key={company.id}
-              products={vm.showcaseProducts[company.slug] || []}
-              isLoading={vm.isLoadingProducts}
-              companyName={company.nome}
-              companySlug={company.slug}
-            />
-          ))}
-        </Section>
+        {/* Vitrines Aprimoradas */}
+        <EnhancedVitrineSection />
       </ScrollView>
     </SafeAreaView>
   );
