@@ -1,6 +1,13 @@
 // Path: src/features/commerce/components/leaflet-carousel.tsx
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Platform,
+} from "react-native";
 import { FileText, ChevronRight } from "lucide-react-native";
 import { Card, HStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
@@ -15,11 +22,51 @@ interface LeafletCarouselProps {
 }
 
 export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
+  // Estado para armazenar a largura da tela
+  const [screenWidth, setScreenWidth] = useState(
+    Dimensions.get("window").width
+  );
+
+  // Atualizar largura da tela quando houver mudanças (importante para web)
+  useEffect(() => {
+    const handleDimensionsChange = ({ window }) => {
+      setScreenWidth(window.width);
+    };
+
+    const subscription = Dimensions.addEventListener(
+      "change",
+      handleDimensionsChange
+    );
+
+    return () => subscription.remove();
+  }, []);
+
+  // Calcular a largura do item baseado na tela
+  const calculateItemWidth = () => {
+    // Em telas menores, usamos uma proporção maior da tela
+    if (screenWidth < 768) {
+      return screenWidth * 0.75; // 75% da largura da tela em dispositivos móveis
+    }
+    // Em telas médias
+    else if (screenWidth < 1024) {
+      return 280; // Tamanho fixo
+    }
+    // Em telas grandes
+    else {
+      return 320; // Tamanho fixo maior
+    }
+  };
+
+  const itemWidth = calculateItemWidth();
+
+  // Determinar altura baseada numa proporção fixa (3:4)
+  const itemHeight = itemWidth * (4 / 3);
+
   if (isLoading) {
     return (
       <View>
         <View className="mb-6">
-          <View className="inline-flex items-center gap-2  mb-4 px-4 py-2 rounded-full">
+          <View className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full">
             <HStack className="bg-secondary-100">
               <FileText size={20} color={THEME_COLORS.secondary} />
               <Text className="text-sm font-medium text-secondary-600">
@@ -41,7 +88,14 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View className="flex-row gap-4 py-2">
             {[1, 2, 3].map((i) => (
-              <View key={i} className="w-72 aspect-[3/4] shrink-0">
+              <View
+                key={i}
+                style={{
+                  width: itemWidth,
+                  height: itemHeight,
+                  marginRight: 16,
+                }}
+              >
                 <Card className="w-full h-full animate-pulse bg-gray-200" />
               </View>
             ))}
@@ -77,24 +131,37 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
           Ofertas Imperdíveis
         </Text>
 
-        <Text className="text-gray-600 mb-6 font-sans text-center">
+        <Text className="text-gray-600 font-sans text-center">
           Confira os melhores preços e promoções dos estabelecimentos da sua
           região
         </Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View className="flex-row gap-4 py-2 pb-4">
-          {leaflets.map((leaflet) => (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
+      >
+        <View className="flex-row py-2 pb-4">
+          {leaflets.map((leaflet, index) => (
             <TouchableOpacity
               key={leaflet.id}
-              className="w-72 shrink-0"
+              style={{
+                width: itemWidth,
+                marginRight: index < leaflets.length - 1 ? 16 : 0,
+              }}
               onPress={() =>
                 router.push(`/(drawer)/empresa/${leaflet.empresa}`)
               }
             >
-              <Card className="w-full h-full overflow-hidden border border-gray-200 shadow-sm rounded-xl">
-                <View className="aspect-[3/4] relative">
+              <Card className="w-full overflow-hidden border border-gray-200 shadow-sm rounded-xl">
+                <View
+                  style={{
+                    width: itemWidth,
+                    height: itemHeight,
+                  }}
+                  className="relative"
+                >
                   {leaflet.imagem_01 ? (
                     <ImagePreview
                       uri={leaflet.imagem_01}
@@ -133,7 +200,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
       </ScrollView>
 
       <TouchableOpacity
-        className="self-center mt-6 bg-secondary-500 px-4 py-2 rounded-full flex-row items-center"
+        className="self-center mt-6 bg-secondary-500 px-6 py-4 rounded-full flex-row items-center font-bold"
         onPress={() => router.push("/(drawer)/(tabs)/encartes")}
       >
         <Text className="text-white font-medium mr-2">
