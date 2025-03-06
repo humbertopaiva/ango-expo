@@ -12,6 +12,9 @@ import { Category } from "../models/category";
 import { Grid, Sparkles } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { router } from "expo-router";
+import { HStack, VStack } from "@gluestack-ui/themed";
+import { Box } from "@/components/ui/box";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface CategoryGridProps {
   categories: Category[];
@@ -30,12 +33,14 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
   if (isLoading) {
     return (
       <View>
-        <View className="inline-flex items-center gap-2 bg-primary-100 mb-4 px-4 py-2 rounded-full">
-          <Sparkles className="h-4 w-4 text-primary-600" />
-          <Text className="text-sm font-medium text-primary-600">
-            Categorias em Destaque
-          </Text>
-        </View>
+        <HStack className="inline-flex items-center justify-center mb-4">
+          <HStack className="bg-primary-100/60 px-4 py-2 rounded-full flex items-center gap-2">
+            <Sparkles size={18} color={THEME_COLORS.primary} />
+            <Text className="text-sm font-medium text-primary-500">
+              Categorias em Destaque
+            </Text>
+          </HStack>
+        </HStack>
 
         <View className="flex-row flex-wrap gap-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -53,21 +58,24 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
 
   return (
     <View>
-      <View className="mb-6">
-        <View className="inline-flex items-center gap-2 bg-primary-100 mb-4 px-4 py-2 rounded-full">
-          <Sparkles className="h-4 w-4 text-primary-600" />
-          <Text className="text-sm font-medium text-primary-600">
-            Categorias em Destaque
+      <View className="mb-6 px-4">
+        <HStack className="inline-flex items-center justify-center mb-4">
+          <HStack className="bg-primary-100/60 px-4 py-2 rounded-full flex items-center gap-2">
+            <Sparkles size={18} color={THEME_COLORS.primary} />
+            <Text className="text-sm font-medium text-primary-500">
+              Categorias em Destaque
+            </Text>
+          </HStack>
+        </HStack>
+
+        <VStack className="items-center justify-center w-full gap-1">
+          <Text className="text-3xl font-gothic text-secondary-500">
+            EXPLORE O
           </Text>
-        </View>
-
-        <Text className="text-2xl font-bold mb-2 text-gray-900">
-          EXPLORE O <Text className="text-primary-500">COMÉRCIO LOCAL</Text>
-        </Text>
-
-        <Text className="text-gray-600 mb-6">
-          Descubra os melhores produtos e serviços da nossa cidade
-        </Text>
+          <Text className="text-3xl font-gothic text-primary-500">
+            COMÉRCIO LOCAL
+          </Text>
+        </VStack>
       </View>
 
       {/* Renderização do grid com FlatList */}

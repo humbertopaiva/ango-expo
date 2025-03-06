@@ -1,40 +1,25 @@
-// Path: app/_layout.tsx (simplificado)
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useEffect } from "react";
+// app/_layout.tsx
+import { View } from "react-native";
 import "@/global.css";
 import { GluestackUIProvider } from "@gluestack-ui/themed";
 import { config } from "@gluestack-ui/config";
 import { Slot } from "expo-router";
-import { useRouter, useSegments } from "expo-router";
-import { Text, View } from "react-native";
-import useAuthStore from "@/src/stores/auth";
-import { useCustomFonts } from "@/src/styles/fonts";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DrawerProvider } from "@/src/providers/drawer-provider";
 import { LoadingProvider } from "@/src/providers/loading-provider";
 import { Loader } from "@/components/common/loader";
+import { useFonts } from "@/src/hooks/use-fonts";
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const fontsLoaded = useCustomFonts();
-  const segments = useSegments();
-  const router = useRouter();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const { isReady, error } = useFonts();
 
-  useEffect(() => {
-    if (!fontsLoaded) return;
-    // Lógica de navegação baseada em autenticação pode ser adicionada aqui
-  }, [isAuthenticated, segments, fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return (
-      <GluestackUIProvider config={config}>
-        <View className="flex-1 bg-background">
-          <Text>Carregando fontes...</Text>
-        </View>
-      </GluestackUIProvider>
-    );
+  // Retornar null enquanto as fontes estão carregando
+  // Isso mantém a SplashScreen visível até que as fontes sejam carregadas
+  if (!isReady && !error) {
+    return null;
   }
 
   return (
