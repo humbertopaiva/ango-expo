@@ -5,6 +5,7 @@ import { Card } from "@gluestack-ui/themed";
 import { Store } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { CategoryCompany } from "../models/category-company";
+import { router } from "expo-router";
 
 interface CategoryCompaniesGridProps {
   companies: CategoryCompany[];
@@ -15,6 +16,11 @@ export function CategoryCompaniesGrid({
   companies,
   isLoading,
 }: CategoryCompaniesGridProps) {
+  // Função para navegar para a página da empresa
+  const navigateToCompany = (slug: string) => {
+    router.push(`/empresa/${slug}`);
+  };
+
   if (isLoading) {
     return (
       <View className="flex-row flex-wrap gap-4">
@@ -49,51 +55,56 @@ export function CategoryCompaniesGrid({
       numColumns={Platform.OS === "web" ? 3 : 1}
       renderItem={({ item }) => (
         <View className="w-full md:w-1/2 lg:w-1/3 p-2">
-          <Card className="overflow-hidden">
-            <View className="relative h-32">
-              {item.banner ? (
-                <ImagePreview
-                  uri={item.banner}
-                  width="100%"
-                  height="100%"
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="w-full h-full bg-primary-100" />
-              )}
-              <View className="absolute -bottom-8 left-4">
-                <View className="w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-white">
-                  {item.logo ? (
-                    <ImagePreview
-                      uri={item.logo}
-                      width="100%"
-                      height="100%"
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View className="w-full h-full items-center justify-center bg-gray-100">
-                      <Store size={24} color="#6B7280" />
-                    </View>
-                  )}
+          <TouchableOpacity
+            onPress={() => navigateToCompany(item.slug)}
+            activeOpacity={0.7}
+          >
+            <Card className="overflow-hidden">
+              <View className="relative h-32">
+                {item.banner ? (
+                  <ImagePreview
+                    uri={item.banner}
+                    width="100%"
+                    height="100%"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="w-full h-full bg-primary-100" />
+                )}
+                <View className="absolute -bottom-8 left-4">
+                  <View className="w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-white">
+                    {item.logo ? (
+                      <ImagePreview
+                        uri={item.logo}
+                        width="100%"
+                        height="100%"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="w-full h-full items-center justify-center bg-gray-100">
+                        <Store size={24} color="#6B7280" />
+                      </View>
+                    )}
+                  </View>
                 </View>
               </View>
-            </View>
-            <View className="p-4 pt-12">
-              <Text className="font-medium text-lg">{item.nome}</Text>
-              <View className="flex-row flex-wrap gap-2 mt-2">
-                {item.subcategorias.map((relation) => (
-                  <View
-                    key={relation.subcategorias_empresas_id.id}
-                    className="bg-gray-100 px-2 py-1 rounded-full"
-                  >
-                    <Text className="text-xs text-gray-700">
-                      {relation.subcategorias_empresas_id.nome}
-                    </Text>
-                  </View>
-                ))}
+              <View className="p-4 pt-12">
+                <Text className="font-medium text-lg">{item.nome}</Text>
+                <View className="flex-row flex-wrap gap-2 mt-2">
+                  {item.subcategorias.map((relation) => (
+                    <View
+                      key={relation.subcategorias_empresas_id.id}
+                      className="bg-gray-100 px-2 py-1 rounded-full"
+                    >
+                      <Text className="text-xs text-gray-700">
+                        {relation.subcategorias_empresas_id.nome}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </View>
-            </View>
-          </Card>
+            </Card>
+          </TouchableOpacity>
         </View>
       )}
       contentContainerStyle={{

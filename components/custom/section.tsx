@@ -22,7 +22,7 @@ export function Section({
   className = "",
 }: SectionProps) {
   return (
-    <View className={`mb-6 ${className} px-4 pt-6 pb-16 flex-1`}>
+    <View className={`${className} px-4 flex-1`}>
       {/* Cabeçalho da seção */}
       {title && (
         <View className="flex-row items-center justify-between mb-4">

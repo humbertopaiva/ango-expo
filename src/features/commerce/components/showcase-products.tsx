@@ -1,21 +1,24 @@
-// src/features/commerce/components/showcase-products.tsx
+// Path: src/features/commerce/components/showcase-products.tsx
 import React from "react";
 import { View, Text, FlatList, TouchableOpacity, Platform } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Package } from "lucide-react-native";
+import { Package, ArrowRight } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { ShowcaseProduct } from "../models/showcase-product";
+import { router } from "expo-router";
 
 interface ShowcaseProductsProps {
   products: ShowcaseProduct[];
   isLoading: boolean;
   companyName: string;
+  companySlug?: string;
 }
 
 export function ShowcaseProducts({
   products,
   isLoading,
   companyName,
+  companySlug,
 }: ShowcaseProductsProps) {
   // Formatação de moeda
   const formatCurrency = (value: string) => {
@@ -28,7 +31,7 @@ export function ShowcaseProducts({
 
   if (isLoading) {
     return (
-      <View className="space-y-4">
+      <View className="space-y-4 mb-8">
         <Text className="text-lg font-medium">Carregando produtos...</Text>
         <View className="flex-row flex-wrap gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -46,18 +49,36 @@ export function ShowcaseProducts({
   }
 
   return (
-    <View className="space-y-4">
-      <Text className="text-lg font-medium">
-        Produtos em destaque de {companyName}
-      </Text>
+    <View className="space-y-4 mb-8">
+      <View className="flex-row justify-between items-center mb-4">
+        <Text className="text-lg font-semibold text-gray-800">
+          Produtos em destaque de {companyName}
+        </Text>
+
+        {companySlug && (
+          <TouchableOpacity
+            className="flex-row items-center"
+            onPress={() => router.push(`/(drawer)/empresa/${companySlug}`)}
+          >
+            <Text className="text-primary-600 text-sm font-medium mr-1">
+              Ver mais
+            </Text>
+            <ArrowRight size={16} color="#F4511E" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
         numColumns={Platform.OS === "web" ? 4 : 2}
         renderItem={({ item }) => (
           <View className="w-1/2 md:w-1/4 p-2">
-            <TouchableOpacity className="w-full h-full">
-              <Card className="w-full h-full overflow-hidden">
+            <TouchableOpacity
+              className="w-full h-full"
+              onPress={() => console.log("Clicou Produto")}
+            >
+              <Card className="w-full h-full overflow-hidden border border-gray-200 rounded-xl shadow-sm">
                 <View className="aspect-square relative">
                   {item.imagem ? (
                     <ImagePreview
@@ -71,21 +92,35 @@ export function ShowcaseProducts({
                       <Package size={48} color="#6B7280" />
                     </View>
                   )}
+
+                  {item.preco_promocional && (
+                    <View className="absolute top-2 right-2 bg-red-500 rounded-full px-2 py-1">
+                      <Text className="text-white text-xs font-bold">
+                        OFERTA
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <View className="p-4">
-                  <Text className="font-medium line-clamp-2 mb-2">
+                  <Text className="font-medium line-clamp-2 mb-2 text-gray-800">
                     {item.nome}
                   </Text>
                   <Text className="text-sm text-gray-500 line-clamp-2 mb-2">
                     {item.descricao}
                   </Text>
                   <View className="space-y-1">
-                    <Text className="text-lg font-medium text-primary-600">
-                      {formatCurrency(item.preco)}
-                    </Text>
-                    {item.preco_promocional && (
-                      <Text className="text-sm text-gray-500 line-through">
-                        {formatCurrency(item.preco_promocional)}
+                    {item.preco_promocional ? (
+                      <>
+                        <Text className="text-lg font-medium text-primary-600">
+                          {formatCurrency(item.preco_promocional)}
+                        </Text>
+                        <Text className="text-sm text-gray-500 line-through">
+                          {formatCurrency(item.preco)}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text className="text-lg font-medium text-primary-600">
+                        {formatCurrency(item.preco)}
                       </Text>
                     )}
                   </View>
