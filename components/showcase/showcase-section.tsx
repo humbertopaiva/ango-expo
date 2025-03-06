@@ -15,7 +15,7 @@ export function EnhancedVitrineSection() {
     return (
       <View className="py-8">
         <View className="mb-6 items-center">
-          <HStack className="bg-primary-100 px-4 py-2 rounded-full items-center space-x-2 mb-4">
+          <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
             <Sparkles size={16} color={THEME_COLORS.primary} />
             <Text className="text-sm font-medium text-primary-600">
               Vitrines em Destaque
@@ -52,7 +52,7 @@ export function EnhancedVitrineSection() {
   return (
     <View className="py-8">
       <View className="mb-6 items-center px-4">
-        <HStack className="bg-primary-100 px-4 py-2 rounded-full items-center space-x-2 mb-4">
+        <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
           <Sparkles size={16} color={THEME_COLORS.primary} />
           <Text className="text-sm font-medium text-primary-600">
             Vitrines em Destaque
