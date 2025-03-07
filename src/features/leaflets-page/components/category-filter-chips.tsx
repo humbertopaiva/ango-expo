@@ -1,9 +1,9 @@
 // Path: src/features/leaflets-page/components/category-filter-chips.tsx
-
 import React from "react";
 import { View, ScrollView, TouchableOpacity, Text } from "react-native";
 import { Category } from "../models/leaflet";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { LayoutGrid } from "lucide-react-native";
 
 interface CategoryFilterChipsProps {
   categories: Category[];
@@ -20,6 +20,7 @@ export function CategoryFilterChips({
   selectAll,
   isLoading,
 }: CategoryFilterChipsProps) {
+  // Verifique se todas as categorias estão selecionadas
   const allSelected = activeCategories.length === categories.length;
 
   if (isLoading) {
@@ -32,7 +33,7 @@ export function CategoryFilterChips({
         {[1, 2, 3, 4].map((i) => (
           <View
             key={i}
-            className="h-8 w-24 bg-gray-200 rounded-full mx-1 animate-pulse"
+            className="h-10 w-32 bg-gray-200 rounded-full mx-1 animate-pulse"
           />
         ))}
       </ScrollView>
@@ -43,44 +44,58 @@ export function CategoryFilterChips({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
+      contentContainerStyle={{
+        paddingLeft: 16,
+        paddingRight: 8,
+        paddingVertical: 8,
+      }}
+      className="mb-4"
     >
+      {/* Botão "Todas" */}
       <TouchableOpacity
         onPress={selectAll}
-        className={`px-4 py-2 rounded-full mr-2 ${
+        className={`flex-row items-center h-10 px-4 mx-1 rounded-full ${
           allSelected
             ? "bg-secondary-500"
             : "bg-gray-100 border border-gray-200"
         }`}
       >
+        <LayoutGrid size={18} color={allSelected ? "white" : "#6B7280"} />
         <Text
-          className={allSelected ? "text-white font-medium" : "text-gray-800"}
+          className={`ml-2 font-medium ${
+            allSelected ? "text-white" : "text-gray-700"
+          }`}
         >
           Todas
         </Text>
       </TouchableOpacity>
 
-      {categories.map((category) => (
-        <TouchableOpacity
-          key={category.id}
-          onPress={() => toggleCategory(category.id)}
-          className={`px-4 py-2 rounded-full mr-2 ${
-            activeCategories.includes(category.id)
-              ? "bg-secondary-500"
-              : "bg-gray-100 border border-gray-200"
-          }`}
-        >
-          <Text
-            className={
-              activeCategories.includes(category.id)
-                ? "text-white font-medium"
-                : "text-gray-800"
-            }
+      {/* Chips de categorias individuais */}
+      {categories.map((category) => {
+        // Quando "Todas" está selecionado, nenhuma categoria individual deve parecer selecionada
+        const isSelected =
+          !allSelected && activeCategories.includes(category.id);
+
+        return (
+          <TouchableOpacity
+            key={category.id}
+            onPress={() => toggleCategory(category.id)}
+            className={`px-4 py-2 h-10 rounded-full mx-1 ${
+              isSelected
+                ? "bg-secondary-500"
+                : "bg-gray-100 border border-gray-200"
+            }`}
           >
-            {category.nome}
-          </Text>
-        </TouchableOpacity>
-      ))}
+            <Text
+              className={
+                isSelected ? "text-white font-medium" : "text-gray-700"
+              }
+            >
+              {category.nome}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 }

@@ -35,4 +35,6 @@ export interface ILeafletsViewModel {
 
   // Helpers existentes
   clearFilters: () => void;
+
+  allCategoriesSelected: boolean;
 }

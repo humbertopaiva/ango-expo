@@ -1,11 +1,12 @@
 // src/features/leaflets/hooks/use-leaflets.ts
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { leafletService } from "../services/leaflet.service";
 import { Category, Company, Leaflet } from "../models/leaflet";
 import { LeafletCategory } from "../view-models/leaflets.view-model.interface";
 
 export function useLeaflets() {
+  // Estados
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,27 +19,22 @@ export function useLeaflets() {
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
-  // Buscar categorias
-  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
-    queryKey: ["leaflets", "categories"],
-    queryFn: () => {
-      // Extrair categorias únicas dos encartes
-      const uniqueCategories = Array.from(
-        new Set(leaflets.map((leaflet) => leaflet.empresa.categoria.slug))
-      ).map((slug) => {
-        const leaflet = leaflets.find((l) => l.empresa.categoria.slug === slug);
-        return {
-          id: leaflet?.empresa.categoria.id || "",
-          nome: leaflet?.empresa.categoria.nome || "",
-          slug: slug,
-        };
-      });
-      return uniqueCategories;
-    },
-    enabled: leaflets.length > 0,
-  });
+  // Extrair categorias únicas dos encartes
+  const categories = useMemo<Category[]>(() => {
+    const uniqueCategories = Array.from(
+      new Set(leaflets.map((leaflet) => leaflet.empresa.categoria.id))
+    ).map((id) => {
+      const leaflet = leaflets.find((l) => l.empresa.categoria.id === id);
+      return {
+        id: id,
+        nome: leaflet?.empresa.categoria.nome || "",
+        slug: leaflet?.empresa.categoria.slug || "",
+      };
+    });
+    return uniqueCategories;
+  }, [leaflets]);
 
-  // Extrair empresas únicas dos encartes (código existente)
+  // Extrair empresas únicas dos encartes
   const companies = useMemo<Company[]>(() => {
     const uniqueCompanies = Array.from(
       new Set(leaflets.map((leaflet) => leaflet.empresa.slug))
@@ -53,22 +49,61 @@ export function useLeaflets() {
     return uniqueCompanies;
   }, [leaflets]);
 
-  // Inicializa activeCategories com todas as categorias quando elas carregam
+  // Determinar se todas as categorias estão selecionadas
+  const allCategoriesSelected = useMemo(() => {
+    return (
+      activeCategories.length === categories.length &&
+      categories.every((cat) => activeCategories.includes(cat.id))
+    );
+  }, [activeCategories, categories]);
+
+  // Inicializa activeCategories quando as categorias carregam
   useEffect(() => {
     if (categories.length > 0 && activeCategories.length === 0) {
       setActiveCategories(categories.map((cat) => cat.id));
     }
   }, [categories]);
 
-  // Agrupar encartes por categoria
-  const categorizedLeaflets = useMemo<LeafletCategory[]>(() => {
+  // Toggle uma única categoria
+  const toggleCategoryFilter = useCallback(
+    (categoryId: string) => {
+      if (allCategoriesSelected) {
+        // Se todas estão selecionadas, seleciona apenas esta
+        setActiveCategories([categoryId]);
+      } else if (activeCategories.includes(categoryId)) {
+        // Se já está selecionada e não é a única, remove
+        if (activeCategories.length > 1) {
+          setActiveCategories((prev) => prev.filter((id) => id !== categoryId));
+        }
+      } else {
+        // Se não está selecionada, adiciona
+        setActiveCategories((prev) => [...prev, categoryId]);
+      }
+    },
+    [activeCategories, allCategoriesSelected]
+  );
+
+  // Selecionar todas as categorias
+  const selectAllCategories = useCallback(() => {
+    setActiveCategories(categories.map((cat) => cat.id));
+  }, [categories]);
+
+  // Limpar filtros de categorias (seleciona apenas a primeira)
+  const clearCategoryFilters = useCallback(() => {
+    if (categories.length > 0) {
+      setActiveCategories([categories[0].id]);
+    } else {
+      setActiveCategories([]);
+    }
+  }, [categories]);
+
+  // Agrupar encartes por categoria e aplicar filtros
+  const categorizedLeaflets = useMemo(() => {
     const grouped: Record<string, LeafletCategory> = {};
 
-    leaflets.forEach((leaflet) => {
-      const category = leaflet.empresa.categoria;
-
-      // Inicializa a categoria se ainda não existir
-      if (!grouped[category.id]) {
+    // Primeiro filtramos as categorias ativas
+    for (const category of categories) {
+      if (activeCategories.includes(category.id)) {
         grouped[category.id] = {
           id: category.id,
           name: category.nome,
@@ -76,145 +111,40 @@ export function useLeaflets() {
           leaflets: [],
         };
       }
-
-      // Adiciona o encarte à categoria
-      grouped[category.id].leaflets.push(leaflet);
-    });
-
-    return Object.values(grouped);
-  }, [leaflets]);
-
-  // Filtrar encartes baseado nas seleções
-  const filteredLeaflets = useMemo(() => {
-    let filtered = leaflets;
-
-    // Filtrar por empresa
-    if (selectedCompany) {
-      filtered = filtered.filter(
-        (leaflet) => leaflet.empresa.slug === selectedCompany
-      );
     }
 
-    // Filtrar por categoria
-    if (selectedCategory) {
-      filtered = filtered.filter(
-        (leaflet) => leaflet.empresa.categoria.slug === selectedCategory
-      );
-    }
+    // Depois preenchemos com os encartes filtrados
+    for (const leaflet of leaflets) {
+      const categoryId = leaflet.empresa.categoria.id;
 
-    // Filtrar por categorias ativas
-    if (
-      activeCategories.length > 0 &&
-      activeCategories.length < categories.length
-    ) {
-      filtered = filtered.filter((leaflet) =>
-        activeCategories.includes(leaflet.empresa.categoria.id)
-      );
-    }
+      if (activeCategories.includes(categoryId) && grouped[categoryId]) {
+        // Aplicar filtros adicionais
+        if (selectedCompany && leaflet.empresa.slug !== selectedCompany)
+          continue;
 
-    // Filtrar por termo de busca
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (leaflet) =>
-          leaflet.nome.toLowerCase().includes(term) ||
-          leaflet.empresa.nome.toLowerCase().includes(term)
-      );
-    }
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          if (
+            !leaflet.nome.toLowerCase().includes(term) &&
+            !leaflet.empresa.nome.toLowerCase().includes(term)
+          ) {
+            continue;
+          }
+        }
 
-    return filtered;
-  }, [
-    leaflets,
-    selectedCompany,
-    selectedCategory,
-    activeCategories,
-    searchTerm,
-    categories,
-  ]);
-
-  // Filtra categorizedLeaflets baseado em activeCategories
-  const filteredCategorizedLeaflets = useMemo(() => {
-    if (activeCategories.length === categories.length) {
-      // Se todas as categorias estão ativas, aplicar apenas outros filtros
-      return categorizedLeaflets
-        .map((category) => ({
-          ...category,
-          leaflets: category.leaflets.filter((leaflet) => {
-            let include = true;
-
-            if (selectedCompany) {
-              include = include && leaflet.empresa.slug === selectedCompany;
-            }
-
-            if (searchTerm) {
-              const term = searchTerm.toLowerCase();
-              include =
-                include &&
-                (leaflet.nome.toLowerCase().includes(term) ||
-                  leaflet.empresa.nome.toLowerCase().includes(term));
-            }
-
-            return include;
-          }),
-        }))
-        .filter((category) => category.leaflets.length > 0);
-    } else {
-      // Se apenas algumas categorias estão ativas
-      return categorizedLeaflets
-        .filter((category) => activeCategories.includes(category.id))
-        .map((category) => ({
-          ...category,
-          leaflets: category.leaflets.filter((leaflet) => {
-            let include = true;
-
-            if (selectedCompany) {
-              include = include && leaflet.empresa.slug === selectedCompany;
-            }
-
-            if (searchTerm) {
-              const term = searchTerm.toLowerCase();
-              include =
-                include &&
-                (leaflet.nome.toLowerCase().includes(term) ||
-                  leaflet.empresa.nome.toLowerCase().includes(term));
-            }
-
-            return include;
-          }),
-        }))
-        .filter((category) => category.leaflets.length > 0);
-    }
-  }, [
-    categorizedLeaflets,
-    activeCategories,
-    categories,
-    selectedCompany,
-    searchTerm,
-  ]);
-
-  // Toggle uma categoria no filtro
-  const toggleCategoryFilter = (categoryId: string) => {
-    setActiveCategories((prev) => {
-      if (prev.includes(categoryId)) {
-        return prev.filter((id) => id !== categoryId);
-      } else {
-        return [...prev, categoryId];
+        // Adicionar à categoria
+        grouped[categoryId].leaflets.push(leaflet);
       }
-    });
-  };
+    }
 
-  // Selecionar todas as categorias
-  const selectAllCategories = () => {
-    setActiveCategories(categories.map((cat) => cat.id));
-  };
-
-  // Limpar filtros de categorias (nenhuma categoria selecionada)
-  const clearCategoryFilters = () => {
-    setActiveCategories([]);
-  };
+    // Retornar apenas categorias com encartes
+    return Object.values(grouped).filter(
+      (category) => category.leaflets.length > 0
+    );
+  }, [categories, activeCategories, leaflets, selectedCompany, searchTerm]);
 
   return {
-    leaflets: filteredLeaflets,
+    leaflets,
     allLeaflets: leaflets,
     companies,
     categories,
@@ -224,11 +154,10 @@ export function useLeaflets() {
     setSelectedCategory,
     searchTerm,
     setSearchTerm,
-    isLoading: isLoadingLeaflets || isLoadingCategories,
-
-    // Novos
-    categorizedLeaflets: filteredCategorizedLeaflets,
+    isLoading: isLoadingLeaflets,
+    categorizedLeaflets,
     activeCategories,
+    allCategoriesSelected,
     toggleCategoryFilter,
     selectAllCategories,
     clearCategoryFilters,
