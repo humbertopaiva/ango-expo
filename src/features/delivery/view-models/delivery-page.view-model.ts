@@ -22,6 +22,7 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
     showcases,
     isLoading: isLoadingShowcases,
     companiesWithShowcases,
+    companiesWithShowcaseMapped,
   } = useDeliveryShowcases(filteredProfiles);
 
   useEffect(() => {
@@ -46,5 +47,6 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
     showcases,
     isLoadingShowcases,
     companiesWithShowcases,
+    companiesWithShowcasesMapped: companiesWithShowcaseMapped,
   };
 }

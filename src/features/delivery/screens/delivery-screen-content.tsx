@@ -20,6 +20,7 @@ import { useDeliveryContext } from "../contexts/use-delivery-page-context";
 import { CategoryFilterGrid } from "../components/category-filter-grid";
 import { useDeliveryShowcases } from "../hooks/use-delivery-showcases";
 import { DeliveryShowcaseCarousel } from "../components/delivery-showcase-carousel";
+import { EnhancedDeliveryShowcaseSection } from "../components/enhanced-delivery-showcase-section";
 
 export function DeliveryScreenContent() {
   // Estados locais
@@ -261,27 +262,14 @@ export function DeliveryScreenContent() {
           </View>
         </Section>
 
-        {/* Seção de Vitrines - após o DeliveryGrid */}
+        {/* Seção de Vitrines Aprimorada */}
         {companiesWithShowcases && companiesWithShowcases.length > 0 && (
           <Section className="mt-8 pt-4 border-t border-gray-100">
-            <View className="mb-2">
-              <Text className="text-2xl font-semibold mb-2">
-                Produtos em Destaque
-              </Text>
-              <Text className="text-gray-600">
-                Confira os produtos mais populares dos estabelecimentos
-              </Text>
-            </View>
-
-            {companiesWithShowcases.map((profile) => (
-              <DeliveryShowcaseCarousel
-                key={profile.id}
-                companyName={profile.nome}
-                companySlug={profile.empresa.slug}
-                items={showcases[profile.empresa.slug] || []}
-                isLoading={isLoadingShowcases}
-              />
-            ))}
+            <EnhancedDeliveryShowcaseSection
+              companiesWithShowcases={companiesWithShowcases}
+              showcases={showcases}
+              isLoading={isLoadingShowcases}
+            />
           </Section>
         )}
 
