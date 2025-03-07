@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useDeliveryPage } from "../hooks/use-delivery-page";
 import { IDeliveryViewModel } from "./delivery-page.view-model.interface";
+import { useDeliveryShowcases } from "../hooks/use-delivery-showcases";
 
 export function useDeliveryViewModel(): IDeliveryViewModel {
   const {
@@ -17,7 +18,12 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
     refetchProfiles,
   } = useDeliveryPage();
 
-  // Adicione um log para depuração
+  const {
+    showcases,
+    isLoading: isLoadingShowcases,
+    companiesWithShowcases,
+  } = useDeliveryShowcases(filteredProfiles);
+
   useEffect(() => {
     console.log("DeliveryViewModel initialized");
 
@@ -37,5 +43,8 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
     filteredProfiles,
     isLoading,
     refetchProfiles,
+    showcases,
+    isLoadingShowcases,
+    companiesWithShowcases,
   };
 }
