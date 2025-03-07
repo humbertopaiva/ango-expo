@@ -1,4 +1,5 @@
-// src/features/leaflets/view-models/leaflets.view-model.ts
+// Path: src/features/leaflets-page/view-models/leaflets.view-model.ts
+
 import { useCallback } from "react";
 import { useLeaflets } from "../hooks/use-leaflets";
 import { ILeafletsViewModel } from "./leaflets.view-model.interface";
@@ -15,6 +16,12 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
     searchTerm,
     setSearchTerm,
     isLoading,
+    categorizedLeaflets,
+    activeCategories,
+    allCategoriesSelected,
+    toggleCategoryFilter,
+    selectAllCategories,
+    clearCategoryFilters,
   } = useLeaflets();
 
   // Função para limpar todos os filtros
@@ -22,7 +29,13 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
     setSelectedCompany(null);
     setSelectedCategory(null);
     setSearchTerm("");
-  }, [setSelectedCompany, setSelectedCategory, setSearchTerm]);
+    selectAllCategories();
+  }, [
+    setSelectedCompany,
+    setSelectedCategory,
+    setSearchTerm,
+    selectAllCategories,
+  ]);
 
   return {
     leaflets,
@@ -32,9 +45,15 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
     selectedCategory,
     searchTerm,
     isLoading,
+    categorizedLeaflets,
+    activeCategories,
+    allCategoriesSelected,
     setSelectedCompany,
     setSelectedCategory,
     setSearchTerm,
+    toggleCategoryFilter,
+    selectAllCategories,
+    clearCategoryFilters,
     clearFilters,
   };
 }
