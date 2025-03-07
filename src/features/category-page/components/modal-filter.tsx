@@ -61,7 +61,7 @@ export function ModalFilter({
           <ScrollView className="p-4">
             <VStack className="space-y-4">
               <Text className="text-lg font-medium text-gray-800">
-                Subcategorias
+                Categorias
               </Text>
 
               {/* Opção "Todas" */}
@@ -75,43 +75,60 @@ export function ModalFilter({
                     paddingVertical: 12,
                     paddingHorizontal: 16,
                     borderRadius: 12,
-                    backgroundColor: "#F9FAFB",
+                    backgroundColor:
+                      selectedSubcategory === null
+                        ? `${THEME_COLORS.primary}10`
+                        : "#F9FAFB",
                     borderWidth: 1,
-                    borderColor: "#F3F4F6",
+                    borderColor:
+                      selectedSubcategory === null
+                        ? THEME_COLORS.primary
+                        : "#F3F4F6",
                   },
                 ]}
               >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    flex: 1,
-                  }}
-                >
+                <HStack space="md" style={{ flex: 1, alignItems: "center" }}>
                   <View
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 9999,
-                      backgroundColor: "#E5E7EB",
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor:
+                        selectedSubcategory === null
+                          ? THEME_COLORS.primary
+                          : "#E5E7EB",
                       alignItems: "center",
                       justifyContent: "center",
-                      marginRight: 12,
                     }}
                   >
-                    <Filter size={18} color={THEME_COLORS.primary} />
+                    <Filter
+                      size={20}
+                      color={
+                        selectedSubcategory === null
+                          ? "white"
+                          : THEME_COLORS.primary
+                      }
+                    />
                   </View>
-                  <Text style={{ color: "#1F2937", fontWeight: "500" }}>
-                    Todas
+                  <Text
+                    style={{
+                      color:
+                        selectedSubcategory === null
+                          ? THEME_COLORS.primary
+                          : "#1F2937",
+                      fontWeight: "500",
+                    }}
+                  >
+                    Todas as categorias
                   </Text>
-                </View>
+                </HStack>
 
                 {selectedSubcategory === null && (
                   <View
                     style={{
                       width: 24,
                       height: 24,
-                      borderRadius: 9999,
+                      borderRadius: 12,
                       backgroundColor: THEME_COLORS.primary,
                       alignItems: "center",
                       justifyContent: "center",
@@ -135,28 +152,30 @@ export function ModalFilter({
                       paddingVertical: 12,
                       paddingHorizontal: 16,
                       borderRadius: 12,
-                      backgroundColor: "#F9FAFB",
+                      backgroundColor:
+                        selectedSubcategory === subcategory.slug
+                          ? `${THEME_COLORS.primary}10`
+                          : "#F9FAFB",
                       borderWidth: 1,
-                      borderColor: "#F3F4F6",
+                      borderColor:
+                        selectedSubcategory === subcategory.slug
+                          ? THEME_COLORS.primary
+                          : "#F3F4F6",
                     },
                   ]}
                 >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      flex: 1,
-                    }}
-                  >
+                  <HStack space="md" style={{ flex: 1, alignItems: "center" }}>
                     <View
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 9999,
-                        backgroundColor: "#E5E7EB",
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor:
+                          selectedSubcategory === subcategory.slug
+                            ? THEME_COLORS.primary
+                            : "#E5E7EB",
                         alignItems: "center",
                         justifyContent: "center",
-                        marginRight: 12,
                         overflow: "hidden",
                       }}
                     >
@@ -168,20 +187,35 @@ export function ModalFilter({
                           resizeMode="cover"
                         />
                       ) : (
-                        <Filter size={18} color={THEME_COLORS.primary} />
+                        <Filter
+                          size={20}
+                          color={
+                            selectedSubcategory === subcategory.slug
+                              ? "white"
+                              : THEME_COLORS.primary
+                          }
+                        />
                       )}
                     </View>
-                    <Text style={{ color: "#1F2937", fontWeight: "500" }}>
+                    <Text
+                      style={{
+                        color:
+                          selectedSubcategory === subcategory.slug
+                            ? THEME_COLORS.primary
+                            : "#1F2937",
+                        fontWeight: "500",
+                      }}
+                    >
                       {subcategory.nome}
                     </Text>
-                  </View>
+                  </HStack>
 
                   {selectedSubcategory === subcategory.slug && (
                     <View
                       style={{
                         width: 24,
                         height: 24,
-                        borderRadius: 9999,
+                        borderRadius: 12,
                         backgroundColor: THEME_COLORS.primary,
                         alignItems: "center",
                         justifyContent: "center",

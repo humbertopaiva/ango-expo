@@ -28,12 +28,19 @@ export function SubcategoriesTabs({
   if (isLoading) {
     return (
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View className="flex-row gap-2 py-2">
+        <View className="flex-row py-2">
           {[1, 2, 3, 4].map((i) => (
             <View
               key={i}
-              className="h-10 w-32 rounded-full bg-gray-200 animate-pulse"
-            />
+              style={{
+                width: 80,
+                marginHorizontal: 8,
+                alignItems: "center",
+              }}
+            >
+              <View className="h-16 w-16 rounded-full bg-gray-200 animate-pulse" />
+              <View className="h-4 w-20 bg-gray-200 animate-pulse mt-2 rounded" />
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -42,120 +49,134 @@ export function SubcategoriesTabs({
 
   return (
     <View className="mb-6">
-      <Text className="text-gray-700 font-medium mb-3">Filtrar por</Text>
+      <Text className="text-gray-700 font-medium mb-3">Categorias</Text>
       <ScrollView
         ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         className="pb-1"
       >
-        <View className="flex-row gap-2 py-2">
+        <View className="flex-row py-2">
+          {/* Botão para "Todas" */}
           <Pressable
             onPress={() => handleSelectSubcategory(null)}
             style={({ pressed }) => [
               {
+                width: 80,
+                alignItems: "center",
+                marginHorizontal: 8,
                 opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+          >
+            <View
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
                 backgroundColor:
                   selectedSubcategory === null
                     ? THEME_COLORS.primary
                     : "#F3F4F6",
-                flexDirection: "row",
                 alignItems: "center",
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderRadius: 9999,
-                ...(selectedSubcategory === null && Platform.OS !== "web"
+                justifyContent: "center",
+                ...(selectedSubcategory === null
                   ? {
                       shadowColor: THEME_COLORS.primary,
                       shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.2,
-                      shadowRadius: 3,
-                      elevation: 3,
+                      shadowOpacity: 0.3,
+                      shadowRadius: 4,
+                      elevation: 4,
                     }
                   : {}),
-              },
-            ]}
-          >
-            <Grid
-              size={18}
-              color={selectedSubcategory === null ? "white" : "#6B7280"}
-            />
+              }}
+            >
+              <Grid
+                size={24}
+                color={selectedSubcategory === null ? "white" : "#6B7280"}
+              />
+            </View>
             <Text
               style={{
-                marginLeft: 8,
-                color: selectedSubcategory === null ? "white" : "#6B7280",
-                fontWeight: selectedSubcategory === null ? "500" : "normal",
+                marginTop: 8,
+                color: "#1F2937",
+                fontSize: 12,
+                fontWeight: selectedSubcategory === null ? "500" : "400",
+                textAlign: "center",
+                maxWidth: 75,
               }}
+              numberOfLines={2}
             >
               Todas
             </Text>
           </Pressable>
 
+          {/* Botões para subcategorias */}
           {subcategories.map((subcategory) => (
             <Pressable
               key={subcategory.id}
               onPress={() => handleSelectSubcategory(subcategory.slug)}
               style={({ pressed }) => [
                 {
+                  width: 80,
+                  alignItems: "center",
+                  marginHorizontal: 8,
                   opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <View
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
                   backgroundColor:
                     selectedSubcategory === subcategory.slug
                       ? THEME_COLORS.primary
                       : "#F3F4F6",
-                  flexDirection: "row",
                   alignItems: "center",
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 9999,
-                  ...(selectedSubcategory === subcategory.slug &&
-                  Platform.OS !== "web"
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  ...(selectedSubcategory === subcategory.slug
                     ? {
                         shadowColor: THEME_COLORS.primary,
                         shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.2,
-                        shadowRadius: 3,
-                        elevation: 3,
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 4,
                       }
                     : {}),
-                },
-              ]}
-            >
-              {subcategory.imagem ? (
-                <View
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 9999,
-                    overflow: "hidden",
-                  }}
-                >
+                }}
+              >
+                {subcategory.imagem ? (
                   <ImagePreview
                     uri={subcategory.imagem}
                     width="100%"
                     height="100%"
                     resizeMode="cover"
                   />
-                </View>
-              ) : (
-                <Filter
-                  size={18}
-                  color={
-                    selectedSubcategory === subcategory.slug
-                      ? "white"
-                      : "#6B7280"
-                  }
-                />
-              )}
+                ) : (
+                  <Filter
+                    size={24}
+                    color={
+                      selectedSubcategory === subcategory.slug
+                        ? "white"
+                        : "#6B7280"
+                    }
+                  />
+                )}
+              </View>
               <Text
                 style={{
-                  marginLeft: 8,
-                  color:
-                    selectedSubcategory === subcategory.slug
-                      ? "white"
-                      : "#6B7280",
+                  marginTop: 8,
+                  color: "#1F2937",
+                  fontSize: 12,
                   fontWeight:
-                    selectedSubcategory === subcategory.slug ? "500" : "normal",
+                    selectedSubcategory === subcategory.slug ? "500" : "400",
+                  textAlign: "center",
+                  maxWidth: 75,
                 }}
+                numberOfLines={2}
               >
                 {subcategory.nome}
               </Text>
