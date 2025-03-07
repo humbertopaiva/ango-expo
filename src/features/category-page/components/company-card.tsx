@@ -1,6 +1,6 @@
 // Path: src/features/category-page/components/company-card.tsx
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { CategoryCompany } from "../models/category-company";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { router } from "expo-router";
@@ -23,14 +23,22 @@ export function CompanyCard({ company }: CompanyCardProps) {
     .map((relation) => relation.subcategorias_empresas_id);
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={navigateToCompany}
-      activeOpacity={0.7}
-      style={styles.container}
-      className="bg-white rounded-xl overflow-hidden border border-gray-100"
+      style={({ pressed }) => [
+        styles.container,
+        {
+          opacity: pressed ? 0.9 : 1,
+          backgroundColor: "white",
+          borderRadius: 12,
+          overflow: "hidden",
+          borderWidth: 1,
+          borderColor: "#F3F4F6",
+        },
+      ]}
     >
       {/* Imagem de capa */}
-      <View className="h-32 w-full relative">
+      <View style={{ height: 128, width: "100%", position: "relative" }}>
         {company.banner ? (
           <ImagePreview
             uri={company.banner}
@@ -39,7 +47,15 @@ export function CompanyCard({ company }: CompanyCardProps) {
             resizeMode="cover"
           />
         ) : (
-          <View className="w-full h-full bg-gray-100 items-center justify-center">
+          <View
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#F3F4F6",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <Store size={32} color={THEME_COLORS.primary} />
           </View>
         )}
@@ -48,15 +64,48 @@ export function CompanyCard({ company }: CompanyCardProps) {
         {company.subcategorias.some(
           (sub) => sub.subcategorias_empresas_id.slug === "delivery"
         ) && (
-          <View className="absolute top-3 right-3 bg-primary-500 rounded-full px-3 py-1 shadow-sm">
-            <Text className="text-white text-xs font-medium">Delivery</Text>
+          <View
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              backgroundColor: THEME_COLORS.primary,
+              borderRadius: 9999,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              ...Platform.select({
+                ios: {
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 1.5,
+                },
+                android: {
+                  elevation: 2,
+                },
+              }),
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 12, fontWeight: "500" }}>
+              Delivery
+            </Text>
           </View>
         )}
       </View>
 
-      <HStack className="p-4" space="md">
+      <HStack space="md" style={{ padding: 16 }}>
         {/* Logo */}
-        <View className="h-16 w-16 rounded-xl overflow-hidden border border-gray-200 bg-white">
+        <View
+          style={{
+            height: 64,
+            width: 64,
+            borderRadius: 12,
+            overflow: "hidden",
+            borderWidth: 1,
+            borderColor: "#E5E7EB",
+            backgroundColor: "white",
+          }}
+        >
           {company.logo ? (
             <ImagePreview
               uri={company.logo}
@@ -65,67 +114,95 @@ export function CompanyCard({ company }: CompanyCardProps) {
               resizeMode="cover"
             />
           ) : (
-            <View className="w-full h-full items-center justify-center bg-gray-50">
+            <View
+              style={{
+                width: "100%",
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#F9FAFB",
+              }}
+            >
               <Store size={24} color={THEME_COLORS.primary} />
             </View>
           )}
         </View>
 
         {/* Informações */}
-        <VStack className="flex-1" space="xs">
-          <Text className="text-lg font-semibold text-gray-800">
+        <VStack space="xs" style={{ flex: 1 }}>
+          <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F2937" }}>
             {company.nome}
           </Text>
 
           {/* Subcategorias como tags */}
-          <HStack className="flex-wrap gap-1" space="sm">
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
             {topSubcategories.map((subcategory) => (
               <View
                 key={subcategory.id}
-                className="bg-primary-50 px-2 py-0.5 rounded-full"
+                style={{
+                  backgroundColor: `${THEME_COLORS.primary}10`,
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 9999,
+                }}
               >
-                <Text className="text-xs text-primary-700">
+                <Text style={{ fontSize: 12, color: THEME_COLORS.primary }}>
                   {subcategory.nome}
                 </Text>
               </View>
             ))}
 
             {company.subcategorias.length > 3 && (
-              <Text className="text-xs text-gray-500 ml-1">
+              <Text style={{ fontSize: 12, color: "#6B7280", marginLeft: 4 }}>
                 +{company.subcategorias.length - 3} mais
               </Text>
             )}
-          </HStack>
+          </View>
 
           {/* Informações fictícias para enriquecer o card */}
-          <HStack space="md">
-            <HStack space="xs" alignItems="center">
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 4 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
               <Star size={14} color="#FFB800" />
-              <Text className="text-xs text-gray-600">4.5</Text>
-            </HStack>
+              <Text style={{ fontSize: 12, color: "#6B7280" }}>4.5</Text>
+            </View>
 
-            <HStack space="xs" alignItems="center">
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
               <Clock size={14} color="#6B7280" />
-              <Text className="text-xs text-gray-600">20-30 min</Text>
-            </HStack>
+              <Text style={{ fontSize: 12, color: "#6B7280" }}>20-30 min</Text>
+            </View>
 
-            <HStack space="xs" alignItems="center">
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
               <MapPin size={14} color="#6B7280" />
-              <Text className="text-xs text-gray-600">1.2 km</Text>
-            </HStack>
-          </HStack>
+              <Text style={{ fontSize: 12, color: "#6B7280" }}>1.2 km</Text>
+            </View>
+          </View>
         </VStack>
       </HStack>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      },
+    }),
   },
 });

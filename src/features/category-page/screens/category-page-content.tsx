@@ -5,24 +5,27 @@ import {
   Text,
   ScrollView,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   Platform,
 } from "react-native";
 import { useCategoryPageContext } from "../contexts/use-category-page-context";
 import { SubcategoriesTabs } from "../components/subcategories-tabs";
-
+import { CompanyList } from "../components/company-list";
 import { Section } from "@/components/custom/section";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Search, SlidersHorizontal } from "lucide-react-native";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { CompanyList } from "../components/company-list";
 import { ModalFilter } from "../components/modal-filter";
 
 export function CategoryPageContent() {
   const vm = useCategoryPageContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  const handleSelectSubcategory = (slug: string | null) => {
+    vm.setSelectedSubcategory(slug);
+  };
 
   // Filtragem de empresas baseada no termo de busca
   const filteredCompanies = vm.companies.filter((company) =>
@@ -59,19 +62,26 @@ export function CategoryPageContent() {
                 onChangeText={setSearchTerm}
               />
             </View>
-            <TouchableOpacity
-              className="bg-primary-500 rounded-xl p-3"
+            <Pressable
               onPress={() => setShowFilterModal(true)}
+              style={({ pressed }) => [
+                {
+                  opacity: pressed ? 0.9 : 1,
+                  backgroundColor: THEME_COLORS.primary,
+                  borderRadius: 12,
+                  padding: 12,
+                },
+              ]}
             >
               <SlidersHorizontal size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+            </Pressable>
           </HStack>
 
           {/* Subcategorias */}
           <SubcategoriesTabs
             subcategories={vm.subcategories}
             selectedSubcategory={vm.selectedSubcategory}
-            onSelectSubcategory={vm.setSelectedSubcategory}
+            onSelectSubcategory={handleSelectSubcategory}
             isLoading={vm.isLoading}
           />
 
@@ -92,7 +102,7 @@ export function CategoryPageContent() {
         onClose={() => setShowFilterModal(false)}
         subcategories={vm.subcategories}
         selectedSubcategory={vm.selectedSubcategory}
-        onSelectSubcategory={vm.setSelectedSubcategory}
+        onSelectSubcategory={handleSelectSubcategory}
       />
     </SafeAreaView>
   );

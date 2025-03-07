@@ -1,13 +1,6 @@
 // Path: src/features/category-page/components/modal-filter.tsx
 import React from "react";
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  ScrollView,
-  Pressable,
-} from "react-native";
+import { View, Text, Modal, Pressable, ScrollView } from "react-native";
 import { Subcategory } from "../models/subcategory";
 import { X, Check, Filter } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -49,12 +42,19 @@ export function ModalFilter({
               <Text className="text-xl font-semibold text-gray-800">
                 Filtros
               </Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={onClose}
-                className="p-2 rounded-full bg-gray-100"
+                style={({ pressed }) => [
+                  {
+                    opacity: pressed ? 0.8 : 1,
+                    padding: 8,
+                    borderRadius: 9999,
+                    backgroundColor: "#F3F4F6",
+                  },
+                ]}
               >
                 <X size={20} color="#374151" />
-              </TouchableOpacity>
+              </Pressable>
             </HStack>
           </View>
 
@@ -65,33 +65,101 @@ export function ModalFilter({
               </Text>
 
               {/* Opção "Todas" */}
-              <TouchableOpacity
+              <Pressable
                 onPress={() => handleSelectSubcategory(null)}
-                className="flex-row items-center py-3 px-4 rounded-xl bg-gray-50 border border-gray-100"
+                style={({ pressed }) => [
+                  {
+                    opacity: pressed ? 0.8 : 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingVertical: 12,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
+                    backgroundColor: "#F9FAFB",
+                    borderWidth: 1,
+                    borderColor: "#F3F4F6",
+                  },
+                ]}
               >
-                <View className="flex-row flex-1 items-center">
-                  <View className="w-8 h-8 rounded-full bg-gray-200 items-center justify-center mr-3">
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    flex: 1,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 9999,
+                      backgroundColor: "#E5E7EB",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 12,
+                    }}
+                  >
                     <Filter size={18} color={THEME_COLORS.primary} />
                   </View>
-                  <Text className="text-gray-800 font-medium">Todas</Text>
+                  <Text style={{ color: "#1F2937", fontWeight: "500" }}>
+                    Todas
+                  </Text>
                 </View>
 
                 {selectedSubcategory === null && (
-                  <View className="w-6 h-6 rounded-full bg-primary-500 items-center justify-center">
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 9999,
+                      backgroundColor: THEME_COLORS.primary,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <Check size={16} color="white" />
                   </View>
                 )}
-              </TouchableOpacity>
+              </Pressable>
 
               {/* Lista de subcategorias */}
               {subcategories.map((subcategory) => (
-                <TouchableOpacity
+                <Pressable
                   key={subcategory.id}
                   onPress={() => handleSelectSubcategory(subcategory.slug)}
-                  className="flex-row items-center py-3 px-4 rounded-xl bg-gray-50 border border-gray-100"
+                  style={({ pressed }) => [
+                    {
+                      opacity: pressed ? 0.8 : 1,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingVertical: 12,
+                      paddingHorizontal: 16,
+                      borderRadius: 12,
+                      backgroundColor: "#F9FAFB",
+                      borderWidth: 1,
+                      borderColor: "#F3F4F6",
+                    },
+                  ]}
                 >
-                  <View className="flex-row flex-1 items-center">
-                    <View className="w-8 h-8 rounded-full bg-gray-200 items-center justify-center mr-3 overflow-hidden">
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      flex: 1,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 9999,
+                        backgroundColor: "#E5E7EB",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: 12,
+                        overflow: "hidden",
+                      }}
+                    >
                       {subcategory.imagem ? (
                         <ImagePreview
                           uri={subcategory.imagem}
@@ -103,28 +171,47 @@ export function ModalFilter({
                         <Filter size={18} color={THEME_COLORS.primary} />
                       )}
                     </View>
-                    <Text className="text-gray-800 font-medium">
+                    <Text style={{ color: "#1F2937", fontWeight: "500" }}>
                       {subcategory.nome}
                     </Text>
                   </View>
 
                   {selectedSubcategory === subcategory.slug && (
-                    <View className="w-6 h-6 rounded-full bg-primary-500 items-center justify-center">
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 9999,
+                        backgroundColor: THEME_COLORS.primary,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       <Check size={16} color="white" />
                     </View>
                   )}
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </VStack>
           </ScrollView>
 
           <View className="p-4 border-t border-gray-100">
-            <TouchableOpacity
+            <Pressable
               onPress={onClose}
-              className="bg-primary-500 py-3 rounded-xl items-center"
+              style={({ pressed }) => [
+                {
+                  opacity: pressed ? 0.8 : 1,
+                  backgroundColor: THEME_COLORS.primary,
+                  paddingVertical: 12,
+                  borderRadius: 12,
+                  alignItems: "center",
+                },
+              ]}
             >
-              <Text className="text-white font-medium">Aplicar filtros</Text>
-            </TouchableOpacity>
+              <Text style={{ color: "white", fontWeight: "500" }}>
+                Aplicar filtros
+              </Text>
+            </Pressable>
           </View>
         </View>
       </View>

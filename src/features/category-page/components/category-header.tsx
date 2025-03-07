@@ -1,12 +1,6 @@
 // Path: src/features/category-page/components/category-header.tsx
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-} from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Grid } from "lucide-react-native";
 import { router } from "expo-router";
@@ -47,12 +41,22 @@ export function CategoryHeader({
         <View className="px-4 pt-2 pb-6">
           {/* Header com botão de voltar */}
           <HStack className="items-center mb-3" space="md">
-            <TouchableOpacity
+            <Pressable
               onPress={handleGoBack}
-              className="w-9 h-9 rounded-full bg-white/20 items-center justify-center"
+              style={({ pressed }) => [
+                {
+                  opacity: pressed ? 0.8 : 1,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 9999,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                },
+              ]}
             >
               <ArrowLeft size={20} color="white" />
-            </TouchableOpacity>
+            </Pressable>
 
             <Text className="text-white text-xl font-semibold flex-1 text-center mr-9">
               Categoria

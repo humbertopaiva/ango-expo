@@ -1,12 +1,6 @@
-// Path: src/features/category-page/components/subcategories-tabs.tsx (atualizado sem animações)
+// Path: src/features/category-page/components/subcategories-tabs.tsx
 import React, { useRef } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Platform,
-} from "react-native";
+import { View, Text, ScrollView, Pressable, Platform } from "react-native";
 import { Grid, Filter } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { Subcategory } from "../models/subcategory";
@@ -26,6 +20,10 @@ export function SubcategoriesTabs({
   isLoading,
 }: SubcategoriesTabsProps) {
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const handleSelectSubcategory = (slug: string | null) => {
+    onSelectSubcategory(slug);
+  };
 
   if (isLoading) {
     return (
@@ -52,52 +50,21 @@ export function SubcategoriesTabs({
         className="pb-1"
       >
         <View className="flex-row gap-2 py-2">
-          <TouchableOpacity
-            onPress={() => onSelectSubcategory(null)}
-            className={`flex-row items-center px-4 py-2 rounded-full ${
-              selectedSubcategory === null
-                ? "bg-primary-500 shadow-sm"
-                : "bg-gray-100"
-            }`}
-            style={
-              selectedSubcategory === null && Platform.OS !== "web"
-                ? {
-                    shadowColor: THEME_COLORS.primary,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 3,
-                    elevation: 3,
-                  }
-                : {}
-            }
-          >
-            <Grid
-              size={18}
-              color={selectedSubcategory === null ? "white" : "#6B7280"}
-            />
-            <Text
-              className={`ml-2 ${
-                selectedSubcategory === null
-                  ? "text-white font-medium"
-                  : "text-gray-700"
-              }`}
-            >
-              Todas
-            </Text>
-          </TouchableOpacity>
-
-          {subcategories.map((subcategory) => (
-            <TouchableOpacity
-              key={subcategory.id}
-              onPress={() => onSelectSubcategory(subcategory.slug)}
-              className={`flex-row items-center px-4 py-2 rounded-full ${
-                selectedSubcategory === subcategory.slug
-                  ? "bg-primary-500 shadow-sm"
-                  : "bg-gray-100"
-              }`}
-              style={
-                selectedSubcategory === subcategory.slug &&
-                Platform.OS !== "web"
+          <Pressable
+            onPress={() => handleSelectSubcategory(null)}
+            style={({ pressed }) => [
+              {
+                opacity: pressed ? 0.8 : 1,
+                backgroundColor:
+                  selectedSubcategory === null
+                    ? THEME_COLORS.primary
+                    : "#F3F4F6",
+                flexDirection: "row",
+                alignItems: "center",
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 9999,
+                ...(selectedSubcategory === null && Platform.OS !== "web"
                   ? {
                       shadowColor: THEME_COLORS.primary,
                       shadowOffset: { width: 0, height: 2 },
@@ -105,11 +72,63 @@ export function SubcategoriesTabs({
                       shadowRadius: 3,
                       elevation: 3,
                     }
-                  : {}
-              }
+                  : {}),
+              },
+            ]}
+          >
+            <Grid
+              size={18}
+              color={selectedSubcategory === null ? "white" : "#6B7280"}
+            />
+            <Text
+              style={{
+                marginLeft: 8,
+                color: selectedSubcategory === null ? "white" : "#6B7280",
+                fontWeight: selectedSubcategory === null ? "500" : "normal",
+              }}
+            >
+              Todas
+            </Text>
+          </Pressable>
+
+          {subcategories.map((subcategory) => (
+            <Pressable
+              key={subcategory.id}
+              onPress={() => handleSelectSubcategory(subcategory.slug)}
+              style={({ pressed }) => [
+                {
+                  opacity: pressed ? 0.8 : 1,
+                  backgroundColor:
+                    selectedSubcategory === subcategory.slug
+                      ? THEME_COLORS.primary
+                      : "#F3F4F6",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 9999,
+                  ...(selectedSubcategory === subcategory.slug &&
+                  Platform.OS !== "web"
+                    ? {
+                        shadowColor: THEME_COLORS.primary,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 3,
+                        elevation: 3,
+                      }
+                    : {}),
+                },
+              ]}
             >
               {subcategory.imagem ? (
-                <View className="w-5 h-5 rounded-full overflow-hidden">
+                <View
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 9999,
+                    overflow: "hidden",
+                  }}
+                >
                   <ImagePreview
                     uri={subcategory.imagem}
                     width="100%"
@@ -128,15 +147,19 @@ export function SubcategoriesTabs({
                 />
               )}
               <Text
-                className={`ml-2 ${
-                  selectedSubcategory === subcategory.slug
-                    ? "text-white font-medium"
-                    : "text-gray-700"
-                }`}
+                style={{
+                  marginLeft: 8,
+                  color:
+                    selectedSubcategory === subcategory.slug
+                      ? "white"
+                      : "#6B7280",
+                  fontWeight:
+                    selectedSubcategory === subcategory.slug ? "500" : "normal",
+                }}
               >
                 {subcategory.nome}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       </ScrollView>
