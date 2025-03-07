@@ -17,7 +17,30 @@ class DeliveryService {
   async getSubcategories(): Promise<Subcategory[]> {
     try {
       const response = await api.get("/api/delivery/subcategories");
-      return response.data.data;
+
+      // Extrair as categorias do formato aninhado da resposta
+      if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
+        // Flatten da estrutura da resposta
+        const categorias = response.data.data.flatMap((item: any) =>
+          item.categorias && Array.isArray(item.categorias)
+            ? item.categorias
+            : []
+        );
+
+        // Mapear para nosso formato de Subcategory
+        return categorias.map((cat: any) => ({
+          id: cat.categorias_empresas_id.id,
+          nome: cat.categorias_empresas_id.nome,
+          slug: cat.categorias_empresas_id.slug,
+          imagem: cat.categorias_empresas_id.imagem,
+        }));
+      }
+
+      return [];
     } catch (error) {
       console.error("Erro ao buscar subcategorias de delivery:", error);
       return [];

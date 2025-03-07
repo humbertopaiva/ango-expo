@@ -97,9 +97,9 @@ export function DeliveryCard({ profile }: DeliveryCardProps) {
     <TouchableOpacity
       onPress={navigateToCompany}
       activeOpacity={0.7}
-      className="h-full"
+      className="w-full"
     >
-      <Card className="overflow-hidden border border-gray-200 h-full">
+      <Card className="overflow-hidden border border-gray-200 h-auto">
         <View className="relative h-36">
           {/* Banner com ResilientImage */}
           {typeof profile.banner === "string" && profile.banner ? (
@@ -146,7 +146,7 @@ export function DeliveryCard({ profile }: DeliveryCardProps) {
         </View>
 
         <View className="p-4 pt-8">
-          <Text className="text-lg font-semibold mb-2">
+          <Text className="text-lg font-semibold mb-2" numberOfLines={1}>
             {profile.nome || "Estabelecimento"}
           </Text>
 

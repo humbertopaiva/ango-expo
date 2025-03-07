@@ -7,29 +7,31 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search, Truck, ArrowRight } from "lucide-react-native";
+import { Search, Truck, Filter, X } from "lucide-react-native";
 
 import { Section } from "@/components/custom/section";
-import { DeliveryCard } from "../components/delivery-card";
-import { CategoryFilterGrid } from "@/components/custom/category-filter-grid";
+import { DeliveryGrid } from "../components/delivery-grid";
+import { SubcategoryFilters } from "../components/subcategory-filters";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { useDeliveryContext } from "../contexts/use-delivery-page-context";
-import { SafeMap } from "@/components/common/safe-map";
+import { CategoryFilterGrid } from "../components/category-filter-grid";
+import { useDeliveryShowcases } from "../hooks/use-delivery-showcases";
+import { DeliveryShowcaseCarousel } from "../components/delivery-showcase-carousel";
 
 export function DeliveryScreenContent() {
-  // Estado para controle de erros
+  // Estados locais
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Use try-catch apenas para recuperar o contexto e dados iniciais
+  // Tente recuperar o contexto de forma segura
   let contextData;
   try {
     contextData = useDeliveryContext();
-
-    // Log para debug
-    console.log("Context data retrieved successfully:", !!contextData);
   } catch (error) {
     console.error("Error retrieving delivery context:", error);
     setHasError(true);
@@ -59,7 +61,7 @@ export function DeliveryScreenContent() {
     );
   }
 
-  // Se chegamos aqui, temos os dados do contexto
+  // Extrai dados do contexto com valores padrão seguros
   const {
     searchQuery = "",
     setSearchQuery = () => {},
@@ -68,19 +70,20 @@ export function DeliveryScreenContent() {
     subcategories = [],
     filteredProfiles = [],
     isLoading = false,
+    refetchProfiles = () => {},
   } = contextData || {};
 
-  // Registre os valores para depuração
-  useEffect(() => {
-    console.log("DeliveryScreenContent mounted");
-    console.log("subcategories:", subcategories);
-    console.log("filteredProfiles:", filteredProfiles);
-
-    // Limpe quando o componente for desmontado
-    return () => {
-      console.log("DeliveryScreenContent unmounted");
-    };
-  }, [subcategories, filteredProfiles]);
+  // Função para refresh pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetchProfiles();
+    } catch (error) {
+      console.error("Error refreshing profiles:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Se ocorrer um erro posterior, exibe uma tela de erro
   if (hasError) {
@@ -97,6 +100,7 @@ export function DeliveryScreenContent() {
           onPress={() => {
             setHasError(false);
             setErrorMessage("");
+            onRefresh();
           }}
         >
           <Text className="text-white font-medium">Tentar novamente</Text>
@@ -105,13 +109,24 @@ export function DeliveryScreenContent() {
     );
   }
 
-  // Renderiza o conteúdo principal
+  const {
+    showcases,
+    isLoading: isLoadingShowcases,
+    companiesWithShowcases,
+  } = useDeliveryShowcases(filteredProfiles);
+
+  console.log("COMPANY SHOWCASE", companiesWithShowcases);
+  console.log("SHOWCASES", showcases);
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* Header e Banner */}
         <Section className="pt-6">
@@ -143,60 +158,152 @@ export function DeliveryScreenContent() {
               </Text>
             </View>
 
-            {/* Barra de pesquisa */}
-            <View className="relative">
-              <Search
-                className="absolute left-3 top-3 z-10"
-                size={18}
-                color={THEME_COLORS.primary}
-              />
-              <TextInput
-                placeholder="Buscar restaurantes, comidas..."
-                value={searchQuery}
-                onChangeText={(text) => {
-                  if (setSearchQuery) setSearchQuery(text);
-                }}
-                className="h-12 pl-10 pr-4 bg-white border border-gray-200 rounded-lg"
-              />
+            {/* Barra de pesquisa com botão de filtro */}
+            <View className="flex-row items-center">
+              <View className="relative flex-1">
+                <Search
+                  className="absolute left-3 top-3 z-10"
+                  size={18}
+                  color={THEME_COLORS.primary}
+                />
+                <TextInput
+                  placeholder="Buscar restaurantes, comidas..."
+                  value={searchQuery}
+                  onChangeText={(text) => {
+                    if (setSearchQuery) setSearchQuery(text);
+                  }}
+                  className="h-12 pl-10 pr-4 bg-white border border-gray-200 rounded-lg"
+                />
+              </View>
+
+              <TouchableOpacity
+                className="ml-2 w-12 h-12 bg-primary rounded-lg items-center justify-center"
+                onPress={() => setShowFilters(!showFilters)}
+              >
+                <Filter size={20} color="white" />
+              </TouchableOpacity>
             </View>
           </View>
         </Section>
 
-        {/* Filtros por categoria - Renderização condicional segura */}
+        {/* Filtros por categoria com grid similar ao commerce */}
         {subcategories && subcategories.length > 0 && (
-          <View className="mb-6">
+          <Section className="mb-4 bg-white py-4 rounded-lg">
             {isLoading ? (
               <View className="items-center py-8">
                 <ActivityIndicator size="large" color={THEME_COLORS.primary} />
               </View>
             ) : (
               <CategoryFilterGrid
-                title="Tipos de Estabelecimento"
-                description="Escolha uma categoria para filtrar os estabelecimentos"
-                categories={subcategories}
-                selectedItem={
-                  selectedSubcategories && selectedSubcategories.length === 1
-                    ? selectedSubcategories[0]
-                    : null
-                }
-                onSelect={(slug) => {
+                subcategories={subcategories}
+                selectedSubcategories={selectedSubcategories}
+                onSelectSubcategory={(slug) => {
                   if (setSelectedSubcategory) setSelectedSubcategory(slug);
                 }}
+                title="Categorias"
+                description="Escolha uma categoria para filtrar"
               />
             )}
-          </View>
+
+            {/* Indicador de filtros ativos */}
+            {selectedSubcategories.length > 0 && (
+              <View className="mx-4 mt-2 pt-4 border-t border-gray-100">
+                <View className="flex-row flex-wrap items-center">
+                  <Text className="text-sm text-gray-500 mr-2">
+                    Filtros ativos:
+                  </Text>
+
+                  {selectedSubcategories.map((slug) => {
+                    // Encontrar a subcategoria pelo slug
+                    const category = subcategories.find(
+                      (sub) => sub.slug === slug
+                    );
+
+                    return (
+                      <TouchableOpacity
+                        key={slug}
+                        className="flex-row items-center bg-primary-100 rounded-full px-3 py-1 mr-2 mb-2"
+                        onPress={() => setSelectedSubcategory(null)}
+                      >
+                        <Text className="text-xs text-primary-700 mr-1">
+                          {category?.nome || slug}
+                        </Text>
+                        <X size={12} color={THEME_COLORS.primary} />
+                      </TouchableOpacity>
+                    );
+                  })}
+
+                  {selectedSubcategories.length > 0 && (
+                    <TouchableOpacity
+                      className="flex-row items-center bg-gray-100 rounded-full px-3 py-1 mr-2 mb-2"
+                      onPress={() => setSelectedSubcategory(null)}
+                    >
+                      <Text className="text-xs text-gray-600">
+                        Limpar filtros
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            )}
+          </Section>
         )}
 
-        {/* Lista de estabelecimentos - Renderização condicional segura */}
-        <View className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <SafeMap
-            data={filteredProfiles}
-            renderItem={(profile) => (
-              <DeliveryCard key={profile.id} profile={profile} />
-            )}
-            fallback={<Text>Nenhum estabelecimento disponível.</Text>}
-          />
-        </View>
+        {/* Contador de resultados */}
+        <Section className="mb-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-gray-600 font-medium">
+              {filteredProfiles.length}{" "}
+              {filteredProfiles.length === 1
+                ? "estabelecimento encontrado"
+                : "estabelecimentos encontrados"}
+            </Text>
+          </View>
+        </Section>
+
+        {/* Seção de Vitrines - após o DeliveryGrid */}
+        {companiesWithShowcases && companiesWithShowcases.length > 0 && (
+          <Section className="mt-8 pt-4 border-t border-gray-100">
+            <View className="mb-2">
+              <Text className="text-2xl font-semibold mb-2">
+                Produtos em Destaque
+              </Text>
+              <Text className="text-gray-600">
+                Confira os produtos mais populares dos estabelecimentos
+              </Text>
+            </View>
+
+            {companiesWithShowcases.map((profile) => (
+              <DeliveryShowcaseCarousel
+                key={profile.id}
+                companyName={profile.nome}
+                companySlug={profile.empresa.slug}
+                items={showcases[profile.empresa.slug] || []}
+                isLoading={isLoadingShowcases}
+              />
+            ))}
+          </Section>
+        )}
+
+        {/* Estado de carregamento */}
+        {isLoading && !refreshing ? (
+          <View className="py-12 items-center">
+            <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+            <Text className="text-gray-500 mt-4">
+              Carregando estabelecimentos...
+            </Text>
+          </View>
+        ) : (
+          // Grid de estabelecimentos agrupados por categoria
+          <Section>
+            <DeliveryGrid
+              profiles={filteredProfiles}
+              isLoading={isLoading}
+              groupByCategory={selectedSubcategories.length === 0}
+              subcategories={subcategories}
+            />
+          </Section>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
