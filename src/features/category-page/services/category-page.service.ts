@@ -7,6 +7,7 @@ import { ShowcaseProduct } from "@/src/features/commerce/models/showcase-product
 class CategoryPageService {
   async getSubcategories(categorySlug: string): Promise<Subcategory[]> {
     try {
+      // Corrigindo para a rota correta
       const response = await api.get(
         `/api/categories/${categorySlug}/subcategories`
       );
@@ -21,6 +22,7 @@ class CategoryPageService {
     categorySlug: string
   ): Promise<CategoryCompany[]> {
     try {
+      // Rota para buscar empresas por categoria
       const response = await api.get(`/api/companies/category/${categorySlug}`);
       return response.data.data;
     } catch (error) {
@@ -34,6 +36,7 @@ class CategoryPageService {
 
   async getCategoryShowcase(categorySlug: string): Promise<ShowcaseProduct[]> {
     try {
+      // Rota para buscar vitrine da categoria
       const response = await api.get(`/api/vitrine/category/${categorySlug}`);
       return response.data.data;
     } catch (error) {

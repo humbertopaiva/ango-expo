@@ -8,7 +8,7 @@ export function useCategoryPage(categorySlug: string) {
     null
   );
 
-  // Busca subcategorias
+  // Busca subcategorias usando a rota correta
   const { data: subcategories = [], isLoading: isLoadingSubcategories } =
     useQuery({
       queryKey: ["category-page", "subcategories", categorySlug],

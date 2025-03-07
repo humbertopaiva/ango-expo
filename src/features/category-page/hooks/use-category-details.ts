@@ -7,8 +7,16 @@ export function useCategoryDetails(categorySlug: string) {
     queryKey: ["category-details", categorySlug],
     queryFn: async () => {
       try {
-        const response = await api.get(`/api/categories/${categorySlug}`);
-        return response.data.data;
+        // Usando a rota correta para dados da categoria - esta rota pode estar em outro serviço
+        const response = await api.get(
+          `/api/categories/segment/comercio-local`
+        );
+        // Filtramos para encontrar a categoria específica pelo slug
+        const category = response.data.data.find(
+          (cat: any) => cat.slug === categorySlug
+        );
+
+        return category || null;
       } catch (error) {
         console.error(
           `Erro ao buscar detalhes da categoria ${categorySlug}:`,
