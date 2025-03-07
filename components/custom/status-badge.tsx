@@ -1,73 +1,63 @@
+// Path: src/components/custom/status-badge.tsx
 import React from "react";
 import { View, Text } from "react-native";
 
-type Status =
-  | "ativo"
-  | "inativo"
-  | "disponivel"
-  | "indisponivel"
-  | "aberto"
-  | "fechado"
-  | string;
+type StatusType = "aberto" | "fechado" | "disponivel" | "indisponivel" | "info";
 
 interface StatusBadgeProps {
-  status: Status;
+  status: StatusType;
   customLabel?: string;
-  size?: "xs" | "sm" | "md" | "lg";
+  className?: string;
+  textClassName?: string;
 }
 
 export function StatusBadge({
   status,
   customLabel,
-  size = "sm",
+  className = "",
+  textClassName = "",
 }: StatusBadgeProps) {
-  // Map status to colors and default labels
-  const statusConfig: Record<
-    string,
-    { bg: string; text: string; label: string }
-  > = {
-    ativo: { bg: "bg-green-100", text: "text-green-800", label: "Ativo" },
-    ativa: { bg: "bg-green-100", text: "text-green-800", label: "Ativa" },
-    disponivel: {
-      bg: "bg-green-100",
-      text: "text-green-800",
-      label: "Disponível",
-    },
-    aberto: { bg: "bg-green-100", text: "text-green-800", label: "Aberto" },
-    inativo: { bg: "bg-gray-100", text: "text-gray-800", label: "Inativo" },
-    inativa: { bg: "bg-gray-100", text: "text-gray-800", label: "Inativa" },
-    indisponivel: {
-      bg: "bg-gray-100",
-      text: "text-gray-800",
-      label: "Indisponível",
-    },
-    fechado: { bg: "bg-gray-100", text: "text-gray-800", label: "Fechado" },
+  const getStatusStyles = () => {
+    switch (status) {
+      case "aberto":
+        return {
+          bg: "bg-green-100",
+          text: "text-green-800",
+        };
+      case "fechado":
+        return {
+          bg: "bg-red-100",
+          text: "text-red-800",
+        };
+      case "disponivel":
+        return {
+          bg: "bg-blue-100",
+          text: "text-blue-800",
+        };
+      case "indisponivel":
+        return {
+          bg: "bg-gray-100",
+          text: "text-gray-800",
+        };
+      case "info":
+        return {
+          bg: "bg-primary-100",
+          text: "text-primary-800",
+        };
+      default:
+        return {
+          bg: "bg-gray-100",
+          text: "text-gray-800",
+        };
+    }
   };
 
-  // Get config for the given status or use a default gray style
-  const config = statusConfig[status] || {
-    bg: "bg-gray-100",
-    text: "text-gray-800",
-    label: status,
-  };
-
-  // Size classes
-  const sizeClasses = {
-    xs: "px-1.5 py-0.5 text-xs",
-    sm: "px-1.5 py-0.5 text-sm",
-    md: "px-2 py-1 text-sm",
-    lg: "px-3 py-1.5 text-base",
-  };
-
-  const paddingClasses =
-    size === "sm" ? "px-2 py-0.5" : size === "md" ? "px-2 py-1" : "px-3 py-1.5";
-  const textSizeClass =
-    size === "sm" ? "text-xs" : size === "md" ? "text-sm" : "text-base";
+  const { bg, text } = getStatusStyles();
 
   return (
-    <View className={`rounded-full ${config.bg} ${paddingClasses}`}>
-      <Text className={`${config.text} ${textSizeClass}`}>
-        {customLabel || config.label}
+    <View className={`px-2 py-1 rounded-full ${bg} ${className}`}>
+      <Text className={`text-xs font-medium ${text} ${textClassName}`}>
+        {customLabel || status.charAt(0).toUpperCase() + status.slice(1)}
       </Text>
     </View>
   );

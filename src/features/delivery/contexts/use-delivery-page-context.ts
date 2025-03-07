@@ -1,12 +1,12 @@
-// src/features/delivery/contexts/use-delivery-page-context.ts
+// Path: src/features/delivery/contexts/use-delivery-context.ts
 import { useContext } from "react";
-import { DeliveryPageContext } from "./delivery-page.context-value";
+import { DeliveryContext } from "./delivery-page.context-value";
 
-export const useDeliveryPageContext = () => {
-  const context = useContext(DeliveryPageContext);
-  if (!context) {
+export const useDeliveryContext = () => {
+  const context = useContext(DeliveryContext);
+  if (context === undefined) {
     throw new Error(
-      "useDeliveryPageContext must be used within a DeliveryPageProvider"
+      "useDeliveryContext must be used within a DeliveryProvider"
     );
   }
   return context;

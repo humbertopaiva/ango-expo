@@ -1,23 +1,41 @@
-// src/features/delivery/view-models/delivery-page.view-model.ts
+// Path: src/features/delivery/view-models/delivery.view-model.ts
+import { useEffect } from "react";
 import { useDeliveryPage } from "../hooks/use-delivery-page";
-import { IDeliveryPageViewModel } from "./delivery-page.view-model.interface";
+import { IDeliveryViewModel } from "./delivery-page.view-model.interface";
 
-export function useDeliveryPageViewModel(): IDeliveryPageViewModel {
+export function useDeliveryViewModel(): IDeliveryViewModel {
   const {
-    profiles,
-    subcategories,
-    showcaseProducts,
-    selectedSubcategory,
+    searchQuery,
+    setSearchQuery,
+    selectedSubcategories,
+    toggleSubcategory,
     setSelectedSubcategory,
+    subcategories,
+    profiles,
+    filteredProfiles,
     isLoading,
+    refetchProfiles,
   } = useDeliveryPage();
 
+  // Adicione um log para depuração
+  useEffect(() => {
+    console.log("DeliveryViewModel initialized");
+
+    return () => {
+      console.log("DeliveryViewModel unmounted");
+    };
+  }, []);
+
   return {
-    profiles,
-    subcategories,
-    showcaseProducts,
-    selectedSubcategory,
+    searchQuery,
+    setSearchQuery,
+    selectedSubcategories,
+    toggleSubcategory,
     setSelectedSubcategory,
+    subcategories,
+    profiles,
+    filteredProfiles,
     isLoading,
+    refetchProfiles,
   };
 }
