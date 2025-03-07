@@ -4,9 +4,10 @@ import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { CategoryCompany } from "../models/category-company";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { router } from "expo-router";
-import { Store, MapPin, Clock, Star } from "lucide-react-native";
+import { Store, MapPin, Clock, Phone } from "lucide-react-native";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { isBusinessOpen, formatBusinessHours } from "../utils/business-hours";
 
 interface CompanyCardProps {
   company: CategoryCompany;
@@ -14,11 +15,17 @@ interface CompanyCardProps {
 
 export function CompanyCard({ company }: CompanyCardProps) {
   const navigateToCompany = () => {
-    router.push(`/(drawer)/empresa/${company.slug}`);
+    router.push(`/(drawer)/empresa/${company.empresa.slug}`);
   };
 
-  // Filtra para pegar apenas 3 subcategorias para exibir
-  const topSubcategories = company.subcategorias
+  // Verificar se o comércio está aberto
+  const isOpen = isBusinessOpen(company.perfil);
+
+  // Obter o horário formatado
+  const businessHours = formatBusinessHours(company.perfil);
+
+  // Filtrar para pegar apenas 3 subcategorias para exibir
+  const topSubcategories = company.empresa.subcategorias
     .slice(0, 3)
     .map((relation) => relation.subcategorias_empresas_id);
 
@@ -31,84 +38,28 @@ export function CompanyCard({ company }: CompanyCardProps) {
           opacity: pressed ? 0.9 : 1,
           backgroundColor: "white",
           borderRadius: 12,
-          overflow: "hidden",
-          borderWidth: 1,
-          borderColor: "#F3F4F6",
+          padding: 16,
+          marginBottom: 16,
         },
       ]}
     >
-      {/* Imagem de capa */}
-      <View style={{ height: 128, width: "100%", position: "relative" }}>
-        {company.banner ? (
-          <ImagePreview
-            uri={company.banner}
-            width="100%"
-            height="100%"
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            style={{
-              width: "100%",
-              height: "100%",
-              backgroundColor: "#F3F4F6",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Store size={32} color={THEME_COLORS.primary} />
-          </View>
-        )}
-
-        {/* Destaque/Badge caso tenha delivery */}
-        {company.subcategorias.some(
-          (sub) => sub.subcategorias_empresas_id.slug === "delivery"
-        ) && (
-          <View
-            style={{
-              position: "absolute",
-              top: 12,
-              right: 12,
-              backgroundColor: THEME_COLORS.primary,
-              borderRadius: 9999,
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              ...Platform.select({
-                ios: {
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 1.5,
-                },
-                android: {
-                  elevation: 2,
-                },
-              }),
-            }}
-          >
-            <Text style={{ color: "white", fontSize: 12, fontWeight: "500" }}>
-              Delivery
-            </Text>
-          </View>
-        )}
-      </View>
-
-      <HStack space="md" style={{ padding: 16 }}>
+      <HStack space="md">
         {/* Logo */}
         <View
           style={{
-            height: 64,
-            width: 64,
+            height: 70,
+            width: 70,
             borderRadius: 12,
             overflow: "hidden",
             borderWidth: 1,
             borderColor: "#E5E7EB",
             backgroundColor: "white",
+            position: "relative",
           }}
         >
-          {company.logo ? (
+          {company.perfil.logo ? (
             <ImagePreview
-              uri={company.logo}
+              uri={company.perfil.logo}
               width="100%"
               height="100%"
               resizeMode="cover"
@@ -126,16 +77,81 @@ export function CompanyCard({ company }: CompanyCardProps) {
               <Store size={24} color={THEME_COLORS.primary} />
             </View>
           )}
+
+          {/* Badge de status (Aberto/Fechado) */}
+          <View
+            style={{
+              position: "absolute",
+              bottom: -8,
+              left: "50%",
+              transform: [{ translateX: -30 }],
+              backgroundColor: isOpen ? "#10B981" : "#6B7280",
+              paddingHorizontal: 10,
+              paddingVertical: 2,
+              borderRadius: 999,
+              minWidth: 60,
+              alignItems: "center",
+              ...Platform.select({
+                ios: {
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 1.5,
+                },
+                android: {
+                  elevation: 2,
+                },
+              }),
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 10, fontWeight: "600" }}>
+              {isOpen ? "ABERTO" : "FECHADO"}
+            </Text>
+          </View>
         </View>
 
         {/* Informações */}
         <VStack space="xs" style={{ flex: 1 }}>
-          <Text style={{ fontSize: 18, fontWeight: "600", color: "#1F2937" }}>
-            {company.nome}
-          </Text>
+          <HStack
+            style={{
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                color: "#1F2937",
+                flex: 1,
+              }}
+            >
+              {company.perfil.nome}
+            </Text>
+
+            {/* Cor do estabelecimento (se disponível) */}
+            {company.perfil.cor_primaria && (
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: company.perfil.cor_primaria,
+                  marginLeft: 4,
+                }}
+              />
+            )}
+          </HStack>
 
           {/* Subcategorias como tags */}
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 4,
+              marginTop: 4,
+            }}
+          >
             {topSubcategories.map((subcategory) => (
               <View
                 key={subcategory.id}
@@ -143,45 +159,81 @@ export function CompanyCard({ company }: CompanyCardProps) {
                   backgroundColor: `${THEME_COLORS.primary}10`,
                   paddingHorizontal: 8,
                   paddingVertical: 2,
-                  borderRadius: 9999,
+                  borderRadius: 999,
                 }}
               >
-                <Text style={{ fontSize: 12, color: THEME_COLORS.primary }}>
+                <Text style={{ fontSize: 11, color: THEME_COLORS.primary }}>
                   {subcategory.nome}
                 </Text>
               </View>
             ))}
 
-            {company.subcategorias.length > 3 && (
-              <Text style={{ fontSize: 12, color: "#6B7280", marginLeft: 4 }}>
-                +{company.subcategorias.length - 3} mais
+            {company.empresa.subcategorias.length > 3 && (
+              <Text style={{ fontSize: 11, color: "#6B7280", marginLeft: 4 }}>
+                +{company.empresa.subcategorias.length - 3} mais
               </Text>
             )}
           </View>
 
-          {/* Informações fictícias para enriquecer o card */}
-          <View style={{ flexDirection: "row", gap: 12, marginTop: 4 }}>
+          {/* Informações adicionais */}
+          <HStack style={{ marginTop: 8 }}>
             <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
             >
-              <Star size={14} color="#FFB800" />
-              <Text style={{ fontSize: 12, color: "#6B7280" }}>4.5</Text>
+              <Clock size={12} color="#6B7280" style={{ marginRight: 4 }} />
+              <Text style={{ fontSize: 11, color: "#6B7280" }}>
+                {businessHours}
+              </Text>
             </View>
 
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-            >
-              <Clock size={14} color="#6B7280" />
-              <Text style={{ fontSize: 12, color: "#6B7280" }}>20-30 min</Text>
-            </View>
+            {/* Delivery badge */}
+            {company.empresa.subcategorias.some(
+              (sub) => sub.subcategorias_empresas_id.slug === "delivery"
+            ) && (
+              <View
+                style={{
+                  backgroundColor: `${THEME_COLORS.primary}10`,
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 999,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: THEME_COLORS.primary,
+                    fontWeight: "500",
+                  }}
+                >
+                  Delivery
+                </Text>
+              </View>
+            )}
+          </HStack>
 
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
-            >
-              <MapPin size={14} color="#6B7280" />
-              <Text style={{ fontSize: 12, color: "#6B7280" }}>1.2 km</Text>
-            </View>
-          </View>
+          {/* Linha de adicionais em forma de ícones */}
+          {company.perfil.adicionais &&
+            company.perfil.adicionais.length > 0 && (
+              <View
+                style={{ flexDirection: "row", marginTop: 4, flexWrap: "wrap" }}
+              >
+                {company.perfil.adicionais.includes("wifi") && (
+                  <View style={styles.additionalBadge}>
+                    <Text style={styles.additionalText}>WiFi</Text>
+                  </View>
+                )}
+                {company.perfil.adicionais.includes("estacionamento") && (
+                  <View style={styles.additionalBadge}>
+                    <Text style={styles.additionalText}>Estacionamento</Text>
+                  </View>
+                )}
+                {company.perfil.adicionais.includes("retirada") && (
+                  <View style={styles.additionalBadge}>
+                    <Text style={styles.additionalText}>Retirada</Text>
+                  </View>
+                )}
+              </View>
+            )}
         </VStack>
       </HStack>
     </Pressable>
@@ -204,5 +256,17 @@ const styles = StyleSheet.create({
         boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       },
     }),
+  },
+  additionalBadge: {
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+    marginRight: 4,
+    marginBottom: 2,
+  },
+  additionalText: {
+    fontSize: 9,
+    color: "#6B7280",
   },
 });

@@ -36,7 +36,7 @@ export function useCategoryPage(categorySlug: string) {
     if (!selectedSubcategory) return companies;
 
     return companies.filter((company) =>
-      company.subcategorias.some(
+      company.empresa.subcategorias.some(
         (sub) => sub.subcategorias_empresas_id.slug === selectedSubcategory
       )
     );
@@ -47,7 +47,7 @@ export function useCategoryPage(categorySlug: string) {
     if (!selectedSubcategory) return showcaseProducts;
 
     const filteredCompanySlugs = filteredCompanies.map(
-      (company) => company.slug
+      (company) => company.perfil
     );
 
     return showcaseProducts.filter((product) => {

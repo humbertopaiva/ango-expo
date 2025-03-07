@@ -17,6 +17,7 @@ import { Search, SlidersHorizontal } from "lucide-react-native";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ModalFilter } from "../components/modal-filter";
+import { isBusinessOpen } from "../utils/business-hours";
 
 export function CategoryPageContent() {
   const vm = useCategoryPageContext();
@@ -29,7 +30,7 @@ export function CategoryPageContent() {
 
   // Filtragem de empresas baseada no termo de busca
   const filteredCompanies = vm.companies.filter((company) =>
-    company.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    company.perfil.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -87,6 +88,23 @@ export function CategoryPageContent() {
 
           {/* Lista de Empresas */}
           <View className="mt-6">
+            <View className="mb-4">
+              <Text className="text-lg font-medium text-gray-800">
+                {filteredCompanies.length}{" "}
+                {filteredCompanies.length === 1
+                  ? "estabelecimento"
+                  : "estabelecimentos"}{" "}
+                encontrados
+              </Text>
+              <Text className="text-sm text-gray-500 mt-1">
+                {
+                  filteredCompanies.filter((company) =>
+                    isBusinessOpen(company.perfil)
+                  ).length
+                }{" "}
+                abertos agora
+              </Text>
+            </View>
             <CompanyList
               companies={filteredCompanies}
               isLoading={vm.isLoading}
