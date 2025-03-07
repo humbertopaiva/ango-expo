@@ -1,6 +1,6 @@
-// Path: src/features/delivery/hooks/use-delivery.ts
-import { useState, useEffect, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+// Path: src/features/delivery/hooks/use-delivery-page.ts
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deliveryService } from "../services/delivery.service";
 import { DeliveryProfile } from "../models/delivery-profile";
 
@@ -58,8 +58,15 @@ export function useDeliveryPage() {
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(
     []
   );
+  const queryClient = useQueryClient();
+  const initialized = useRef(false);
 
-  // Buscar subcategorias com staleTime adequado
+  // Referência para os perfis filtrados para evitar recálculos desnecessários
+  const filteredProfilesCache = useRef<DeliveryProfile[] | null>(null);
+  const prevSearchQuery = useRef(searchQuery);
+  const prevSelectedSubcategories = useRef(selectedSubcategories);
+
+  // Buscar subcategorias com staleTime maior e retry melhorado
   const {
     data: subcategories = [],
     isLoading: isLoadingSubcategories,
@@ -67,10 +74,13 @@ export function useDeliveryPage() {
   } = useQuery({
     queryKey: ["delivery", "subcategories"],
     queryFn: deliveryService.getSubcategories,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 15 * 60 * 1000, // 15 minutos (aumentado para reduzir refetches)
+    gcTime: 30 * 60 * 1000, // 30 minutos para garbage collection
+    retry: 2, // Limite de 2 tentativas em caso de falha
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Backoff exponencial
   });
 
-  // Buscar perfis com staleTime adequado
+  // Buscar perfis com staleTime maior e retry melhorado
   const {
     data: profiles = [],
     isLoading: isLoadingProfiles,
@@ -79,59 +89,99 @@ export function useDeliveryPage() {
   } = useQuery({
     queryKey: ["delivery", "profiles"],
     queryFn: deliveryService.getProfiles,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 15 * 60 * 1000, // 15 minutos (aumentado para reduzir refetches)
+    gcTime: 30 * 60 * 1000, // 30 minutos para garbage collection
+    retry: 2, // Limite de 2 tentativas em caso de falha
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Backoff exponencial
+    // Não refetcha automaticamente quando a tab ganha foco novamente
+    refetchOnWindowFocus: false,
+    // Não refetcha automaticamente quando reconecta à internet
+    refetchOnReconnect: false,
   });
 
-  // Memoize filteredProfiles para evitar recálculos desnecessários
-  const filteredProfiles = (Array.isArray(profiles) ? profiles : [])
-    .filter((profile) => {
-      try {
-        // Verificações de segurança
-        if (!profile || typeof profile !== "object") return false;
+  // Função para verificar se os critérios de filtro mudaram
+  const haveFilterCriteriaChanged = useCallback(() => {
+    const searchQueryChanged = prevSearchQuery.current !== searchQuery;
+    const selectedSubcategoriesChanged =
+      prevSelectedSubcategories.current.length !==
+        selectedSubcategories.length ||
+      prevSelectedSubcategories.current.some(
+        (cat, idx) => cat !== selectedSubcategories[idx]
+      );
 
-        // Verificar se nome existe e é uma string
-        const profileName = profile.nome || "";
-        const matchesSearch =
-          typeof profileName === "string" &&
-          profileName.toLowerCase().includes((searchQuery || "").toLowerCase());
+    return searchQueryChanged || selectedSubcategoriesChanged;
+  }, [searchQuery, selectedSubcategories]);
 
-        // Verificar subcategorias com segurança
-        const matchesSubcategories =
-          selectedSubcategories.length === 0 ||
-          (profile.empresa &&
-            profile.empresa.subcategorias &&
-            Array.isArray(profile.empresa.subcategorias) &&
-            profile.empresa.subcategorias.some(
-              (sub: any) =>
-                sub &&
-                sub.subcategorias_empresas_id &&
-                typeof sub.subcategorias_empresas_id === "object" &&
-                sub.subcategorias_empresas_id.slug &&
-                selectedSubcategories.includes(
-                  sub.subcategorias_empresas_id.slug
-                )
-            ));
+  // Calcular perfis filtrados apenas quando necessário
+  const getFilteredProfiles = useCallback(() => {
+    // Se os critérios de filtro não mudaram e já temos resultados em cache, use-os
+    if (!haveFilterCriteriaChanged() && filteredProfilesCache.current) {
+      return filteredProfilesCache.current;
+    }
 
-        return matchesSearch && matchesSubcategories;
-      } catch (error) {
-        console.error("Error filtering profile:", error, profile);
-        return false;
-      }
-    })
-    .sort((a, b) => {
-      try {
-        // Estabelecimentos abertos aparecem primeiro
-        const isOpenA = checkIfOpen(a);
-        const isOpenB = checkIfOpen(b);
+    // Caso contrário, calcule novamente
+    const filtered = (Array.isArray(profiles) ? profiles : [])
+      .filter((profile) => {
+        try {
+          // Verificações de segurança
+          if (!profile || typeof profile !== "object") return false;
 
-        if (isOpenA && !isOpenB) return -1;
-        if (!isOpenA && isOpenB) return 1;
-        return 0;
-      } catch (error) {
-        console.error("Error sorting profiles:", error);
-        return 0;
-      }
-    });
+          // Verificar se nome existe e é uma string
+          const profileName = profile.nome || "";
+          const matchesSearch =
+            typeof profileName === "string" &&
+            profileName
+              .toLowerCase()
+              .includes((searchQuery || "").toLowerCase());
+
+          // Verificar subcategorias com segurança
+          const matchesSubcategories =
+            selectedSubcategories.length === 0 ||
+            (profile.empresa &&
+              profile.empresa.subcategorias &&
+              Array.isArray(profile.empresa.subcategorias) &&
+              profile.empresa.subcategorias.some(
+                (sub: any) =>
+                  sub &&
+                  sub.subcategorias_empresas_id &&
+                  typeof sub.subcategorias_empresas_id === "object" &&
+                  sub.subcategorias_empresas_id.slug &&
+                  selectedSubcategories.includes(
+                    sub.subcategorias_empresas_id.slug
+                  )
+              ));
+
+          return matchesSearch && matchesSubcategories;
+        } catch (error) {
+          console.error("Error filtering profile:", error, profile);
+          return false;
+        }
+      })
+      .sort((a, b) => {
+        try {
+          // Estabelecimentos abertos aparecem primeiro
+          const isOpenA = checkIfOpen(a);
+          const isOpenB = checkIfOpen(b);
+
+          if (isOpenA && !isOpenB) return -1;
+          if (!isOpenA && isOpenB) return 1;
+          return 0;
+        } catch (error) {
+          console.error("Error sorting profiles:", error);
+          return 0;
+        }
+      });
+
+    // Atualizar cache e referências de estado
+    filteredProfilesCache.current = filtered;
+    prevSearchQuery.current = searchQuery;
+    prevSelectedSubcategories.current = [...selectedSubcategories];
+
+    return filtered;
+  }, [profiles, searchQuery, selectedSubcategories]);
+
+  // Calcular perfis filtrados
+  const filteredProfiles = getFilteredProfiles();
 
   // Use useCallback para funções que são passadas como props
   const toggleSubcategory = useCallback((slug: string | null) => {
@@ -148,6 +198,38 @@ export function useDeliveryPage() {
     setSelectedSubcategories(slug ? [slug] : []);
   }, []);
 
+  // Função otimizada para refetch apenas quando realmente necessário
+  const optimizedRefetch = useCallback(async () => {
+    console.log("Realizando refetch otimizado");
+
+    // Invalidar o cache local para forçar um recálculo
+    filteredProfilesCache.current = null;
+
+    // Limpar cache do serviço
+    await deliveryService.clearCache();
+
+    // Invalidar as queries no React Query para forçar o refetch
+    queryClient.invalidateQueries({ queryKey: ["delivery", "profiles"] });
+    queryClient.invalidateQueries({ queryKey: ["delivery", "subcategories"] });
+
+    // Executar o refetch
+    return refetchProfiles();
+  }, [queryClient, refetchProfiles]);
+
+  // Inicializar uma vez quando o componente monta
+  useEffect(() => {
+    if (!initialized.current) {
+      console.log("Inicializando hook useDeliveryPage");
+      initialized.current = true;
+    }
+
+    return () => {
+      console.log("Desmontando hook useDeliveryPage");
+      // Limpar o cache ao desmontar para evitar problemas de memória
+      filteredProfilesCache.current = null;
+    };
+  }, []);
+
   return {
     searchQuery,
     setSearchQuery,
@@ -158,6 +240,6 @@ export function useDeliveryPage() {
     profiles: Array.isArray(profiles) ? profiles : [],
     filteredProfiles,
     isLoading: isLoadingSubcategories || isLoadingProfiles,
-    refetchProfiles,
+    refetchProfiles: optimizedRefetch,
   };
 }
