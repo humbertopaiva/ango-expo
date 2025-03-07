@@ -116,9 +116,6 @@ export function DeliveryScreenContent() {
     companiesWithShowcases,
   } = useDeliveryShowcases(filteredProfiles);
 
-  console.log("COMPANY SHOWCASE", companiesWithShowcases);
-  console.log("SHOWCASES", showcases);
-
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView

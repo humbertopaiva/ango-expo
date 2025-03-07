@@ -33,6 +33,8 @@ export function useDeliveryShowcases(profiles: DeliveryProfile[]) {
     );
   });
 
+  console.log("PROFILES", profiles);
+
   return {
     showcases,
     isLoading,

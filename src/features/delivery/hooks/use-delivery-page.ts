@@ -82,23 +82,6 @@ export function useDeliveryPage() {
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
-  // Log para depuração
-  useEffect(() => {
-    console.log("useDelivery hook initialized");
-
-    if (subcategoriesError) {
-      console.error("Error fetching subcategories:", subcategoriesError);
-    }
-
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
-    }
-
-    return () => {
-      console.log("useDelivery hook cleanup");
-    };
-  }, [subcategoriesError, profilesError]);
-
   // Memoize filteredProfiles para evitar recálculos desnecessários
   const filteredProfiles = (Array.isArray(profiles) ? profiles : [])
     .filter((profile) => {
