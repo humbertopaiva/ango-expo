@@ -13,4 +13,10 @@ export interface CategoryCompany {
       imagem: string | null;
     };
   }>;
+  empresa?: {
+    slug?: string;
+    categoria?: {
+      slug?: string;
+    };
+  };
 }
