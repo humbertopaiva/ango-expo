@@ -21,6 +21,7 @@ export interface DeliveryProfile {
   abertura_domingo?: string;
   fechamento_domingo?: string;
   dias_funcionamento: string[];
+  cor_primaria?: string;
   empresa: {
     id: string;
     slug: string;

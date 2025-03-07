@@ -45,7 +45,7 @@ export function DeliveryCompanyShowcaseCard({
 
   // Determinar se devemos usar texto branco ou escuro com base na cor primária da empresa
   const getTextColor = () => {
-    const primaryColor = company.empresa?.cor_primaria || THEME_COLORS.primary;
+    const primaryColor = company?.cor_primaria || THEME_COLORS.primary;
     if (!primaryColor) return false;
 
     try {
@@ -63,7 +63,9 @@ export function DeliveryCompanyShowcaseCard({
 
   const isDarkBackground = !getTextColor();
   const textColorClass = isDarkBackground ? "text-white" : "text-gray-800";
-  const backgroundColor = company.empresa?.cor_primaria || THEME_COLORS.primary;
+  const backgroundColor = company?.cor_primaria || THEME_COLORS.primary;
+
+  console.log("LOOOGA", company);
 
   return (
     <View
