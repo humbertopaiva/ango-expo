@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { deliveryShowcaseService } from "../services/delivery-showcase.service";
 import { DeliveryProfile } from "../models/delivery-profile";
 import { DeliveryShowcaseItem } from "../models/delivery-showcase-item";
+import { CompanyWithShowcase } from "../models/company-with-showcase";
 
 export function useDeliveryShowcases(profiles: DeliveryProfile[]) {
   // Extrair slugs das empresas (em vez de IDs)
@@ -37,5 +38,9 @@ export function useDeliveryShowcases(profiles: DeliveryProfile[]) {
     isLoading,
     getShowcaseItemsBySlug,
     companiesWithShowcases,
+    companiesWithShowcaseMapped: companiesWithShowcases.map((profile) => ({
+      ...profile,
+      showcaseItems: showcases[profile.empresa.slug] || [],
+    })) as CompanyWithShowcase[],
   };
 }
