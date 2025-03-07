@@ -1,4 +1,4 @@
-// Path: src/features/delivery/screens/delivery-screen-content.tsx
+// src/features/delivery/screens/delivery-screen-content.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -21,6 +21,13 @@ import { CategoryFilterGrid } from "../components/category-filter-grid";
 import { useDeliveryShowcases } from "../hooks/use-delivery-showcases";
 import { DeliveryShowcaseCarousel } from "../components/delivery-showcase-carousel";
 import { EnhancedDeliveryShowcaseSection } from "../components/enhanced-delivery-showcase-section";
+import { SimpleTabs, TabItem } from "@/components/custom/simple-tabs";
+
+// Define the tab keys for easier reference
+const TABS = {
+  FEATURED: "featured",
+  COMPANIES: "companies",
+};
 
 export function DeliveryScreenContent() {
   // Estados locais
@@ -28,6 +35,7 @@ export function DeliveryScreenContent() {
   const [errorMessage, setErrorMessage] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState(TABS.FEATURED);
 
   // Tente recuperar o contexto de forma segura
   let contextData;
@@ -115,6 +123,16 @@ export function DeliveryScreenContent() {
     isLoading: isLoadingShowcases,
     companiesWithShowcases,
   } = useDeliveryShowcases(filteredProfiles);
+
+  // Configuração das tabs
+  const tabs: TabItem[] = [
+    { key: TABS.FEATURED, title: "Destaques" },
+    {
+      key: TABS.COMPANIES,
+      title: "Empresas",
+      badge: filteredProfiles.length,
+    },
+  ];
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -259,34 +277,76 @@ export function DeliveryScreenContent() {
           </View>
         </Section>
 
-        {/* Seção de Vitrines Aprimorada */}
-        {companiesWithShowcases && companiesWithShowcases.length > 0 && (
-          <Section className="mt-8 pt-4 border-t border-gray-100">
-            <EnhancedDeliveryShowcaseSection
-              companiesWithShowcases={companiesWithShowcases}
-              showcases={showcases}
-              isLoading={isLoadingShowcases}
-            />
-          </Section>
-        )}
+        {/* Tabs de navegação */}
+        <Section className="px-2 mb-4">
+          <SimpleTabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            tabStyle="pill"
+          />
+        </Section>
 
-        {/* Estado de carregamento */}
-        {isLoading && !refreshing ? (
-          <View className="py-12 items-center">
-            <ActivityIndicator size="large" color={THEME_COLORS.primary} />
-            <Text className="text-gray-500 mt-4">
-              Carregando estabelecimentos...
-            </Text>
-          </View>
+        {/* Exibe o conteúdo com base na aba ativa */}
+        {activeTab === TABS.FEATURED ? (
+          /* Tab de Destaques */
+          <>
+            {/* Seção de Vitrines Aprimorada */}
+            {companiesWithShowcases && companiesWithShowcases.length > 0 ? (
+              <Section className="mt-8 pt-4 border-t border-gray-100">
+                <EnhancedDeliveryShowcaseSection
+                  companiesWithShowcases={companiesWithShowcases}
+                  showcases={showcases}
+                  isLoading={isLoadingShowcases}
+                />
+              </Section>
+            ) : (
+              <Section className="mt-8 items-center py-16">
+                {isLoadingShowcases ? (
+                  <ActivityIndicator
+                    size="large"
+                    color={THEME_COLORS.primary}
+                  />
+                ) : (
+                  <View className="items-center">
+                    <Text className="text-xl font-semibold text-gray-800 mb-2">
+                      Sem destaques
+                    </Text>
+                    <Text className="text-gray-500 text-center">
+                      Não há produtos em destaque no momento.
+                    </Text>
+                    <TouchableOpacity
+                      className="mt-6 bg-primary-50 px-6 py-3 rounded-full"
+                      onPress={() => setActiveTab(TABS.COMPANIES)}
+                    >
+                      <Text className="text-primary-600 font-medium">
+                        Ver empresas
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </Section>
+            )}
+          </>
         ) : (
-          // Grid de estabelecimentos agrupados por categoria
+          /* Tab de Empresas */
           <Section>
-            <DeliveryGrid
-              profiles={filteredProfiles}
-              isLoading={isLoading}
-              groupByCategory={selectedSubcategories.length === 0}
-              subcategories={subcategories}
-            />
+            {isLoading && !refreshing ? (
+              <View className="py-12 items-center">
+                <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+                <Text className="text-gray-500 mt-4">
+                  Carregando estabelecimentos...
+                </Text>
+              </View>
+            ) : (
+              // Grid de estabelecimentos agrupados por categoria
+              <DeliveryGrid
+                profiles={filteredProfiles}
+                isLoading={isLoading}
+                groupByCategory={selectedSubcategories.length === 0}
+                subcategories={subcategories}
+              />
+            )}
           </Section>
         )}
       </ScrollView>
