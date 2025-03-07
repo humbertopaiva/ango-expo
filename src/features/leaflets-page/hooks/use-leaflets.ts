@@ -67,20 +67,38 @@ export function useLeaflets() {
   // Toggle uma única categoria
   const toggleCategoryFilter = useCallback(
     (categoryId: string) => {
+      // Caso 1: Todas categorias estão selecionadas (estado "Todas")
       if (allCategoriesSelected) {
-        // Se todas estão selecionadas, seleciona apenas esta
+        // Seleciona apenas a categoria clicada
         setActiveCategories([categoryId]);
-      } else if (activeCategories.includes(categoryId)) {
-        // Se já está selecionada e não é a única, remove
-        if (activeCategories.length > 1) {
-          setActiveCategories((prev) => prev.filter((id) => id !== categoryId));
+      }
+      // Caso 2: A categoria clicada já está selecionada
+      else if (activeCategories.includes(categoryId)) {
+        // Se é a única categoria selecionada, não faz nada
+        if (activeCategories.length === 1) {
+          return;
         }
-      } else {
-        // Se não está selecionada, adiciona
+        // Se há mais de uma, remove esta
+        setActiveCategories((prev) => prev.filter((id) => id !== categoryId));
+      }
+      // Caso 3: Mudando de uma categoria individual para outra
+      else if (activeCategories.length === 1) {
+        // Substitui a categoria atual pela nova (troca direta)
+        setActiveCategories([categoryId]);
+      }
+      // Caso 4: Adicionando mais uma categoria à seleção
+      else {
         setActiveCategories((prev) => [...prev, categoryId]);
+
+        // Verifica se após adicionar estamos com todas selecionadas
+        const newActiveCategories = [...activeCategories, categoryId];
+        if (newActiveCategories.length === categories.length) {
+          // Força a atualização para o estado "Todas"
+          setActiveCategories(categories.map((cat) => cat.id));
+        }
       }
     },
-    [activeCategories, allCategoriesSelected]
+    [activeCategories, allCategoriesSelected, categories]
   );
 
   // Selecionar todas as categorias

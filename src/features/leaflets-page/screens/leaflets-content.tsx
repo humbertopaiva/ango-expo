@@ -80,6 +80,7 @@ export function LeafletsContent() {
           activeCategories={vm.activeCategories}
           toggleCategory={vm.toggleCategoryFilter}
           selectAll={vm.selectAllCategories}
+          allCategoriesSelected={vm.allCategoriesSelected}
           isLoading={vm.isLoading}
         />
 

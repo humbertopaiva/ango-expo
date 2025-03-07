@@ -11,18 +11,19 @@ interface CategoryFilterChipsProps {
   toggleCategory: (categoryId: string) => void;
   selectAll: () => void;
   isLoading: boolean;
+  allCategoriesSelected: boolean;
 }
+
+// Path: src/features/leaflets-page/components/category-filter-chips.tsx
 
 export function CategoryFilterChips({
   categories,
   activeCategories,
   toggleCategory,
   selectAll,
+  allCategoriesSelected,
   isLoading,
 }: CategoryFilterChipsProps) {
-  // Verifique se todas as categorias estão selecionadas
-  const allSelected = activeCategories.length === categories.length;
-
   if (isLoading) {
     return (
       <ScrollView
@@ -55,15 +56,18 @@ export function CategoryFilterChips({
       <TouchableOpacity
         onPress={selectAll}
         className={`flex-row items-center h-10 px-4 mx-1 rounded-full ${
-          allSelected
+          allCategoriesSelected
             ? "bg-secondary-500"
             : "bg-gray-100 border border-gray-200"
         }`}
       >
-        <LayoutGrid size={18} color={allSelected ? "white" : "#6B7280"} />
+        <LayoutGrid
+          size={18}
+          color={allCategoriesSelected ? "white" : "#6B7280"}
+        />
         <Text
           className={`ml-2 font-medium ${
-            allSelected ? "text-white" : "text-gray-700"
+            allCategoriesSelected ? "text-white" : "text-gray-700"
           }`}
         >
           Todas
@@ -72,9 +76,11 @@ export function CategoryFilterChips({
 
       {/* Chips de categorias individuais */}
       {categories.map((category) => {
-        // Quando "Todas" está selecionado, nenhuma categoria individual deve parecer selecionada
+        // Uma categoria individual só está visualmente selecionada se:
+        // 1. NÃO estamos no estado "Todas" E
+        // 2. Esta categoria específica está no array activeCategories
         const isSelected =
-          !allSelected && activeCategories.includes(category.id);
+          !allCategoriesSelected && activeCategories.includes(category.id);
 
         return (
           <TouchableOpacity
