@@ -12,8 +12,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Filter } from "lucide-react-native";
 import { router } from "expo-router";
 import { HStack } from "@gluestack-ui/themed";
-import { THEME_COLORS } from "@/src/styles/colors";
-import { ImagePreview } from "@/components/custom/image-preview";
 
 interface CategoryHeaderProps {
   categoryName: string | null;
@@ -37,7 +35,7 @@ export function CategoryHeader({
 
   if (isLoading) {
     return (
-      <View style={styles.container} className="bg-white">
+      <View style={styles.container} className="bg-primary-500">
         <SafeAreaView edges={["top"]}>
           <View className="h-6 w-32 bg-gray-200 animate-pulse rounded-md" />
         </SafeAreaView>
@@ -46,57 +44,40 @@ export function CategoryHeader({
   }
 
   return (
-    <View style={styles.container} className="bg-white">
+    <View style={styles.container} className="bg-primary-500">
       <SafeAreaView edges={["top"]}>
         <HStack className="px-4 py-3 items-center justify-between">
-          {/* Parte esquerda: Logo da App */}
-          <Image
-            source={require("@/assets/images/logo-white.png")}
-            style={{ height: 28, width: 90 }}
-            resizeMode="contain"
-            className="opacity-80"
-          />
+          <HStack>
+            <TouchableOpacity
+              onPress={handleGoBack}
+              className="p-1 rounded-fullmr-2"
+            >
+              <ArrowLeft size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            {/* Parte esquerda: Logo da App */}
+            <Image
+              source={require("@/assets/images/logo-white.png")}
+              style={{ height: 28, width: 90 }}
+              resizeMode="contain"
+            />
+          </HStack>
 
           {/* Parte direita: Título "Categorias" */}
-          <Text className="text-primary-600 font-medium">Categorias</Text>
+          <Text className="text-white font-medium">Categorias</Text>
         </HStack>
 
         {/* Barra de navegação secundária com nome da categoria */}
-        <HStack className="px-4 py-2 bg-primary-50 items-center justify-between">
+        <HStack className="px-4 py-3 bg-secondary-500 items-center justify-center">
           <HStack space="md" className="items-center flex-1">
-            <TouchableOpacity
-              onPress={handleGoBack}
-              className="p-1 rounded-full"
-            >
-              <ArrowLeft size={18} color={THEME_COLORS.primary} />
-            </TouchableOpacity>
-
-            <HStack space="sm" className="items-center flex-1">
-              {categoryImage ? (
-                <View className="w-6 h-6 rounded-full overflow-hidden bg-white">
-                  <ImagePreview
-                    uri={categoryImage}
-                    width="100%"
-                    height="100%"
-                    resizeMode="cover"
-                  />
-                </View>
-              ) : null}
-
-              <Text className="text-primary-700 font-medium" numberOfLines={1}>
+            <HStack space="sm" className="items-center flex-1 justify-center">
+              <Text
+                className="text-white font-semibold text-xl"
+                numberOfLines={1}
+              >
                 {formattedCategoryName}
               </Text>
             </HStack>
           </HStack>
-
-          {onFilterPress && (
-            <TouchableOpacity
-              onPress={onFilterPress}
-              className="p-1 bg-white rounded-full"
-            >
-              <Filter size={16} color={THEME_COLORS.primary} />
-            </TouchableOpacity>
-          )}
         </HStack>
       </SafeAreaView>
     </View>
@@ -107,11 +88,32 @@ export function CategoryHeader({
 function formatCategoryName(name: string | null): string {
   if (!name) return "Categoria";
 
+  // Lista de palavras que devem permanecer em minúsculo (conjunções, preposições, etc.)
+  const lowercaseWords = [
+    "e",
+    "de",
+    "da",
+    "do",
+    "das",
+    "dos",
+    "em",
+    "por",
+    "com",
+    "para",
+  ];
+
   // Transforma "alimentacao-e-bebidas" em "Alimentação e Bebidas"
   return name
     .replace(/-/g, " ")
     .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word, index) => {
+      // Se for uma das palavras da lista e não for a primeira palavra
+      if (lowercaseWords.includes(word.toLowerCase()) && index !== 0) {
+        return word.toLowerCase();
+      }
+      // Caso contrário, capitalize a primeira letra
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
     .join(" ");
 }
 
