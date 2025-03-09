@@ -1,4 +1,4 @@
-// src/features/delivery/screens/delivery-screen-content.tsx
+// Path: src/features/delivery/screens/delivery-screen-content.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search, Truck, Filter, X } from "lucide-react-native";
+import { Search, Truck, Filter, X, Sparkles } from "lucide-react-native";
 
 import { Section } from "@/components/custom/section";
 import { DeliveryGrid } from "../components/delivery-grid";
@@ -22,6 +22,7 @@ import { useDeliveryShowcases } from "../hooks/use-delivery-showcases";
 import { DeliveryShowcaseCarousel } from "../components/delivery-showcase-carousel";
 import { EnhancedDeliveryShowcaseSection } from "../components/enhanced-delivery-showcase-section";
 import { SimpleTabs, TabItem } from "@/components/custom/simple-tabs";
+import { HStack, VStack } from "@gluestack-ui/themed";
 
 // Define the tab keys for easier reference
 const TABS = {
@@ -147,32 +148,31 @@ export function DeliveryScreenContent() {
         {/* Header e Banner */}
         <Section className="pt-6">
           <View className="mb-8">
-            <View className="mb-6">
-              <View className="flex-row items-center mb-2">
-                <Truck
-                  size={20}
-                  color={THEME_COLORS.primary}
-                  className="mr-2"
-                />
-                <Text className="text-lg font-semibold text-primary">
+            {/* Badge estilizada igual ao comércio local */}
+            <HStack className="items-center mb-4">
+              <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2">
+                <Truck size={18} color={THEME_COLORS.primary} />
+                <Text className="text-sm font-medium text-primary-600">
                   Delivery
                 </Text>
-              </View>
+              </HStack>
+            </HStack>
 
-              <View className="flex-col gap-2">
-                <Text className="text-3xl font-gothic text-secondary">
-                  PEÇA SEM SAIR
-                </Text>
-                <Text className="text-3xl font-gothic text-primary">
-                  DE CASA
-                </Text>
-              </View>
-
-              <Text className="text-gray-600 mt-2">
-                Encontre os melhores restaurantes e estabelecimentos com entrega
-                na sua região
+            {/* Título estilizado igual ao comércio local */}
+            <VStack className="items-center justify-center w-full gap-1 mb-4">
+              <Text className="text-3xl font-gothic text-secondary-500">
+                PEÇA SEM SAIR
               </Text>
-            </View>
+              <Text className="text-3xl font-gothic text-primary-500">
+                DE CASA
+              </Text>
+            </VStack>
+
+            {/* Texto descritivo igual ao comércio local */}
+            <Text className="text-gray-600 font-sans text-center mb-6">
+              Encontre os melhores restaurantes e estabelecimentos com entrega
+              na sua região
+            </Text>
 
             {/* Barra de pesquisa com botão de filtro */}
             <View className="flex-row items-center">
@@ -202,9 +202,9 @@ export function DeliveryScreenContent() {
           </View>
         </Section>
 
-        {/* Filtros por categoria com grid similar ao commerce */}
+        {/* Filtros por categoria com grid moderna */}
         {subcategories && subcategories.length > 0 && (
-          <Section className="mb-4 bg-white py-4 rounded-lg">
+          <Section className="mb-6">
             {isLoading ? (
               <View className="items-center py-8">
                 <ActivityIndicator size="large" color={THEME_COLORS.primary} />
@@ -216,14 +216,14 @@ export function DeliveryScreenContent() {
                 onSelectSubcategory={(slug) => {
                   if (setSelectedSubcategory) setSelectedSubcategory(slug);
                 }}
-                title="Categorias"
-                description="Escolha uma categoria para filtrar"
+                title="Escolha uma Categoria"
+                description="Filtrar estabelecimentos por tipo de comida"
               />
             )}
 
-            {/* Indicador de filtros ativos */}
+            {/* Indicador de filtros ativos - mantenha este se necessário */}
             {selectedSubcategories.length > 0 && (
-              <View className="mx-4 mt-2 pt-4 border-t border-gray-100">
+              <View className="mx-4 pt-2 border-t border-gray-100">
                 <View className="flex-row flex-wrap items-center">
                   <Text className="text-sm text-gray-500 mr-2">
                     Filtros ativos:
@@ -249,16 +249,14 @@ export function DeliveryScreenContent() {
                     );
                   })}
 
-                  {selectedSubcategories.length > 0 && (
-                    <TouchableOpacity
-                      className="flex-row items-center bg-gray-100 rounded-full px-3 py-1 mr-2 mb-2"
-                      onPress={() => setSelectedSubcategory(null)}
-                    >
-                      <Text className="text-xs text-gray-600">
-                        Limpar filtros
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity
+                    className="flex-row items-center bg-gray-100 rounded-full px-3 py-1 mr-2 mb-2"
+                    onPress={() => setSelectedSubcategory(null)}
+                  >
+                    <Text className="text-xs text-gray-600">
+                      Limpar filtros
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -319,7 +317,7 @@ export function DeliveryScreenContent() {
                       className="mt-6 bg-primary-50 px-6 py-3 rounded-full"
                       onPress={() => setActiveTab(TABS.COMPANIES)}
                     >
-                      <Text className="text-primary-600 font-medium">
+                      <Text className="text-primary-500 font-medium">
                         Ver empresas
                       </Text>
                     </TouchableOpacity>
