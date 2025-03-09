@@ -12,6 +12,7 @@ import { CategoryLeafletsSection } from "../components/category-leaflets-section
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { PromotionalBanner } from "../../commerce/components/promotional-banner";
 
 export function LeafletsContent() {
   const vm = useLeafletsContext();
@@ -45,18 +46,23 @@ export function LeafletsContent() {
         }
         showsVerticalScrollIndicator={false}
       >
+        {/* Banner Promocional */}
+        <View className="px-4 pt-4">
+          <PromotionalBanner />
+        </View>
+
         {/* Cabeçalho */}
         <View className="items-center mb-6 pt-6 px-4">
-          <HStack className="bg-secondary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
-            <Sparkles size={18} color={THEME_COLORS.secondary} />
-            <Text className="text-sm font-medium text-secondary-600">
+          <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
+            <Sparkles size={18} color={THEME_COLORS.primary} />
+            <Text className="text-sm font-medium text-primary-500">
               Promoções e Ofertas
             </Text>
           </HStack>
 
           <VStack alignItems="center" space="xs">
-            <Text className="text-3xl font-gothic text-secondary-600 text-center mb-1">
-              ENCARTES PROMOCIONAIS
+            <Text className="text-3xl font-gothic text-secondary-500 text-center mb-1">
+              ENCARTES <Text className="text-primary-500">PROMOCIONAIS</Text>
             </Text>
             <Text className="text-gray-600 text-center font-sans">
               Confira os melhores preços e ofertas das lojas da sua região
