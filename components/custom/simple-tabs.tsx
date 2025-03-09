@@ -66,7 +66,7 @@ export function SimpleTabs({
               onPress={() => onTabChange(tab.key)}
               className={`mr-2 ${styles.container} ${
                 styles.underline || ""
-              } flex-row items-center`}
+              } flex-row items-center justify-center`}
             >
               <Text className={styles.text}>{tab.title}</Text>
               {tab.badge !== undefined && (
@@ -78,7 +78,7 @@ export function SimpleTabs({
                   <Text
                     className={`text-xs ${
                       isActive ? "text-white" : "text-white"
-                    }`} // Path: components/custom/simple-tabs.tsx (continuação)
+                    }`}
                   >
                     {tab.badge}
                   </Text>
