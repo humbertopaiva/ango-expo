@@ -4,18 +4,25 @@ import { View, Text, ScrollView, TextInput, Pressable } from "react-native";
 import { useCategoryPageContext } from "../contexts/use-category-page-context";
 import { SubcategoriesTabs } from "../components/subcategories-tabs";
 import { CompanyList } from "../components/company-list";
+
 import { Section } from "@/components/custom/section";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search, SlidersHorizontal } from "lucide-react-native";
+import { Search } from "lucide-react-native";
 import { HStack } from "@gluestack-ui/themed";
-import { THEME_COLORS } from "@/src/styles/colors";
 import { ModalFilter } from "../components/modal-filter";
-import { isBusinessOpen } from "../utils/business-hours";
+import { CategoryBreadcrumb } from "../components/category-breadcrumb";
 
-export function CategoryPageContent() {
+interface CategoryPageContentProps {
+  showFilterModal: boolean;
+  setShowFilterModal: (show: boolean) => void;
+}
+
+export function CategoryPageContent({
+  showFilterModal,
+  setShowFilterModal,
+}: CategoryPageContentProps) {
   const vm = useCategoryPageContext();
   const [searchTerm, setSearchTerm] = useState("");
-  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const handleSelectSubcategory = (slug: string | null) => {
     vm.setSelectedSubcategory(slug);
@@ -27,38 +34,28 @@ export function CategoryPageContent() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={["bottom"]}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Breadcrumb de navegação */}
+        <View className="bg-white py-1">
+          <CategoryBreadcrumb categoryName={vm.categoryName} />
+        </View>
+
         <Section>
-          {/* Barra de pesquisa e filtros */}
-          <HStack space="md" className="mb-6">
-            <View className="flex-1 bg-gray-100 rounded-xl flex-row items-center px-3">
-              <Search size={20} color="#6B7280" />
-              <TextInput
-                className="flex-1 py-3 px-2 text-gray-800"
-                placeholder="Buscar estabelecimentos..."
-                value={searchTerm}
-                onChangeText={setSearchTerm}
-              />
-            </View>
-            <Pressable
-              onPress={() => setShowFilterModal(true)}
-              style={({ pressed }) => [
-                {
-                  opacity: pressed ? 0.9 : 1,
-                  backgroundColor: THEME_COLORS.primary,
-                  borderRadius: 12,
-                  padding: 12,
-                },
-              ]}
-            >
-              <SlidersHorizontal size={20} color="#FFFFFF" />
-            </Pressable>
-          </HStack>
+          {/* Barra de pesquisa simplificada - sem botão de filtro */}
+          <View className="bg-gray-100 rounded-xl flex-row items-center px-3 mt-4 mx-4 mb-6">
+            <Search size={20} color="#6B7280" />
+            <TextInput
+              className="flex-1 py-3 px-2 text-gray-800"
+              placeholder="Buscar estabelecimentos..."
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+            />
+          </View>
 
           {/* Subcategorias */}
           <SubcategoriesTabs
