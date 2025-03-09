@@ -54,26 +54,6 @@ export function EnhancedDeliveryShowcaseSection({
 
   return (
     <View className="py-8">
-      <View className="mb-6 items-center px-4">
-        {/* Badge estilizada igual ao commerce */}
-        <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
-          <Sparkles size={16} color={THEME_COLORS.primary} />
-          <Text className="text-sm font-medium text-primary-500">
-            Produtos em Destaque
-          </Text>
-        </HStack>
-
-        {/* Título estilizado igual ao commerce */}
-        <Text className="text-3xl font-semibold text-center mb-2 text-primary-500">
-          Delivery com Qualidade
-        </Text>
-
-        {/* Subtítulo estilizado igual ao commerce */}
-        <Text className="text-gray-600 text-center font-sans">
-          Confira os melhores produtos dos estabelecimentos da região
-        </Text>
-      </View>
-
       <View>
         {companiesWithShowcases.map((company) => (
           <DeliveryCompanyShowcaseCard

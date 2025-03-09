@@ -10,6 +10,7 @@ interface SectionProps {
   onAction?: () => void;
   children: ReactNode;
   className?: string;
+  paddingX?: number;
 }
 
 export function Section({
@@ -20,9 +21,13 @@ export function Section({
   onAction,
   children,
   className = "",
+  paddingX = 8,
 }: SectionProps) {
   return (
-    <View className={`${className} px-4 flex-1`}>
+    <View
+      className={`${className} flex-1`}
+      style={{ paddingHorizontal: paddingX }}
+    >
       {/* Cabeçalho da seção */}
       {title && (
         <View className="flex-row items-center justify-between mb-4">
