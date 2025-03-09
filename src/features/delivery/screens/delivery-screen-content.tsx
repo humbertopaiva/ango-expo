@@ -199,7 +199,7 @@ export function DeliveryScreenContent() {
             {selectedSubcategories.length > 0 && (
               <View className="mx-4 pt-2 border-t border-gray-100">
                 <View className="flex-row flex-wrap items-center">
-                  <Text className="text-sm text-gray-500 mr-2">
+                  <Text className="text-md text-gray-500 mr-2">
                     Filtros ativos:
                   </Text>
 
@@ -215,7 +215,7 @@ export function DeliveryScreenContent() {
                         className="flex-row items-center bg-primary-100 rounded-full px-3 py-1 mr-2 mb-2"
                         onPress={() => setSelectedSubcategory(null)}
                       >
-                        <Text className="text-xs text-primary-700 mr-1">
+                        <Text className="text-md text-primary-500 mr-1">
                           {category?.nome || slug}
                         </Text>
                         <X size={12} color={THEME_COLORS.primary} />
@@ -223,14 +223,14 @@ export function DeliveryScreenContent() {
                     );
                   })}
 
-                  <TouchableOpacity
-                    className="flex-row items-center bg-gray-100 rounded-full px-3 py-1 mr-2 mb-2"
+                  {/* <TouchableOpacity
+                    className="flex-row items-center bg-gray-200 rounded-full px-3 py-1 mr-2 mb-2"
                     onPress={() => setSelectedSubcategory(null)}
                   >
-                    <Text className="text-xs text-gray-600">
+                    <Text className="text-md text-gray-600">
                       Limpar filtros
                     </Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
               </View>
             )}
@@ -239,7 +239,7 @@ export function DeliveryScreenContent() {
 
         {/* Contador de resultados */}
         <Section className="mb-4">
-          <View className="flex-row justify-between items-center">
+          <View className="flex-row justify-center items-center">
             <Text className="text-gray-600 font-medium">
               {filteredProfiles.length}{" "}
               {filteredProfiles.length === 1
@@ -250,12 +250,11 @@ export function DeliveryScreenContent() {
         </Section>
 
         {/* Tabs de navegação */}
-        <Section className="px-2 mb-4">
+        <Section className="px-2 bg-white">
           <SimpleTabs
             tabs={tabs}
             activeTab={activeTab}
             onTabChange={setActiveTab}
-            tabStyle="pill"
           />
         </Section>
 
@@ -265,7 +264,7 @@ export function DeliveryScreenContent() {
           <>
             {/* Seção de Vitrines Aprimorada */}
             {companiesWithShowcases && companiesWithShowcases.length > 0 ? (
-              <Section className="mt-8 pt-4 border-t border-gray-100">
+              <Section className="pt-4 border-t border-gray-100 bg-white">
                 <EnhancedDeliveryShowcaseSection
                   companiesWithShowcases={companiesWithShowcases}
                   showcases={showcases}
@@ -302,7 +301,7 @@ export function DeliveryScreenContent() {
           </>
         ) : (
           /* Tab de Empresas */
-          <Section>
+          <Section className="bg-white">
             {isLoading && !refreshing ? (
               <View className="py-12 items-center">
                 <ActivityIndicator size="large" color={THEME_COLORS.primary} />

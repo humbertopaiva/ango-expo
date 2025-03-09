@@ -97,7 +97,7 @@ export function DeliveryGrid({
     );
 
     return (
-      <View className="space-y-8">
+      <View className="gap-8 flex flex-co bg-white">
         {categoriesToShow.map((category) => (
           <View key={category.slug} className="mb-6">
             <Text className="text-xl font-semibold mb-4">{category.nome}</Text>
