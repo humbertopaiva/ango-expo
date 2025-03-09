@@ -7,7 +7,7 @@ import { ShowcaseProduct } from "@/src/features/commerce/models/showcase-product
 class CategoryPageService {
   async getSubcategories(categorySlug: string): Promise<Subcategory[]> {
     try {
-      // Corrigindo para a rota correta
+      // Rota correta para obter subcategorias
       const response = await api.get(
         `/api/categories/${categorySlug}/subcategories`
       );

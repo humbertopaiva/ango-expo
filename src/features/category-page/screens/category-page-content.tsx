@@ -5,28 +5,32 @@ import {
   Text,
   ScrollView,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   Platform,
 } from "react-native";
 import { useCategoryPageContext } from "../contexts/use-category-page-context";
 import { SubcategoriesTabs } from "../components/subcategories-tabs";
-
+import { CompanyList } from "../components/company-list";
 import { Section } from "@/components/custom/section";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Search, SlidersHorizontal } from "lucide-react-native";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { CompanyList } from "../components/company-list";
 import { ModalFilter } from "../components/modal-filter";
+import { isBusinessOpen } from "../utils/business-hours";
 
 export function CategoryPageContent() {
   const vm = useCategoryPageContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
 
+  const handleSelectSubcategory = (slug: string | null) => {
+    vm.setSelectedSubcategory(slug);
+  };
+
   // Filtragem de empresas baseada no termo de busca
   const filteredCompanies = vm.companies.filter((company) =>
-    company.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    company.perfil.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -59,24 +63,48 @@ export function CategoryPageContent() {
                 onChangeText={setSearchTerm}
               />
             </View>
-            <TouchableOpacity
-              className="bg-primary-500 rounded-xl p-3"
+            <Pressable
               onPress={() => setShowFilterModal(true)}
+              style={({ pressed }) => [
+                {
+                  opacity: pressed ? 0.9 : 1,
+                  backgroundColor: THEME_COLORS.primary,
+                  borderRadius: 12,
+                  padding: 12,
+                },
+              ]}
             >
               <SlidersHorizontal size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+            </Pressable>
           </HStack>
 
           {/* Subcategorias */}
           <SubcategoriesTabs
             subcategories={vm.subcategories}
             selectedSubcategory={vm.selectedSubcategory}
-            onSelectSubcategory={vm.setSelectedSubcategory}
+            onSelectSubcategory={handleSelectSubcategory}
             isLoading={vm.isLoading}
           />
 
           {/* Lista de Empresas */}
           <View className="mt-6">
+            <View className="mb-4">
+              <Text className="text-lg font-medium text-gray-800">
+                {filteredCompanies.length}{" "}
+                {filteredCompanies.length === 1
+                  ? "estabelecimento"
+                  : "estabelecimentos"}{" "}
+                encontrados
+              </Text>
+              <Text className="text-sm text-gray-500 mt-1">
+                {
+                  filteredCompanies.filter((company) =>
+                    isBusinessOpen(company.perfil)
+                  ).length
+                }{" "}
+                abertos agora
+              </Text>
+            </View>
             <CompanyList
               companies={filteredCompanies}
               isLoading={vm.isLoading}
@@ -92,7 +120,7 @@ export function CategoryPageContent() {
         onClose={() => setShowFilterModal(false)}
         subcategories={vm.subcategories}
         selectedSubcategory={vm.selectedSubcategory}
-        onSelectSubcategory={vm.setSelectedSubcategory}
+        onSelectSubcategory={handleSelectSubcategory}
       />
     </SafeAreaView>
   );

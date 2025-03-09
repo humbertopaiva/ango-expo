@@ -1,10 +1,10 @@
-// Path: src/features/category-page/components/company-list.tsx (atualizado sem animações)
+// Path: src/features/category-page/components/company-list.tsx
 import React from "react";
 import { View, Text, FlatList, Platform, Image } from "react-native";
 import { CategoryCompany } from "../models/category-company";
-
-import { SafeMap } from "@/components/common/safe-map";
 import { CompanyCard } from "./company-card";
+import { SafeMap } from "@/components/common/safe-map";
+import { isBusinessOpen } from "../utils/business-hours";
 
 interface CompanyListProps {
   companies: CategoryCompany[];
@@ -17,11 +17,30 @@ export function CompanyList({
   isLoading,
   searchTerm = "",
 }: CompanyListProps) {
+  // Ordenar as empresas: primeiro as abertas, depois por data de atualização
+  const sortedCompanies = [...companies].sort((a, b) => {
+    // Se uma está aberta e outra fechada, a aberta vem primeiro
+    const aIsOpen = isBusinessOpen(a.perfil);
+    const bIsOpen = isBusinessOpen(b.perfil);
+
+    if (aIsOpen && !bIsOpen) return -1;
+    if (!aIsOpen && bIsOpen) return 1;
+
+    // Se ambas têm o mesmo status, ordena por data de atualização (mais recente primeiro)
+    const dateA = a.perfil.date_updated
+      ? new Date(a.perfil.date_updated).getTime()
+      : 0;
+    const dateB = b.perfil.date_updated
+      ? new Date(b.perfil.date_updated).getTime()
+      : 0;
+    return dateB - dateA;
+  });
+
   if (isLoading) {
     return (
       <View className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <View key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
+          <View key={i} className="h-24 bg-gray-200 rounded-xl animate-pulse" />
         ))}
       </View>
     );
@@ -42,16 +61,14 @@ export function CompanyList({
     );
   }
 
-  // Versão simplificada sem animações para web
+  // Versão para web
   if (Platform.OS === "web") {
     return (
       <View className="space-y-4">
         <SafeMap
-          data={companies}
+          data={sortedCompanies}
           renderItem={(company) => (
-            <View key={company.id} className="mb-4">
-              <CompanyCard company={company} />
-            </View>
+            <CompanyCard key={company.perfil.id} company={company} />
           )}
         />
       </View>
@@ -61,10 +78,9 @@ export function CompanyList({
   // Mobile usa FlatList para melhor performance
   return (
     <FlatList
-      data={companies}
-      keyExtractor={(item) => item.id}
+      data={sortedCompanies}
+      keyExtractor={(item) => item.perfil.id}
       renderItem={({ item }) => <CompanyCard company={item} />}
-      ItemSeparatorComponent={() => <View className="h-4" />}
       scrollEnabled={false}
       contentContainerStyle={{ paddingVertical: 4 }}
     />

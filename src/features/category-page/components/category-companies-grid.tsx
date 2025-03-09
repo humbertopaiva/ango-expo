@@ -51,19 +51,19 @@ export function CategoryCompaniesGrid({
   return (
     <FlatList
       data={companies}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.perfil.id}
       numColumns={Platform.OS === "web" ? 3 : 1}
       renderItem={({ item }) => (
         <View className="w-full md:w-1/2 lg:w-1/3 p-2">
           <TouchableOpacity
-            onPress={() => navigateToCompany(item.slug)}
+            onPress={() => navigateToCompany(item.empresa.slug)}
             activeOpacity={0.7}
           >
             <Card className="overflow-hidden">
               <View className="relative h-32">
-                {item.banner ? (
+                {item.perfil.banner ? (
                   <ImagePreview
-                    uri={item.banner}
+                    uri={item.perfil.banner}
                     width="100%"
                     height="100%"
                     resizeMode="cover"
@@ -73,9 +73,9 @@ export function CategoryCompaniesGrid({
                 )}
                 <View className="absolute -bottom-8 left-4">
                   <View className="w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-white">
-                    {item.logo ? (
+                    {item.perfil.logo ? (
                       <ImagePreview
-                        uri={item.logo}
+                        uri={item.perfil.logo}
                         width="100%"
                         height="100%"
                         resizeMode="cover"
@@ -89,9 +89,9 @@ export function CategoryCompaniesGrid({
                 </View>
               </View>
               <View className="p-4 pt-12">
-                <Text className="font-medium text-lg">{item.nome}</Text>
+                <Text className="font-medium text-lg">{item.perfil.nome}</Text>
                 <View className="flex-row flex-wrap gap-2 mt-2">
-                  {item.subcategorias.map((relation) => (
+                  {item.empresa.subcategorias.map((relation) => (
                     <View
                       key={relation.subcategorias_empresas_id.id}
                       className="bg-gray-100 px-2 py-1 rounded-full"
