@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Filter } from "lucide-react-native";
+import { ArrowLeft, SlidersHorizontal } from "lucide-react-native";
 import { router } from "expo-router";
 import { HStack } from "@gluestack-ui/themed";
 
@@ -67,7 +67,7 @@ export function CategoryHeader({
         </HStack>
 
         {/* Barra de navegação secundária com nome da categoria */}
-        <HStack className="px-4 py-3 bg-secondary-500 items-center">
+        <HStack className="px-4 py-3 bg-secondary-500 items-center justify-between">
           <HStack space="md" className="items-center flex-1">
             <HStack space="sm" className="items-center flex-1 ">
               <Text
@@ -78,6 +78,16 @@ export function CategoryHeader({
               </Text>
             </HStack>
           </HStack>
+
+          {/* Botão de filtro */}
+          {onFilterPress && (
+            <TouchableOpacity
+              onPress={onFilterPress}
+              className="p-2 bg-white/20 rounded-full"
+            >
+              <SlidersHorizontal size={20} color="white" />
+            </TouchableOpacity>
+          )}
         </HStack>
       </SafeAreaView>
     </View>
