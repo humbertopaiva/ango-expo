@@ -4,26 +4,23 @@ import {
   View,
   Text,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search, Truck, Filter, X, Sparkles } from "lucide-react-native";
+import { Truck, X, Sparkles } from "lucide-react-native";
 
 import { Section } from "@/components/custom/section";
 import { DeliveryGrid } from "../components/delivery-grid";
-import { SubcategoryFilters } from "../components/subcategory-filters";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { useDeliveryContext } from "../contexts/use-delivery-page-context";
 import { CategoryFilterGrid } from "../components/category-filter-grid";
 import { useDeliveryShowcases } from "../hooks/use-delivery-showcases";
-import { DeliveryShowcaseCarousel } from "../components/delivery-showcase-carousel";
 import { EnhancedDeliveryShowcaseSection } from "../components/enhanced-delivery-showcase-section";
-import { SimpleTabs, TabItem } from "@/components/custom/simple-tabs";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { PromotionalBanner } from "../../commerce/components/promotional-banner";
+import { SimpleTabs } from "@/components/custom/simple-tabs";
 
 // Define the tab keys for easier reference
 const TABS = {
@@ -36,7 +33,6 @@ export function DeliveryScreenContent() {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState(TABS.FEATURED);
 
   // Tente recuperar o contexto de forma segura
@@ -127,7 +123,7 @@ export function DeliveryScreenContent() {
   } = useDeliveryShowcases(filteredProfiles);
 
   // Configuração das tabs
-  const tabs: TabItem[] = [
+  const tabs = [
     { key: TABS.FEATURED, title: "Destaques" },
     {
       key: TABS.COMPANIES,
@@ -195,7 +191,7 @@ export function DeliveryScreenContent() {
               />
             )}
 
-            {/* Indicador de filtros ativos - mantenha este se necessário */}
+            {/* Indicador de filtros ativos */}
             {selectedSubcategories.length > 0 && (
               <View className="mx-4 pt-2 border-t border-gray-100">
                 <View className="flex-row flex-wrap items-center">
@@ -222,15 +218,6 @@ export function DeliveryScreenContent() {
                       </TouchableOpacity>
                     );
                   })}
-
-                  {/* <TouchableOpacity
-                    className="flex-row items-center bg-gray-200 rounded-full px-3 py-1 mr-2 mb-2"
-                    onPress={() => setSelectedSubcategory(null)}
-                  >
-                    <Text className="text-md text-gray-600">
-                      Limpar filtros
-                    </Text>
-                  </TouchableOpacity> */}
                 </View>
               </View>
             )}
@@ -249,14 +236,18 @@ export function DeliveryScreenContent() {
           </View>
         </Section>
 
-        {/* Tabs de navegação */}
-        <Section className="px-2 bg-white">
-          <SimpleTabs
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-        </Section>
+        {/* Nova seção de tabs com estilo elegante */}
+        <View className="bg-white pt-1">
+          <View className="border-b border-gray-100">
+            <SimpleTabs
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              primaryColor={THEME_COLORS.primary}
+              centered={true}
+            />
+          </View>
+        </View>
 
         {/* Exibe o conteúdo com base na aba ativa */}
         {activeTab === TABS.FEATURED ? (
@@ -264,7 +255,7 @@ export function DeliveryScreenContent() {
           <>
             {/* Seção de Vitrines Aprimorada */}
             {companiesWithShowcases && companiesWithShowcases.length > 0 ? (
-              <Section className="pt-4 border-t border-gray-100 bg-white">
+              <Section className=" bg-white">
                 <EnhancedDeliveryShowcaseSection
                   companiesWithShowcases={companiesWithShowcases}
                   showcases={showcases}

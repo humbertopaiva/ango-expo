@@ -1,13 +1,20 @@
-// Path: src/features/delivery/components/delivery-card.tsx
+// Path: src/features/delivery/components/premium-delivery-card.tsx
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { Card } from "@gluestack-ui/themed";
 import {
-  Package,
+  View,
+  Text,
+  TouchableOpacity,
+  Linking,
+  Platform,
+  StyleSheet,
+} from "react-native";
+import {
   MessageCircle,
   Phone,
   MapPin,
+  Clock,
   ChevronRight,
+  Store,
 } from "lucide-react-native";
 import { ResilientImage } from "@/components/common/resilient-image";
 import { DeliveryProfile } from "../models/delivery-profile";
@@ -15,6 +22,7 @@ import { router } from "expo-router";
 import { StatusBadge } from "@/components/custom/status-badge";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { checkIfOpen } from "../hooks/use-delivery-page";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface DeliveryCardProps {
   profile: DeliveryProfile;
@@ -32,7 +40,7 @@ export function DeliveryCard({ profile }: DeliveryCardProps) {
       return checkIfOpen(profile);
     } catch (error) {
       console.error("Error checking if open:", error);
-      return false;
+      return false; // Em caso de erro, considera fechado
     }
   }, [profile]);
 
@@ -51,32 +59,36 @@ export function DeliveryCard({ profile }: DeliveryCardProps) {
     );
   }, [profile]);
 
-  // Manipuladores de eventos com segurança
-  const handleWhatsAppClick = (e: any) => {
+  // Manipuladores de eventos
+  const handleWhatsAppClick = () => {
     try {
-      e.stopPropagation();
-      e.preventDefault();
-
       if (!profile.whatsapp) return;
 
       const phoneNumber = profile.whatsapp.replace(/\D/g, "");
       const whatsappUrl = `https://wa.me/${phoneNumber}`;
-      window.open(whatsappUrl, "_blank");
+
+      if (Platform.OS === "web") {
+        window.open(whatsappUrl, "_blank");
+      } else {
+        Linking.openURL(whatsappUrl);
+      }
     } catch (error) {
       console.error("Error opening WhatsApp:", error);
     }
   };
 
-  const handlePhoneClick = (e: any) => {
+  const handlePhoneClick = () => {
     try {
-      e.stopPropagation();
-      e.preventDefault();
-
       if (!profile.whatsapp) return;
 
       const phoneNumber = profile.whatsapp.replace(/\D/g, "");
       const telUrl = `tel:${phoneNumber}`;
-      window.open(telUrl, "_blank");
+
+      if (Platform.OS === "web") {
+        window.open(telUrl, "_blank");
+      } else {
+        Linking.openURL(telUrl);
+      }
     } catch (error) {
       console.error("Error making phone call:", error);
     }
@@ -85,146 +97,314 @@ export function DeliveryCard({ profile }: DeliveryCardProps) {
   const navigateToCompany = () => {
     try {
       if (!profile.empresa || !profile.empresa.slug) return;
-
       router.push(`/(drawer)/empresa/${profile.empresa.slug}`);
     } catch (error) {
       console.error("Error navigating to company:", error);
     }
   };
 
-  // Renderização com verificações de segurança
+  // Background color for the card (use primary color or default)
+  // Substitui preto por um tom mais suave
+  let backgroundColor = profile.cor_primaria || THEME_COLORS.primary;
+  if (backgroundColor === "#000000" || backgroundColor === "#000") {
+    backgroundColor = "#2a2a2a";
+  }
+
   return (
     <TouchableOpacity
       onPress={navigateToCompany}
-      activeOpacity={0.7}
-      className="w-full"
+      activeOpacity={0.9}
+      style={[styles.container, { shadowColor: backgroundColor }]}
     >
-      <Card className="overflow-hidden border border-gray-200 h-auto">
-        <View className="relative h-36">
-          {/* Banner com ResilientImage */}
-          {typeof profile.banner === "string" && profile.banner ? (
+      {/* Banner Background with Overlay */}
+      <View style={styles.bannerContainer}>
+        {profile.banner ? (
+          <>
             <ResilientImage
               source={profile.banner}
-              style={{ width: "100%", height: "100%" }}
+              style={styles.bannerImage}
               resizeMode="cover"
             />
-          ) : (
-            <View className="w-full h-full items-center justify-center bg-primary-50">
-              <Package size={48} color={THEME_COLORS.primary} />
-            </View>
-          )}
-
-          {/* Logo com ResilientImage */}
-          <View className="absolute left-3 -bottom-6">
-            <View className="w-16 h-16 rounded-full overflow-hidden border-4 border-white bg-white">
-              {typeof profile.logo === "string" && profile.logo ? (
-                <ResilientImage
-                  source={profile.logo}
-                  style={{ width: "100%", height: "100%" }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="w-full h-full items-center justify-center bg-gray-100">
-                  <Text className="text-xl font-bold text-primary-600">
-                    {profile.nome && typeof profile.nome === "string"
-                      ? profile.nome.charAt(0)
-                      : "?"}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          <View className="absolute top-2 right-2">
-            <StatusBadge
-              status={isOpen ? "aberto" : "fechado"}
-              customLabel={isOpen ? "Aberto agora" : "Fechado"}
-              className={isOpen ? "bg-green-100" : "bg-red-100"}
-              textClassName={isOpen ? "text-green-800" : "text-red-800"}
+            <LinearGradient
+              colors={["rgba(40,40,40,0.2)", "rgba(30,30,30,0.75)"]}
+              style={styles.gradientOverlay}
+            />
+          </>
+        ) : (
+          <View style={[styles.fallbackBanner, { backgroundColor }]}>
+            <LinearGradient
+              colors={[`${backgroundColor}`, `#2a2a2aCC`]}
+              style={styles.gradientOverlay}
             />
           </View>
+        )}
+      </View>
+
+      {/* Content Container */}
+      <View style={styles.contentContainer}>
+        {/* Top Section with Logo and Status */}
+        <View style={styles.topSection}>
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            {profile.logo ? (
+              <ResilientImage
+                source={profile.logo}
+                style={styles.logoImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.fallbackLogo, { backgroundColor }]}>
+                <Store size={24} color="white" />
+              </View>
+            )}
+          </View>
+
+          {/* Status Badge */}
+          <StatusBadge
+            status={isOpen ? "aberto" : "fechado"}
+            customLabel={isOpen ? "Aberto agora" : "Fechado"}
+            className={isOpen ? "bg-green-100" : "bg-red-100"}
+            textClassName={isOpen ? "text-green-800" : "text-red-800"}
+          />
         </View>
 
-        <View className="p-4 pt-8">
-          <Text className="text-lg font-semibold mb-2" numberOfLines={1}>
-            {profile.nome || "Estabelecimento"}
+        {/* Main Info */}
+        <View style={styles.mainInfo}>
+          <Text style={styles.title} numberOfLines={1}>
+            {profile.nome}
           </Text>
 
+          {/* Categories */}
           {subcategories.length > 0 && (
-            <View className="flex-row flex-wrap mb-3">
+            <View style={styles.categoriesContainer}>
               {subcategories.slice(0, 2).map((sub, index) => {
-                if (!sub || !sub.subcategorias_empresas_id) {
-                  return null;
-                }
+                if (!sub || !sub.subcategorias_empresas_id) return null;
 
                 return (
                   <View
-                    key={
-                      sub.subcategorias_empresas_id.id || `subcategory-${index}`
-                    }
-                    className="mr-1 mb-1"
+                    key={sub.subcategorias_empresas_id.id || `cat-${index}`}
+                    style={styles.categoryBadge}
                   >
-                    <StatusBadge
-                      status="info"
-                      customLabel={
-                        sub.subcategorias_empresas_id.nome || "Categoria"
-                      }
-                      className="bg-primary-50"
-                      textClassName="text-primary-800"
-                    />
+                    <Text style={styles.categoryText}>
+                      {sub.subcategorias_empresas_id.nome}
+                    </Text>
                   </View>
                 );
               })}
 
               {subcategories.length > 2 && (
-                <StatusBadge
-                  status="info"
-                  customLabel={`+${subcategories.length - 2}`}
-                  className="bg-gray-100"
-                  textClassName="text-gray-700"
-                />
+                <Text style={styles.moreCategories}>
+                  +{subcategories.length - 2}
+                </Text>
               )}
             </View>
           )}
 
+          {/* Address */}
           {profile.endereco && (
-            <View className="flex-row items-center mb-4">
-              <MapPin size={14} color="#6B7280" className="mr-1" />
-              <Text className="text-sm text-gray-600" numberOfLines={1}>
+            <View style={styles.addressContainer}>
+              <MapPin size={14} color="white" />
+              <Text style={styles.addressText} numberOfLines={1}>
                 {profile.endereco}
               </Text>
             </View>
           )}
 
-          <View className="flex-row mt-2">
-            <TouchableOpacity
-              onPress={navigateToCompany}
-              className="bg-primary flex-1 h-10 rounded-lg items-center justify-center flex-row mr-2"
-            >
-              <Text className="text-white font-medium">Ver cardápio</Text>
-              <ChevronRight size={16} color="white" />
-            </TouchableOpacity>
-
-            {profile.whatsapp && (
-              <>
-                <TouchableOpacity
-                  onPress={handlePhoneClick}
-                  className="w-10 h-10 rounded-lg bg-primary-50 items-center justify-center mr-2"
-                >
-                  <Phone size={18} color={THEME_COLORS.primary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleWhatsAppClick}
-                  className="w-10 h-10 rounded-lg bg-green-50 items-center justify-center"
-                >
-                  <MessageCircle size={18} color="#25D366" />
-                </TouchableOpacity>
-              </>
-            )}
+          {/* Opening hours */}
+          <View style={styles.addressContainer}>
+            <Clock size={14} color="white" />
+            <Text style={styles.addressText}>
+              {isOpen ? "Aberto agora" : "Fechado no momento"}
+            </Text>
           </View>
         </View>
-      </Card>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          {/* View Menu Button */}
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={navigateToCompany}
+          >
+            <Text style={styles.primaryButtonText}>Ver cardápio</Text>
+            <ChevronRight size={16} color="white" />
+          </TouchableOpacity>
+
+          {/* Contact Buttons */}
+          {profile.whatsapp && (
+            <View style={styles.contactButtons}>
+              <TouchableOpacity
+                style={styles.phoneButton}
+                onPress={handlePhoneClick}
+              >
+                <Phone size={18} color="white" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.whatsappButton}
+                onPress={handleWhatsAppClick}
+              >
+                <MessageCircle size={18} color="white" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    borderRadius: 16,
+    overflow: "hidden",
+    marginBottom: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    backgroundColor: "#1a1a1a", // Tom mais suave de preto
+  },
+  bannerContainer: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+  },
+  bannerImage: {
+    width: "100%",
+    height: "100%",
+  },
+  fallbackBanner: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#2a2a2a", // Fundo mais suave quando não há banner
+  },
+  gradientOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "rgba(24, 24, 24, 0.4)", // Base adicional para suavizar
+  },
+  contentContainer: {
+    padding: 16,
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
+  topSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+  logoContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "white",
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  logoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  fallbackLogo: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+  },
+  mainInfo: {
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "white",
+    marginBottom: 8,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  categoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 10,
+  },
+  categoryBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+  categoryText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  moreCategories: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 12,
+    marginLeft: 4,
+    alignSelf: "center",
+  },
+  addressContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  addressText: {
+    marginLeft: 6,
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 13,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  primaryButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginRight: 8,
+    justifyContent: "center",
+  },
+  primaryButtonText: {
+    color: "white",
+    fontWeight: "600",
+    marginRight: 4,
+  },
+  contactButtons: {
+    flexDirection: "row",
+  },
+  phoneButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  whatsappButton: {
+    backgroundColor: "#25D36680",
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
