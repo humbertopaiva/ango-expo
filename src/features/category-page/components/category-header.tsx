@@ -1,8 +1,15 @@
-// Path: src/features/category-page/components/category-header.tsx
+// Path: src/features/category-page/components/enhanced-category-header.tsx
 import React from "react";
-import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Platform,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Grid } from "lucide-react-native";
+import { ArrowLeft, Filter } from "lucide-react-native";
 import { router } from "expo-router";
 import { HStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -12,80 +19,86 @@ interface CategoryHeaderProps {
   categoryName: string | null;
   categoryImage: string | null;
   isLoading: boolean;
+  onFilterPress?: () => void;
 }
 
 export function CategoryHeader({
   categoryName,
   categoryImage,
   isLoading,
+  onFilterPress,
 }: CategoryHeaderProps) {
   const handleGoBack = () => {
     router.back();
   };
 
+  // Formata o nome da categoria para exibição
+  const formattedCategoryName = formatCategoryName(categoryName);
+
   if (isLoading) {
     return (
-      <View style={styles.container} className="bg-gray-100">
+      <View style={styles.container} className="bg-white">
         <SafeAreaView edges={["top"]}>
-          <View className="px-4 pt-4 pb-6">
-            <View className="h-6 w-32 bg-gray-200 animate-pulse rounded-md" />
-          </View>
+          <View className="h-6 w-32 bg-gray-200 animate-pulse rounded-md" />
         </SafeAreaView>
       </View>
     );
   }
 
   return (
-    <View style={styles.container} className="bg-primary-500">
+    <View style={styles.container} className="bg-white">
       <SafeAreaView edges={["top"]}>
-        <View className="px-4 pt-2 pb-6">
-          {/* Header com botão de voltar */}
-          <HStack className="items-center mb-3" space="md">
-            <Pressable
-              onPress={handleGoBack}
-              style={({ pressed }) => [
-                {
-                  opacity: pressed ? 0.8 : 1,
-                  width: 36,
-                  height: 36,
-                  borderRadius: 9999,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                },
-              ]}
-            >
-              <ArrowLeft size={20} color="white" />
-            </Pressable>
+        <HStack className="px-4 py-3 items-center justify-between">
+          {/* Parte esquerda: Logo da App */}
+          <Image
+            source={require("@/assets/images/logo-white.png")}
+            style={{ height: 28, width: 90 }}
+            resizeMode="contain"
+            className="opacity-80"
+          />
 
-            <Text className="text-white text-xl font-semibold flex-1 text-center mr-9">
-              {formatCategoryName(categoryName)}
-            </Text>
+          {/* Parte direita: Título "Categorias" */}
+          <Text className="text-primary-600 font-medium">Categorias</Text>
+        </HStack>
+
+        {/* Barra de navegação secundária com nome da categoria */}
+        <HStack className="px-4 py-2 bg-primary-50 items-center justify-between">
+          <HStack space="md" className="items-center flex-1">
+            <TouchableOpacity
+              onPress={handleGoBack}
+              className="p-1 rounded-full"
+            >
+              <ArrowLeft size={18} color={THEME_COLORS.primary} />
+            </TouchableOpacity>
+
+            <HStack space="sm" className="items-center flex-1">
+              {categoryImage ? (
+                <View className="w-6 h-6 rounded-full overflow-hidden bg-white">
+                  <ImagePreview
+                    uri={categoryImage}
+                    width="100%"
+                    height="100%"
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : null}
+
+              <Text className="text-primary-700 font-medium" numberOfLines={1}>
+                {formattedCategoryName}
+              </Text>
+            </HStack>
           </HStack>
 
-          {/* Ícone da categoria */}
-          <View className="items-center justify-center mt-4">
-            <View className="w-20 h-20 rounded-full bg-white/20 items-center justify-center overflow-hidden">
-              {categoryImage ? (
-                <ImagePreview
-                  uri={categoryImage}
-                  width="60%"
-                  height="60%"
-                  resizeMode="contain"
-                  containerClassName="items-center justify-center"
-                />
-              ) : (
-                <Grid size={32} color="white" />
-              )}
-            </View>
-          </View>
-        </View>
+          {onFilterPress && (
+            <TouchableOpacity
+              onPress={onFilterPress}
+              className="p-1 bg-white rounded-full"
+            >
+              <Filter size={16} color={THEME_COLORS.primary} />
+            </TouchableOpacity>
+          )}
+        </HStack>
       </SafeAreaView>
-
-      {/* Elemento decorativo na parte inferior */}
-      <View className="absolute -bottom-5 left-0 right-0">
-        <View className="h-6 bg-white rounded-t-3xl" />
-      </View>
     </View>
   );
 }
@@ -104,20 +117,18 @@ function formatCategoryName(name: string | null): string {
 
 const styles = StyleSheet.create({
   container: {
-    position: "relative",
-    paddingBottom: 5,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowRadius: 3,
       },
       android: {
-        elevation: 3,
+        elevation: 2,
       },
       web: {
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
       },
     }),
   },

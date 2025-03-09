@@ -1,10 +1,11 @@
 // Path: src/features/category-page/screens/category-page.tsx
-import React from "react";
+import React, { useState } from "react";
 import { View } from "react-native";
 import { CategoryPageProvider } from "../contexts/category-page-provider";
 import { CategoryPageContent } from "./category-page-content";
 import { useLocalSearchParams } from "expo-router";
 import { useCategoryDetails } from "../hooks/use-category-details";
+
 import { CategoryHeader } from "../components/category-header";
 
 export function CategoryPage() {
@@ -12,6 +13,7 @@ export function CategoryPage() {
   const { categoryName, categoryImage, isLoading } = useCategoryDetails(
     categorySlug as string
   );
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   if (!categorySlug) {
     return null;
@@ -19,14 +21,19 @@ export function CategoryPage() {
 
   return (
     <View className="flex-1 bg-background">
+      {/* Utilizando o novo header compacto */}
       <CategoryHeader
         categoryName={categoryName}
         categoryImage={categoryImage}
         isLoading={isLoading}
+        onFilterPress={() => setShowFilterModal(true)}
       />
 
       <CategoryPageProvider categorySlug={categorySlug as string}>
-        <CategoryPageContent />
+        <CategoryPageContent
+          showFilterModal={showFilterModal}
+          setShowFilterModal={setShowFilterModal}
+        />
       </CategoryPageProvider>
     </View>
   );
