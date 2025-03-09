@@ -1,4 +1,4 @@
-// Path: src/features/category-page/screens/category-page.tsx (atualizado sem animações)
+// Path: src/features/category-page/screens/category-page.tsx
 import React from "react";
 import { View } from "react-native";
 import { CategoryPageProvider } from "../contexts/category-page-provider";
