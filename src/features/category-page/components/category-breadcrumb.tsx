@@ -15,6 +15,9 @@ export function CategoryBreadcrumb({ categoryName }: CategoryBreadcrumbProps) {
     router.push("/(drawer)/(tabs)/comercio-local");
   };
 
+  // Formata o nome da categoria usando a mesma função que usamos no header
+  const formattedCategoryName = formatCategoryName(categoryName);
+
   return (
     <HStack className="px-4 py-2 items-center flex-wrap">
       <TouchableOpacity onPress={goToHome} className="flex-row items-center">
@@ -31,8 +34,41 @@ export function CategoryBreadcrumb({ categoryName }: CategoryBreadcrumbProps) {
       <ChevronRight size={14} color="#9CA3AF" className="mx-1" />
 
       <Text className="text-xs font-medium text-gray-800" numberOfLines={1}>
-        {categoryName}
+        {formattedCategoryName}
       </Text>
     </HStack>
   );
+}
+
+// Função para formatar o nome da categoria de forma mais amigável
+function formatCategoryName(name: string | null): string {
+  if (!name) return "Categoria";
+
+  // Lista de palavras que devem permanecer em minúsculo (conjunções, preposições, etc.)
+  const lowercaseWords = [
+    "e",
+    "de",
+    "da",
+    "do",
+    "das",
+    "dos",
+    "em",
+    "por",
+    "com",
+    "para",
+  ];
+
+  // Transforma "alimentacao-e-bebidas" em "Alimentação e Bebidas"
+  return name
+    .replace(/-/g, " ")
+    .split(" ")
+    .map((word, index) => {
+      // Se for uma das palavras da lista e não for a primeira palavra
+      if (lowercaseWords.includes(word.toLowerCase()) && index !== 0) {
+        return word.toLowerCase();
+      }
+      // Caso contrário, capitalize a primeira letra
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
 }

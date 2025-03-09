@@ -47,10 +47,10 @@ export function CategoryPageContent({
 
         <Section>
           {/* Barra de pesquisa simplificada - sem botão de filtro */}
-          <View className="bg-gray-100 rounded-xl flex-row items-center px-3 mt-4 mx-4 mb-6">
-            <Search size={20} color="#6B7280" />
+          <View className=" rounded-xl flex-row items-center px-4  mt-4 mx-4 mb-6 bg-white">
+            <Search size={20} color="#6B7280" className="ml-4" />
             <TextInput
-              className="flex-1 py-3 px-2 text-gray-800"
+              className="flex-1 py-3 px-2 text-gray-800 fonts-sans"
               placeholder="Buscar estabelecimentos..."
               value={searchTerm}
               onChangeText={setSearchTerm}
