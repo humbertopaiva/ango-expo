@@ -255,7 +255,7 @@ export function DeliveryScreenContent() {
           <>
             {/* Seção de Vitrines Aprimorada */}
             {companiesWithShowcases && companiesWithShowcases.length > 0 ? (
-              <Section className=" bg-white">
+              <Section className="bg-white" paddingX={0}>
                 <EnhancedDeliveryShowcaseSection
                   companiesWithShowcases={companiesWithShowcases}
                   showcases={showcases}
