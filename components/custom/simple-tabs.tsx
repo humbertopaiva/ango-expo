@@ -1,13 +1,6 @@
-// components/ui/simple-tabs.tsx
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  Platform,
-} from "react-native";
+// Path: components/custom/simple-tabs.tsx
+import React from "react";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 export interface TabItem {
@@ -20,165 +13,81 @@ interface SimpleTabsProps {
   tabs: TabItem[];
   activeTab: string;
   onTabChange: (tabKey: string) => void;
-  fullWidth?: boolean;
-  primaryColor?: string;
-  tabStyle?: "pill" | "underline";
+  tabStyle?: "underline" | "pill" | "button";
 }
 
 export function SimpleTabs({
   tabs,
   activeTab,
   onTabChange,
-  fullWidth = true,
-  primaryColor = THEME_COLORS.primary,
-  tabStyle = "pill",
+  tabStyle = "underline",
 }: SimpleTabsProps) {
-  // Animated value for the indicator
-  const [indicatorPosition] = useState(new Animated.Value(0));
-  const [indicatorWidth] = useState(new Animated.Value(0));
-
-  // Function to handle tab press with animation
-  const handleTabPress = (
-    tabKey: string,
-    index: number,
-    tabWidth: number,
-    tabPosition: number
-  ) => {
-    onTabChange(tabKey);
-
-    // Animate the indicator
-    Animated.parallel([
-      Animated.timing(indicatorPosition, {
-        toValue: tabPosition,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-      Animated.timing(indicatorWidth, {
-        toValue: tabWidth,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-
-  // Measure tab width and position for animation
-  const measureTab = (event: any, tabKey: string, index: number) => {
-    if (tabKey === activeTab) {
-      const { width, x } = event.nativeEvent.layout;
-      indicatorPosition.setValue(x);
-      indicatorWidth.setValue(width);
+  // Estilos com base no tipo de tab
+  const getTabStyles = (isActive: boolean, style: string) => {
+    if (style === "pill") {
+      return {
+        container: isActive
+          ? "bg-primary-500 rounded-full py-2 px-4"
+          : "bg-gray-100 rounded-full py-2 px-4",
+        text: isActive ? "text-white font-medium" : "text-gray-700 font-medium",
+      };
+    } else if (style === "button") {
+      return {
+        container: isActive
+          ? "bg-primary-500 py-2 px-4 rounded-lg"
+          : "bg-white border border-gray-200 py-2 px-4 rounded-lg",
+        text: isActive ? "text-white font-medium" : "text-gray-700 font-medium",
+      };
+    } else {
+      return {
+        container: "py-2 px-4",
+        text: isActive
+          ? "text-primary-600 font-medium"
+          : "text-gray-500 font-medium",
+        underline: isActive ? "border-b-2 border-primary-500" : "",
+      };
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.tabsContainer, fullWidth && styles.fullWidth]}>
-        {tabs.map((tab, index) => {
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ paddingVertical: 8 }}
+    >
+      <View className="flex-row">
+        {tabs.map((tab) => {
           const isActive = tab.key === activeTab;
+          const styles = getTabStyles(isActive, tabStyle);
 
           return (
             <TouchableOpacity
               key={tab.key}
               onPress={() => onTabChange(tab.key)}
-              onLayout={(e) => measureTab(e, tab.key, index)}
-              style={[
-                styles.tab,
-                fullWidth && styles.fullWidthTab,
-                tabStyle === "pill" &&
-                  isActive && {
-                    backgroundColor: isActive
-                      ? `${primaryColor}10`
-                      : "transparent",
-                  },
-              ]}
-              activeOpacity={0.7}
+              className={`mr-2 ${styles.container} ${
+                styles.underline || ""
+              } flex-row items-center`}
             >
-              <Text
-                style={[
-                  styles.tabText,
-                  isActive
-                    ? { color: primaryColor, fontWeight: "600" }
-                    : styles.tabTextInactive,
-                ]}
-              >
-                {tab.title}
-              </Text>
-
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <View style={[styles.badge, { backgroundColor: primaryColor }]}>
-                  <Text style={styles.badgeText}>{tab.badge}</Text>
+              <Text className={styles.text}>{tab.title}</Text>
+              {tab.badge !== undefined && (
+                <View
+                  className={`ml-2 rounded-full px-2 py-0.5 ${
+                    isActive ? "bg-white/20" : "bg-primary-500"
+                  }`}
+                >
+                  <Text
+                    className={`text-xs ${
+                      isActive ? "text-white" : "text-white"
+                    }`} // Path: components/custom/simple-tabs.tsx (continuação)
+                  >
+                    {tab.badge}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
           );
         })}
-
-        {tabStyle === "underline" && (
-          <Animated.View
-            style={[
-              styles.indicator,
-              {
-                backgroundColor: primaryColor,
-                left: indicatorPosition,
-                width: indicatorWidth,
-              },
-            ]}
-          />
-        )}
       </View>
-    </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 8,
-  },
-  tabsContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    borderRadius: 8,
-    overflow: "hidden",
-    position: "relative",
-  },
-  fullWidth: {
-    justifyContent: "space-around",
-  },
-  tab: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fullWidthTab: {
-    flex: 1,
-  },
-  tabText: {
-    fontSize: 14,
-    textAlign: "center",
-  },
-  tabTextInactive: {
-    color: "#6B7280",
-  },
-  badge: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 6,
-  },
-  badgeText: {
-    color: "white",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  indicator: {
-    height: 3,
-    position: "absolute",
-    bottom: 0,
-    borderRadius: 3,
-  },
-});

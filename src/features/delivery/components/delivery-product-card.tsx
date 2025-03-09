@@ -37,7 +37,6 @@ export function DeliveryProductCard({
 
   return (
     <TouchableOpacity onPress={onPress} className="w-64 flex-shrink-0 mr-4">
-      {/* Aplicando altura fixa ao Card */}
       <Card className="border border-gray-200 rounded-xl overflow-hidden h-96">
         {/* Seção da imagem com proporção fixa */}
         <View className="relative" style={{ height: "50%" }}>
@@ -73,7 +72,7 @@ export function DeliveryProductCard({
         {/* Seção do conteúdo com altura fixa e scroll interno se necessário */}
         <View className="p-4 flex-1 justify-between">
           <View>
-            {/* Título com altura máxima fixa */}
+            {/* Título com altura máxima fixa - estilo padronizado */}
             <Text
               className="text-lg font-semibold text-gray-800"
               numberOfLines={2}
@@ -82,7 +81,7 @@ export function DeliveryProductCard({
               {product.nome}
             </Text>
 
-            {/* Descrição com altura máxima fixa */}
+            {/* Descrição com altura máxima fixa - estilo padronizado */}
             <Text
               className="text-sm text-gray-600 mt-1"
               numberOfLines={2}
@@ -92,11 +91,11 @@ export function DeliveryProductCard({
             </Text>
           </View>
 
-          {/* Seção de preço com posicionamento fixo na parte inferior */}
+          {/* Seção de preço com posicionamento fixo na parte inferior - estilo padronizado */}
           <View className="mt-auto">
             {product.preco_promocional ? (
               <>
-                <Text className="text-lg font-bold text-primary-600">
+                <Text className="text-lg font-bold text-primary-500">
                   {formatCurrency(product.preco_promocional)}
                 </Text>
                 <Text className="text-sm text-gray-500 line-through">
@@ -104,7 +103,7 @@ export function DeliveryProductCard({
                 </Text>
               </>
             ) : (
-              <Text className="text-lg font-bold text-primary-600">
+              <Text className="text-lg font-bold text-primary-500">
                 {formatCurrency(product.preco)}
               </Text>
             )}
