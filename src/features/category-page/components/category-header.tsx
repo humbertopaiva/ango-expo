@@ -67,9 +67,9 @@ export function CategoryHeader({
         </HStack>
 
         {/* Barra de navegação secundária com nome da categoria */}
-        <HStack className="px-4 py-3 bg-secondary-500 items-center justify-center">
+        <HStack className="px-4 py-3 bg-secondary-500 items-center">
           <HStack space="md" className="items-center flex-1">
-            <HStack space="sm" className="items-center flex-1 justify-center">
+            <HStack space="sm" className="items-center flex-1 ">
               <Text
                 className="text-white font-semibold text-xl"
                 numberOfLines={1}
