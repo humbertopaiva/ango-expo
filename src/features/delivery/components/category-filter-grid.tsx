@@ -20,7 +20,7 @@ export function CategoryFilterGrid({
   subcategories,
   selectedSubcategories,
   onSelectSubcategory,
-  title = "Categorias",
+  title,
   description,
 }: CategoryFilterGridProps) {
   // Fixo em 3 colunas para mobile

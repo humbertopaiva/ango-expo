@@ -23,6 +23,7 @@ import { DeliveryShowcaseCarousel } from "../components/delivery-showcase-carous
 import { EnhancedDeliveryShowcaseSection } from "../components/enhanced-delivery-showcase-section";
 import { SimpleTabs, TabItem } from "@/components/custom/simple-tabs";
 import { HStack, VStack } from "@gluestack-ui/themed";
+import { PromotionalBanner } from "../../commerce/components/promotional-banner";
 
 // Define the tab keys for easier reference
 const TABS = {
@@ -146,10 +147,11 @@ export function DeliveryScreenContent() {
         }
       >
         {/* Header e Banner */}
-        <Section className="pt-6">
-          <View className="mb-8">
+        <Section className="pt-4">
+          <View className="">
+            <PromotionalBanner />
             {/* Badge estilizada igual ao comércio local */}
-            <HStack className="items-center mb-4">
+            <HStack className="items-center justify-center mb-4">
               <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2">
                 <Truck size={18} color={THEME_COLORS.primary} />
                 <Text className="text-sm font-medium text-primary-600">
@@ -173,32 +175,6 @@ export function DeliveryScreenContent() {
               Encontre os melhores restaurantes e estabelecimentos com entrega
               na sua região
             </Text>
-
-            {/* Barra de pesquisa com botão de filtro */}
-            <View className="flex-row items-center">
-              <View className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-3 z-10"
-                  size={18}
-                  color={THEME_COLORS.primary}
-                />
-                <TextInput
-                  placeholder="Buscar restaurantes, comidas..."
-                  value={searchQuery}
-                  onChangeText={(text) => {
-                    if (setSearchQuery) setSearchQuery(text);
-                  }}
-                  className="h-12 pl-10 pr-4 bg-white border border-gray-200 rounded-lg"
-                />
-              </View>
-
-              <TouchableOpacity
-                className="ml-2 w-12 h-12 bg-primary rounded-lg items-center justify-center"
-                onPress={() => setShowFilters(!showFilters)}
-              >
-                <Filter size={20} color="white" />
-              </TouchableOpacity>
-            </View>
           </View>
         </Section>
 
@@ -216,8 +192,6 @@ export function DeliveryScreenContent() {
                 onSelectSubcategory={(slug) => {
                   if (setSelectedSubcategory) setSelectedSubcategory(slug);
                 }}
-                title="Escolha uma Categoria"
-                description="Filtrar estabelecimentos por tipo de comida"
               />
             )}
 
