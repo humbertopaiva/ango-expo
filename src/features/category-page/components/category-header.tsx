@@ -4,7 +4,7 @@ import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Grid } from "lucide-react-native";
 import { router } from "expo-router";
-import { HStack, VStack } from "@gluestack-ui/themed";
+import { HStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ImagePreview } from "@/components/custom/image-preview";
 
@@ -59,14 +59,13 @@ export function CategoryHeader({
             </Pressable>
 
             <Text className="text-white text-xl font-semibold flex-1 text-center mr-9">
-              Categoria
+              {formatCategoryName(categoryName)}
             </Text>
           </HStack>
 
-          {/* Conteúdo principal */}
-          <HStack className="items-center" space="lg">
-            {/* Ícone da categoria */}
-            <View className="w-16 h-16 rounded-xl bg-white/20 items-center justify-center overflow-hidden">
+          {/* Ícone da categoria */}
+          <View className="items-center justify-center mt-4">
+            <View className="w-20 h-20 rounded-full bg-white/20 items-center justify-center overflow-hidden">
               {categoryImage ? (
                 <ImagePreview
                   uri={categoryImage}
@@ -79,17 +78,7 @@ export function CategoryHeader({
                 <Grid size={32} color="white" />
               )}
             </View>
-
-            {/* Informações da categoria */}
-            <VStack className="flex-1" space="xs">
-              <Text className="text-white text-2xl font-bold">
-                {formatCategoryName(categoryName)}
-              </Text>
-              <Text className="text-white/80 text-sm">
-                Encontre os melhores estabelecimentos
-              </Text>
-            </VStack>
-          </HStack>
+          </View>
         </View>
       </SafeAreaView>
 

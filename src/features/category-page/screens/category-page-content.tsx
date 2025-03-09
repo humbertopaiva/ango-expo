@@ -1,20 +1,13 @@
 // Path: src/features/category-page/screens/category-page-content.tsx
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  Pressable,
-  Platform,
-} from "react-native";
+import { View, Text, ScrollView, TextInput, Pressable } from "react-native";
 import { useCategoryPageContext } from "../contexts/use-category-page-context";
 import { SubcategoriesTabs } from "../components/subcategories-tabs";
 import { CompanyList } from "../components/company-list";
 import { Section } from "@/components/custom/section";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Search, SlidersHorizontal } from "lucide-react-native";
-import { HStack, VStack } from "@gluestack-ui/themed";
+import { HStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ModalFilter } from "../components/modal-filter";
 import { isBusinessOpen } from "../utils/business-hours";
@@ -41,17 +34,6 @@ export function CategoryPageContent() {
         showsVerticalScrollIndicator={false}
       >
         <Section>
-          {/* Cabeçalho da categoria */}
-          <VStack space="md" className="mb-6">
-            <Text className="text-2xl font-semibold text-gray-800">
-              {vm.categoryName || "Carregando..."}
-            </Text>
-            <Text className="text-gray-600">
-              Encontre os melhores estabelecimentos de{" "}
-              {vm.categoryName?.toLowerCase() || "sua categoria"} perto de você.
-            </Text>
-          </VStack>
-
           {/* Barra de pesquisa e filtros */}
           <HStack space="md" className="mb-6">
             <View className="flex-1 bg-gray-100 rounded-xl flex-row items-center px-3">
@@ -87,28 +69,21 @@ export function CategoryPageContent() {
           />
 
           {/* Lista de Empresas */}
-          <View className="mt-6">
+          <View className="mt-6 px-4">
             <View className="mb-4">
-              <Text className="text-lg font-medium text-gray-800">
+              <Text className="text-lg font-semibold text-gray-800">
                 {filteredCompanies.length}{" "}
                 {filteredCompanies.length === 1
                   ? "estabelecimento"
                   : "estabelecimentos"}{" "}
                 encontrados
               </Text>
-              <Text className="text-sm text-gray-500 mt-1">
-                {
-                  filteredCompanies.filter((company) =>
-                    isBusinessOpen(company.perfil)
-                  ).length
-                }{" "}
-                abertos agora
-              </Text>
             </View>
             <CompanyList
               companies={filteredCompanies}
               isLoading={vm.isLoading}
               searchTerm={searchTerm}
+              categoryName={vm.categoryName}
             />
           </View>
         </Section>

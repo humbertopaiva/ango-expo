@@ -4,7 +4,7 @@ import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { CategoryCompany } from "../models/category-company";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { router } from "expo-router";
-import { Store, MapPin, Clock, Phone } from "lucide-react-native";
+import { Store, Clock, ChevronRight } from "lucide-react-native";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { isBusinessOpen, formatBusinessHours } from "../utils/business-hours";
@@ -24,9 +24,9 @@ export function CompanyCard({ company }: CompanyCardProps) {
   // Obter o horário formatado
   const businessHours = formatBusinessHours(company.perfil);
 
-  // Filtrar para pegar apenas 3 subcategorias para exibir
+  // Filtrar para pegar apenas 2 subcategorias para exibir
   const topSubcategories = company.empresa.subcategorias
-    .slice(0, 3)
+    .slice(0, 2)
     .map((relation) => relation.subcategorias_empresas_id);
 
   return (
@@ -36,237 +36,103 @@ export function CompanyCard({ company }: CompanyCardProps) {
         styles.container,
         {
           opacity: pressed ? 0.9 : 1,
-          backgroundColor: "white",
-          borderRadius: 12,
-          padding: 16,
-          marginBottom: 16,
         },
       ]}
     >
-      <HStack space="md">
-        {/* Logo */}
-        <View
-          style={{
-            height: 70,
-            width: 70,
-            borderRadius: 12,
-            overflow: "hidden",
-            borderWidth: 1,
-            borderColor: "#E5E7EB",
-            backgroundColor: "white",
-            position: "relative",
-          }}
-        >
-          {company.perfil.logo ? (
-            <ImagePreview
-              uri={company.perfil.logo}
-              width="100%"
-              height="100%"
-              resizeMode="cover"
-            />
-          ) : (
-            <View
-              style={{
-                width: "100%",
-                height: "100%",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "#F9FAFB",
-              }}
-            >
-              <Store size={24} color={THEME_COLORS.primary} />
-            </View>
-          )}
+      <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-3 overflow-hidden">
+        <View className="p-4">
+          <HStack space="md" className="justify-between">
+            <HStack space="md" className="flex-1">
+              {/* Logo */}
+              <View className="relative">
+                <View className="w-20 h-20 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                  {company.perfil.logo ? (
+                    <ImagePreview
+                      uri={company.perfil.logo}
+                      width="100%"
+                      height="100%"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View className="w-full h-full items-center justify-center">
+                      <Store size={24} color={THEME_COLORS.primary} />
+                    </View>
+                  )}
+                </View>
 
-          {/* Badge de status (Aberto/Fechado) */}
-          <View
-            style={{
-              position: "absolute",
-              bottom: -8,
-              left: "50%",
-              transform: [{ translateX: -30 }],
-              backgroundColor: isOpen ? "#10B981" : "#6B7280",
-              paddingHorizontal: 10,
-              paddingVertical: 2,
-              borderRadius: 999,
-              minWidth: 60,
-              alignItems: "center",
-              ...Platform.select({
-                ios: {
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 1.5,
-                },
-                android: {
-                  elevation: 2,
-                },
-              }),
-            }}
-          >
-            <Text style={{ color: "white", fontSize: 10, fontWeight: "600" }}>
-              {isOpen ? "ABERTO" : "FECHADO"}
-            </Text>
-          </View>
+                {/* Status Dot - Apenas o indicador visual sem texto */}
+                <View
+                  className={`absolute top-0 -right-1 w-4 h-4 rounded-full ${
+                    isOpen ? "bg-green-500" : "bg-gray-500"
+                  } border-2 border-white`}
+                />
+              </View>
+
+              {/* Company Info */}
+              <VStack space="xs" className="flex-1 ml-2">
+                <Text className="text-lg font-semibold text-gray-800">
+                  {company.perfil.nome}
+                </Text>
+
+                {/* Hours */}
+                <HStack space="xs" className="items-center">
+                  <Clock size={12} color="#6B7280" />
+                  <Text className="text-xs text-gray-500">{businessHours}</Text>
+                </HStack>
+
+                {/* Categories */}
+                <HStack className="flex-wrap mt-1">
+                  {topSubcategories.map((subcategory, index) => (
+                    <View
+                      key={subcategory.id}
+                      className={`bg-primary-50 px-2 py-0.5 rounded-full mr-1 mb-1`}
+                    >
+                      <Text className="text-xs text-primary-700">
+                        {subcategory.nome}
+                      </Text>
+                    </View>
+                  ))}
+                  {company.empresa.subcategorias.length > 2 && (
+                    <Text className="text-xs text-gray-500 self-center">
+                      +{company.empresa.subcategorias.length - 2}
+                    </Text>
+                  )}
+                </HStack>
+              </VStack>
+            </HStack>
+
+            {/* Ver perfil button - Minimalista */}
+            <Pressable onPress={navigateToCompany} className="self-center pl-2">
+              <HStack space="xs" className="items-center">
+                <Text className="text-sm text-primary-600 font-medium">
+                  Ver perfil
+                </Text>
+                <ChevronRight size={16} color={THEME_COLORS.primary} />
+              </HStack>
+            </Pressable>
+          </HStack>
         </View>
-
-        {/* Informações */}
-        <VStack space="xs" style={{ flex: 1 }}>
-          <HStack
-            style={{
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "600",
-                color: "#1F2937",
-                flex: 1,
-              }}
-            >
-              {company.perfil.nome}
-            </Text>
-
-            {/* Cor do estabelecimento (se disponível) */}
-            {company.perfil.cor_primaria && (
-              <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: company.perfil.cor_primaria,
-                  marginLeft: 4,
-                }}
-              />
-            )}
-          </HStack>
-
-          {/* Subcategorias como tags */}
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              gap: 4,
-              marginTop: 4,
-            }}
-          >
-            {topSubcategories.map((subcategory) => (
-              <View
-                key={subcategory.id}
-                style={{
-                  backgroundColor: `${THEME_COLORS.primary}10`,
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                  borderRadius: 999,
-                }}
-              >
-                <Text style={{ fontSize: 11, color: THEME_COLORS.primary }}>
-                  {subcategory.nome}
-                </Text>
-              </View>
-            ))}
-
-            {company.empresa.subcategorias.length > 3 && (
-              <Text style={{ fontSize: 11, color: "#6B7280", marginLeft: 4 }}>
-                +{company.empresa.subcategorias.length - 3} mais
-              </Text>
-            )}
-          </View>
-
-          {/* Informações adicionais */}
-          <HStack style={{ marginTop: 8 }}>
-            <View
-              style={{ flex: 1, flexDirection: "row", alignItems: "center" }}
-            >
-              <Clock size={12} color="#6B7280" style={{ marginRight: 4 }} />
-              <Text style={{ fontSize: 11, color: "#6B7280" }}>
-                {businessHours}
-              </Text>
-            </View>
-
-            {/* Delivery badge */}
-            {company.empresa.subcategorias.some(
-              (sub) => sub.subcategorias_empresas_id.slug === "delivery"
-            ) && (
-              <View
-                style={{
-                  backgroundColor: `${THEME_COLORS.primary}10`,
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                  borderRadius: 999,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 11,
-                    color: THEME_COLORS.primary,
-                    fontWeight: "500",
-                  }}
-                >
-                  Delivery
-                </Text>
-              </View>
-            )}
-          </HStack>
-
-          {/* Linha de adicionais em forma de ícones */}
-          {company.perfil.adicionais &&
-            company.perfil.adicionais.length > 0 && (
-              <View
-                style={{ flexDirection: "row", marginTop: 4, flexWrap: "wrap" }}
-              >
-                {company.perfil.adicionais.includes("wifi") && (
-                  <View style={styles.additionalBadge}>
-                    <Text style={styles.additionalText}>WiFi</Text>
-                  </View>
-                )}
-                {company.perfil.adicionais.includes("estacionamento") && (
-                  <View style={styles.additionalBadge}>
-                    <Text style={styles.additionalText}>Estacionamento</Text>
-                  </View>
-                )}
-                {company.perfil.adicionais.includes("retirada") && (
-                  <View style={styles.additionalBadge}>
-                    <Text style={styles.additionalText}>Retirada</Text>
-                  </View>
-                )}
-              </View>
-            )}
-        </VStack>
-      </HStack>
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    marginHorizontal: 4,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowRadius: 3,
       },
       android: {
         elevation: 2,
       },
       web: {
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.12)",
       },
     }),
-  },
-  additionalBadge: {
-    backgroundColor: "#F3F4F6",
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
-    marginRight: 4,
-    marginBottom: 2,
-  },
-  additionalText: {
-    fontSize: 9,
-    color: "#6B7280",
   },
 });
