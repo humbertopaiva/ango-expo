@@ -1,4 +1,5 @@
-// Path: src/utils/date.utils.ts
+// Atualização da função em Path: src/utils/date.utils.ts
+// Adicione ou atualize a função formatDateToTimeString:
 
 /**
  * Formata uma string de hora no formato "HH:MM" para exibição
@@ -25,49 +26,4 @@ export const formatDateToTimeString = (timeString: string): string => {
     console.error("Erro ao formatar hora:", error);
     return timeString;
   }
-};
-
-/**
- * Verifica se uma data é hoje
- * @param date Data a ser verificada
- * @returns true se a data for hoje, false caso contrário
- */
-export const isToday = (date: Date): boolean => {
-  const today = new Date();
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  );
-};
-
-/**
- * Formata uma data para exibição relativa (hoje, ontem, etc.)
- * @param date Data a ser formatada
- * @returns String formatada
- */
-export const formatRelativeDate = (date: Date): string => {
-  if (isToday(date)) {
-    return `Hoje, ${date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
-  }
-
-  // Verifica se é ontem
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear()
-  ) {
-    return `Ontem, ${date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
-  }
-
-  // Para outras datas
-  return date.toLocaleDateString();
 };

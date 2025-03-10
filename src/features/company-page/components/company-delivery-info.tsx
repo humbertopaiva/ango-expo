@@ -3,17 +3,13 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Clock, DollarSign, ChevronRight } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
-import { Card } from "@gluestack-ui/themed";
+import { Card, HStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 interface CompanyDeliveryInfoProps {
   onMoreInfoPress: () => void;
 }
 
-/**
- * Componente simplificado e minimalista para exibir informações essenciais de entrega
- * com as informações principais alinhadas horizontalmente
- */
 export function CompanyDeliveryInfo({
   onMoreInfoPress,
 }: CompanyDeliveryInfoProps) {
@@ -44,13 +40,18 @@ export function CompanyDeliveryInfo({
       activeOpacity={0.8}
     >
       <Card className="p-4 rounded-xl border border-gray-100 shadow-sm">
-        {/* Cabeçalho com texto e ícone */}
-        <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-base font-semibold text-gray-800">
-            Informações de Entrega
-          </Text>
-          <ChevronRight size={20} color="#9CA3AF" />
-        </View>
+        <HStack className="items-center justify-between mb-3">
+          <Text className="text-lg font-semibold text-gray-800">Delivery</Text>
+          <View className="flex-row items-center">
+            <Text
+              className="text-primary-500 font-medium mr-1"
+              style={{ color: primaryColor }}
+            >
+              Ver detalhes
+            </Text>
+            <ChevronRight size={16} color={primaryColor} />
+          </View>
+        </HStack>
 
         {/* Informações principais alinhadas horizontalmente */}
         <View className="flex-row justify-between items-center">
