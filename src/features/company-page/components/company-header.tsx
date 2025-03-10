@@ -1,5 +1,5 @@
-// Path: src/features/company-page/components/-company-header.tsx
-import React, { useState } from "react";
+// Path: src/features/company-page/components/company-header.tsx
+import React from "react";
 import { View, Text, TouchableOpacity, Linking, Platform } from "react-native";
 import {
   Phone,
@@ -7,26 +7,24 @@ import {
   MapPin,
   Clock,
   ChevronDown,
-  ChevronUp,
   Store,
-  Instagram,
-  Facebook,
-  Mail,
-  ExternalLink,
+  Info,
 } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { Card, HStack, VStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
-import { formatSocialUrl } from "@/src/utils/social.utils";
 import { LinearGradient } from "expo-linear-gradient";
+
+interface CompanyHeaderProps {
+  onMoreInfoPress?: () => void;
+}
 
 /**
  * Componente de cabeçalho aprimorado para a página da empresa
  * Inclui banner, logo, informações básicas e botões de contato
  */
-export function CompanyHeader() {
+export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
   const vm = useCompanyPageContext();
-  const [showMoreInfo, setShowMoreInfo] = useState(false);
 
   if (!vm.profile) return null;
 
@@ -88,31 +86,6 @@ export function CompanyHeader() {
     }
   };
 
-  const handleSocialLink = async (socialType: string, url: string) => {
-    if (!url) return;
-
-    try {
-      let formattedUrl = url;
-
-      // Formatar a URL conforme o tipo de rede social
-      if (socialType === "instagram") {
-        formattedUrl = formatSocialUrl("instagram", url);
-      } else if (socialType === "facebook") {
-        formattedUrl = formatSocialUrl("facebook", url);
-      }
-
-      await Linking.openURL(formattedUrl);
-    } catch (error) {
-      console.error("Erro ao abrir link:", error);
-    }
-  };
-
-  const handleEmailPress = async () => {
-    if (vm.profile?.email) {
-      await Linking.openURL(`mailto:${vm.profile.email}`);
-    }
-  };
-
   const handleMapPress = async () => {
     if (!vm.profile?.endereco) return;
 
@@ -125,52 +98,6 @@ export function CompanyHeader() {
     } else {
       Linking.openURL(`https://maps.google.com/?q=${address}`);
     }
-  };
-
-  const renderSocialIcons = () => {
-    const icons = [];
-
-    if (vm.profile?.instagram) {
-      icons.push(
-        <TouchableOpacity
-          key="instagram"
-          onPress={() =>
-            handleSocialLink("instagram", vm.profile?.instagram || "")
-          }
-          className="w-9 h-9 rounded-full bg-pink-100 items-center justify-center mr-2"
-        >
-          <Instagram size={18} color="#E1306C" />
-        </TouchableOpacity>
-      );
-    }
-
-    if (vm.profile?.facebook) {
-      icons.push(
-        <TouchableOpacity
-          key="facebook"
-          onPress={() =>
-            handleSocialLink("facebook", vm.profile?.facebook || "")
-          }
-          className="w-9 h-9 rounded-full bg-blue-100 items-center justify-center mr-2"
-        >
-          <Facebook size={18} color="#1877F2" />
-        </TouchableOpacity>
-      );
-    }
-
-    if (vm.profile?.email) {
-      icons.push(
-        <TouchableOpacity
-          key="email"
-          onPress={handleEmailPress}
-          className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center mr-2"
-        >
-          <Mail size={18} color="#6B7280" />
-        </TouchableOpacity>
-      );
-    }
-
-    return icons;
   };
 
   // Definir estilos baseados na cor primária da empresa
@@ -227,6 +154,18 @@ export function CompanyHeader() {
           {statusText}
         </Text>
       </View>
+
+      {/* Botão de mais informações */}
+      {onMoreInfoPress && (
+        <View className="absolute top-4 left-4">
+          <TouchableOpacity
+            onPress={onMoreInfoPress}
+            className="p-2 bg-white/80 rounded-full shadow-sm"
+          >
+            <Info size={22} color={primaryColor} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Conteúdo principal */}
       <View className="px-4 -mt-16 relative z-10">
@@ -301,24 +240,18 @@ export function CompanyHeader() {
             )}
 
             <TouchableOpacity
-              onPress={() => setShowMoreInfo(!showMoreInfo)}
+              onPress={onMoreInfoPress}
               className="flex-1 flex-row items-center justify-center py-2 px-3 bg-gray-100 rounded-lg"
             >
-              {showMoreInfo ? (
-                <ChevronUp size={18} color="#6B7280" />
-              ) : (
-                <ChevronDown size={18} color="#6B7280" />
-              )}
-              <Text className="ml-1 font-medium text-gray-700">
-                {showMoreInfo ? "Menos" : "Mais"}
-              </Text>
+              <Info size={18} color="#6B7280" />
+              <Text className="ml-1 font-medium text-gray-700">Mais info</Text>
             </TouchableOpacity>
           </HStack>
 
-          {/* Mais informações - Exibir apenas quando showMoreInfo for true */}
-          {showMoreInfo && (
-            <View className="mt-4 pt-4 border-t border-gray-100">
-              {/* Endereço */}
+          {/* Informações básicas */}
+          <View className="mt-4 pt-4 border-t border-gray-100">
+            {/* Endereço */}
+            {vm.profile.endereco && (
               <TouchableOpacity
                 className="flex-row items-center mb-3"
                 onPress={handleMapPress}
@@ -334,35 +267,22 @@ export function CompanyHeader() {
                     Abrir no mapa
                   </Text>
                 </View>
-                <ExternalLink size={14} color="#6B7280" />
               </TouchableOpacity>
+            )}
 
-              {/* Horário */}
-              <View className="flex-row items-center mb-3">
-                <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-2">
-                  <Clock size={16} color="#6B7280" />
-                </View>
-                <View>
-                  <Text className="text-gray-800">{formatHorario()}</Text>
-                  <Text className="text-xs text-gray-500">
-                    {vm.getFormattedWorkingHours()}
-                  </Text>
-                </View>
+            {/* Horário */}
+            <View className="flex-row items-center">
+              <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-2">
+                <Clock size={16} color="#6B7280" />
               </View>
-
-              {/* Redes sociais */}
-              {(vm.profile.instagram ||
-                vm.profile.facebook ||
-                vm.profile.email) && (
-                <View className="flex-row items-center">
-                  <Text className="text-sm font-medium text-gray-700 mr-2">
-                    Redes sociais:
-                  </Text>
-                  <HStack>{renderSocialIcons()}</HStack>
-                </View>
-              )}
+              <View>
+                <Text className="text-gray-800">{formatHorario()}</Text>
+                <Text className="text-xs text-gray-500">
+                  {vm.getFormattedWorkingHours()}
+                </Text>
+              </View>
             </View>
-          )}
+          </View>
         </Card>
       </View>
     </View>
