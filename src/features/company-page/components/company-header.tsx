@@ -92,7 +92,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
   const statusText = open ? "Aberto agora" : "Fechado";
 
   return (
-    <View className="relative mb-4">
+    <View className="relative mb-4" style={{ backgroundColor: primaryColor }}>
       {/* Banner */}
       <View className="h-[180px] w-full relative overflow-hidden">
         <ImagePreview

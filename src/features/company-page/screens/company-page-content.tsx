@@ -31,7 +31,7 @@ export function CompanyPageContent() {
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        <View>
+        <View style={{ backgroundColor: vm.primaryColor }}>
           {/* Cabeçalho da empresa com banner, logo e informações */}
           <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
 
