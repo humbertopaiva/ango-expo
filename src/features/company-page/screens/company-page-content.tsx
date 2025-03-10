@@ -1,13 +1,15 @@
-// src/features/company-page/screens/company-page-content.tsx
+// Path: src/features/company-page/screens/enhanced-company-page-content.tsx
 import React from "react";
-import { View, Text, ScrollView } from "react-native";
-import { CompanyHeader } from "../components/company-header";
-import { CompanyProductsGrid } from "../components/company-products-grid";
-import { CompanyShowcase } from "../components/company-showcase";
-import { CompanyDeliveryInfo } from "../components/company-delivery-info";
+import { View, ScrollView } from "react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
-import { ContentContainer } from "@/components/custom/content-container";
+import { FeaturedProducts } from "../components/featured-products";
+import { CompanyDeliveryInfo } from "../components/company-delivery-info";
+import { CompanyHeader } from "../components/company-header";
+import { ProductsGrid } from "../components/company-products-grid";
 
+/**
+ * Conteúdo principal da página da empresa com layout aprimorado
+ */
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
 
@@ -15,34 +17,28 @@ export function CompanyPageContent() {
     <ScrollView
       className="flex-1 bg-gray-50"
       contentContainerStyle={{ paddingBottom: 80 }}
+      showsVerticalScrollIndicator={false}
     >
-      <View className="space-y-6">
-        {/* Header with company info */}
+      <View>
+        {/* Cabeçalho da empresa com banner, logo e informações */}
         <CompanyHeader />
 
-        {/* Delivery information */}
+        {/* Informações de entrega (se a empresa oferecer) */}
         {vm.hasDelivery() && <CompanyDeliveryInfo />}
 
-        {/* Showcase Products */}
-        {vm.showcaseProducts.length > 0 && (
-          <View className="mt-6">
-            <CompanyShowcase
-              products={vm.showcaseProducts}
-              isLoading={vm.isLoading}
-            />
-          </View>
+        {/* Produtos em destaque (da vitrine) */}
+        {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
+          <FeaturedProducts />
         )}
 
-        {/* All Products Grid */}
-        <View className="mt-6 mb-8">
-          <Text className="text-xl font-semibold mx-4 mb-4">
-            Todos os Produtos
-          </Text>
-          <CompanyProductsGrid
-            products={vm.products}
-            isLoading={vm.isLoading}
-          />
-        </View>
+        {/* Grade de todos os produtos com pesquisa e filtros */}
+        <ProductsGrid
+          title="Todos os Produtos"
+          onProductPress={(product) => {
+            // Aqui você pode implementar a navegação para a página de detalhes do produto
+            console.log("Produto selecionado:", product.nome);
+          }}
+        />
       </View>
     </ScrollView>
   );
