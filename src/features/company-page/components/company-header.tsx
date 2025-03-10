@@ -1,15 +1,7 @@
 // Path: src/features/company-page/components/company-header.tsx
 import React from "react";
 import { View, Text, TouchableOpacity, Linking, Platform } from "react-native";
-import {
-  Phone,
-  MessageCircle,
-  MapPin,
-  Clock,
-  ChevronDown,
-  Store,
-  Info,
-} from "lucide-react-native";
+import { Info, Store, MessageCircle } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { Card, HStack, VStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
@@ -19,10 +11,6 @@ interface CompanyHeaderProps {
   onMoreInfoPress?: () => void;
 }
 
-/**
- * Componente de cabeçalho aprimorado para a página da empresa
- * Inclui banner, logo, informações básicas e botões de contato
- */
 export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
   const vm = useCompanyPageContext();
 
@@ -71,14 +59,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
     );
   };
 
-  const handlePhoneCall = async () => {
-    if (vm.profile?.telefone) {
-      const phoneNumber = vm.profile?.telefone.replace(/\D/g, "");
-      const phoneUrl = `tel:${phoneNumber}`;
-      await Linking.openURL(phoneUrl);
-    }
-  };
-
+  // Handler para WhatsApp
   const handleWhatsApp = async () => {
     const whatsappLink = vm.getWhatsAppLink();
     if (whatsappLink) {
@@ -86,34 +67,10 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
     }
   };
 
-  const handleMapPress = async () => {
-    if (!vm.profile?.endereco) return;
-
-    const address = encodeURIComponent(vm.profile.endereco);
-
-    if (Platform.OS === "ios") {
-      Linking.openURL(`maps://?q=${address}`);
-    } else if (Platform.OS === "android") {
-      Linking.openURL(`geo:0,0?q=${address}`);
-    } else {
-      Linking.openURL(`https://maps.google.com/?q=${address}`);
-    }
-  };
-
   // Definir estilos baseados na cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
   const statusColor = isOpen() ? "#22C55E" : "#EF4444"; // Verde se aberto, vermelho se fechado
   const statusText = isOpen() ? "Aberto agora" : "Fechado";
-
-  // Formatar horário de funcionamento
-  const formatHorario = () => {
-    if (!vm.profile?.horario_funcionamento) return "Horário não informado";
-
-    const { abertura, fechamento } = vm.profile?.horario_funcionamento;
-    if (!abertura || !fechamento) return "Horário não informado";
-
-    return `${abertura} às ${fechamento}`;
-  };
 
   return (
     <View className="relative mb-4">
@@ -210,78 +167,31 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
           </HStack>
 
           {/* Botões de ação */}
-          <HStack className="mt-4 mb-1" space="md">
-            {vm.profile.telefone && (
-              <TouchableOpacity
-                onPress={handlePhoneCall}
-                className="flex-1 flex-row items-center justify-center py-2 px-3 bg-primary-50 rounded-lg"
-                style={{ backgroundColor: `${primaryColor}15` }}
-              >
-                <Phone size={18} color={primaryColor} />
-                <Text
-                  className="ml-2 font-medium"
-                  style={{ color: primaryColor }}
-                >
-                  Ligar
-                </Text>
-              </TouchableOpacity>
-            )}
-
+          <View className="flex-row mt-4 gap-2">
+            {/* WhatsApp (apenas se disponível) */}
             {vm.profile.whatsapp && (
               <TouchableOpacity
                 onPress={handleWhatsApp}
-                className="flex-1 flex-row items-center justify-center py-2 px-3 bg-green-50 rounded-lg"
+                className="flex-1 py-3 bg-green-500 rounded-lg flex-row justify-center items-center"
               >
-                <MessageCircle size={18} color="#22C55E" />
-                <Text className="ml-2 font-medium text-green-600">
-                  WhatsApp
-                </Text>
+                <MessageCircle size={18} color="white" />
+                <Text className="ml-2 font-medium text-white">WhatsApp</Text>
               </TouchableOpacity>
             )}
 
+            {/* Mais informações */}
             <TouchableOpacity
               onPress={onMoreInfoPress}
-              className="flex-1 flex-row items-center justify-center py-2 px-3 bg-gray-100 rounded-lg"
+              className="flex-1 py-3 bg-gray-50 rounded-lg flex-row justify-center items-center"
             >
-              <Info size={18} color="#6B7280" />
-              <Text className="ml-1 font-medium text-gray-700">Mais info</Text>
-            </TouchableOpacity>
-          </HStack>
-
-          {/* Informações básicas */}
-          <View className="mt-4 pt-4 border-t border-gray-100">
-            {/* Endereço */}
-            {vm.profile.endereco && (
-              <TouchableOpacity
-                className="flex-row items-center mb-3"
-                onPress={handleMapPress}
+              <Info size={18} color={primaryColor} />
+              <Text
+                className="ml-2 font-medium"
+                style={{ color: primaryColor }}
               >
-                <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-2">
-                  <MapPin size={16} color="#6B7280" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-gray-800">
-                    {vm.getFormattedAddress()}
-                  </Text>
-                  <Text className="text-xs text-primary-600">
-                    Abrir no mapa
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-
-            {/* Horário */}
-            <View className="flex-row items-center">
-              <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-2">
-                <Clock size={16} color="#6B7280" />
-              </View>
-              <View>
-                <Text className="text-gray-800">{formatHorario()}</Text>
-                <Text className="text-xs text-gray-500">
-                  {vm.getFormattedWorkingHours()}
-                </Text>
-              </View>
-            </View>
+                Informações
+              </Text>
+            </TouchableOpacity>
           </View>
         </Card>
       </View>
