@@ -32,6 +32,8 @@ import {
   ShieldCheck,
   DollarSign,
   Info,
+  Check,
+  X as XIcon,
 } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { formatSocialUrl } from "@/src/utils/social.utils";
@@ -66,24 +68,13 @@ export function CompanyInfoModal({
     });
   };
 
-  // Formatar dias da semana
-  const formatWeekdays = (days: string[] = []) => {
-    if (!days || days.length === 0) return "Não informado";
-
-    const weekdayMap: Record<string, string> = {
-      domingo: "Domingo",
-      segunda: "Segunda",
-      terca: "Terça",
-      quarta: "Quarta",
-      quinta: "Quinta",
-      sexta: "Sexta",
-      sabado: "Sábado",
-    };
-
-    // Se todos os dias estiverem presentes
-    if (days.length === 7) return "Todos os dias";
-
-    return days.map((day) => weekdayMap[day.toLowerCase()] || day).join(", ");
+  // Função para formatar o horário (remover segundos)
+  const formatTime = (time?: string): string => {
+    if (!time) return "--:--";
+    if (time.includes(":")) {
+      return time.substring(0, 5); // apenas "HH:MM"
+    }
+    return time;
   };
 
   // Manipuladores para links e ações
@@ -143,6 +134,17 @@ export function CompanyInfoModal({
 
   // Verificar se existem redes sociais
   const hasSocialNetworks = profile.instagram || profile.facebook;
+
+  // Dias da semana para exibição
+  const days = [
+    { key: "domingo", name: "Domingo" },
+    { key: "segunda", name: "Segunda-feira" },
+    { key: "terca", name: "Terça-feira" },
+    { key: "quarta", name: "Quarta-feira" },
+    { key: "quinta", name: "Quinta-feira" },
+    { key: "sexta", name: "Sexta-feira" },
+    { key: "sabado", name: "Sábado" },
+  ];
 
   return (
     <Modal isOpen={isVisible} onClose={onClose} avoidKeyboard size="full">
@@ -217,30 +219,50 @@ export function CompanyInfoModal({
                 color={primaryColor}
               />
 
-              <Box className="bg-gray-50 rounded-lg px-4 py-3">
-                <HStack className="mb-2">
-                  <View className="w-6">
-                    <Calendar size={16} color="#6B7280" />
-                  </View>
-                  <Text className="text-gray-700">
-                    {formatWeekdays(profile.dias_funcionamento || [])}
-                  </Text>
-                </HStack>
+              <Box className="bg-gray-50 rounded-lg p-4">
+                {days.map((day) => {
+                  const isOpenDay = profile.dias_funcionamento?.includes(
+                    day.key
+                  );
+                  const openTimeKey = `abertura_${day.key}`;
+                  const closeTimeKey = `fechamento_${day.key}`;
 
-                <HStack>
-                  <View className="w-6">
-                    <Clock size={16} color="#6B7280" />
-                  </View>
-                  <Text className="text-gray-700">
-                    {profile.horario_funcionamento
-                      ? `${formatDateToTimeString(
-                          profile.horario_funcionamento.abertura
-                        )} às ${formatDateToTimeString(
-                          profile.horario_funcionamento.fechamento
-                        )}`
-                      : "Horário não informado"}
-                  </Text>
-                </HStack>
+                  // Acesse as propriedades de forma segura
+                  const openTime = profile[openTimeKey as keyof typeof profile];
+                  const closeTime =
+                    profile[closeTimeKey as keyof typeof profile];
+
+                  return (
+                    <HStack
+                      key={day.key}
+                      className="justify-between py-1.5 items-center"
+                    >
+                      <Text className="text-gray-700 font-medium">
+                        {day.name}
+                      </Text>
+                      <HStack className="items-center" space="sm">
+                        {isOpenDay ? (
+                          <>
+                            <Text className="text-gray-600">
+                              {formatTime(openTime as string)} -{" "}
+                              {formatTime(closeTime as string)}
+                            </Text>
+                            <View className="bg-green-100 p-1 rounded-full ml-2">
+                              <Check size={12} color="#22C55E" />
+                            </View>
+                          </>
+                        ) : (
+                          <>
+                            <Text className="text-gray-400">Fechado</Text>
+                            <View className="bg-red-100 p-1 rounded-full ml-2">
+                              <XIcon size={12} color="#EF4444" />
+                            </View>
+                          </>
+                        )}
+                      </HStack>
+                    </HStack>
+                  );
+                })}
               </Box>
             </VStack>
 
@@ -359,7 +381,7 @@ export function CompanyInfoModal({
                     >
                       <Phone size={18} color="#6B7280" />
                       <View className="ml-3">
-                        <Text className="text-gray-500 text-xs">Telefone</Text>
+                        <Text className="text-sm text-gray-500">Telefone</Text>
                         <Text className="text-gray-800 font-medium">
                           {profile.telefone}
                         </Text>
@@ -375,7 +397,7 @@ export function CompanyInfoModal({
                     >
                       <MessageCircle size={18} color="#25D366" />
                       <View className="ml-3">
-                        <Text className="text-gray-500 text-xs">WhatsApp</Text>
+                        <Text className="text-sm text-gray-500">WhatsApp</Text>
                         <Text className="text-gray-800 font-medium">
                           {profile.whatsapp}
                         </Text>
@@ -391,7 +413,7 @@ export function CompanyInfoModal({
                     >
                       <Mail size={18} color="#6B7280" />
                       <View className="ml-3">
-                        <Text className="text-gray-500 text-xs">Email</Text>
+                        <Text className="text-sm text-gray-500">Email</Text>
                         <Text className="text-gray-800 font-medium">
                           {profile.email}
                         </Text>
@@ -425,7 +447,10 @@ export function CompanyInfoModal({
                         Instagram
                       </Text>
                       <Text className="text-gray-700 font-medium mt-1">
-                        @{profile.instagram.replace(/^@/, "")}
+                        @
+                        {profile.instagram
+                          .replace(/^@/, "")
+                          .replace(/.*\//, "")}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -443,7 +468,7 @@ export function CompanyInfoModal({
                         Facebook
                       </Text>
                       <Text className="text-gray-700 font-medium mt-1">
-                        {profile.facebook.replace(/^@/, "")}
+                        {profile.facebook.replace(/^@/, "").replace(/.*\//, "")}
                       </Text>
                     </TouchableOpacity>
                   )}

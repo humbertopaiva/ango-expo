@@ -16,49 +16,6 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
 
   if (!vm.profile) return null;
 
-  // Função para verificar se o estabelecimento está aberto
-  const isOpen = () => {
-    if (!vm.profile?.horario_funcionamento) return false;
-
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTime = currentHour * 60 + currentMinute; // Tempo atual em minutos
-
-    // Mapeamento dos dias da semana
-    const dayMapping: Record<string, number> = {
-      domingo: 0,
-      segunda: 1,
-      terca: 2,
-      quarta: 3,
-      quinta: 4,
-      sexta: 5,
-      sabado: 6,
-    };
-
-    // Verificar se o dia atual está entre os dias de funcionamento
-    const isWorkingDay = vm.profile?.dias_funcionamento?.some(
-      (dia) => dayMapping[dia.toLowerCase()] === currentDay
-    );
-
-    if (!isWorkingDay) return false;
-
-    // Verificar se o horário atual está dentro do horário de funcionamento
-    const horarios = vm.profile?.horario_funcionamento;
-    if (!horarios || !horarios.abertura || !horarios.fechamento) return false;
-
-    const [abreHora, abreMinuto] = horarios.abertura.split(":").map(Number);
-    const [fechaHora, fechaMinuto] = horarios.fechamento.split(":").map(Number);
-
-    const aberturaEmMinutos = abreHora * 60 + abreMinuto;
-    const fechamentoEmMinutos = fechaHora * 60 + fechaMinuto;
-
-    return (
-      currentTime >= aberturaEmMinutos && currentTime < fechamentoEmMinutos
-    );
-  };
-
   // Handler para WhatsApp
   const handleWhatsApp = async () => {
     const whatsappLink = vm.getWhatsAppLink();
@@ -67,10 +24,72 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
     }
   };
 
+  // Verificar se o estabelecimento está aberto
+  const isOpen = () => {
+    if (!vm.profile?.dias_funcionamento) return false;
+
+    const now = new Date();
+    const currentDay = now.getDay(); // 0 = Domingo, 6 = Sábado
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+    // Mapear o dia da semana em JavaScript para o formato usado na API
+    const dayMapping = [
+      "domingo",
+      "segunda",
+      "terca",
+      "quarta",
+      "quinta",
+      "sexta",
+      "sabado",
+    ];
+    const dayKey = dayMapping[currentDay];
+
+    // Verificar se o dia atual está na lista de dias de funcionamento
+    if (!vm.profile.dias_funcionamento.includes(dayKey)) {
+      return false;
+    }
+
+    // Obter o horário de abertura e fechamento para o dia atual
+    const openTimeKey = `abertura_${dayKey}`;
+    const closeTimeKey = `fechamento_${dayKey}`;
+
+    const openTimeString = vm.profile[
+      openTimeKey as keyof typeof vm.profile
+    ] as string | undefined;
+    const closeTimeString = vm.profile[
+      closeTimeKey as keyof typeof vm.profile
+    ] as string | undefined;
+
+    if (!openTimeString || !closeTimeString) {
+      return false;
+    }
+
+    // Converter os horários para minutos a partir de meia-noite
+    function timeStringToMinutes(timeString: string): number {
+      // Exemplo: "09:00:00" -> 540 minutos (9 horas * 60)
+      const parts = timeString.split(":");
+      const hours = parseInt(parts[0], 10);
+      const minutes = parseInt(parts[1], 10);
+      return hours * 60 + minutes;
+    }
+
+    const openTimeMinutes = timeStringToMinutes(openTimeString);
+    const closeTimeMinutes = timeStringToMinutes(closeTimeString);
+
+    // Verificar se o horário atual está dentro do horário de funcionamento
+    return (
+      currentTimeInMinutes >= openTimeMinutes &&
+      currentTimeInMinutes <= closeTimeMinutes
+    );
+  };
+
   // Definir estilos baseados na cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
-  const statusColor = isOpen() ? "#22C55E" : "#EF4444"; // Verde se aberto, vermelho se fechado
-  const statusText = isOpen() ? "Aberto agora" : "Fechado";
+  const open = isOpen();
+  const statusColor = open ? "#22C55E" : "#EF4444"; // Verde se aberto, vermelho se fechado
+  const statusText = open ? "Aberto agora" : "Fechado";
 
   return (
     <View className="relative mb-4">

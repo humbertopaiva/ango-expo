@@ -13,6 +13,20 @@ export interface CompanyProfile {
     abertura: string; // Formato "HH:MM"
     fechamento: string; // Formato "HH:MM"
   };
+  abertura_segunda?: string;
+  fechamento_segunda?: string;
+  abertura_terca?: string;
+  fechamento_terca?: string;
+  abertura_quarta?: string;
+  fechamento_quarta?: string;
+  abertura_quinta?: string;
+  fechamento_quinta?: string;
+  abertura_sexta?: string;
+  fechamento_sexta?: string;
+  abertura_sabado?: string;
+  fechamento_sabado?: string;
+  abertura_domingo?: string;
+  fechamento_domingo?: string;
   opcoes_pagamento: Array<{
     tipo: string;
     ativo: boolean;
