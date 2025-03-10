@@ -16,6 +16,7 @@ import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
+import { getContrastColor } from "@/src/utils/color.utils";
 
 interface AdaptiveProductCardProps {
   product: CompanyProduct;
@@ -72,6 +73,8 @@ export function AdaptiveProductCard({
     cartVm.addProduct(product, vm.profile.empresa.slug, vm.profile.nome);
   };
 
+  const contrastTextColor = getContrastColor(vm.primaryColor || "#F4511E");
+
   // Destacar card para delivery
   if (isDeliveryPlan && isHighlighted) {
     // Proporção 4:3
@@ -119,7 +122,7 @@ export function AdaptiveProductCard({
             className="absolute bottom-4 right-4 rounded-full p-3 z-10"
             style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
           >
-            <ShoppingBag size={24} color="white" />
+            <ShoppingBag size={24} color={contrastTextColor} />
           </TouchableOpacity>
 
           {/* Conteúdo do card */}

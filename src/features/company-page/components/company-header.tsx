@@ -92,7 +92,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
   const statusText = open ? "Aberto agora" : "Fechado";
 
   return (
-    <View className="relative mb-4" style={{ backgroundColor: primaryColor }}>
+    <View className="relative mb-4">
       {/* Banner */}
       <View className="h-[180px] w-full relative overflow-hidden">
         <ImagePreview
@@ -130,18 +130,6 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
           {statusText}
         </Text>
       </View>
-
-      {/* Botão de mais informações */}
-      {onMoreInfoPress && (
-        <View className="absolute top-4 left-4">
-          <TouchableOpacity
-            onPress={onMoreInfoPress}
-            className="p-2 bg-white/80 rounded-full shadow-sm"
-          >
-            <Info size={22} color={primaryColor} />
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Conteúdo principal */}
       <View className="px-4 -mt-16 relative z-10">

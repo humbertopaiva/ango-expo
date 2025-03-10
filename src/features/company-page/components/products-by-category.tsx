@@ -231,7 +231,7 @@ export function ProductsByCategory({
   const hasCategories = Object.keys(categoryProducts).length > 0;
 
   return (
-    <View className="mb-8 bg-background-100">
+    <View className="mb-8">
       {/* Header e barra de pesquisa */}
       <View className="px-4 mb-4">
         <HStack className="items-center justify-between mb-2">

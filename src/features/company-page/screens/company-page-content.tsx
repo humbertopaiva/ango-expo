@@ -31,7 +31,7 @@ export function CompanyPageContent() {
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ backgroundColor: vm.primaryColor }}>
+        <View>
           {/* Cabeçalho da empresa com banner, logo e informações */}
           <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
 
@@ -51,9 +51,6 @@ export function CompanyPageContent() {
           />
         </View>
       </ScrollView>
-
-      {/* Botão flutuante do carrinho */}
-      <CartFAB />
 
       {/* Barra de ações fixa no rodapé */}
       <CompanyActionBar />

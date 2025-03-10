@@ -13,6 +13,7 @@ import { router } from "expo-router";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { HStack } from "@gluestack-ui/themed";
+import { getContrastColor } from "@/src/utils/color.utils";
 
 /**
  * Barra de ações fixa no rodapé da página da empresa
@@ -28,6 +29,8 @@ export function CompanyActionBar() {
 
   // Cores da empresa (usa valor padrão se não estiver definido)
   const primaryColor = vm.primaryColor || "#F4511E";
+
+  const contrastTextColor = getContrastColor(primaryColor);
 
   // Quantidade de itens no carrinho
   const itemCount = cartVm.itemCount;
@@ -61,14 +64,16 @@ export function CompanyActionBar() {
           className="flex-1 rounded-xl"
         >
           <View style={styles.iconContainer}>
-            <ShoppingCart size={20} color="white" />
+            <ShoppingCart size={20} color={contrastTextColor} />
             {itemCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{itemCount}</Text>
               </View>
             )}
           </View>
-          <Text style={styles.buttonText}>Carrinho</Text>
+          <Text style={[styles.buttonText, { color: contrastTextColor }]}>
+            Carrinho
+          </Text>
         </TouchableOpacity>
 
         {/* Botão de pedidos */}

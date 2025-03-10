@@ -18,7 +18,8 @@ import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { HStack } from "@gluestack-ui/themed";
 import { SafeMap } from "@/components/common/safe-map";
 import { AdaptiveProductCard } from "./adaptive-product-card";
-import { RelativePathString, router } from "expo-router";
+import { router } from "expo-router";
+import { getContrastText, getContrastColor } from "@/src/utils/color.utils";
 
 export function FeaturedProductsStrip() {
   const vm = useCompanyPageContext();
@@ -65,46 +66,23 @@ export function FeaturedProductsStrip() {
 
   // Cor primária da empresa ou cor padrão
   const primaryColor = vm.primaryColor || "#F4511E";
-  // Cor para text baseada no contraste para garantir legibilidade
-  const getTextColor = (bgColor: any) => {
-    // Converter cor hexadecimal para RGB
-    const r = parseInt(bgColor.slice(1, 3), 16);
-    const g = parseInt(bgColor.slice(3, 5), 16);
-    const b = parseInt(bgColor.slice(5, 7), 16);
-
-    // Fórmula para calcular brilho percebido
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-
-    // Retorna branco para fundos escuros e preto para fundos claros
-    return brightness < 128 ? "#FFFFFF" : "#333333";
-  };
-
-  const textColor = primaryColor.startsWith("#")
-    ? getTextColor(primaryColor)
-    : "#FFFFFF";
 
   return (
     <View className="mb-8">
       {/* Container com fundo colorido baseado na cor primária da empresa */}
-      <View
-        className="pt-6 pb-8 overflow-hidden"
-        style={{
-          backgroundColor: primaryColor,
-          shadowColor: primaryColor,
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 4,
-        }}
-      >
+      <View className="pt-6 pb-8 overflow-hidden">
         {/* Cabeçalho com textos */}
         <View className="px-4 mb-4">
           <HStack className="items-center justify-between mb-3">
             {/* Seção de título com ícone de destaque */}
             <HStack className="items-center gap-2">
               <View className="p-2 rounded-full bg-white/20">
-                <Sparkles size={18} color={textColor} />
+                <Sparkles size={18} color={primaryColor} />
               </View>
-              <Text className={`text-xl font-bold ${textColor}`}>
+              <Text
+                className={`text-2xl font-semibold`}
+                style={{ color: primaryColor }}
+              >
                 Produtos em Destaque
               </Text>
             </HStack>
