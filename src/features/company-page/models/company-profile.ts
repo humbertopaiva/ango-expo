@@ -43,6 +43,7 @@ export interface CompanyProfile {
     categoria: {
       nome: string;
       slug: string;
+      imagem?: string;
     };
     plano: {
       nome: string;

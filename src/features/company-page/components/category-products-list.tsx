@@ -47,6 +47,11 @@ export function CategoryProductsList({
     return width * 0.7; // Celulares: 70% da largura da tela
   };
 
+  // Atualiza isExpanded quando a prop expanded muda
+  React.useEffect(() => {
+    setIsExpanded(expanded);
+  }, [expanded]);
+
   if (products.length === 0) {
     return null;
   }
@@ -56,9 +61,7 @@ export function CategoryProductsList({
 
   // Cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
-
-  // Gradiente para usar como fundo do header da categoria
-  const gradientColors = [`${primaryColor}10`, `${primaryColor}05`];
+  const lightPrimaryColor = `${primaryColor}10`;
 
   return (
     <View className="mb-6">
@@ -67,7 +70,10 @@ export function CategoryProductsList({
         onPress={() => setIsExpanded(!isExpanded)}
         className="py-3 mb-2"
       >
-        <Box className="px-4 py-3 rounded-lg mx-4">
+        <Box
+          className="px-4 py-3 rounded-lg mx-4"
+          style={{ backgroundColor: lightPrimaryColor }}
+        >
           <HStack className="items-center justify-between">
             <View className="flex-row items-center">
               <Text
@@ -76,7 +82,10 @@ export function CategoryProductsList({
               >
                 {title}
               </Text>
-              <View className="bg-white px-2 py-0.5 rounded-full ml-2">
+              <View
+                className="px-2 py-0.5 rounded-full ml-2"
+                style={{ backgroundColor: "white" }}
+              >
                 <Text
                   className="text-xs font-medium"
                   style={{ color: primaryColor }}
@@ -120,18 +129,25 @@ export function CategoryProductsList({
                 }
               />
 
-              {/* Se tiver mais de 4 produtos, mostra botão "Ver mais" */}
-              {products.length > 4 && isDeliveryPlan && (
-                <TouchableOpacity className="py-3 border-t border-gray-100">
-                  <Text
-                    className="text-center font-medium"
-                    style={{ color: primaryColor }}
+              {/* Se tiver mais de 4 produtos e eles estiverem parcialmente ocultos,
+                  mostra botão "Ver mais" */}
+              {products.length > 4 &&
+                isDeliveryPlan &&
+                products.length > 0 &&
+                !isExpanded && (
+                  <TouchableOpacity
+                    className="py-3 border-t border-gray-100"
+                    onPress={() => setIsExpanded(true)}
                   >
-                    Ver mais {products.length - 4}{" "}
-                    {products.length - 4 === 1 ? "item" : "itens"}
-                  </Text>
-                </TouchableOpacity>
-              )}
+                    <Text
+                      className="text-center font-medium"
+                      style={{ color: primaryColor }}
+                    >
+                      Ver mais {products.length - 4}{" "}
+                      {products.length - 4 === 1 ? "item" : "itens"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
             </View>
           ) : (
             /* Lista horizontal para catálogo */

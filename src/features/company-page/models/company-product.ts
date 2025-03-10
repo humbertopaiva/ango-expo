@@ -15,6 +15,7 @@ export interface CompanyProduct {
     id: string;
     nome: string;
     slug: string;
+    imagem?: string;
   };
   empresa: {
     nome: string;
