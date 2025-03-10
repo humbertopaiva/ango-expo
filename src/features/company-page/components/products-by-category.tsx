@@ -1,18 +1,12 @@
-// Path: src/features/company-page/components/products-by-category.tsx
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Platform,
-} from "react-native";
+// Path: src/features/company-page/components/products-by-category.tsx (ajustado para usar o view model)
+import React, { useState, useRef } from "react";
+import { View, Text, TouchableOpacity, Platform, FlatList } from "react-native";
 import {
   Search,
   Package,
-  Filter,
   X,
   SlidersHorizontal,
+  Store,
 } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import {
@@ -26,172 +20,106 @@ import {
   ScrollView,
 } from "@gluestack-ui/themed";
 import { CategoryProductsList } from "./category-products-list";
-import { CompanyProduct } from "../models/company-product";
+import { ImagePreview } from "@/components/custom/image-preview";
+import { SafeMap } from "@/components/common/safe-map";
+import { useProductsViewModel } from "../view-models/products-by-category.view-model";
+import { shouldUseDarkText } from "@/src/utils/color.utils";
 
 interface ProductsByCategoryProps {
   title?: string;
-}
-
-// Interface para produtos agrupados por categoria
-interface ProductsByCategory {
-  [category: string]: CompanyProduct[];
 }
 
 export function ProductsByCategory({
   title = "Produtos",
 }: ProductsByCategoryProps) {
   const vm = useCompanyPageContext();
-  const [searchText, setSearchText] = useState("");
-  const [categoryProducts, setCategoryProducts] = useState<ProductsByCategory>(
-    {}
-  );
   const [showFilters, setShowFilters] = useState(false);
-  const [activeSort, setActiveSort] = useState<string>("relevance");
+  const categoryScrollRef = useRef<FlatList>(null);
   const isWeb = Platform.OS === "web";
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
 
+  // Usar o view model para a lógica de dados
+  const productsViewModel = useProductsViewModel(vm.products);
+
   const primaryColor = vm.primaryColor || "#F4511E";
-
-  // Opções de ordenação
-  const sortOptions = [
-    { id: "relevance", label: "Relevância" },
-    { id: "price_asc", label: "Menor preço" },
-    { id: "price_desc", label: "Maior preço" },
-    { id: "name_asc", label: "A-Z" },
-  ];
-
-  // Agrupar produtos por categoria
-  useEffect(() => {
-    if (!vm.products || vm.products.length === 0) return;
-
-    const grouped: ProductsByCategory = {};
-
-    vm.products.forEach((product) => {
-      // Usar categoria do produto ou "Outros" se não tiver
-      const category = product.categoria?.nome || "Outros";
-
-      if (!grouped[category]) {
-        grouped[category] = [];
-      }
-
-      grouped[category].push(product);
-    });
-
-    // Ordenar produtos conforme a opção selecionada
-    Object.keys(grouped).forEach((category) => {
-      grouped[category] = sortProducts(grouped[category], activeSort);
-    });
-
-    setCategoryProducts(grouped);
-  }, [vm.products, activeSort]);
-
-  // Ordenar produtos
-  const sortProducts = (products: CompanyProduct[], sortOption: string) => {
-    const sorted = [...products];
-
-    switch (sortOption) {
-      case "price_asc":
-        return sorted.sort(
-          (a, b) =>
-            parseFloat(a.preco_promocional || a.preco) -
-            parseFloat(b.preco_promocional || b.preco)
-        );
-      case "price_desc":
-        return sorted.sort(
-          (a, b) =>
-            parseFloat(b.preco_promocional || b.preco) -
-            parseFloat(a.preco_promocional || a.preco)
-        );
-      case "name_asc":
-        return sorted.sort((a, b) => a.nome.localeCompare(b.nome));
-      case "relevance":
-      default:
-        return sorted;
-    }
-  };
-
-  // Filtrar produtos por texto de pesquisa
-  useEffect(() => {
-    if (!vm.products || vm.products.length === 0) return;
-
-    if (!searchText.trim()) {
-      // Se não tiver texto de pesquisa, mostrar todos os produtos agrupados
-      const grouped: ProductsByCategory = {};
-
-      vm.products.forEach((product) => {
-        const category = product.categoria?.nome || "Outros";
-
-        if (!grouped[category]) {
-          grouped[category] = [];
-        }
-
-        grouped[category].push(product);
-      });
-
-      // Ordenar produtos conforme a opção selecionada
-      Object.keys(grouped).forEach((category) => {
-        grouped[category] = sortProducts(grouped[category], activeSort);
-      });
-
-      setCategoryProducts(grouped);
-    } else {
-      // Se tiver texto de pesquisa, filtra todos os produtos
-      const searchLower = searchText.toLowerCase();
-      const filteredProducts = vm.products.filter(
-        (product) =>
-          product.nome.toLowerCase().includes(searchLower) ||
-          (product.descricao &&
-            product.descricao.toLowerCase().includes(searchLower))
-      );
-
-      // Agrupa os produtos filtrados
-      if (filteredProducts.length > 0) {
-        const filtered: ProductsByCategory = {};
-
-        filteredProducts.forEach((product) => {
-          const category = product.categoria?.nome || "Outros";
-
-          if (!filtered[category]) {
-            filtered[category] = [];
-          }
-
-          filtered[category].push(product);
-        });
-
-        // Ordenar produtos conforme a opção selecionada
-        Object.keys(filtered).forEach((category) => {
-          filtered[category] = sortProducts(filtered[category], activeSort);
-        });
-
-        setCategoryProducts(filtered);
-      } else {
-        // Se não encontrou nada, mostra objeto vazio
-        setCategoryProducts({});
-      }
-    }
-  }, [searchText, vm.products, activeSort]);
+  const isDarkText = shouldUseDarkText(primaryColor);
+  const filterBgColor = `${primaryColor}15`;
+  const filterTextColor = primaryColor;
 
   // Botão de filtro para cada opção de ordenação
   const SortButton = ({ id, label }: { id: string; label: string }) => (
     <TouchableOpacity
-      onPress={() => setActiveSort(id)}
+      onPress={() => productsViewModel.setActiveSort(id)}
       className={`py-2 px-4 rounded-full mr-2 ${
-        activeSort === id ? "bg-primary-500" : "bg-gray-100"
+        productsViewModel.activeSort === id ? "bg-primary-500" : "bg-gray-100"
       }`}
       style={{
-        backgroundColor: activeSort === id ? primaryColor : "#f3f4f6",
+        backgroundColor:
+          productsViewModel.activeSort === id ? primaryColor : "#f3f4f6",
       }}
     >
       <Text
         className={`text-sm ${
-          activeSort === id ? "text-white font-medium" : "text-gray-800"
+          productsViewModel.activeSort === id
+            ? "text-white font-medium"
+            : "text-gray-800"
         }`}
       >
         {label}
       </Text>
     </TouchableOpacity>
   );
+
+  // Renderizar o item da categoria para o FlatList horizontal
+  const renderCategoryItem = ({ item }: { item: string }) => {
+    const isActive = productsViewModel.selectedCategory === item;
+    const categoryProducts = vm.products?.filter(
+      (p) => (p.categoria?.nome || "Outros") === item
+    );
+    const categoryImage = categoryProducts?.[0]?.categoria?.imagem;
+
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          productsViewModel.setSelectedCategory(isActive ? null : item);
+        }}
+        className="items-center mr-4"
+        activeOpacity={0.7}
+      >
+        <View
+          className={`w-16 h-16 rounded-xl items-center justify-center mb-1 ${
+            isActive ? "border-2" : ""
+          }`}
+          style={{
+            backgroundColor: `${primaryColor}15`,
+            borderColor: isActive ? primaryColor : "transparent",
+          }}
+        >
+          {categoryImage ? (
+            <ImagePreview
+              uri={categoryImage}
+              width="100%"
+              height="100%"
+              resizeMode="cover"
+              containerClassName="rounded-xl"
+            />
+          ) : (
+            <Store size={24} color={isActive ? primaryColor : "#6B7280"} />
+          )}
+        </View>
+        <Text
+          className={`text-xs text-center ${
+            isActive ? "font-bold" : "font-medium"
+          }`}
+          style={{ color: isActive ? primaryColor : "#4B5563" }}
+          numberOfLines={1}
+        >
+          {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   if (vm.isLoading) {
     // Skeleton loading state
@@ -204,7 +132,7 @@ export function ProductsByCategory({
         </View>
 
         <View className="mt-6">
-          <View className="h-10 mx-4 bg-gray-200 rounded-lg mb-4 animate-pulse" />
+          <View className="h-20 mx-4 bg-gray-200 rounded-lg mb-4 animate-pulse" />
 
           <View className="flex-row flex-wrap px-4 mb-6">
             {[1, 2, 3, 4].map((item) => (
@@ -228,7 +156,8 @@ export function ProductsByCategory({
     );
   }
 
-  const hasCategories = Object.keys(categoryProducts).length > 0;
+  const hasCategories =
+    Object.keys(productsViewModel.filteredCategories).length > 0;
 
   return (
     <View className="mb-8">
@@ -240,37 +169,52 @@ export function ProductsByCategory({
           <TouchableOpacity
             onPress={() => setShowFilters(!showFilters)}
             className="flex-row items-center px-3 py-1.5 rounded-full"
-            style={{ backgroundColor: `${primaryColor}15` }}
+            style={{ backgroundColor: filterBgColor }}
           >
-            <SlidersHorizontal size={16} color={primaryColor} />
+            <SlidersHorizontal size={16} color={filterTextColor} />
             <Text
               className="ml-1.5 text-sm font-medium"
-              style={{ color: primaryColor }}
+              style={{ color: filterTextColor }}
             >
               Filtrar
             </Text>
           </TouchableOpacity>
         </HStack>
 
-        {/* Barra de pesquisa */}
-        <Input size="md" className="bg-white mb-3 border-gray-200 shadow-sm">
-          <InputSlot pl="$3">
-            <InputIcon as={Search} color="$gray500" />
-          </InputSlot>
-          <InputField
-            placeholder="Buscar produtos..."
-            value={searchText}
-            onChangeText={setSearchText}
-            className="py-2.5"
-          />
-          {searchText ? (
-            <InputSlot pr="$3">
-              <TouchableOpacity onPress={() => setSearchText("")}>
-                <X size={18} color="#9CA3AF" />
-              </TouchableOpacity>
+        {/* Barra de pesquisa melhorada */}
+        <View className="mb-4">
+          <Input
+            size="md"
+            className="bg-white border-gray-200 shadow-sm rounded-xl"
+            style={{
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.06,
+              shadowRadius: 2,
+              elevation: 2,
+            }}
+          >
+            <InputSlot pl="$3">
+              <InputIcon as={Search} color="$gray500" />
             </InputSlot>
-          ) : null}
-        </Input>
+            <InputField
+              placeholder="Buscar produtos..."
+              value={productsViewModel.searchText}
+              onChangeText={productsViewModel.setSearchText}
+              className="py-2.5"
+            />
+            {productsViewModel.searchText ? (
+              <InputSlot pr="$3">
+                <TouchableOpacity
+                  onPress={() => productsViewModel.setSearchText("")}
+                  className="bg-gray-100 rounded-full p-1"
+                >
+                  <X size={14} color="#9CA3AF" />
+                </TouchableOpacity>
+              </InputSlot>
+            ) : null}
+          </Input>
+        </View>
 
         {/* Filtros de ordenação */}
         {showFilters && (
@@ -279,19 +223,37 @@ export function ProductsByCategory({
             showsHorizontalScrollIndicator={false}
             className="py-2 -mx-4 px-4"
           >
-            {sortOptions.map((option) => (
+            {productsViewModel.getSortOptions().map((option) => (
               <SortButton key={option.id} id={option.id} label={option.label} />
             ))}
           </ScrollView>
         )}
       </View>
 
+      {/* Lista horizontal de categorias */}
+      {productsViewModel.categoryNames.length > 0 && (
+        <View className="mb-4">
+          <FlatList
+            ref={categoryScrollRef}
+            data={productsViewModel.categoryNames}
+            renderItem={renderCategoryItem}
+            keyExtractor={(item) => `category-${item}`}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+            }}
+          />
+        </View>
+      )}
+
       {/* Resultados da busca */}
-      {searchText && (
+      {productsViewModel.searchText && (
         <View className="px-4 mb-4">
           <Text className="text-gray-600">
-            {Object.values(categoryProducts).flat().length} resultados para "
-            {searchText}"
+            {productsViewModel.totalProductCount} resultados para "
+            {productsViewModel.searchText}"
           </Text>
         </View>
       )}
@@ -302,18 +264,18 @@ export function ProductsByCategory({
           <Card className="p-8 items-center justify-center border border-gray-100">
             <Package size={56} color="#9CA3AF" className="mb-3" />
             <Text className="text-lg font-medium text-gray-800 mb-2 text-center">
-              {searchText
+              {productsViewModel.searchText
                 ? "Nenhum produto encontrado"
                 : "Nenhum produto disponível"}
             </Text>
             <Text className="text-gray-500 text-center mb-4">
-              {searchText
-                ? `Não encontramos resultados para "${searchText}"`
+              {productsViewModel.searchText
+                ? `Não encontramos resultados para "${productsViewModel.searchText}"`
                 : "Esta loja ainda não cadastrou produtos"}
             </Text>
-            {searchText ? (
+            {productsViewModel.searchText ? (
               <Button
-                onPress={() => setSearchText("")}
+                onPress={() => productsViewModel.setSearchText("")}
                 className="mt-2"
                 variant="outline"
               >
@@ -326,19 +288,22 @@ export function ProductsByCategory({
 
       {/* Listas de produtos por categoria */}
       {hasCategories &&
-        Object.entries(categoryProducts).map(([category, products]) => (
-          <CategoryProductsList
-            key={`category-${category}`}
-            title={category}
-            products={products}
-            // Para delivery, expandimos apenas a primeira categoria por padrão
-            expanded={
-              !isDeliveryPlan ||
-              Object.keys(categoryProducts)[0] === category ||
-              searchText.length > 0
-            }
-          />
-        ))}
+        Object.entries(productsViewModel.filteredCategories).map(
+          ([category, products]) => (
+            <CategoryProductsList
+              key={`category-${category}`}
+              title={category}
+              products={products}
+              // Para delivery, expandimos todas as categorias por padrão ou
+              // se uma categoria específica for selecionada
+              expanded={
+                isDeliveryPlan ||
+                productsViewModel.selectedCategory === category ||
+                productsViewModel.searchText.length > 0
+              }
+            />
+          )
+        )}
     </View>
   );
 }
