@@ -1,4 +1,4 @@
-// Path: src/features/company-page/components/-products-grid.tsx
+// Path: src/features/company-page/components/enhanced-products-grid.tsx
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Platform, FlatList } from "react-native";
 import { Package, Search, SlidersHorizontal } from "lucide-react-native";
@@ -10,8 +10,8 @@ import {
   InputIcon,
   InputSlot,
 } from "@gluestack-ui/themed";
-import { ImagePreview } from "@/components/custom/image-preview";
 import { CompanyProduct } from "../models/company-product";
+import { CompanyProductCard } from "./company-product-card";
 
 interface ProductsGridProps {
   title?: string;
@@ -64,25 +64,6 @@ export function ProductsGrid({
   };
 
   const filteredProducts = getFilteredProducts();
-
-  // Formatação de valores monetários
-  const formatCurrency = (value: string) => {
-    const numericValue = parseFloat(value);
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(numericValue);
-  };
-
-  // Calcular desconto percentual
-  const calculateDiscount = (original: string, promotional: string) => {
-    if (!promotional) return 0;
-    const originalValue = parseFloat(original);
-    const promotionalValue = parseFloat(promotional);
-    return Math.round(
-      ((originalValue - promotionalValue) / originalValue) * 100
-    );
-  };
 
   // Número de colunas baseado na plataforma
   const numColumns = Platform.OS === "web" ? 3 : 2;
@@ -212,67 +193,10 @@ export function ProductsGrid({
         numColumns={numColumns}
         renderItem={({ item }) => (
           <View className={`${numColumns === 3 ? "w-1/3" : "w-1/2"} p-2`}>
-            <TouchableOpacity
+            <CompanyProductCard
+              product={item}
               onPress={() => onProductPress && onProductPress(item)}
-              activeOpacity={0.7}
-            >
-              <Card className="overflow-hidden h-full border border-gray-100">
-                {/* Imagem do produto */}
-                <View className="aspect-square">
-                  <ImagePreview
-                    uri={item.imagem}
-                    fallbackIcon={Package}
-                    width="100%"
-                    height="100%"
-                    resizeMode="cover"
-                  />
-
-                  {/* Tag de promoção, se aplicável */}
-                  {item.preco_promocional && (
-                    <View className="absolute top-2 right-2 bg-red-600 px-2 py-1 rounded-full">
-                      <Text className="text-white text-xs font-bold">
-                        {calculateDiscount(item.preco, item.preco_promocional)}%
-                        OFF
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Informações do produto */}
-                <View className="p-3">
-                  <Text className="font-medium line-clamp-2" numberOfLines={2}>
-                    {item.nome}
-                  </Text>
-
-                  {item.descricao && (
-                    <Text
-                      className="text-gray-500 text-sm line-clamp-2 mt-1"
-                      numberOfLines={2}
-                    >
-                      {item.descricao}
-                    </Text>
-                  )}
-
-                  {/* Preço */}
-                  <View className="mt-2">
-                    {item.preco_promocional ? (
-                      <>
-                        <Text className="text-primary-600 font-bold">
-                          {formatCurrency(item.preco_promocional)}
-                        </Text>
-                        <Text className="text-gray-500 text-sm line-through">
-                          {formatCurrency(item.preco)}
-                        </Text>
-                      </>
-                    ) : (
-                      <Text className="text-primary-600 font-bold">
-                        {formatCurrency(item.preco)}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              </Card>
-            </TouchableOpacity>
+            />
           </View>
         )}
         contentContainerStyle={{ paddingHorizontal: 16 }}
