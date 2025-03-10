@@ -1,10 +1,11 @@
 // src/features/company-page/screens/company-page.tsx
 import React from "react";
 import { CompanyPageProvider } from "../contexts/company-page-provider";
-import { CompanyPageContent } from "./company-page-content";
+
 import { useLocalSearchParams } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
 import { View } from "react-native";
+import { CompanyPageContent } from "./company-page-content";
 
 export function CompanyPage() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();

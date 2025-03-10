@@ -1,4 +1,4 @@
-// src/features/company-page/models/company-profile.ts
+// Path: src/features/company-page/models/company-profile.ts
 export interface CompanyProfile {
   id: string;
   nome: string;
@@ -9,6 +9,10 @@ export interface CompanyProfile {
   cor_primaria: string;
   cor_secundaria: string;
   dias_funcionamento: string[];
+  horario_funcionamento?: {
+    abertura: string; // Formato "HH:MM"
+    fechamento: string; // Formato "HH:MM"
+  };
   opcoes_pagamento: Array<{
     tipo: string;
     ativo: boolean;
@@ -18,6 +22,8 @@ export interface CompanyProfile {
   logo: string | null;
   banner: string | null;
   descricao: string;
+  instagram?: string;
+  facebook?: string;
   empresa: {
     slug: string;
     categoria: {
