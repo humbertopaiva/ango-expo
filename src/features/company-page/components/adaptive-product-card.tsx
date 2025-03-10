@@ -6,28 +6,36 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
 } from "react-native";
-import { Card } from "@gluestack-ui/themed";
-import { Package, Star } from "lucide-react-native";
+import { Card, HStack } from "@gluestack-ui/themed";
+import { Package, Star, ShoppingBag } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { CompanyProduct } from "../models/company-product";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 
 interface AdaptiveProductCardProps {
   product: CompanyProduct;
   style?: any;
   showFeaturedBadge?: boolean;
+  isHighlighted?: boolean;
 }
 
 export function AdaptiveProductCard({
   product,
   style,
   showFeaturedBadge = false,
+  isHighlighted = false,
 }: AdaptiveProductCardProps) {
   const vm = useCompanyPageContext();
+  const cartVm = useCartViewModel();
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
+  const { width } = Dimensions.get("window");
+  const isWeb = Platform.OS === "web";
 
   // Formatação de moeda
   const formatCurrency = (value: string) => {
@@ -56,6 +64,114 @@ export function AdaptiveProductCard({
     });
   };
 
+  // Adicionar ao carrinho diretamente
+  const handleAddToCart = (e: any) => {
+    e.stopPropagation();
+    if (!product || !vm.profile) return;
+
+    cartVm.addProduct(product, vm.profile.empresa.slug, vm.profile.nome);
+  };
+
+  // Destacar card para delivery
+  if (isDeliveryPlan && isHighlighted) {
+    // Proporção 4:3
+    const cardWidth = isWeb ? (width > 768 ? 380 : width * 0.85) : width * 0.85;
+    const cardHeight = cardWidth * 0.75; // Proporção 4:3
+
+    return (
+      <TouchableOpacity
+        onPress={handleProductPress}
+        className="relative"
+        activeOpacity={0.8}
+        style={[
+          style,
+          {
+            height: cardHeight,
+            borderRadius: 16,
+            overflow: "hidden",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 4,
+          },
+        ]}
+      >
+        <View className="w-full h-full">
+          {/* Imagem de fundo com gradiente */}
+          <View className="absolute w-full h-full">
+            <ImagePreview
+              uri={product.imagem}
+              fallbackIcon={Package}
+              width="100%"
+              height="100%"
+              resizeMode="cover"
+            />
+            <LinearGradient
+              colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.7)"]}
+              style={{ position: "absolute", height: "100%", width: "100%" }}
+            />
+          </View>
+
+          {/* Botão de adicionar ao carrinho no canto superior direito */}
+          <TouchableOpacity
+            onPress={handleAddToCart}
+            className="absolute bottom-4 right-4 rounded-full p-3 z-10"
+            style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
+          >
+            <ShoppingBag size={24} color="white" />
+          </TouchableOpacity>
+
+          {/* Conteúdo do card */}
+          <View className="flex-1 justify-end p-5">
+            <HStack className="items-center mb-4 gap-2">
+              {/* Nome do produto (sem descrição) */}
+              <Text
+                className="text-white font-bold text-2xl "
+                numberOfLines={2}
+              >
+                {product.nome}
+              </Text>
+              {product.preco_promocional && (
+                <View className="">
+                  <Text className="text-white font-bold text-xs bg-red-600 px-2 py-1 rounded-full ml-2">
+                    {calculateDiscount(
+                      product.preco,
+                      product.preco_promocional
+                    )}
+                    % OFF
+                  </Text>
+                </View>
+              )}
+            </HStack>
+
+            {/* Preço e badge de desconto juntos */}
+            <View className="flex-row items-center">
+              <View className="flex-1">
+                {product.preco_promocional ? (
+                  <View className="flex-row items-center">
+                    <View>
+                      <Text className="text-white/80 text-md line-through">
+                        {formatCurrency(product.preco)}
+                      </Text>
+                      <Text className="text-white font-bold text-2xl">
+                        {formatCurrency(product.preco_promocional)}
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <Text className="text-white font-bold text-xl">
+                    {formatCurrency(product.preco)}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+
   // Layout horizontal para delivery
   if (isDeliveryPlan) {
     return (
@@ -65,67 +181,59 @@ export function AdaptiveProductCard({
         activeOpacity={0.7}
         style={style}
       >
-        <Card className="flex-row border border-gray-100 rounded-xl overflow-hidden h-24 mb-2">
+        <Card className="flex-row border border-gray-100 rounded-xl overflow-hidden h-32 mb-3 shadow-sm">
           {/* Imagem do produto */}
-          <View className="w-24 h-24 relative">
-            <ImagePreview
-              uri={product.imagem}
-              fallbackIcon={Package}
-              width="100%"
-              height="100%"
-              resizeMode="cover"
-            />
-
-            {product.preco_promocional && (
-              <View className="absolute top-1 left-1 bg-red-500 px-1.5 py-0.5 rounded-full">
-                <Text className="text-white text-xs font-bold">
-                  {calculateDiscount(product.preco, product.preco_promocional)}%
-                </Text>
-              </View>
-            )}
-
-            {showFeaturedBadge && (
-              <View className="absolute bottom-1 right-1 bg-amber-500 rounded-full p-1">
-                <Star size={12} color="#fff" />
-              </View>
-            )}
-          </View>
+          <ImagePreview
+            uri={product.imagem}
+            fallbackIcon={Package}
+            width="180px"
+            height="100%"
+            resizeMode="cover"
+            containerClassName="aspect-square"
+          />
 
           {/* Informações do produto */}
           <View className="flex-1 p-3 justify-between">
             <View>
               <Text
-                className="font-medium text-sm line-clamp-1"
+                className="font-bold text-gray-800 line-clamp-1 text-lg"
                 numberOfLines={1}
               >
                 {product.nome}
               </Text>
-
-              {product.descricao && (
-                <Text
-                  className="text-xs text-gray-500 line-clamp-2 mt-0.5"
-                  numberOfLines={2}
-                >
-                  {product.descricao}
-                </Text>
-              )}
             </View>
 
-            <View>
-              {product.preco_promocional ? (
-                <View className="flex-row items-center">
-                  <Text className="text-sm font-bold text-primary-600">
-                    {formatCurrency(product.preco_promocional)}
-                  </Text>
-                  <Text className="text-xs text-gray-400 line-through ml-1">
+            <View className="flex-row justify-between items-center">
+              <View>
+                {product.preco_promocional ? (
+                  <View>
+                    <Text className="text-xs text-gray-400 line-through">
+                      {formatCurrency(product.preco)}
+                    </Text>
+                    <Text
+                      className="text-lg font-bold"
+                      style={{ color: vm.primaryColor || "#F4511E" }}
+                    >
+                      {formatCurrency(product.preco_promocional)}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text
+                    className="text-base font-bold"
+                    style={{ color: vm.primaryColor || "#F4511E" }}
+                  >
                     {formatCurrency(product.preco)}
                   </Text>
-                </View>
-              ) : (
-                <Text className="text-sm font-bold text-primary-600">
-                  {formatCurrency(product.preco)}
-                </Text>
-              )}
+                )}
+              </View>
+
+              <TouchableOpacity
+                onPress={handleAddToCart}
+                className="rounded-full p-2"
+                style={{ backgroundColor: `${vm.primaryColor || "#F4511E"}20` }}
+              >
+                <ShoppingBag size={20} color={vm.primaryColor || "#F4511E"} />
+              </TouchableOpacity>
             </View>
           </View>
         </Card>
@@ -141,7 +249,7 @@ export function AdaptiveProductCard({
       activeOpacity={0.7}
       style={style}
     >
-      <Card className="overflow-hidden rounded-xl border border-gray-100">
+      <Card className="overflow-hidden rounded-xl border border-gray-100 shadow-sm transition-transform duration-200 hover:shadow-md">
         {/* Imagem do produto */}
         <View className="aspect-square relative">
           <ImagePreview
@@ -152,25 +260,38 @@ export function AdaptiveProductCard({
             resizeMode="cover"
           />
 
-          {product.preco_promocional && (
-            <View className="absolute top-2 right-2 bg-red-500 px-2 py-1 rounded-full">
-              <Text className="text-white text-xs font-bold">
-                {calculateDiscount(product.preco, product.preco_promocional)}%
-              </Text>
-            </View>
-          )}
+          {/* Badges */}
+          <View className="absolute top-0 left-0 right-0 p-2 flex-row justify-between">
+            {showFeaturedBadge && (
+              <View className="bg-amber-500 rounded-full p-1.5 shadow-sm">
+                <Star size={14} color="#fff" />
+              </View>
+            )}
 
-          {showFeaturedBadge && (
-            <View className="absolute top-2 left-2 bg-amber-500 rounded-full p-1.5">
-              <Star size={14} color="#fff" />
-            </View>
-          )}
+            {product.preco_promocional && (
+              <View className="bg-red-500 px-2 py-1 rounded-full shadow-sm">
+                <Text className="text-white text-xs font-bold">
+                  {calculateDiscount(product.preco, product.preco_promocional)}%
+                  OFF
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Quick-add button */}
+          <TouchableOpacity
+            onPress={handleAddToCart}
+            className="absolute bottom-3 right-3 bg-white rounded-full p-2 shadow-md"
+            style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
+          >
+            <ShoppingBag size={16} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
 
         {/* Informações do produto */}
         <View className="p-3">
           <Text
-            className="font-medium text-gray-800 line-clamp-2"
+            className="font-medium text-gray-800 line-clamp-2 text-base"
             numberOfLines={2}
           >
             {product.nome}
@@ -185,18 +306,24 @@ export function AdaptiveProductCard({
             </Text>
           )}
 
-          <View className="mt-2">
+          <View className="mt-2 pt-2 border-t border-gray-100">
             {product.preco_promocional ? (
-              <>
-                <Text className="text-sm font-bold text-primary-600">
+              <View className="flex-row items-baseline gap-2">
+                <Text
+                  className="text-base font-bold"
+                  style={{ color: vm.primaryColor || "#F4511E" }}
+                >
                   {formatCurrency(product.preco_promocional)}
                 </Text>
                 <Text className="text-xs text-gray-400 line-through">
                   {formatCurrency(product.preco)}
                 </Text>
-              </>
+              </View>
             ) : (
-              <Text className="text-sm font-bold text-primary-600">
+              <Text
+                className="text-base font-bold"
+                style={{ color: vm.primaryColor || "#F4511E" }}
+              >
                 {formatCurrency(product.preco)}
               </Text>
             )}

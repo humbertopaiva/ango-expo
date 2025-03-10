@@ -5,24 +5,26 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   Dimensions,
+  StatusBar,
+  Share,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import {
   Share2,
-  Heart,
   ShoppingBag,
   MinusCircle,
   PlusCircle,
   ArrowLeft,
   Package,
 } from "lucide-react-native";
-import { HStack, VStack, Card, Button } from "@gluestack-ui/themed";
+import { HStack, VStack, Button } from "@gluestack-ui/themed";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { CompanyProduct } from "../models/company-product";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -31,6 +33,7 @@ export function ProductDetailsScreen() {
   const [product, setProduct] = useState<CompanyProduct | null>(null);
   const [quantity, setQuantity] = useState(1);
   const { width } = Dimensions.get("window");
+  const insets = useSafeAreaInsets();
 
   // Carregar dados do produto
   useEffect(() => {
@@ -40,7 +43,6 @@ export function ProductDetailsScreen() {
     if (foundProduct) {
       setProduct(foundProduct);
     } else {
-      // Produto não encontrado, poderia mostrar um erro ou redirecionar
       console.error("Produto não encontrado:", productId);
     }
   }, [productId, vm.products]);
@@ -85,110 +87,197 @@ export function ProductDetailsScreen() {
 
   // Voltar para a página da empresa
   const handleBack = () => {
-    router.push(`/(drawer)/empresa/${vm.profile?.empresa.slug}`);
+    router.back();
   };
+
+  // Compartilhar o produto
+  const handleShare = async () => {
+    // if (!product || !vm.profile) return;
+
+    // const productUrl = `https://ango.app/empresa/${vm.profile.empresa.slug}/product/${product.id}`;
+
+    // try {
+    //   await Share.share({
+    //     message:
+    //       Platform.OS === "ios"
+    //         ? undefined
+    //         : `Confira ${product.nome} na ${
+    //             vm.profile.nome
+    //           }: ${productUrl}`,
+    //     url: Platform.OS === "ios" ? productUrl : undefined,
+    //     title: `${product.nome} - ${vm.profile.nome}`,
+    //   });
+    // } catch (error) {
+    //   console.error("Erro ao compartilhar:", error);
+    // }
+    console.log("COMPARTILHAR");
+  };
+
+  // Calcular desconto percentual (se houver)
+  const calculateDiscount = () => {
+    if (!product.preco_promocional) return null;
+
+    const originalPrice = parseFloat(product.preco);
+    const discountPrice = parseFloat(product.preco_promocional);
+    const discountPercent = Math.round(
+      ((originalPrice - discountPrice) / originalPrice) * 100
+    );
+
+    return discountPercent;
+  };
+
+  const discountPercent = calculateDiscount();
+  const primaryColor = vm.primaryColor || "#F4511E";
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Cabeçalho */}
-      <View className="bg-white p-4 flex-row items-center justify-between">
-        <TouchableOpacity onPress={handleBack} className="p-2">
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
+      <StatusBar barStyle="light-content" />
 
-        <HStack space="md">
-          <TouchableOpacity className="p-2">
-            <Share2 size={24} color="#374151" />
+      {/* Área da imagem em aspecto quadrado com botões sobrepostos */}
+      <View
+        style={{ width: width, height: width }}
+        className="bg-white relative"
+      >
+        <ImagePreview
+          uri={product.imagem}
+          fallbackIcon={Package}
+          width="100%"
+          height="100%"
+          resizeMode="contain"
+        />
+
+        {/* Overlay gradiente no topo para melhorar visibilidade dos botões */}
+        <View className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/50 to-transparent" />
+
+        {/* Botões de navegação sobrepostos */}
+        <View
+          className="absolute top-0 left-0 right-0 flex-row items-center justify-between px-4"
+          style={{ paddingTop: insets.top || 16 }}
+        >
+          <TouchableOpacity
+            onPress={handleBack}
+            className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
+          >
+            <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <TouchableOpacity className="p-2">
-            <Heart size={24} color="#374151" />
+          <TouchableOpacity
+            onPress={handleShare}
+            className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
+          >
+            <Share2 size={20} color="#FFFFFF" />
           </TouchableOpacity>
-        </HStack>
+        </View>
+
+        {/* Badge de desconto (se houver) */}
+        {discountPercent && (
+          <View className="absolute top-4 right-4 bg-red-500 px-3 py-1 rounded-full">
+            <Text className="text-white font-bold text-sm">
+              {discountPercent}% OFF
+            </Text>
+          </View>
+        )}
       </View>
 
       <ScrollView className="flex-1">
-        {/* Imagem do produto */}
-        <View style={{ width: width, height: width }} className="bg-white">
-          <ImagePreview
-            uri={product.imagem}
-            fallbackIcon={Package}
-            width="100%"
-            height="100%"
-            resizeMode="contain"
-          />
-        </View>
-
-        {/* Informações do produto */}
-        <Card className="m-4 p-4 rounded-xl">
-          <VStack space="md">
-            <Text className="text-2xl font-bold text-gray-800">
-              {product.nome}
+        {/* Conteúdo do produto */}
+        <View className="p-4 bg-white">
+          {/* Informações da categoria */}
+          {product.categoria && (
+            <Text className="text-sm text-gray-500 mb-1">
+              {product.categoria.nome}
             </Text>
+          )}
 
-            <HStack className="justify-between items-center">
-              <View>
-                {product.preco_promocional ? (
-                  <View>
-                    <Text className="text-gray-500 text-sm line-through">
-                      {formatCurrency(product.preco)}
-                    </Text>
-                    <Text className="text-xl font-bold text-primary-600">
-                      {formatCurrency(product.preco_promocional)}
-                    </Text>
-                  </View>
-                ) : (
-                  <Text className="text-xl font-bold text-primary-600">
+          {/* Nome do produto */}
+          <Text className="text-2xl font-bold text-gray-800 mb-2">
+            {product.nome}
+          </Text>
+
+          {/* Preço do produto */}
+          <View className="mb-4">
+            <HStack className="items-center">
+              {product.preco_promocional ? (
+                <>
+                  <Text
+                    className="text-2xl font-bold text-primary-600"
+                    style={{ color: primaryColor }}
+                  >
+                    {formatCurrency(product.preco_promocional)}
+                  </Text>
+                  <Text className="ml-2 text-base text-gray-400 line-through">
                     {formatCurrency(product.preco)}
                   </Text>
-                )}
-
-                {product.parcelamento_cartao && product.quantidade_parcelas && (
-                  <Text className="text-sm text-gray-600 mt-1">
-                    ou {product.quantidade_parcelas}x de{" "}
-                    {formatCurrency(
-                      (
-                        parseFloat(product.preco_promocional || product.preco) /
-                        parseInt(product.quantidade_parcelas)
-                      ).toString()
-                    )}
-                    {product.parcelas_sem_juros ? " sem juros" : ""}
-                  </Text>
-                )}
-              </View>
-
-              {/* Seletor de quantidade */}
-              <HStack className="items-center space-x-2 bg-gray-50 p-2 rounded-lg">
-                <TouchableOpacity onPress={decreaseQuantity}>
-                  <MinusCircle size={24} color="#6B7280" />
-                </TouchableOpacity>
-
-                <Text className="text-xl font-medium w-8 text-center">
-                  {quantity}
+                </>
+              ) : (
+                <Text
+                  className="text-2xl font-bold text-primary-600"
+                  style={{ color: primaryColor }}
+                >
+                  {formatCurrency(product.preco)}
                 </Text>
-
-                <TouchableOpacity onPress={increaseQuantity}>
-                  <PlusCircle size={24} color={vm.primaryColor || "#F4511E"} />
-                </TouchableOpacity>
-              </HStack>
+              )}
             </HStack>
 
-            {product.descricao && (
-              <View className="mt-4">
-                <Text className="text-base font-semibold text-gray-800">
-                  Descrição
-                </Text>
-                <Text className="text-gray-600 mt-1 text-sm">
-                  {product.descricao}
-                </Text>
-              </View>
+            {/* Informação de parcelamento */}
+            {product.parcelamento_cartao && product.quantidade_parcelas && (
+              <Text className="text-sm text-gray-600 mt-1">
+                ou {product.quantidade_parcelas}x de{" "}
+                {formatCurrency(
+                  (
+                    parseFloat(product.preco_promocional || product.preco) /
+                    parseInt(product.quantidade_parcelas)
+                  ).toString()
+                )}
+                {product.parcelas_sem_juros ? " sem juros" : ""}
+              </Text>
             )}
-          </VStack>
-        </Card>
+          </View>
+
+          {/* Descrição do produto */}
+          {product.descricao && (
+            <View className="mb-6 pb-4 border-b border-gray-100">
+              <Text className="text-base font-semibold text-gray-800 mb-2">
+                Descrição
+              </Text>
+              <Text className="text-gray-600 text-base leading-relaxed">
+                {product.descricao}
+              </Text>
+            </View>
+          )}
+
+          {/* Seletor de quantidade */}
+          <View className="mb-6">
+            <Text className="text-base font-semibold text-gray-800 mb-2">
+              Quantidade
+            </Text>
+            <HStack className="items-center bg-gray-50 self-start px-2 py-1 rounded-lg">
+              <TouchableOpacity
+                onPress={decreaseQuantity}
+                className="p-2"
+                disabled={quantity <= 1}
+                style={{ opacity: quantity <= 1 ? 0.5 : 1 }}
+              >
+                <MinusCircle size={26} color={primaryColor} />
+              </TouchableOpacity>
+
+              <Text className="text-xl font-medium mx-4 min-w-8 text-center">
+                {quantity}
+              </Text>
+
+              <TouchableOpacity onPress={increaseQuantity} className="p-2">
+                <PlusCircle size={26} color={primaryColor} />
+              </TouchableOpacity>
+            </HStack>
+          </View>
+        </View>
       </ScrollView>
 
       {/* Barra inferior com botão de adicionar ao carrinho */}
-      <View className="bg-white p-4 border-t border-gray-200">
+      <View
+        className="bg-white p-4 border-t border-gray-200"
+        style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+      >
         <HStack className="justify-between items-center">
           <VStack>
             <Text className="text-sm text-gray-500">Total</Text>
@@ -199,11 +288,13 @@ export function ProductDetailsScreen() {
 
           <Button
             onPress={addToCart}
-            className="bg-primary-500 flex-row items-center px-6"
-            style={{ backgroundColor: vm.primaryColor }}
+            className="bg-primary-500 h-12 flex-row items-center px-6"
+            style={{ backgroundColor: primaryColor }}
           >
             <ShoppingBag size={20} color="white" />
-            <Text className="text-white font-bold ml-2">Adicionar</Text>
+            <Text className="text-white font-bold ml-2 text-base">
+              Adicionar ao Carrinho
+            </Text>
           </Button>
         </HStack>
       </View>

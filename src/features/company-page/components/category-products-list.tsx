@@ -3,17 +3,24 @@ import React, { useState, useRef } from "react";
 import {
   View,
   Text,
-  FlatList,
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Platform,
 } from "react-native";
-import { ChevronDown, ChevronUp, ChevronRight } from "lucide-react-native";
+import {
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  Package,
+} from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { SafeMap } from "@/components/common/safe-map";
 import { AdaptiveProductCard } from "./adaptive-product-card";
-import { Card, HStack } from "@gluestack-ui/themed";
+import { Card, HStack, Divider } from "@gluestack-ui/themed";
 import { CompanyProduct } from "../models/company-product";
+import { LinearGradient } from "expo-linear-gradient";
+import { Box } from "@/components/ui/box";
 
 interface CategoryProductsListProps {
   title: string;
@@ -30,13 +37,13 @@ export function CategoryProductsList({
   const vm = useCompanyPageContext();
   const scrollViewRef = useRef<ScrollView>(null);
   const { width } = Dimensions.get("window");
-
+  const isWeb = Platform.OS === "web";
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
 
   // Calcular largura ideal do item com base na largura da tela
   const getItemWidth = () => {
-    if (width > 768) return 240; // Tablets e Desktop
+    if (width > 768) return 260; // Tablets e Desktop
     return width * 0.7; // Celulares: 70% da largura da tela
   };
 
@@ -44,28 +51,57 @@ export function CategoryProductsList({
     return null;
   }
 
+  // Calcular número de colunas para layout grid
+  const numColumns = width > 768 ? 3 : 2;
+
+  // Cor primária da empresa
+  const primaryColor = vm.primaryColor || "#F4511E";
+
+  // Gradiente para usar como fundo do header da categoria
+  const gradientColors = [`${primaryColor}10`, `${primaryColor}05`];
+
   return (
     <View className="mb-6">
       {/* Cabeçalho da categoria com botão de expandir/recolher */}
       <TouchableOpacity
         onPress={() => setIsExpanded(!isExpanded)}
-        className="flex-row items-center justify-between px-4 py-2 mb-2"
+        className="py-3 mb-2"
       >
-        <Text className="text-lg font-bold text-gray-800">{title}</Text>
-        <View className="bg-gray-100 rounded-full p-1">
-          {isExpanded ? (
-            <ChevronUp size={16} color="#374151" />
-          ) : (
-            <ChevronDown size={16} color="#374151" />
-          )}
-        </View>
+        <Box className="px-4 py-3 rounded-lg mx-4">
+          <HStack className="items-center justify-between">
+            <View className="flex-row items-center">
+              <Text
+                className="text-lg font-bold"
+                style={{ color: primaryColor }}
+              >
+                {title}
+              </Text>
+              <View className="bg-white px-2 py-0.5 rounded-full ml-2">
+                <Text
+                  className="text-xs font-medium"
+                  style={{ color: primaryColor }}
+                >
+                  {products.length}
+                </Text>
+              </View>
+            </View>
+
+            <View className="bg-white rounded-full p-1">
+              {isExpanded ? (
+                <ChevronUp size={18} color={primaryColor} />
+              ) : (
+                <ChevronDown size={18} color={primaryColor} />
+              )}
+            </View>
+          </HStack>
+        </Box>
       </TouchableOpacity>
 
       {isExpanded && (
         <>
           {isDeliveryPlan ? (
             /* Lista vertical para delivery */
-            <View className="px-4">
+            <View className="px-4 space-y-3">
               <SafeMap
                 data={products}
                 renderItem={(product, index) => (
@@ -75,13 +111,27 @@ export function CategoryProductsList({
                   />
                 )}
                 fallback={
-                  <Card className="p-4 items-center">
-                    <Text className="text-gray-500">
+                  <Card className="p-4 items-center border border-gray-100">
+                    <Package size={48} color="#9CA3AF" />
+                    <Text className="text-gray-500 mt-2">
                       Nenhum produto nesta categoria
                     </Text>
                   </Card>
                 }
               />
+
+              {/* Se tiver mais de 4 produtos, mostra botão "Ver mais" */}
+              {products.length > 4 && isDeliveryPlan && (
+                <TouchableOpacity className="py-3 border-t border-gray-100">
+                  <Text
+                    className="text-center font-medium"
+                    style={{ color: primaryColor }}
+                  >
+                    Ver mais {products.length - 4}{" "}
+                    {products.length - 4 === 1 ? "item" : "itens"}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             /* Lista horizontal para catálogo */
@@ -90,8 +140,14 @@ export function CategoryProductsList({
                 ref={scrollViewRef}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 16 }}
+                contentContainerStyle={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                }}
                 className="pb-2"
+                decelerationRate="fast"
+                snapToInterval={getItemWidth() + 16} // Snap to each card
+                snapToAlignment="start"
               >
                 <SafeMap
                   data={products}
@@ -109,18 +165,43 @@ export function CategoryProductsList({
                 {/* Botão "Ver todos" no final da lista horizontal */}
                 {products.length > 3 && (
                   <TouchableOpacity
-                    style={{ width: 100 }}
-                    className="items-center justify-center rounded-xl border border-gray-200 mr-4"
+                    style={{ width: 120 }}
+                    className="items-center justify-center rounded-xl border border-gray-100 mr-4 shadow-sm"
                   >
-                    <View className="p-4 items-center">
-                      <ChevronRight size={24} color="#6B7280" />
-                      <Text className="text-sm text-gray-600 mt-2">
-                        Ver todos
+                    <View className="h-full items-center justify-center p-4">
+                      <View
+                        className="w-12 h-12 rounded-full items-center justify-center mb-2"
+                        style={{ backgroundColor: `${primaryColor}15` }}
+                      >
+                        <ChevronRight size={24} color={primaryColor} />
+                      </View>
+                      <Text
+                        className="text-sm text-center font-medium"
+                        style={{ color: primaryColor }}
+                      >
+                        Ver todos {products.length} produtos
                       </Text>
                     </View>
                   </TouchableOpacity>
                 )}
               </ScrollView>
+
+              {/* Indicadores de página (dots) para o modo catálogo */}
+              {products.length > 3 && (
+                <View className="flex-row justify-center mt-1 gap-1.5">
+                  {[...Array(Math.min(5, Math.ceil(products.length / 2)))].map(
+                    (_, idx) => (
+                      <View
+                        key={`dot-${idx}`}
+                        className="h-1.5 w-1.5 rounded-full bg-gray-300"
+                        style={{
+                          backgroundColor: idx === 0 ? primaryColor : "#D1D5DB",
+                        }}
+                      />
+                    )
+                  )}
+                </View>
+              )}
             </View>
           )}
         </>
