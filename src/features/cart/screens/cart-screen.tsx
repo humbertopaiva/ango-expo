@@ -1,16 +1,25 @@
 // Path: src/features/cart/screens/cart-screen.tsx
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { ShoppingBag, ArrowLeft, Trash2 } from "lucide-react-native";
 import ScreenHeader from "@/components/ui/screen-header";
 import { Card, Button, VStack, HStack } from "@gluestack-ui/themed";
 import { useCartViewModel } from "../view-models/use-cart-view-model";
+import { useOrderViewModel } from "@/src/features/orders/view-models/use-order-view-model";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 export function CartScreen() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const cart = useCartViewModel();
+  const orderViewModel = useOrderViewModel();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Verifica se o carrinho está vazio
   const cartIsEmpty = cart.isEmpty;
@@ -25,10 +34,21 @@ export function CartScreen() {
     router.push(`/(drawer)/empresa/${companySlug}`);
   };
 
-  // Botão para finalizar pedido (a ser implementado)
-  const handleCheckout = () => {
-    // Aqui você implementará a lógica para finalizar o pedido
-    console.log("Checkout do pedido");
+  // Botão para finalizar pedido
+  const handleCheckout = async () => {
+    try {
+      setIsProcessing(true);
+      const order = await orderViewModel.placeOrder();
+
+      if (order) {
+        // Navega para a página de pedidos após finalizar
+        router.push(`/(drawer)/empresa/${companySlug}/orders`);
+      }
+    } catch (error) {
+      console.error("Erro ao finalizar pedido:", error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -111,8 +131,19 @@ export function CartScreen() {
             </Card>
 
             {/* Botão de finalizar pedido */}
-            <Button onPress={handleCheckout} className="bg-primary-500 mt-4">
-              <Button.Text>Finalizar Pedido</Button.Text>
+            <Button
+              onPress={handleCheckout}
+              className="bg-primary-500 mt-4"
+              isDisabled={isProcessing}
+            >
+              {isProcessing ? (
+                <HStack space="sm">
+                  <ActivityIndicator size="small" color="white" />
+                  <Button.Text>Processando...</Button.Text>
+                </HStack>
+              ) : (
+                <Button.Text>Finalizar Pedido</Button.Text>
+              )}
             </Button>
           </VStack>
         )}
