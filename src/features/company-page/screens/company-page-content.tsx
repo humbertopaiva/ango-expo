@@ -1,21 +1,28 @@
 // Path: src/features/company-page/screens/company-page-content.tsx
-import React, { useState, useRef } from "react";
-import { View, Animated, ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View } from "react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { FeaturedProductsStrip } from "../components/featured-products-strip";
 import { CompanyDeliveryInfo } from "../components/company-delivery-info";
 import { CompanyHeader } from "../components/company-header";
 import { ProductsByCategory } from "../components/products-by-category";
 import { CompanyActionBar } from "../components/company-action-bar";
-import { CartFAB } from "../components/cart-fab";
 import { CompanyInfoModal } from "../components/company-info-modal";
+import { ScrollView } from "react-native-gesture-handler";
+import { CompanySpecificHeader } from "../components/company-specific-header";
+import { router } from "expo-router";
 
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
   const [isInfoModalVisible, setInfoModalVisible] = useState(false);
-  const scrollY = useRef(new Animated.Value(0)).current;
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
+
+  // Estado para armazenar informações do header
+  const [companyTitle, setCompanyTitle] = useState<string>("");
+  const [companySubtitle, setCompanySubtitle] = useState<string>("");
+  const [primaryColor, setPrimaryColor] = useState<string>("#4B5563"); // gray-700 default
+  const [categorySlug, setCategorySlug] = useState<string | null>(null);
 
   const handleOpenInfoModal = () => {
     setInfoModalVisible(true);
@@ -25,23 +32,67 @@ export function CompanyPageContent() {
     setInfoModalVisible(false);
   };
 
-  // Handler para o evento de scroll
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: false }
-  );
+  // Configurar informações do header quando o perfil estiver disponível
+  useEffect(() => {
+    if (vm.profile) {
+      setCompanyTitle(vm.profile.nome);
+
+      // Definir subtítulo baseado na categoria, se disponível
+      if (vm.profile.empresa?.categoria) {
+        setCompanySubtitle(vm.profile.empresa.categoria.nome);
+        setCategorySlug(vm.profile.empresa.categoria.slug); // Salvar o slug da categoria
+      }
+
+      // Definir cor primária da empresa ou usar cinza escuro como fallback
+      if (vm.profile.cor_primaria) {
+        setPrimaryColor(vm.profile.cor_primaria);
+      }
+    }
+  }, [vm.profile]);
+
+  // Handler para voltar para a categoria
+  const handleBackPress = () => {
+    if (categorySlug) {
+      // Se temos o slug da categoria, vamos diretamente para ela
+      router.push(`/(drawer)/categoria/${categorySlug}`);
+    } else {
+      // Fallback para a navegação padrão
+      router.back();
+    }
+  };
+
+  if (vm.isLoading) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center">
+        {/* Um header vazio para manter o layout consistente durante o carregamento */}
+        <CompanySpecificHeader
+          title="Carregando..."
+          onBackPress={() => router.back()}
+        />
+        <View className="flex-1 justify-center items-center">
+          {/* Aqui você pode adicionar um indicador de carregamento se desejar */}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50 relative">
-      <Animated.ScrollView
+      {/* Header específico da empresa */}
+      <CompanySpecificHeader
+        title={companyTitle}
+        subtitle={companySubtitle}
+        primaryColor={primaryColor}
+        onBackPress={handleBackPress}
+      />
+
+      <ScrollView
         className="flex-1 bg-gray-50"
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
-        onScroll={handleScroll}
       >
         <View>
-          {/* Cabeçalho da empresa com banner, logo e informações */}
+          {/* Cabeçalho da empresa */}
           <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
 
           {/* Informações de entrega (se a empresa oferecer) */}
@@ -54,13 +105,10 @@ export function CompanyPageContent() {
             <FeaturedProductsStrip />
           )}
 
-          {/* Produtos agrupados por categoria com scroll e filtro fixo */}
-          <ProductsByCategory
-            title={isDeliveryPlan ? "Cardápio" : "Nossos Produtos"}
-            scrollY={scrollY}
-          />
+          {/* Produtos agrupados por categoria */}
+          <ProductsByCategory title={"Nossos Produtos"} />
         </View>
-      </Animated.ScrollView>
+      </ScrollView>
 
       {/* Barra de ações fixa no rodapé */}
       <CompanyActionBar />

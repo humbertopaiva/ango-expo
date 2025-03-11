@@ -6,6 +6,7 @@ import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { Card, HStack, VStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface CompanyHeaderProps {
   onMoreInfoPress?: () => void;
@@ -13,6 +14,7 @@ interface CompanyHeaderProps {
 
 export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
   const vm = useCompanyPageContext();
+  const insets = useSafeAreaInsets();
 
   if (!vm.profile) return null;
 
@@ -94,7 +96,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
   return (
     <View className="relative mb-4">
       {/* Banner */}
-      <View className="h-[180px] w-full relative overflow-hidden">
+      <View className="w-full relative overflow-hidden" style={{ height: 180 }}>
         <ImagePreview
           uri={vm.profile.banner}
           fallbackIcon={Store}
@@ -106,13 +108,13 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
 
         {/* Gradiente para melhorar legibilidade do conteúdo */}
         <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.7)"]}
+          colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
           style={{
             position: "absolute",
             left: 0,
             right: 0,
+            top: 0,
             bottom: 0,
-            height: 100,
           }}
         />
       </View>
@@ -120,7 +122,9 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
       {/* Indicador de aberto/fechado */}
       <View
         className="absolute top-4 right-4 px-3 py-1 rounded-full flex-row items-center"
-        style={{ backgroundColor: `${statusColor}20` }}
+        style={{
+          backgroundColor: `${statusColor}20`,
+        }}
       >
         <View
           className="w-2 h-2 rounded-full mr-1"

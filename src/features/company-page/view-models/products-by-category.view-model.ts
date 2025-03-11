@@ -1,5 +1,5 @@
 // Path: src/features/company-page/view-models/products-by-category.view-model.ts
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { CompanyProduct } from "../models/company-product";
 
 // Interface para produtos agrupados por categoria
@@ -12,6 +12,9 @@ export interface SortOption {
   id: string;
   label: string;
 }
+
+// Constante para a categoria "Todos"
+export const ALL_CATEGORIES = "Todos";
 
 export interface UseProductsViewModel {
   categoryProducts: ProductsByCategory;
@@ -42,7 +45,9 @@ export const useProductsViewModel = (
   const [categoryProducts, setCategoryProducts] = useState<ProductsByCategory>(
     {}
   );
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    ALL_CATEGORIES
+  );
   const [activeSort, setActiveSort] = useState<string>(initialSort);
   const [searchText, setSearchText] = useState<string>("");
 
@@ -82,11 +87,19 @@ export const useProductsViewModel = (
     }
   };
 
+  // Todos os produtos ordenados (para a categoria "Todos")
+  const allSortedProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    return sortProducts([...products], activeSort);
+  }, [products, activeSort]);
+
   // Agrupar produtos por categoria
   useEffect(() => {
     if (!products || products.length === 0) return;
 
-    const grouped: ProductsByCategory = {};
+    const grouped: ProductsByCategory = {
+      [ALL_CATEGORIES]: allSortedProducts, // Adiciona opção "Todos"
+    };
 
     products.forEach((product) => {
       // Usar categoria do produto ou "Outros" se não tiver
@@ -101,23 +114,17 @@ export const useProductsViewModel = (
 
     // Ordenar produtos conforme a opção selecionada
     Object.keys(grouped).forEach((category) => {
-      grouped[category] = sortProducts(grouped[category], activeSort);
+      if (category !== ALL_CATEGORIES) {
+        // Pulamos "Todos" pois já foi ordenado
+        grouped[category] = sortProducts(grouped[category], activeSort);
+      }
     });
 
     setCategoryProducts(grouped);
-
-    // Selecionar a primeira categoria por padrão, se não houver seleção
-    if (!selectedCategory && Object.keys(grouped).length > 0) {
-      setSelectedCategory(Object.keys(grouped)[0]);
-    }
-  }, [products, activeSort]);
+  }, [products, activeSort, allSortedProducts]);
 
   // Filtrar categorias baseado na pesquisa e categoria selecionada
   const getFilteredCategories = (): ProductsByCategory => {
-    if (!searchText && !selectedCategory) {
-      return categoryProducts;
-    }
-
     // Se há termos de pesquisa, filtrar produtos primeiro
     if (searchText) {
       const searchLower = searchText.toLowerCase();
@@ -135,33 +142,52 @@ export const useProductsViewModel = (
 
       const filtered: ProductsByCategory = {};
 
-      filteredProducts.forEach((product) => {
-        const category = product.categoria?.nome || "Outros";
+      // Se estamos na categoria "Todos", mostrar resultados agrupados por categoria
+      if (selectedCategory === ALL_CATEGORIES || !selectedCategory) {
+        // Adicionar categoria "Todos" com todos os produtos filtrados
+        filtered[ALL_CATEGORIES] = sortProducts(filteredProducts, activeSort);
 
-        if (!filtered[category]) {
-          filtered[category] = [];
+        // Agrupar por categorias reais
+        filteredProducts.forEach((product) => {
+          const category = product.categoria?.nome || "Outros";
+
+          if (!filtered[category]) {
+            filtered[category] = [];
+          }
+
+          filtered[category].push(product);
+        });
+
+        // Ordenar produtos de cada categoria
+        Object.keys(filtered).forEach((category) => {
+          if (category !== ALL_CATEGORIES) {
+            filtered[category] = sortProducts(filtered[category], activeSort);
+          }
+        });
+      } else {
+        // Se uma categoria específica está selecionada, filtrar apenas por ela
+        const categoryProducts = filteredProducts.filter(
+          (product) =>
+            (product.categoria?.nome || "Outros") === selectedCategory
+        );
+
+        if (categoryProducts.length > 0) {
+          filtered[selectedCategory] = sortProducts(
+            categoryProducts,
+            activeSort
+          );
         }
-
-        filtered[category].push(product);
-      });
-
-      // Ordenar produtos filtrados
-      Object.keys(filtered).forEach((category) => {
-        filtered[category] = sortProducts(filtered[category], activeSort);
-      });
-
-      // Se também há um filtro de categoria, filtrar ainda mais
-      if (selectedCategory) {
-        return selectedCategory in filtered
-          ? { [selectedCategory]: filtered[selectedCategory] }
-          : {};
       }
 
       return filtered;
     }
 
-    // Se só temos filtro de categoria, exibir apenas a categoria selecionada
-    if (selectedCategory) {
+    // Sem pesquisa de texto, apenas filtrar por categoria selecionada
+    if (selectedCategory === ALL_CATEGORIES) {
+      // Mostrar todas as categorias quando "Todos" está selecionado
+      return categoryProducts;
+    } else if (selectedCategory) {
+      // Mostrar apenas a categoria selecionada
       return selectedCategory in categoryProducts
         ? { [selectedCategory]: categoryProducts[selectedCategory] }
         : {};
@@ -171,8 +197,22 @@ export const useProductsViewModel = (
   };
 
   const filteredCategories = getFilteredCategories();
-  const categoryNames = Object.keys(categoryProducts);
-  const totalProductCount = Object.values(filteredCategories).flat().length;
+
+  // Ordenar categorias para que "Todos" sempre seja o primeiro
+  const categoryNames = useMemo(() => {
+    const names = Object.keys(categoryProducts);
+    if (names.includes(ALL_CATEGORIES)) {
+      return [
+        ALL_CATEGORIES,
+        ...names.filter((name) => name !== ALL_CATEGORIES),
+      ];
+    }
+    return names;
+  }, [categoryProducts]);
+
+  const totalProductCount = Object.entries(filteredCategories)
+    .filter(([category]) => category !== ALL_CATEGORIES)
+    .reduce((sum, [_, products]) => sum + products.length, 0);
 
   return {
     categoryProducts,

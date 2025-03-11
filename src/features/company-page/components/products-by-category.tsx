@@ -1,15 +1,13 @@
 // Path: src/features/company-page/components/products-by-category.tsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Platform,
   FlatList,
-  Animated,
   ScrollView,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
+  Dimensions,
 } from "react-native";
 import { Search, Package, X, SlidersHorizontal } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
@@ -24,95 +22,152 @@ import {
 } from "@gluestack-ui/themed";
 import { CategoryProductsList } from "./category-products-list";
 import { SafeMap } from "@/components/common/safe-map";
-import { useProductsViewModel } from "../view-models/products-by-category.view-model";
 import { shouldUseDarkText } from "@/src/utils/color.utils";
+
+// Constante para a categoria "Todos"
+const ALL_CATEGORIES = "Todos";
 
 interface ProductsByCategoryProps {
   title?: string;
-  scrollY?: Animated.Value;
-  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }
 
 export function ProductsByCategory({
   title = "Produtos",
-  scrollY = new Animated.Value(0),
-  onScroll,
 }: ProductsByCategoryProps) {
   const vm = useCompanyPageContext();
   const [showFilters, setShowFilters] = useState(false);
-  const filterBarRef = useRef<View>(null);
-  const [filterBarHeight, setFilterBarHeight] = useState(0);
-  const [filterBarTop, setFilterBarTop] = useState(0);
-  const [isFilterBarFixed, setIsFilterBarFixed] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    ALL_CATEGORIES
+  );
+  const [searchText, setSearchText] = useState("");
   const contentScrollRef = useRef<ScrollView>(null);
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
+  const { width } = Dimensions.get("window");
 
-  // Animação para opacidade do background do filtro fixo
-  const filterBackgroundOpacity = scrollY.interpolate({
-    inputRange: [filterBarTop, filterBarTop + 30],
-    outputRange: [0, 1],
-    extrapolate: "clamp",
-  });
+  // Estado para armazenar todas as categorias
+  const [categories, setCategories] = useState<string[]>([]);
 
-  // Usar o view model para a lógica de dados
-  const productsViewModel = useProductsViewModel(vm.products);
-
+  // Cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
-  const isDarkText = shouldUseDarkText(primaryColor);
   const filterBgColor = `${primaryColor}15`;
   const filterTextColor = primaryColor;
 
-  // Efeito para monitorar a posição de scroll
+  // Calcular todos os produtos e categorias quando os dados estiverem disponíveis
   useEffect(() => {
-    const listenerId = scrollY.addListener(({ value }) => {
-      if (value >= filterBarTop && filterBarTop > 0) {
-        setIsFilterBarFixed(true);
-      } else {
-        setIsFilterBarFixed(false);
+    if (!vm.products || vm.products.length === 0) return;
+
+    // Agrupar produtos por categorias
+    const grouped: Record<string, any[]> = { [ALL_CATEGORIES]: [] };
+
+    vm.products.forEach((product) => {
+      // Adicionar à categoria "Todos"
+      grouped[ALL_CATEGORIES].push(product);
+
+      // Adicionar à categoria específica
+      const category = product.categoria?.nome || "Outros";
+      if (!grouped[category]) {
+        grouped[category] = [];
       }
+      grouped[category].push(product);
     });
 
-    return () => {
-      scrollY.removeListener(listenerId);
-    };
-  }, [filterBarTop]);
+    // Ordenar categorias alfabeticamente, mas manter "Todos" no topo
+    const sortedCategories = Object.keys(grouped).sort((a, b) => {
+      if (a === ALL_CATEGORIES) return -1;
+      if (b === ALL_CATEGORIES) return 1;
+      return a.localeCompare(b);
+    });
 
-  // Medir a posição e altura da barra de filtro
-  const measureFilterBar = () => {
-    if (filterBarRef.current) {
-      filterBarRef.current.measureInWindow((x, y, width, height) => {
-        setFilterBarHeight(height);
-        setFilterBarTop(y);
+    setCategories(sortedCategories);
+  }, [vm.products]);
+
+  // Filtrar produtos com base na pesquisa e categoria selecionada
+  const getFilteredProducts = useMemo(() => {
+    if (!vm.products || vm.products.length === 0) return {};
+
+    // Se não houver filtros, retornar todos os produtos agrupados por categoria
+    if (
+      !searchText &&
+      (selectedCategory === ALL_CATEGORIES || !selectedCategory)
+    ) {
+      const grouped: Record<string, any[]> = {};
+
+      vm.products.forEach((product) => {
+        const category = product.categoria?.nome || "Outros";
+        if (!grouped[category]) {
+          grouped[category] = [];
+        }
+        grouped[category].push(product);
+      });
+
+      return grouped;
+    }
+
+    // Filtrar produtos pela pesquisa
+    let filtered = vm.products;
+    if (searchText) {
+      const searchLower = searchText.toLowerCase();
+      filtered = filtered.filter(
+        (product) =>
+          product.nome.toLowerCase().includes(searchLower) ||
+          (product.descricao &&
+            product.descricao.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Filtrar por categoria se não for "Todos"
+    if (selectedCategory && selectedCategory !== ALL_CATEGORIES) {
+      filtered = filtered.filter(
+        (product) => (product.categoria?.nome || "Outros") === selectedCategory
+      );
+    }
+
+    // Agrupar resultados filtrados por categoria
+    const result: Record<string, any[]> = {};
+
+    if (selectedCategory && selectedCategory !== ALL_CATEGORIES) {
+      // Se uma categoria específica está selecionada, mostrar apenas essa categoria
+      result[selectedCategory] = filtered;
+    } else {
+      // Agrupar por categorias
+      filtered.forEach((product) => {
+        const category = product.categoria?.nome || "Outros";
+        if (!result[category]) {
+          result[category] = [];
+        }
+        result[category].push(product);
       });
     }
-  };
 
-  useEffect(() => {
-    // Medir após a renderização inicial e quando os dados mudarem
-    const timer = setTimeout(measureFilterBar, 500);
-    return () => clearTimeout(timer);
-  }, [vm.products, productsViewModel.categoryNames]);
+    return result;
+  }, [vm.products, searchText, selectedCategory]);
+
+  // Calcular contagem total de produtos filtrados
+  const totalFilteredProducts = useMemo(() => {
+    return Object.values(getFilteredProducts).reduce(
+      (sum, products) => sum + products.length,
+      0
+    );
+  }, [getFilteredProducts]);
 
   // Renderizar o item da categoria para o FlatList horizontal
   const renderCategoryItem = ({ item }: { item: string }) => {
-    const isActive = productsViewModel.selectedCategory === item;
+    const isActive = selectedCategory === item;
 
     return (
       <TouchableOpacity
-        onPress={() => {
-          productsViewModel.setSelectedCategory(isActive ? null : item);
-        }}
-        className={`mr-3 px-4 py-2 rounded-full ${
+        onPress={() => setSelectedCategory(item)}
+        className={`font-semibold text-md mr-3 px-4 py-2 rounded-full ${
           isActive ? "bg-primary-500" : "bg-gray-100"
         }`}
         style={{
-          backgroundColor: isActive ? primaryColor : "#f3f4f6",
+          backgroundColor: isActive ? primaryColor : `${primaryColor}/80`,
         }}
       >
         <Text
-          className={`text-sm ${
-            isActive ? "text-white font-medium" : "text-gray-800"
+          className={`text-md ${
+            isActive ? "text-white font-semibold" : "text-gray-800"
           }`}
           numberOfLines={1}
         >
@@ -147,29 +202,15 @@ export function ProductsByCategory({
     );
   }
 
-  const hasCategories =
-    Object.keys(productsViewModel.filteredCategories).length > 0;
+  // Verificar se há categorias para mostrar
+  const hasCategories = Object.keys(getFilteredProducts).length > 0;
 
   return (
     <View className="mb-8">
       {/* Header e barra de pesquisa */}
       <View className="px-4 mb-4">
-        <HStack className="items-center justify-between mb-2">
-          <Text className="text-xl font-bold text-gray-800">{title}</Text>
-
-          <TouchableOpacity
-            onPress={() => setShowFilters(!showFilters)}
-            className="flex-row items-center px-3 py-1.5 rounded-full"
-            style={{ backgroundColor: filterBgColor }}
-          >
-            <SlidersHorizontal size={16} color={filterTextColor} />
-            <Text
-              className="ml-1.5 text-sm font-medium"
-              style={{ color: filterTextColor }}
-            >
-              Filtrar
-            </Text>
-          </TouchableOpacity>
+        <HStack className="items-center justify-between mb-6">
+          <Text className="text-xl font-semibold text-gray-800">{title}</Text>
         </HStack>
 
         {/* Barra de pesquisa melhorada */}
@@ -186,18 +227,18 @@ export function ProductsByCategory({
             }}
           >
             <InputSlot pl="$3">
-              <InputIcon as={Search} color="$gray500" />
+              <InputIcon as={Search} color="#9CA3AF" />
             </InputSlot>
             <InputField
               placeholder="Buscar produtos..."
-              value={productsViewModel.searchText}
-              onChangeText={productsViewModel.setSearchText}
-              className="py-2.5"
+              value={searchText}
+              onChangeText={setSearchText}
+              className="py-2.5 placeholder:font-sans"
             />
-            {productsViewModel.searchText ? (
+            {searchText ? (
               <InputSlot pr="$3">
                 <TouchableOpacity
-                  onPress={() => productsViewModel.setSearchText("")}
+                  onPress={() => setSearchText("")}
                   className="bg-gray-100 rounded-full p-1"
                 >
                   <X size={14} color="#9CA3AF" />
@@ -209,47 +250,44 @@ export function ProductsByCategory({
 
         {/* Filtros de ordenação */}
         {showFilters && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="py-2 -mx-4 px-4"
-          >
-            {productsViewModel.getSortOptions().map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                onPress={() => productsViewModel.setActiveSort(option.id)}
-                className={`py-2 px-4 rounded-full mr-2`}
-                style={{
-                  backgroundColor:
-                    productsViewModel.activeSort === option.id
-                      ? primaryColor
-                      : "#f3f4f6",
-                }}
-              >
-                <Text
-                  className={`text-sm ${
-                    productsViewModel.activeSort === option.id
-                      ? "text-white font-medium"
-                      : "text-gray-800"
-                  }`}
+          <View className="mb-3">
+            <Text className="text-sm font-medium text-gray-700 mb-2">
+              Ordenar por:
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="py-1 -mx-1 px-1"
+            >
+              {[
+                { id: "relevance", label: "Relevância" },
+                { id: "price_asc", label: "Menor preço" },
+                { id: "price_desc", label: "Maior preço" },
+                { id: "name_asc", label: "A-Z" },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  className={`py-2 px-4 rounded-full mr-2`}
+                  style={{
+                    backgroundColor: primaryColor,
+                    opacity: 0.8,
+                  }}
                 >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text className="text-sm text-white font-medium">
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         )}
       </View>
 
-      {/* Lista horizontal fixa de categorias */}
-      <View
-        ref={filterBarRef}
-        onLayout={measureFilterBar}
-        className="mb-4 z-10"
-      >
-        {productsViewModel.categoryNames.length > 0 && (
+      {/* Lista horizontal de categorias */}
+      <View className="mb-6">
+        {categories.length > 0 && (
           <FlatList
-            data={productsViewModel.categoryNames}
+            data={categories}
             renderItem={renderCategoryItem}
             keyExtractor={(item) => `category-${item}`}
             horizontal
@@ -258,51 +296,16 @@ export function ProductsByCategory({
               paddingHorizontal: 16,
               paddingVertical: 8,
             }}
+            style={{ marginBottom: 8 }}
           />
         )}
       </View>
 
-      {/* Versão fixa do filtro de categorias que aparece ao rolar */}
-      {isFilterBarFixed && productsViewModel.categoryNames.length > 0 && (
-        <Animated.View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            backgroundColor: `rgba(255,255,255,${filterBackgroundOpacity})`,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-            elevation: 3,
-            height: filterBarHeight,
-            paddingVertical: 8,
-          }}
-        >
-          <FlatList
-            data={productsViewModel.categoryNames}
-            renderItem={renderCategoryItem}
-            keyExtractor={(item) => `fixed-category-${item}`}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-            }}
-          />
-        </Animated.View>
-      )}
-
-      {/* Espaço vazio para o filtro fixo */}
-      {isFilterBarFixed && <View style={{ height: filterBarHeight }} />}
-
       {/* Resultados da busca */}
-      {productsViewModel.searchText && (
+      {searchText && (
         <View className="px-4 mb-4">
           <Text className="text-gray-600">
-            {productsViewModel.totalProductCount} resultados para "
-            {productsViewModel.searchText}"
+            {totalFilteredProducts} resultados para "{searchText}"
           </Text>
         </View>
       )}
@@ -313,18 +316,18 @@ export function ProductsByCategory({
           <Card className="p-8 items-center justify-center border border-gray-100">
             <Package size={56} color="#9CA3AF" className="mb-3" />
             <Text className="text-lg font-medium text-gray-800 mb-2 text-center">
-              {productsViewModel.searchText
+              {searchText
                 ? "Nenhum produto encontrado"
                 : "Nenhum produto disponível"}
             </Text>
             <Text className="text-gray-500 text-center mb-4">
-              {productsViewModel.searchText
-                ? `Não encontramos resultados para "${productsViewModel.searchText}"`
+              {searchText
+                ? `Não encontramos resultados para "${searchText}"`
                 : "Esta loja ainda não cadastrou produtos"}
             </Text>
-            {productsViewModel.searchText ? (
+            {searchText ? (
               <Button
-                onPress={() => productsViewModel.setSearchText("")}
+                onPress={() => setSearchText("")}
                 className="mt-2"
                 variant="outline"
               >
@@ -343,21 +346,22 @@ export function ProductsByCategory({
         scrollEnabled={false}
       >
         {hasCategories &&
-          Object.entries(productsViewModel.filteredCategories).map(
-            ([category, products]) => (
-              <CategoryProductsList
-                key={`category-${category}`}
-                title={category}
-                products={products}
-                viewAllPath={
-                  vm.profile?.empresa.slug
-                    ? `/(drawer)/empresa/${
-                        vm.profile.empresa.slug
-                      }/products?category=${encodeURIComponent(category)}`
-                    : undefined
-                }
-              />
-            )
+          Object.entries(getFilteredProducts).map(
+            ([category, products]) =>
+              category !== ALL_CATEGORIES && (
+                <CategoryProductsList
+                  key={`category-${category}`}
+                  title={category}
+                  products={products}
+                  viewAllPath={
+                    vm.profile?.empresa.slug
+                      ? `/(drawer)/empresa/${
+                          vm.profile.empresa.slug
+                        }/products?category=${encodeURIComponent(category)}`
+                      : undefined
+                  }
+                />
+              )
           )}
       </ScrollView>
     </View>
