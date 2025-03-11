@@ -50,9 +50,7 @@ export function CategoriesContent() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <View className="flex-1">
-        {/* Conteúdo fixo superior */}
         <View className="px-4 pt-3 bg-background-100">
-          {/* Search */}
           <SearchInput
             value={vm.searchTerm}
             onChangeText={vm.setSearchTerm}
@@ -61,7 +59,6 @@ export function CategoriesContent() {
           />
         </View>
 
-        {/* Lista de categorias */}
         <View className="flex-1 px-4 pt-2 pb-20 bg-background-100">
           <CategoriesList
             categories={vm.categories}
@@ -75,7 +72,6 @@ export function CategoriesContent() {
           />
         </View>
 
-        {/* Category Form Modal */}
         <CategoryFormModal
           isOpen={vm.isFormVisible}
           onClose={handleCloseModal}
@@ -84,7 +80,6 @@ export function CategoriesContent() {
           category={vm.selectedCategory}
         />
 
-        {/* Primary Action Button - show conditionally */}
         {showNewButton && (
           <PrimaryActionButton
             onPress={handleAddCategory}
@@ -93,7 +88,6 @@ export function CategoriesContent() {
           />
         )}
 
-        {/* Confirmation Dialog */}
         <ConfirmationDialog
           isOpen={vm.isDeleteDialogOpen}
           onClose={vm.cancelDeleteCategory}
