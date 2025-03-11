@@ -1,6 +1,6 @@
 // Path: src/features/company-page/screens/company-page-content.tsx
-import React, { useState } from "react";
-import { View, ScrollView } from "react-native";
+import React, { useState, useRef } from "react";
+import { View, Animated, ScrollView } from "react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { FeaturedProductsStrip } from "../components/featured-products-strip";
 import { CompanyDeliveryInfo } from "../components/company-delivery-info";
@@ -13,6 +13,7 @@ import { CompanyInfoModal } from "../components/company-info-modal";
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
   const [isInfoModalVisible, setInfoModalVisible] = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
 
@@ -24,12 +25,20 @@ export function CompanyPageContent() {
     setInfoModalVisible(false);
   };
 
+  // Handler para o evento de scroll
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: false }
+  );
+
   return (
     <View className="flex-1 bg-gray-50 relative">
-      <ScrollView
+      <Animated.ScrollView
         className="flex-1 bg-gray-50"
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
       >
         <View>
           {/* Cabeçalho da empresa com banner, logo e informações */}
@@ -45,12 +54,13 @@ export function CompanyPageContent() {
             <FeaturedProductsStrip />
           )}
 
-          {/* Produtos agrupados por categoria */}
+          {/* Produtos agrupados por categoria com scroll e filtro fixo */}
           <ProductsByCategory
             title={isDeliveryPlan ? "Cardápio" : "Nossos Produtos"}
+            scrollY={scrollY}
           />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Barra de ações fixa no rodapé */}
       <CompanyActionBar />

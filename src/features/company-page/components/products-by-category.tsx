@@ -1,13 +1,17 @@
-// Path: src/features/company-page/components/products-by-category.tsx (ajustado para usar o view model)
-import React, { useState, useRef } from "react";
-import { View, Text, TouchableOpacity, Platform, FlatList } from "react-native";
+// Path: src/features/company-page/components/products-by-category.tsx
+import React, { useState, useRef, useEffect } from "react";
 import {
-  Search,
-  Package,
-  X,
-  SlidersHorizontal,
-  Store,
-} from "lucide-react-native";
+  View,
+  Text,
+  TouchableOpacity,
+  Platform,
+  FlatList,
+  Animated,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
+import { Search, Package, X, SlidersHorizontal } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import {
   Input,
@@ -17,27 +21,39 @@ import {
   HStack,
   Card,
   Button,
-  ScrollView,
 } from "@gluestack-ui/themed";
 import { CategoryProductsList } from "./category-products-list";
-import { ImagePreview } from "@/components/custom/image-preview";
 import { SafeMap } from "@/components/common/safe-map";
 import { useProductsViewModel } from "../view-models/products-by-category.view-model";
 import { shouldUseDarkText } from "@/src/utils/color.utils";
 
 interface ProductsByCategoryProps {
   title?: string;
+  scrollY?: Animated.Value;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }
 
 export function ProductsByCategory({
   title = "Produtos",
+  scrollY = new Animated.Value(0),
+  onScroll,
 }: ProductsByCategoryProps) {
   const vm = useCompanyPageContext();
   const [showFilters, setShowFilters] = useState(false);
-  const categoryScrollRef = useRef<FlatList>(null);
-  const isWeb = Platform.OS === "web";
+  const filterBarRef = useRef<View>(null);
+  const [filterBarHeight, setFilterBarHeight] = useState(0);
+  const [filterBarTop, setFilterBarTop] = useState(0);
+  const [isFilterBarFixed, setIsFilterBarFixed] = useState(false);
+  const contentScrollRef = useRef<ScrollView>(null);
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
+
+  // Animação para opacidade do background do filtro fixo
+  const filterBackgroundOpacity = scrollY.interpolate({
+    inputRange: [filterBarTop, filterBarTop + 30],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
 
   // Usar o view model para a lógica de dados
   const productsViewModel = useProductsViewModel(vm.products);
@@ -47,72 +63,57 @@ export function ProductsByCategory({
   const filterBgColor = `${primaryColor}15`;
   const filterTextColor = primaryColor;
 
-  // Botão de filtro para cada opção de ordenação
-  const SortButton = ({ id, label }: { id: string; label: string }) => (
-    <TouchableOpacity
-      onPress={() => productsViewModel.setActiveSort(id)}
-      className={`py-2 px-4 rounded-full mr-2 ${
-        productsViewModel.activeSort === id ? "bg-primary-500" : "bg-gray-100"
-      }`}
-      style={{
-        backgroundColor:
-          productsViewModel.activeSort === id ? primaryColor : "#f3f4f6",
-      }}
-    >
-      <Text
-        className={`text-sm ${
-          productsViewModel.activeSort === id
-            ? "text-white font-medium"
-            : "text-gray-800"
-        }`}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
+  // Efeito para monitorar a posição de scroll
+  useEffect(() => {
+    const listenerId = scrollY.addListener(({ value }) => {
+      if (value >= filterBarTop && filterBarTop > 0) {
+        setIsFilterBarFixed(true);
+      } else {
+        setIsFilterBarFixed(false);
+      }
+    });
+
+    return () => {
+      scrollY.removeListener(listenerId);
+    };
+  }, [filterBarTop]);
+
+  // Medir a posição e altura da barra de filtro
+  const measureFilterBar = () => {
+    if (filterBarRef.current) {
+      filterBarRef.current.measureInWindow((x, y, width, height) => {
+        setFilterBarHeight(height);
+        setFilterBarTop(y);
+      });
+    }
+  };
+
+  useEffect(() => {
+    // Medir após a renderização inicial e quando os dados mudarem
+    const timer = setTimeout(measureFilterBar, 500);
+    return () => clearTimeout(timer);
+  }, [vm.products, productsViewModel.categoryNames]);
 
   // Renderizar o item da categoria para o FlatList horizontal
   const renderCategoryItem = ({ item }: { item: string }) => {
     const isActive = productsViewModel.selectedCategory === item;
-    const categoryProducts = vm.products?.filter(
-      (p) => (p.categoria?.nome || "Outros") === item
-    );
-    const categoryImage = categoryProducts?.[0]?.categoria?.imagem;
 
     return (
       <TouchableOpacity
         onPress={() => {
           productsViewModel.setSelectedCategory(isActive ? null : item);
         }}
-        className="items-center mr-4"
-        activeOpacity={0.7}
+        className={`mr-3 px-4 py-2 rounded-full ${
+          isActive ? "bg-primary-500" : "bg-gray-100"
+        }`}
+        style={{
+          backgroundColor: isActive ? primaryColor : "#f3f4f6",
+        }}
       >
-        <View
-          className={`w-16 h-16 rounded-xl items-center justify-center mb-1 ${
-            isActive ? "border-2" : ""
-          }`}
-          style={{
-            backgroundColor: `${primaryColor}15`,
-            borderColor: isActive ? primaryColor : "transparent",
-          }}
-        >
-          {categoryImage ? (
-            <ImagePreview
-              uri={categoryImage}
-              width="100%"
-              height="100%"
-              resizeMode="cover"
-              containerClassName="rounded-xl"
-            />
-          ) : (
-            <Store size={24} color={isActive ? primaryColor : "#6B7280"} />
-          )}
-        </View>
         <Text
-          className={`text-xs text-center ${
-            isActive ? "font-bold" : "font-medium"
+          className={`text-sm ${
+            isActive ? "text-white font-medium" : "text-gray-800"
           }`}
-          style={{ color: isActive ? primaryColor : "#4B5563" }}
           numberOfLines={1}
         >
           {item}
@@ -137,16 +138,6 @@ export function ProductsByCategory({
           <View className="flex-row flex-wrap px-4 mb-6">
             {[1, 2, 3, 4].map((item) => (
               <View key={`skeleton-${item}`} className="w-1/2 p-2">
-                <View className="h-48 bg-gray-200 rounded-lg animate-pulse" />
-              </View>
-            ))}
-          </View>
-
-          <View className="h-10 mx-4 bg-gray-200 rounded-lg mb-4 animate-pulse" />
-
-          <View className="flex-row flex-wrap px-4">
-            {[1, 2].map((item) => (
-              <View key={`skeleton-2-${item}`} className="w-1/2 p-2">
                 <View className="h-48 bg-gray-200 rounded-lg animate-pulse" />
               </View>
             ))}
@@ -224,17 +215,40 @@ export function ProductsByCategory({
             className="py-2 -mx-4 px-4"
           >
             {productsViewModel.getSortOptions().map((option) => (
-              <SortButton key={option.id} id={option.id} label={option.label} />
+              <TouchableOpacity
+                key={option.id}
+                onPress={() => productsViewModel.setActiveSort(option.id)}
+                className={`py-2 px-4 rounded-full mr-2`}
+                style={{
+                  backgroundColor:
+                    productsViewModel.activeSort === option.id
+                      ? primaryColor
+                      : "#f3f4f6",
+                }}
+              >
+                <Text
+                  className={`text-sm ${
+                    productsViewModel.activeSort === option.id
+                      ? "text-white font-medium"
+                      : "text-gray-800"
+                  }`}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         )}
       </View>
 
-      {/* Lista horizontal de categorias */}
-      {productsViewModel.categoryNames.length > 0 && (
-        <View className="mb-4">
+      {/* Lista horizontal fixa de categorias */}
+      <View
+        ref={filterBarRef}
+        onLayout={measureFilterBar}
+        className="mb-4 z-10"
+      >
+        {productsViewModel.categoryNames.length > 0 && (
           <FlatList
-            ref={categoryScrollRef}
             data={productsViewModel.categoryNames}
             renderItem={renderCategoryItem}
             keyExtractor={(item) => `category-${item}`}
@@ -245,8 +259,43 @@ export function ProductsByCategory({
               paddingVertical: 8,
             }}
           />
-        </View>
+        )}
+      </View>
+
+      {/* Versão fixa do filtro de categorias que aparece ao rolar */}
+      {isFilterBarFixed && productsViewModel.categoryNames.length > 0 && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            backgroundColor: `rgba(255,255,255,${filterBackgroundOpacity})`,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 3,
+            elevation: 3,
+            height: filterBarHeight,
+            paddingVertical: 8,
+          }}
+        >
+          <FlatList
+            data={productsViewModel.categoryNames}
+            renderItem={renderCategoryItem}
+            keyExtractor={(item) => `fixed-category-${item}`}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+            }}
+          />
+        </Animated.View>
       )}
+
+      {/* Espaço vazio para o filtro fixo */}
+      {isFilterBarFixed && <View style={{ height: filterBarHeight }} />}
 
       {/* Resultados da busca */}
       {productsViewModel.searchText && (
@@ -287,23 +336,30 @@ export function ProductsByCategory({
       )}
 
       {/* Listas de produtos por categoria */}
-      {hasCategories &&
-        Object.entries(productsViewModel.filteredCategories).map(
-          ([category, products]) => (
-            <CategoryProductsList
-              key={`category-${category}`}
-              title={category}
-              products={products}
-              // Para delivery, expandimos todas as categorias por padrão ou
-              // se uma categoria específica for selecionada
-              expanded={
-                isDeliveryPlan ||
-                productsViewModel.selectedCategory === category ||
-                productsViewModel.searchText.length > 0
-              }
-            />
-          )
-        )}
+      <ScrollView
+        ref={contentScrollRef}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
+      >
+        {hasCategories &&
+          Object.entries(productsViewModel.filteredCategories).map(
+            ([category, products]) => (
+              <CategoryProductsList
+                key={`category-${category}`}
+                title={category}
+                products={products}
+                viewAllPath={
+                  vm.profile?.empresa.slug
+                    ? `/(drawer)/empresa/${
+                        vm.profile.empresa.slug
+                      }/products?category=${encodeURIComponent(category)}`
+                    : undefined
+                }
+              />
+            )
+          )}
+      </ScrollView>
     </View>
   );
 }
