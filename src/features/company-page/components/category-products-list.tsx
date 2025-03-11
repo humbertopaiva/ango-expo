@@ -1,5 +1,5 @@
 // Path: src/features/company-page/components/category-products-list.tsx
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -42,12 +42,11 @@ export function CategoryProductsList({
 
   // Cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
-  const lightPrimaryColor = `${primaryColor}10`;
 
   // Handler para "Ver todos"
   const handleViewAll = () => {
     if (viewAllPath) {
-      router.push(`/(drawer)/empresa/${vm.profile?.empresa.slug}/`);
+      router.push(`/(drawer)/empresa/${vm.profile?.empresa.slug}`);
     } else if (vm.profile?.empresa.slug) {
       // Construir URL com parâmetros para filtrar por categoria
       router.push({
