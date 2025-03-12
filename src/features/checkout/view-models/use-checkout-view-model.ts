@@ -114,22 +114,28 @@ export function useCheckoutViewModel() {
 
   // Validações
   const isPersonalInfoValid = useCallback(() => {
-    return (
-      personalInfo.name.trim().length > 0 &&
-      personalInfo.phone.replace(/\D/g, "").length >= 10
-    );
-  }, [personalInfo]);
+    const isNameValid = personalInfo.name.trim().length > 0;
+    const isPhoneValid = personalInfo.phone.replace(/\D/g, "").length >= 10;
 
+    // Também validamos o endereço se o método de entrega for delivery
+    if (deliveryMethod === "delivery") {
+      const isAddressValid =
+        address.street.trim().length > 0 &&
+        address.number.trim().length > 0 &&
+        address.neighborhood.trim().length > 0 &&
+        address.city.trim().length > 0;
+
+      return isNameValid && isPhoneValid && isAddressValid;
+    }
+
+    return isNameValid && isPhoneValid;
+  }, [personalInfo, address, deliveryMethod]);
+
+  // Para compatibilidade com o código existente, mantemos isAddressValid mas
+  // ele agora sempre retorna true, pois o endereço já foi validado na etapa anterior
   const isAddressValid = useCallback(() => {
-    if (deliveryMethod === "pickup") return true;
-
-    return (
-      address.street.trim().length > 0 &&
-      address.number.trim().length > 0 &&
-      address.neighborhood.trim().length > 0 &&
-      address.city.trim().length > 0
-    );
-  }, [address, deliveryMethod]);
+    return true;
+  }, []);
 
   const isPaymentValid = useCallback(() => {
     if (paymentInfo.method === "cash" && paymentInfo.changeFor) {
@@ -172,15 +178,7 @@ export function useCheckoutViewModel() {
       if (!isPersonalInfoValid()) {
         Alert.alert(
           "Dados incompletos",
-          "Por favor, preencha seus dados pessoais."
-        );
-        return false;
-      }
-
-      if (deliveryMethod === "delivery" && !isAddressValid()) {
-        Alert.alert(
-          "Endereço incompleto",
-          "Por favor, preencha seu endereço de entrega."
+          "Por favor, preencha corretamente todos os dados solicitados."
         );
         return false;
       }
@@ -235,7 +233,6 @@ export function useCheckoutViewModel() {
     deliveryMethod,
     cartVm.items,
     isPersonalInfoValid,
-    isAddressValid,
     isPaymentValid,
   ]);
 

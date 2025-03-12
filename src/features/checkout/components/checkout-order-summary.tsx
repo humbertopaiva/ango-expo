@@ -1,12 +1,13 @@
 // Path: src/features/checkout/components/checkout-order-summary.tsx
 import React from "react";
-import { View, Text, TouchableOpacity, Image } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Card, HStack, VStack, Divider } from "@gluestack-ui/themed";
 import { Package, MessageSquare } from "lucide-react-native";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { CartItem } from "@/src/features/cart/models/cart";
+import { DeliveryMethodSelector } from "./delivery-method-selector";
 
 /**
  * Componente de item de pedido individual com detalhes e observações
@@ -74,6 +75,7 @@ export function CheckoutOrderSummary() {
   const checkoutVm = useCheckoutViewModel();
 
   const hasDeliveryFee =
+    checkoutVm.deliveryMethod === "delivery" &&
     checkoutVm.companyConfig?.deliveryConfig?.deliveryFee &&
     parseFloat(checkoutVm.companyConfig.deliveryConfig.deliveryFee) > 0;
 
@@ -96,76 +98,84 @@ export function CheckoutOrderSummary() {
   };
 
   return (
-    <Card className="p-0 overflow-hidden border border-gray-100">
-      {/* Seção de itens do pedido */}
-      <View className="p-4 bg-white">
-        <Text className="text-lg font-semibold text-gray-800 mb-3">
-          Itens do Pedido ({cartVm.items.length})
-        </Text>
+    <View>
+      {/* Seletor de método de entrega */}
+      <DeliveryMethodSelector />
 
-        <VStack space="xs">
-          {cartVm.items.map((item) => (
-            <React.Fragment key={item.id}>
-              <OrderItem item={item} />
-              {item.observation && (
-                <ItemObservation observation={item.observation} />
-              )}
-            </React.Fragment>
-          ))}
-        </VStack>
-      </View>
-
-      {/* Resumo de valores */}
-      <View className="bg-gray-50 p-4">
-        <Text className="font-semibold text-gray-800 mb-3">
-          Resumo de Valores
-        </Text>
-
-        <VStack space="sm">
-          <HStack className="justify-between">
-            <Text className="text-gray-600">Subtotal</Text>
-            <Text className="font-medium text-gray-800">{cartVm.subtotal}</Text>
-          </HStack>
-
-          <HStack className="justify-between">
-            <Text className="text-gray-600">Taxa de entrega</Text>
-            <Text className="font-medium text-gray-800">
-              {hasDeliveryFee
-                ? (
-                    parseFloat(
-                      checkoutVm.companyConfig?.deliveryConfig?.deliveryFee ||
-                        "0"
-                    ) / 100
-                  ).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })
-                : "Grátis"}
-            </Text>
-          </HStack>
-
-          <Divider my="$0.5" />
-
-          <HStack className="justify-between mt-2">
-            <Text className="font-semibold text-gray-800">Total</Text>
-            <Text className="font-bold text-lg text-gray-800">
-              {calculateTotal()}
-            </Text>
-          </HStack>
-        </VStack>
-      </View>
-
-      {/* Notas sobre entrega, se disponível */}
-      {checkoutVm.companyConfig?.deliveryConfig?.notes && (
-        <View className="bg-blue-50 p-4 border-t border-blue-100">
-          <Text className="font-medium text-blue-800 mb-1">
-            Informações de Entrega
+      {/* Itens do Pedido */}
+      <Card className="p-0 overflow-hidden border border-gray-100">
+        {/* Seção de itens do pedido */}
+        <View className="p-4 bg-white">
+          <Text className="text-lg font-semibold text-gray-800 mb-3">
+            Itens do Pedido ({cartVm.items.length})
           </Text>
-          <Text className="text-sm text-blue-700">
-            {checkoutVm.companyConfig.deliveryConfig.notes}
-          </Text>
+
+          <VStack space="xs">
+            {cartVm.items.map((item) => (
+              <React.Fragment key={item.id}>
+                <OrderItem item={item} />
+                {item.observation && (
+                  <ItemObservation observation={item.observation} />
+                )}
+              </React.Fragment>
+            ))}
+          </VStack>
         </View>
-      )}
-    </Card>
+
+        {/* Resumo de valores */}
+        <View className="bg-gray-50 p-4">
+          <Text className="font-semibold text-gray-800 mb-3">
+            Resumo de Valores
+          </Text>
+
+          <VStack space="sm">
+            <HStack className="justify-between">
+              <Text className="text-gray-600">Subtotal</Text>
+              <Text className="font-medium text-gray-800">
+                {cartVm.subtotal}
+              </Text>
+            </HStack>
+
+            <HStack className="justify-between">
+              <Text className="text-gray-600">Taxa de entrega</Text>
+              <Text className="font-medium text-gray-800">
+                {hasDeliveryFee
+                  ? (
+                      parseFloat(
+                        checkoutVm.companyConfig?.deliveryConfig?.deliveryFee ||
+                          "0"
+                      ) / 100
+                    ).toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })
+                  : "Grátis"}
+              </Text>
+            </HStack>
+
+            <Divider my="$0.5" />
+
+            <HStack className="justify-between mt-2">
+              <Text className="font-semibold text-gray-800">Total</Text>
+              <Text className="font-bold text-lg text-gray-800">
+                {calculateTotal()}
+              </Text>
+            </HStack>
+          </VStack>
+        </View>
+
+        {/* Notas sobre entrega, se disponível */}
+        {checkoutVm.companyConfig?.deliveryConfig?.notes && (
+          <View className="bg-blue-50 p-4 border-t border-blue-100">
+            <Text className="font-medium text-blue-800 mb-1">
+              Informações de Entrega
+            </Text>
+            <Text className="text-sm text-blue-700">
+              {checkoutVm.companyConfig.deliveryConfig.notes}
+            </Text>
+          </View>
+        )}
+      </Card>
+    </View>
   );
 }
