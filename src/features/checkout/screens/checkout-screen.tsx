@@ -5,474 +5,306 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Dimensions,
+  Image,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import ScreenHeader from "@/components/ui/screen-header";
-import { Card, VStack, HStack, Divider, Button } from "@gluestack-ui/themed";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, Card, HStack, VStack, Divider } from "@gluestack-ui/themed";
 import {
-  MapPin,
+  ArrowLeft,
   CreditCard,
-  Banknote,
-  Wallet,
-  ChevronRight,
-  Clock,
+  DollarSign,
+  MapPin,
   CheckCircle,
-  ChevronDown,
-  Phone as PhoneIcon, // Renomeado para evitar conflito
+  Phone,
+  User,
+  Package,
+  Clipboard,
+  MessageSquare,
 } from "lucide-react-native";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
-import { useOrderViewModel } from "@/src/features/orders/view-models/use-order-view-model";
+import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
+import ScreenHeader from "@/components/ui/screen-header";
+
+import { CartItem } from "@/src/features/cart/models/cart";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { getContrastColor } from "@/src/utils/color.utils";
-import { PaymentMethod } from "@/src/features/orders/models/order";
+import { ImagePreview } from "@/components/custom/image-preview";
+import { CheckoutOrderSummary } from "../components/checkout-order-summary";
+import { CheckoutUserForm } from "../components/checkout-user-form";
+import { CheckoutAddressForm } from "../components/checkout-address-form";
+import { CheckoutPaymentMethod } from "../components/checkout-payment-method";
+import { CheckoutCompletedView } from "../components/checkout-completed-view";
 
 export function CheckoutScreen() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
+  const cartVm = useCartViewModel();
+  const checkoutVm = useCheckoutViewModel();
   const insets = useSafeAreaInsets();
-  const cartViewModel = useCartViewModel();
-  const orderViewModel = useOrderViewModel();
-
+  const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod>(PaymentMethod.CREDIT_CARD);
-  const [orderProcessed, setOrderProcessed] = useState(false);
-  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const { width } = Dimensions.get("window");
 
-  const primaryColor = THEME_COLORS.primary;
-  const contrastColor = getContrastColor(primaryColor);
-
+  // Carregar a configuração da empresa e do checkout
   useEffect(() => {
-    // Se o carrinho estiver vazio, redirecionar para a página da empresa
-    if (cartViewModel.isEmpty && !orderProcessed) {
-      router.replace(`/(drawer)/empresa/${companySlug}`);
+    if (companySlug) {
+      checkoutVm.loadCompanyConfig(companySlug);
     }
-  }, [cartViewModel.isEmpty, companySlug, orderProcessed]);
+  }, [companySlug]);
 
-  // Formatar o telefone enquanto o usuário digita
-  const formatPhoneNumber = (text: string) => {
-    // Remove tudo exceto números
-    const cleaned = text.replace(/\D/g, "");
-
-    // Limita ao tamanho máximo de um número de telefone
-    const limited = cleaned.substring(0, 11);
-
-    // Aplica a formatação
-    let formatted = limited;
-    if (limited.length > 2) {
-      formatted = `(${limited.substring(0, 2)}) ${limited.substring(2)}`;
-
-      if (limited.length > 7) {
-        formatted = `(${limited.substring(0, 2)}) ${limited.substring(
-          2,
-          7
-        )}-${limited.substring(7)}`;
-      }
+  // Verificar se o carrinho está vazio e redirecionar se necessário
+  useEffect(() => {
+    if (cartVm.isEmpty) {
+      Alert.alert(
+        "Carrinho vazio",
+        "Seu carrinho está vazio. Adicione produtos antes de finalizar o pedido.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace(`/(drawer)/empresa/${companySlug}`),
+          },
+        ]
+      );
     }
+  }, [cartVm.isEmpty, companySlug]);
 
-    return formatted;
+  // Manipuladores para navegação entre etapas
+  const handleNextStep = () => {
+    if (currentStep < getTotalSteps()) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
-  const handlePhoneChange = (text: string) => {
-    setContactPhone(formatPhoneNumber(text));
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      router.back();
+    }
   };
 
-  // Processar o pedido
-  const handlePlaceOrder = async () => {
-    if (!deliveryAddress.trim()) {
-      Alert.alert(
-        "Endereço necessário",
-        "Por favor, informe seu endereço de entrega."
-      );
-      return;
-    }
+  // Método para voltar à loja
+  const handleBackToStore = () => {
+    router.push(`/(drawer)/empresa/${companySlug}`);
+  };
 
-    if (!contactPhone.trim() || contactPhone.length < 14) {
-      Alert.alert(
-        "Telefone necessário",
-        "Por favor, informe um número de telefone válido."
-      );
-      return;
-    }
-
+  // Finalizar pedido
+  const handleFinishOrder = async () => {
     try {
       setIsProcessing(true);
+      const success = await checkoutVm.finalizeOrder();
 
-      // Processar o pedido usando o OrderViewModel
-      const order = await orderViewModel.placeOrder(selectedPaymentMethod);
-
-      if (order) {
-        setOrderProcessed(true);
-        setOrderNumber(order.id);
-
-        // Aqui você pode adicionar lógica para enviar os detalhes de entrega
-        // para o seu backend através de uma API
+      if (success) {
+        setCurrentStep(getTotalSteps()); // Avança para a tela de conclusão
       } else {
         Alert.alert(
           "Erro",
-          "Não foi possível processar seu pedido. Tente novamente."
+          "Não foi possível finalizar seu pedido. Verifique as informações e tente novamente."
         );
       }
     } catch (error) {
       console.error("Erro ao finalizar pedido:", error);
-      Alert.alert("Erro", "Ocorreu um erro ao processar seu pedido.");
+      Alert.alert(
+        "Erro",
+        "Ocorreu um erro ao processar seu pedido. Por favor, tente novamente."
+      );
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Ir para a tela de acompanhamento de pedido
-  const goToOrderTracking = () => {
-    if (orderNumber) {
-      router.push(`/(drawer)/empresa/${companySlug}/orders/${orderNumber}`);
+  // Determinar o número total de etapas
+  const getTotalSteps = () => {
+    // 1: Resumo do pedido
+    // 2: Informações pessoais
+    // 3: Endereço de entrega
+    // 4: Método de pagamento
+    // 5: Confirmação
+    return 5;
+  };
+
+  // Obter título da etapa atual
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1:
+        return "Resumo do Pedido";
+      case 2:
+        return "Seus Dados";
+      case 3:
+        return "Endereço de Entrega";
+      case 4:
+        return "Forma de Pagamento";
+      case 5:
+        return "Pedido Finalizado";
+      default:
+        return "Checkout";
     }
   };
 
-  // Voltar para a loja
-  const goBackToStore = () => {
-    router.replace(`/(drawer)/empresa/${companySlug}`);
+  // Verificar se o botão de próximo deve estar habilitado
+  const isNextButtonEnabled = () => {
+    switch (currentStep) {
+      case 1:
+        return true; // Sempre habilitado no resumo do pedido
+      case 2:
+        return checkoutVm.isPersonalInfoValid(); // Verificar se os dados pessoais estão preenchidos
+      case 3:
+        return checkoutVm.isAddressValid(); // Verificar se o endereço está preenchido
+      case 4:
+        return checkoutVm.isPaymentValid(); // Verificar se o método de pagamento foi selecionado
+      default:
+        return false;
+    }
   };
 
-  // Renderizar o conteúdo após o processamento do pedido
-  if (orderProcessed) {
+  // Obter texto do botão de próximo
+  const getNextButtonText = () => {
+    switch (currentStep) {
+      case 1:
+        return "Continuar";
+      case 2:
+        return "Continuar para Endereço";
+      case 3:
+        return "Continuar para Pagamento";
+      case 4:
+        return "Finalizar Pedido";
+      default:
+        return "Continuar";
+    }
+  };
+
+  // Verificar se devemos esconder o botão de voltar
+  const shouldHideBackButton = () => {
+    return currentStep === 5; // Na tela de confirmação, não há botão de voltar
+  };
+
+  // Cor primária da empresa ou padrão
+  const primaryColor =
+    checkoutVm.companyConfig?.primaryColor || THEME_COLORS.primary;
+  const contrastTextColor = getContrastColor(primaryColor);
+
+  // Se o carrinho estiver vazio, não renderizar o conteúdo
+  if (cartVm.isEmpty) {
     return (
-      <View className="flex-1 bg-white">
-        <ScreenHeader title="Pedido Confirmado" showBackButton={false} />
-
-        <View className="flex-1 items-center justify-center p-6">
-          <View className="items-center mb-8">
-            <View
-              className="w-20 h-20 rounded-full items-center justify-center mb-4"
-              style={{ backgroundColor: `${primaryColor}15` }}
-            >
-              <CheckCircle size={40} color={primaryColor} />
-            </View>
-
-            <Text className="text-2xl font-bold text-gray-800 mb-2">
-              Pedido realizado com sucesso!
-            </Text>
-
-            <Text className="text-gray-600 text-center mb-2">
-              Seu pedido #{orderNumber?.replace("order_", "").substring(0, 6)}{" "}
-              foi confirmado.
-            </Text>
-
-            <HStack className="items-center space-x-1 mb-6">
-              <Clock size={16} color="#6B7280" />
-              <Text className="text-gray-500">
-                Tempo estimado de entrega: 30-45 minutos
-              </Text>
-            </HStack>
-          </View>
-
-          <VStack space="lg" className="w-full">
-            <Button
-              onPress={goToOrderTracking}
-              style={{ backgroundColor: primaryColor }}
-            >
-              <Text className="text-white font-bold">Acompanhar Pedido</Text>
-            </Button>
-
-            <Button variant="outline" onPress={goBackToStore}>
-              <Text className="font-medium" style={{ color: primaryColor }}>
-                Voltar para a Loja
-              </Text>
-            </Button>
-          </VStack>
-        </View>
+      <View className="flex-1 items-center justify-center bg-gray-50">
+        <ActivityIndicator size="large" color={primaryColor} />
       </View>
     );
   }
 
+  // Renderizar conteúdo de acordo com a etapa
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return <CheckoutOrderSummary />;
+      case 2:
+        return <CheckoutUserForm />;
+      case 3:
+        return <CheckoutAddressForm />;
+      case 4:
+        return <CheckoutPaymentMethod />;
+      case 5:
+        return <CheckoutCompletedView onBackToStore={handleBackToStore} />;
+      default:
+        return <View />;
+    }
+  };
+
+  // Renderizar indicadores de etapas
+  const renderStepIndicators = () => {
+    const totalSteps = getTotalSteps() - 1; // Não contamos a última etapa (conclusão)
+
+    return (
+      <HStack className="justify-between mb-4 px-4">
+        {Array.from({ length: totalSteps }).map((_, index) => {
+          const stepNumber = index + 1;
+          const isActive = stepNumber === currentStep;
+          const isCompleted = stepNumber < currentStep;
+
+          return (
+            <View
+              key={`step-${stepNumber}`}
+              className={`flex-1 ${index < totalSteps - 1 ? "mr-2" : ""}`}
+            >
+              <View
+                className="h-1 rounded-full"
+                style={{
+                  backgroundColor:
+                    isActive || isCompleted ? primaryColor : "#E5E7EB",
+                  opacity: isActive ? 1 : isCompleted ? 0.7 : 0.3,
+                }}
+              />
+            </View>
+          );
+        })}
+      </HStack>
+    );
+  };
+
   return (
-    <View className="flex-1 bg-gray-50">
-      <ScreenHeader
-        title="Finalizar Pedido"
-        subtitle="Complete as informações para delivery"
-        showBackButton={true}
-        onBackPress={() => router.back()}
-      />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
+      <View className="flex-1 bg-gray-50">
+        {/* Cabeçalho */}
+        <ScreenHeader
+          title={getStepTitle()}
+          subtitle={
+            currentStep < 5
+              ? `Etapa ${currentStep} de ${getTotalSteps() - 1}`
+              : undefined
+          }
+          showBackButton={!shouldHideBackButton()}
+          onBackPress={handlePreviousStep}
+        />
 
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Informações de Entrega */}
-        <Card className="p-4 mb-4 border border-gray-100">
-          <Text className="font-semibold text-gray-800 text-base mb-3">
-            Informações de Entrega
-          </Text>
+        {/* Indicadores de etapas */}
+        {currentStep < 5 && renderStepIndicators()}
 
-          <VStack space="lg">
-            <VStack>
-              <Text className="text-gray-700 mb-1">Endereço de Entrega</Text>
-              <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3 py-2">
-                <MapPin size={18} color="#9CA3AF" />
-                <TextInput
-                  value={deliveryAddress}
-                  onChangeText={setDeliveryAddress}
-                  placeholder="Ex: Rua exemplo, 123 - Bairro"
-                  className="flex-1 ml-2 text-gray-800"
-                />
-              </View>
-            </VStack>
-
-            <VStack>
-              <Text className="text-gray-700 mb-1">Telefone para Contato</Text>
-              <View className="flex-row items-center bg-white border border-gray-200 rounded-lg px-3 py-2">
-                <PhoneIcon size={18} color="#9CA3AF" />
-                <TextInput
-                  value={contactPhone}
-                  onChangeText={handlePhoneChange}
-                  placeholder="(00) 00000-0000"
-                  keyboardType="phone-pad"
-                  className="flex-1 ml-2 text-gray-800"
-                />
-              </View>
-            </VStack>
-          </VStack>
-        </Card>
-
-        {/* Seleção de Forma de Pagamento */}
-        <Card className="p-4 mb-4 border border-gray-100">
-          <Text className="font-semibold text-gray-800 text-base mb-3">
-            Forma de Pagamento
-          </Text>
-
-          <VStack space="sm">
-            {/* Cartão de Crédito */}
-            <TouchableOpacity
-              onPress={() =>
-                setSelectedPaymentMethod(PaymentMethod.CREDIT_CARD)
-              }
-              className={`p-3 rounded-lg border ${
-                selectedPaymentMethod === PaymentMethod.CREDIT_CARD
-                  ? `border-${primaryColor} bg-${primaryColor}10`
-                  : "border-gray-200 bg-white"
-              }`}
-              style={{
-                borderColor:
-                  selectedPaymentMethod === PaymentMethod.CREDIT_CARD
-                    ? primaryColor
-                    : "#E5E7EB",
-                backgroundColor:
-                  selectedPaymentMethod === PaymentMethod.CREDIT_CARD
-                    ? `${primaryColor}10`
-                    : "white",
-              }}
-            >
-              <HStack space="md" alignItems="center">
-                <CreditCard
-                  size={20}
-                  color={
-                    selectedPaymentMethod === PaymentMethod.CREDIT_CARD
-                      ? primaryColor
-                      : "#6B7280"
-                  }
-                />
-                <Text
-                  className="font-medium"
-                  style={{
-                    color:
-                      selectedPaymentMethod === PaymentMethod.CREDIT_CARD
-                        ? primaryColor
-                        : "#374151",
-                  }}
-                >
-                  Cartão de Crédito
-                </Text>
-              </HStack>
-            </TouchableOpacity>
-
-            {/* Cartão de Débito */}
-            <TouchableOpacity
-              onPress={() => setSelectedPaymentMethod(PaymentMethod.DEBIT_CARD)}
-              className={`p-3 rounded-lg border ${
-                selectedPaymentMethod === PaymentMethod.DEBIT_CARD
-                  ? `border-${primaryColor} bg-${primaryColor}10`
-                  : "border-gray-200 bg-white"
-              }`}
-              style={{
-                borderColor:
-                  selectedPaymentMethod === PaymentMethod.DEBIT_CARD
-                    ? primaryColor
-                    : "#E5E7EB",
-                backgroundColor:
-                  selectedPaymentMethod === PaymentMethod.DEBIT_CARD
-                    ? `${primaryColor}10`
-                    : "white",
-              }}
-            >
-              <HStack space="md" alignItems="center">
-                <CreditCard
-                  size={20}
-                  color={
-                    selectedPaymentMethod === PaymentMethod.DEBIT_CARD
-                      ? primaryColor
-                      : "#6B7280"
-                  }
-                />
-                <Text
-                  className="font-medium"
-                  style={{
-                    color:
-                      selectedPaymentMethod === PaymentMethod.DEBIT_CARD
-                        ? primaryColor
-                        : "#374151",
-                  }}
-                >
-                  Cartão de Débito
-                </Text>
-              </HStack>
-            </TouchableOpacity>
-
-            {/* Dinheiro */}
-            <TouchableOpacity
-              onPress={() => setSelectedPaymentMethod(PaymentMethod.CASH)}
-              className={`p-3 rounded-lg border ${
-                selectedPaymentMethod === PaymentMethod.CASH
-                  ? `border-${primaryColor} bg-${primaryColor}10`
-                  : "border-gray-200 bg-white"
-              }`}
-              style={{
-                borderColor:
-                  selectedPaymentMethod === PaymentMethod.CASH
-                    ? primaryColor
-                    : "#E5E7EB",
-                backgroundColor:
-                  selectedPaymentMethod === PaymentMethod.CASH
-                    ? `${primaryColor}10`
-                    : "white",
-              }}
-            >
-              <HStack space="md" alignItems="center">
-                <Banknote
-                  size={20}
-                  color={
-                    selectedPaymentMethod === PaymentMethod.CASH
-                      ? primaryColor
-                      : "#6B7280"
-                  }
-                />
-                <Text
-                  className="font-medium"
-                  style={{
-                    color:
-                      selectedPaymentMethod === PaymentMethod.CASH
-                        ? primaryColor
-                        : "#374151",
-                  }}
-                >
-                  Dinheiro
-                </Text>
-              </HStack>
-            </TouchableOpacity>
-
-            {/* PIX */}
-            <TouchableOpacity
-              onPress={() => setSelectedPaymentMethod(PaymentMethod.PIX)}
-              className={`p-3 rounded-lg border ${
-                selectedPaymentMethod === PaymentMethod.PIX
-                  ? `border-${primaryColor} bg-${primaryColor}10`
-                  : "border-gray-200 bg-white"
-              }`}
-              style={{
-                borderColor:
-                  selectedPaymentMethod === PaymentMethod.PIX
-                    ? primaryColor
-                    : "#E5E7EB",
-                backgroundColor:
-                  selectedPaymentMethod === PaymentMethod.PIX
-                    ? `${primaryColor}10`
-                    : "white",
-              }}
-            >
-              <HStack space="md" alignItems="center">
-                <Wallet
-                  size={20}
-                  color={
-                    selectedPaymentMethod === PaymentMethod.PIX
-                      ? primaryColor
-                      : "#6B7280"
-                  }
-                />
-                <Text
-                  className="font-medium"
-                  style={{
-                    color:
-                      selectedPaymentMethod === PaymentMethod.PIX
-                        ? primaryColor
-                        : "#374151",
-                  }}
-                >
-                  PIX
-                </Text>
-              </HStack>
-            </TouchableOpacity>
-          </VStack>
-        </Card>
-
-        {/* Resumo do Pedido */}
-        <Card className="p-4 mb-4 border border-gray-100">
-          <Text className="font-semibold text-gray-800 text-base mb-3">
-            Resumo do Pedido
-          </Text>
-
-          <VStack space="sm">
-            <HStack className="justify-between">
-              <Text className="text-gray-600">
-                Subtotal ({cartViewModel.itemCount}{" "}
-                {cartViewModel.itemCount === 1 ? "item" : "itens"})
-              </Text>
-              <Text className="font-medium text-gray-800">
-                {cartViewModel.subtotal}
-              </Text>
-            </HStack>
-
-            <HStack className="justify-between">
-              <Text className="text-gray-600">Taxa de entrega</Text>
-              <Text className="font-medium text-gray-800">R$ 5,00</Text>
-            </HStack>
-
-            <Divider className="my-2" />
-
-            <HStack className="justify-between">
-              <Text className="font-semibold text-gray-800">Total</Text>
-              <Text className="font-bold text-lg text-gray-800">
-                {cartViewModel.total}
-              </Text>
-            </HStack>
-          </VStack>
-        </Card>
-      </ScrollView>
-
-      {/* Botão de Finalizar Pedido */}
-      <View
-        className="absolute left-0 right-0 bottom-0 p-4 bg-white border-t border-gray-200"
-        style={{ paddingBottom: Math.max(insets.bottom, 16) }}
-      >
-        <Button
-          onPress={handlePlaceOrder}
-          style={{ backgroundColor: primaryColor }}
-          disabled={isProcessing}
+        {/* Conteúdo principal */}
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: currentStep < 5 ? 120 : 16,
+          }}
+          showsVerticalScrollIndicator={false}
         >
-          {isProcessing ? (
-            <HStack space="sm" alignItems="center">
-              <ActivityIndicator size="small" color="white" />
-              <Text className="text-white font-bold">Processando...</Text>
-            </HStack>
-          ) : (
-            <Text className="text-white font-bold">Confirmar Pedido</Text>
-          )}
-        </Button>
+          {renderStepContent()}
+        </ScrollView>
+
+        {/* Barra de navegação inferior - omitir na etapa de conclusão */}
+        {currentStep < 5 && (
+          <View
+            className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4"
+            style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+          >
+            <Button
+              onPress={currentStep === 4 ? handleFinishOrder : handleNextStep}
+              style={{ backgroundColor: primaryColor }}
+              isDisabled={!isNextButtonEnabled() || isProcessing}
+            >
+              {isProcessing ? (
+                <HStack space="sm" alignItems="center">
+                  <ActivityIndicator size="small" color="white" />
+                  <Text className="text-white font-bold">Processando...</Text>
+                </HStack>
+              ) : (
+                <Text className="text-white font-bold">
+                  {getNextButtonText()}
+                </Text>
+              )}
+            </Button>
+          </View>
+        )}
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
