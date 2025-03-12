@@ -15,18 +15,7 @@ import {
 import { useLocalSearchParams, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Card, HStack, VStack, Divider } from "@gluestack-ui/themed";
-import {
-  ArrowLeft,
-  CreditCard,
-  DollarSign,
-  MapPin,
-  CheckCircle,
-  Phone,
-  User,
-  Package,
-  Clipboard,
-  MessageSquare,
-} from "lucide-react-native";
+
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import ScreenHeader from "@/components/ui/screen-header";
@@ -37,7 +26,6 @@ import { getContrastColor } from "@/src/utils/color.utils";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { CheckoutOrderSummary } from "../components/checkout-order-summary";
 import { CheckoutUserForm } from "../components/checkout-user-form";
-import { CheckoutAddressForm } from "../components/checkout-address-form";
 import { CheckoutPaymentMethod } from "../components/checkout-payment-method";
 import { CheckoutCompletedView } from "../components/checkout-completed-view";
 
@@ -121,11 +109,10 @@ export function CheckoutScreen() {
   // Determinar o número total de etapas
   const getTotalSteps = () => {
     // 1: Resumo do pedido
-    // 2: Informações pessoais
-    // 3: Endereço de entrega
-    // 4: Método de pagamento
-    // 5: Confirmação
-    return 5;
+    // 2: Informações pessoais (agora inclui endereço)
+    // 3: Método de pagamento
+    // 4: Confirmação
+    return 4;
   };
 
   // Obter título da etapa atual
@@ -134,31 +121,57 @@ export function CheckoutScreen() {
       case 1:
         return "Resumo do Pedido";
       case 2:
-        return "Seus Dados";
+        return "Suas Informações";
       case 3:
-        return "Endereço de Entrega";
-      case 4:
         return "Forma de Pagamento";
-      case 5:
+      case 4:
         return "Pedido Finalizado";
       default:
         return "Checkout";
     }
   };
 
-  // Verificar se o botão de próximo deve estar habilitado
-  const isNextButtonEnabled = () => {
+  // Obter subtítulo da etapa atual
+  const getStepSubtitle = () => {
     switch (currentStep) {
       case 1:
-        return true; // Sempre habilitado no resumo do pedido
+        return "Verifique os itens e valores";
       case 2:
-        return checkoutVm.isPersonalInfoValid(); // Verificar se os dados pessoais estão preenchidos
+        return checkoutVm.deliveryMethod === "delivery"
+          ? "Dados pessoais e endereço"
+          : "Dados para identificação";
       case 3:
-        return checkoutVm.isAddressValid(); // Verificar se o endereço está preenchido
+        return "Escolha como deseja pagar";
       case 4:
-        return checkoutVm.isPaymentValid(); // Verificar se o método de pagamento foi selecionado
+        return undefined;
       default:
-        return false;
+        return undefined;
+    }
+  };
+
+  // Verificar se o botão de próximo deve estar habilitado
+  const isNextButtonEnabled = () => {
+    try {
+      switch (currentStep) {
+        case 1:
+          return true; // Sempre habilitado no resumo do pedido
+        case 2: {
+          // Validação explícita para debug
+          const valid = checkoutVm.isPersonalInfoValid();
+          console.log("[DEBUG] Botão próximo etapa 2:", valid);
+          return valid;
+        }
+        case 3: {
+          const valid = checkoutVm.isPaymentValid();
+          console.log("[DEBUG] Botão próximo etapa 3:", valid);
+          return valid;
+        }
+        default:
+          return false;
+      }
+    } catch (error) {
+      console.error("[DEBUG] Erro ao verificar habilitação do botão:", error);
+      return false;
     }
   };
 
@@ -168,10 +181,8 @@ export function CheckoutScreen() {
       case 1:
         return "Continuar";
       case 2:
-        return "Continuar para Endereço";
-      case 3:
         return "Continuar para Pagamento";
-      case 4:
+      case 3:
         return "Finalizar Pedido";
       default:
         return "Continuar";
@@ -180,7 +191,7 @@ export function CheckoutScreen() {
 
   // Verificar se devemos esconder o botão de voltar
   const shouldHideBackButton = () => {
-    return currentStep === 5; // Na tela de confirmação, não há botão de voltar
+    return currentStep === 4; // Na tela de confirmação, não há botão de voltar
   };
 
   // Cor primária da empresa ou padrão
@@ -205,10 +216,8 @@ export function CheckoutScreen() {
       case 2:
         return <CheckoutUserForm />;
       case 3:
-        return <CheckoutAddressForm />;
-      case 4:
         return <CheckoutPaymentMethod />;
-      case 5:
+      case 4:
         return <CheckoutCompletedView onBackToStore={handleBackToStore} />;
       default:
         return <View />;
@@ -257,8 +266,9 @@ export function CheckoutScreen() {
         <ScreenHeader
           title={getStepTitle()}
           subtitle={
-            currentStep < 5
-              ? `Etapa ${currentStep} de ${getTotalSteps() - 1}`
+            currentStep < 4
+              ? getStepSubtitle() ||
+                `Etapa ${currentStep} de ${getTotalSteps() - 1}`
               : undefined
           }
           showBackButton={!shouldHideBackButton()}
@@ -266,14 +276,14 @@ export function CheckoutScreen() {
         />
 
         {/* Indicadores de etapas */}
-        {currentStep < 5 && renderStepIndicators()}
+        {currentStep < 4 && renderStepIndicators()}
 
         {/* Conteúdo principal */}
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
             padding: 16,
-            paddingBottom: currentStep < 5 ? 120 : 16,
+            paddingBottom: currentStep < 4 ? 120 : 16,
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -281,15 +291,27 @@ export function CheckoutScreen() {
         </ScrollView>
 
         {/* Barra de navegação inferior - omitir na etapa de conclusão */}
-        {currentStep < 5 && (
+        {currentStep < 4 && (
           <View
             className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4"
             style={{ paddingBottom: Math.max(insets.bottom, 16) }}
           >
+            {/* Button para debug - força uma validação explícita */}
             <Button
-              onPress={currentStep === 4 ? handleFinishOrder : handleNextStep}
-              style={{ backgroundColor: primaryColor }}
-              isDisabled={!isNextButtonEnabled() || isProcessing}
+              onPress={currentStep === 3 ? handleFinishOrder : handleNextStep}
+              style={{
+                backgroundColor:
+                  currentStep === 1 ||
+                  (currentStep === 2 && checkoutVm.isPersonalInfoValid()) ||
+                  (currentStep === 3 && checkoutVm.isPaymentValid())
+                    ? primaryColor
+                    : "#9CA3AF", // Cinza quando desabilitado
+              }}
+              isDisabled={
+                (currentStep === 2 && !checkoutVm.isPersonalInfoValid()) ||
+                (currentStep === 3 && !checkoutVm.isPaymentValid()) ||
+                isProcessing
+              }
             >
               {isProcessing ? (
                 <HStack space="sm" alignItems="center">
