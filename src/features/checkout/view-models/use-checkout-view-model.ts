@@ -1,5 +1,5 @@
 // Path: src/features/checkout/view-models/use-checkout-view-model.ts
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Alert, Linking } from "react-native";
 import { useMultiCartStore } from "@/src/features/cart/stores/cart.store";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
@@ -71,6 +71,16 @@ export function useCheckoutViewModel() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    // Garantir que o valor da cidade seja sempre "Lima Duarte (MG)"
+    if (deliveryMethod === "delivery" && address.city !== "Lima Duarte (MG)") {
+      setAddress((prev) => ({
+        ...prev,
+        city: "Lima Duarte (MG)",
+      }));
+    }
+  }, [deliveryMethod, address.city, setAddress]);
+
   // Acesso ao carrinho
   const cartVm = useCartViewModel();
   const multiCartStore = useMultiCartStore();
@@ -114,42 +124,43 @@ export function useCheckoutViewModel() {
 
   // Validações
   const isPersonalInfoValid = useCallback(() => {
-    // Verificação dos dados pessoais
-    const isNameValid = personalInfo.name.trim().length > 0;
-    const isPhoneValid = personalInfo.phone.replace(/\D/g, "").length >= 10;
+    try {
+      // Validação básica de nome e telefone
+      if (!personalInfo.name || personalInfo.name.trim() === "") {
+        return false;
+      }
 
-    // Para debug - ajuda a identificar por que a validação está falhando
-    console.log("Validando dados pessoais:", {
-      isNameValid,
-      isPhoneValid,
-      deliveryMethod,
-      address: {
-        street: address.street,
-        number: address.number,
-        neighborhood: address.neighborhood,
-        city: address.city,
-      },
-    });
+      const phoneDigits = personalInfo.phone.replace(/\D/g, "");
+      if (phoneDigits.length < 10) {
+        return false;
+      }
 
-    // Se o método de entrega for retirada, só validamos os dados pessoais
-    if (deliveryMethod === "pickup") {
-      return isNameValid && isPhoneValid;
+      // Se for retirada, só precisamos do nome e telefone
+      if (deliveryMethod === "pickup") {
+        return true;
+      }
+
+      // Para entrega, validamos o endereço (exceto cidade que é automática)
+      if (!address.street || address.street.trim() === "") {
+        return false;
+      }
+
+      if (!address.number || address.number.trim() === "") {
+        return false;
+      }
+
+      if (!address.neighborhood || address.neighborhood.trim() === "") {
+        return false;
+      }
+
+      // A cidade é automaticamente "Lima Duarte (MG)", então não precisamos validar
+
+      // Se chegou aqui, tudo está válido
+      return true;
+    } catch (error) {
+      console.error("Erro na validação de informações pessoais:", error);
+      return false;
     }
-
-    // Se for delivery, validamos também o endereço
-    const isStreetValid = address.street.trim().length > 0;
-    const isNumberValid = address.number.trim().length > 0;
-    const isNeighborhoodValid = address.neighborhood.trim().length > 0;
-    const isCityValid = address.city.trim().length > 0;
-
-    return (
-      isNameValid &&
-      isPhoneValid &&
-      isStreetValid &&
-      isNumberValid &&
-      isNeighborhoodValid &&
-      isCityValid
-    );
   }, [personalInfo, address, deliveryMethod]);
 
   // Para compatibilidade com o código existente, mantemos isAddressValid
@@ -158,20 +169,42 @@ export function useCheckoutViewModel() {
     return true;
   }, []);
 
+  /**
+   * Verifica se as informações de pagamento estão válidas
+   */
   const isPaymentValid = useCallback(() => {
-    if (paymentInfo.method === "cash" && paymentInfo.changeFor) {
-      // Para pagamento em dinheiro, verificar se o valor para troco é válido
-      const changeValue =
-        parseFloat(paymentInfo.changeFor.replace(/\D/g, "")) / 100;
-      const orderTotal = cartVm.items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
-
-      return changeValue >= orderTotal;
+    // Verificar se um método de pagamento foi selecionado
+    if (!paymentInfo.method) {
+      return false;
     }
 
-    return true; // Para outros métodos de pagamento
+    // Para pagamento em dinheiro, verificar se o troco está correto
+    if (paymentInfo.method === "cash" && paymentInfo.changeFor) {
+      try {
+        // Extrair valor numérico da string formatada (removendo R$, espaços e trocando vírgula por ponto)
+        const changeValueRaw = paymentInfo.changeFor
+          .replace(/[^\d,]/g, "") // Remove tudo exceto dígitos e vírgula
+          .replace(",", "."); // Substitui vírgula por ponto para conversão
+
+        // Converter para número
+        const changeValue = parseFloat(changeValueRaw);
+
+        // Calcular total do pedido
+        const orderTotal = cartVm.items.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        );
+
+        // Verificar se o valor para troco é maior que o total do pedido
+        return !isNaN(changeValue) && changeValue >= orderTotal;
+      } catch (error) {
+        console.error("Erro ao validar troco:", error);
+        return false;
+      }
+    }
+
+    // Para outros métodos de pagamento, consideramos válido
+    return true;
   }, [paymentInfo, cartVm.items]);
 
   // Formatar valor de troco
