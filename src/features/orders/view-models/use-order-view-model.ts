@@ -1,107 +1,144 @@
 // Path: src/features/orders/view-models/use-order-view-model.ts
-import { useOrderStore } from "../stores/order.store";
-import { useCartStore } from "@/src/features/cart/stores/cart.store";
-import { Order, OrderStatus } from "../models/order";
+import { useState } from "react";
+import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
+import {
+  Order,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+} from "../models/order";
+import { useMultiCartStore } from "@/src/features/cart/stores/cart.store";
+import { useLocalSearchParams } from "expo-router";
 
-export interface OrderViewModel {
-  // Estado
-  orders: Order[];
-  hasOrders: boolean;
+// Simulação de um serviço de armazenamento de pedidos
+// Em um aplicativo real, isso seria substituído por uma chamada de API
+class OrderStorageService {
+  private static instance: OrderStorageService;
+  private orders: Order[] = [];
 
-  // Filtragem
-  ordersByCompany: (companySlug: string) => Order[];
-  ordersByStatus: (status: OrderStatus) => Order[];
+  private constructor() {}
 
-  // Ações
-  placeOrder: () => Promise<Order | null>;
-  cancelOrder: (orderId: string) => void;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  public static getInstance(): OrderStorageService {
+    if (!OrderStorageService.instance) {
+      OrderStorageService.instance = new OrderStorageService();
+    }
+    return OrderStorageService.instance;
+  }
 
-  // Helpers
-  getOrderById: (orderId: string) => Order | undefined;
-  getStatusText: (status: OrderStatus) => string;
+  public getOrders(): Order[] {
+    return this.orders;
+  }
+
+  public getOrdersByCompanySlug(companySlug: string): Order[] {
+    return this.orders.filter((order) => order.companySlug === companySlug);
+  }
+
+  public getOrderById(id: string): Order | undefined {
+    return this.orders.find((order) => order.id === id);
+  }
+
+  public addOrder(order: Order): Order {
+    this.orders.push(order);
+    return order;
+  }
+
+  public updateOrder(updatedOrder: Order): Order {
+    const index = this.orders.findIndex(
+      (order) => order.id === updatedOrder.id
+    );
+    if (index !== -1) {
+      this.orders[index] = updatedOrder;
+    }
+    return updatedOrder;
+  }
 }
 
-/**
- * Hook que fornece a lógica de negócios para os pedidos
- * Segue o padrão MVVM para separar a lógica da UI
- */
+export interface OrderViewModel {
+  isLoading: boolean;
+  orders: Order[];
+
+  // Ações
+  placeOrder: (paymentMethod?: PaymentMethod) => Promise<Order | null>;
+  getOrdersByCompany: (companySlug: string) => Order[];
+  getOrderById: (orderId: string) => Order | undefined;
+}
+
 export function useOrderViewModel(): OrderViewModel {
-  const orderStore = useOrderStore();
-  const cartStore = useCartStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const cartViewModel = useCartViewModel();
+  const multiCartStore = useMultiCartStore();
+  const orderStorage = OrderStorageService.getInstance();
+  const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
 
-  // Verifica se há pedidos
-  const hasOrders = orderStore.orders.length > 0;
+  // Obter pedidos do storage
+  const orders = orderStorage.getOrders();
 
-  // Finaliza um pedido
-  const placeOrder = async (): Promise<Order | null> => {
+  // Colocar um novo pedido
+  const placeOrder = async (
+    paymentMethod: PaymentMethod = PaymentMethod.CREDIT_CARD
+  ): Promise<Order | null> => {
+    if (cartViewModel.isEmpty || !companySlug) return null;
+
+    setIsLoading(true);
+
     try {
-      // Verificar se há itens no carrinho
-      if (cartStore.items.length === 0) {
-        console.log("Não é possível finalizar pedido: carrinho vazio");
-        return null;
-      }
+      // Simulação de processamento de pedido
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Verificar se há informações da empresa
-      if (
-        !cartStore.companyId ||
-        !cartStore.companySlug ||
-        !cartStore.companyName
-      ) {
-        console.log(
-          "Não é possível finalizar pedido: informações da empresa faltando"
-        );
-        return null;
-      }
+      // Criar um novo pedido com os itens do carrinho
+      const newOrder: Order = {
+        id: `order_${Date.now()}`,
+        companyId: cartViewModel.items[0]?.companyId || "",
+        companySlug: companySlug,
+        companyName: cartViewModel.companyName || "",
+        customerName: "Cliente", // Em um app real, isso viria de um serviço de autenticação
+        items: [...cartViewModel.items],
+        subtotal: parseFloat(
+          cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
+        ),
+        total: parseFloat(
+          cartViewModel.total.replace(/[^\d,]/g, "").replace(",", ".")
+        ),
+        status: OrderStatus.PENDING,
+        payment: {
+          method: paymentMethod,
+          status: PaymentStatus.PENDING,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        estimatedDeliveryTime: 45, // 45 minutos de estimativa padrão
+      };
 
-      // Criar o pedido
-      const newOrder = orderStore.createOrder(
-        cartStore.items,
-        cartStore.companyId,
-        cartStore.companySlug,
-        cartStore.companyName
-      );
+      // Salvar o pedido
+      const savedOrder = orderStorage.addOrder(newOrder);
 
-      // Limpar o carrinho
-      cartStore.clearCart();
+      // Limpar o carrinho específico após finalizar o pedido
+      multiCartStore.clearCart(companySlug);
 
-      return newOrder;
+      return savedOrder;
     } catch (error) {
       console.error("Erro ao finalizar pedido:", error);
       return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Retorna o texto legível do status
-  const getStatusText = (status: OrderStatus): string => {
-    switch (status) {
-      case "pending":
-        return "Aguardando confirmação";
-      case "preparing":
-        return "Em preparação";
-      case "shipping":
-        return "Em entrega";
-      case "delivered":
-        return "Entregue";
-      case "canceled":
-        return "Cancelado";
-      default:
-        return "Status desconhecido";
-    }
+  // Obter pedidos por empresa
+  const getOrdersByCompany = (companySlug: string): Order[] => {
+    return orderStorage.getOrdersByCompanySlug(companySlug);
+  };
+
+  // Obter pedido por ID
+  const getOrderById = (orderId: string): Order | undefined => {
+    return orderStorage.getOrderById(orderId);
   };
 
   return {
-    orders: orderStore.orders,
-    hasOrders,
-
-    ordersByCompany: orderStore.getOrdersByCompany,
-    ordersByStatus: orderStore.getOrdersByStatus,
-
+    isLoading,
+    orders,
     placeOrder,
-    cancelOrder: orderStore.cancelOrder,
-    updateOrderStatus: orderStore.updateOrderStatus,
-
-    getOrderById: orderStore.getOrderById,
-    getStatusText,
+    getOrdersByCompany,
+    getOrderById,
   };
 }

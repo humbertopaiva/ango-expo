@@ -1,238 +1,226 @@
 // Path: src/features/orders/screens/orders-screen.tsx
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import {
-  Package,
-  Clock,
-  Check,
-  Truck,
-  AlertCircle,
-  RefreshCw,
-} from "lucide-react-native";
 import ScreenHeader from "@/components/ui/screen-header";
+import { Card, VStack, HStack, Divider } from "@gluestack-ui/themed";
 import {
-  Card,
-  VStack,
-  HStack,
-  Select,
-  SelectTrigger,
-  SelectInput,
-  SelectContent,
-  SelectItem,
-} from "@gluestack-ui/themed";
-import { THEME_COLORS } from "@/src/styles/colors";
+  Clock,
+  CheckCircle,
+  Truck,
+  XCircle,
+  AlertCircle,
+  ChevronRight,
+  Calendar,
+  Package,
+} from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
+import { THEME_COLORS } from "@/src/styles/colors";
 import { Order, OrderStatus } from "../models/order";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export function OrdersScreen() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
-  const [filterStatus, setFilterStatus] = useState<string>("all");
   const orderViewModel = useOrderViewModel();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Carrega os pedidos da empresa específica
+  const primaryColor = THEME_COLORS.primary;
+
   useEffect(() => {
+    loadOrders();
+  }, [companySlug]);
+
+  const loadOrders = () => {
     if (companySlug) {
-      const companyOrders = orderViewModel.ordersByCompany(companySlug);
-      setOrders(companyOrders);
-    }
-  }, [companySlug, orderViewModel.orders]);
-
-  // Filtra os pedidos conforme selecionado
-  const filteredOrders =
-    filterStatus === "all"
-      ? orders
-      : orders.filter((order) => order.status === filterStatus);
-
-  // Botão para retornar à página da empresa
-  const handleBackToCompany = () => {
-    router.push(`/(drawer)/empresa/${companySlug}`);
-  };
-
-  // Renderiza ícone de status conforme o estado do pedido
-  const renderStatusIcon = (status: OrderStatus) => {
-    switch (status) {
-      case "pending":
-        return <Clock size={16} color="#F59E0B" />;
-      case "preparing":
-        return <Package size={16} color="#3B82F6" />;
-      case "shipping":
-        return <Truck size={16} color="#8B5CF6" />;
-      case "delivered":
-        return <Check size={16} color="#10B981" />;
-      case "canceled":
-        return <AlertCircle size={16} color="#EF4444" />;
-      default:
-        return <Clock size={16} color="#6B7280" />;
+      const companyOrders = orderViewModel.getOrdersByCompany(companySlug);
+      // Ordenar por data, mais recentes primeiro
+      setOrders(
+        companyOrders.sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+        )
+      );
     }
   };
 
-  // Texto de status conforme o estado do pedido
-  const getStatusText = orderViewModel.getStatusText;
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadOrders();
+    setRefreshing(false);
+  };
 
-  // Cor de status conforme o estado do pedido
-  const getStatusColor = (status: OrderStatus) => {
+  const handleOrderPress = (orderId: string) => {
+    router.push(`/(drawer)/empresa/${companySlug}/orders/${orderId}`);
+  };
+
+  const getStatusInfo = (status: OrderStatus) => {
     switch (status) {
-      case "pending":
-        return { bg: "bg-amber-100", text: "text-amber-700" };
-      case "preparing":
-        return { bg: "bg-blue-100", text: "text-blue-700" };
-      case "shipping":
-        return { bg: "bg-purple-100", text: "text-purple-700" };
-      case "delivered":
-        return { bg: "bg-green-100", text: "text-green-700" };
-      case "canceled":
-        return { bg: "bg-red-100", text: "text-red-700" };
+      case OrderStatus.PENDING:
+        return {
+          label: "Pendente",
+          icon: AlertCircle,
+          color: "#F59E0B", // Amber
+          bgColor: "#FEF3C7",
+        };
+      case OrderStatus.CONFIRMED:
+        return {
+          label: "Confirmado",
+          icon: CheckCircle,
+          color: "#10B981", // Green
+          bgColor: "#D1FAE5",
+        };
+      case OrderStatus.PREPARING:
+        return {
+          label: "Em preparação",
+          icon: Clock,
+          color: "#3B82F6", // Blue
+          bgColor: "#DBEAFE",
+        };
+      case OrderStatus.READY_FOR_DELIVERY:
+        return {
+          label: "Pronto para entrega",
+          icon: Package,
+          color: "#8B5CF6", // Purple
+          bgColor: "#EDE9FE",
+        };
+      case OrderStatus.IN_TRANSIT:
+        return {
+          label: "Em trânsito",
+          icon: Truck,
+          color: "#6366F1", // Indigo
+          bgColor: "#E0E7FF",
+        };
+      case OrderStatus.DELIVERED:
+        return {
+          label: "Entregue",
+          icon: CheckCircle,
+          color: "#10B981", // Green
+          bgColor: "#D1FAE5",
+        };
+      case OrderStatus.CANCELED:
+        return {
+          label: "Cancelado",
+          icon: XCircle,
+          color: "#EF4444", // Red
+          bgColor: "#FEE2E2",
+        };
       default:
-        return { bg: "bg-gray-100", text: "text-gray-700" };
+        return {
+          label: "Desconhecido",
+          icon: AlertCircle,
+          color: "#6B7280", // Gray
+          bgColor: "#F3F4F6",
+        };
     }
+  };
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return format(date, "dd 'de' MMMM', às 'HH:mm", { locale: ptBR });
+  };
+
+  const renderOrderItem = ({ item }: { item: Order }) => {
+    const statusInfo = getStatusInfo(item.status);
+    const StatusIcon = statusInfo.icon;
+
+    return (
+      <TouchableOpacity
+        onPress={() => handleOrderPress(item.id)}
+        activeOpacity={0.7}
+      >
+        <Card className="mb-4 border border-gray-100 overflow-hidden">
+          <View
+            className="border-l-4 pl-3 py-3 pr-4"
+            style={{ borderLeftColor: statusInfo.color }}
+          >
+            <HStack className="justify-between items-center mb-2">
+              <HStack space="sm" alignItems="center">
+                <View
+                  className="p-1 rounded-full"
+                  style={{ backgroundColor: statusInfo.bgColor }}
+                >
+                  <StatusIcon size={16} color={statusInfo.color} />
+                </View>
+                <Text className="font-semibold text-gray-800">
+                  Pedido #{item.id.replace("order_", "").substring(0, 6)}
+                </Text>
+              </HStack>
+
+              <Text
+                className="text-sm font-medium"
+                style={{ color: statusInfo.color }}
+              >
+                {statusInfo.label}
+              </Text>
+            </HStack>
+
+            <HStack className="items-center mb-2">
+              <Calendar size={14} color="#6B7280" />
+              <Text className="text-xs text-gray-500 ml-1">
+                {formatDate(item.createdAt)}
+              </Text>
+            </HStack>
+
+            <HStack className="justify-between items-center">
+              <Text className="text-gray-500 text-sm">
+                {item.items.length} {item.items.length === 1 ? "item" : "itens"}
+              </Text>
+              <HStack space="sm" alignItems="center">
+                <Text className="font-bold text-gray-800">
+                  {formatCurrency(item.total)}
+                </Text>
+                <ChevronRight size={16} color="#9CA3AF" />
+              </HStack>
+            </HStack>
+          </View>
+        </Card>
+      </TouchableOpacity>
+    );
   };
 
   return (
-    <View className="flex-1 bg-background">
-      {/* Cabeçalho com título e botão de voltar */}
+    <View className="flex-1 bg-gray-50">
       <ScreenHeader
         title="Meus Pedidos"
-        subtitle="Acompanhe seus pedidos realizados"
+        subtitle={companySlug ? `Acompanhe seus pedidos` : undefined}
         showBackButton={true}
-        onBackPress={handleBackToCompany}
+        onBackPress={() => router.back()}
       />
 
-      <View className="px-4 py-2">
-        {/* Filtro de status */}
-        <Select
-          defaultValue="all"
-          onValueChange={(value) => setFilterStatus(value)}
-        >
-          <SelectTrigger className="bg-white border border-gray-200 rounded-lg h-10">
-            <SelectInput
-              placeholder="Filtrar por status"
-              className="text-gray-800"
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem label="Todos os pedidos" value="all" />
-            <SelectItem label="Aguardando confirmação" value="pending" />
-            <SelectItem label="Em preparação" value="preparing" />
-            <SelectItem label="Em entrega" value="shipping" />
-            <SelectItem label="Entregue" value="delivered" />
-            <SelectItem label="Cancelado" value="canceled" />
-          </SelectContent>
-        </Select>
-      </View>
-
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-      >
-        {filteredOrders.length === 0 ? (
-          // Exibe mensagem quando não há pedidos
-          <Card className="p-8 items-center justify-center border border-gray-200">
-            <Package size={64} color="#9CA3AF" className="mb-4" />
-            <Text className="text-lg font-semibold text-gray-800 mb-2 text-center">
-              Você ainda não tem pedidos
+      <FlatList
+        data={orders}
+        keyExtractor={(item) => item.id}
+        renderItem={renderOrderItem}
+        contentContainerStyle={{ padding: 16 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+        ListEmptyComponent={
+          <Card className="p-6 items-center justify-center border border-gray-100">
+            <Package size={48} color="#9CA3AF" className="mb-3" />
+            <Text className="text-gray-800 font-semibold text-lg mb-2 text-center">
+              Nenhum pedido encontrado
             </Text>
-            <Text className="text-gray-500 text-center mb-6">
-              Seus pedidos aparecerão aqui quando você fizer compras
+            <Text className="text-gray-500 text-center">
+              Você ainda não fez nenhum pedido nesta loja.
             </Text>
-            <TouchableOpacity
-              onPress={handleBackToCompany}
-              className="bg-primary-500 px-4 py-2 rounded-lg"
-            >
-              <Text className="text-white font-medium">Ver Produtos</Text>
-            </TouchableOpacity>
           </Card>
-        ) : (
-          // Lista de pedidos
-          <VStack space="md">
-            {filteredOrders.map((order) => {
-              const statusStyle = getStatusColor(order.status);
-              const orderDate = new Date(order.createdAt).toLocaleString(
-                "pt-BR",
-                {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }
-              );
-
-              return (
-                <Card key={order.id} className="p-4 border border-gray-200">
-                  <VStack space="sm">
-                    {/* Cabeçalho do pedido */}
-                    <HStack className="justify-between items-center">
-                      <Text className="font-semibold text-gray-800">
-                        Pedido #{order.id}
-                      </Text>
-                      <Text className="text-gray-500 text-sm">{orderDate}</Text>
-                    </HStack>
-
-                    {/* Status do pedido */}
-                    <View
-                      className={`flex-row items-center py-1 px-3 self-start rounded-full ${statusStyle.bg}`}
-                    >
-                      {renderStatusIcon(order.status)}
-                      <Text
-                        className={`${statusStyle.text} ml-1 font-medium text-sm`}
-                      >
-                        {getStatusText(order.status)}
-                      </Text>
-                    </View>
-
-                    {/* Itens do pedido */}
-                    <View className="bg-gray-50 p-3 rounded-lg">
-                      <Text className="font-medium mb-2">Itens do pedido:</Text>
-                      {order.items.map((item) => (
-                        <HStack key={item.id} className="justify-between mb-1">
-                          <Text className="text-gray-700">
-                            {item.quantity}x {item.name}
-                          </Text>
-                          <Text className="text-gray-700">
-                            {item.priceFormatted}
-                          </Text>
-                        </HStack>
-                      ))}
-                    </View>
-
-                    {/* Total do pedido */}
-                    <HStack className="justify-between border-t border-gray-200 pt-2">
-                      <Text className="font-medium">Total</Text>
-                      <Text className="font-bold">{order.totalFormatted}</Text>
-                    </HStack>
-
-                    {/* Botões de ação */}
-                    <HStack className="justify-end space-x-2 mt-2">
-                      {order.status === "pending" && (
-                        <TouchableOpacity
-                          className="px-4 py-2 bg-red-50 rounded-lg"
-                          onPress={() => orderViewModel.cancelOrder(order.id)}
-                        >
-                          <Text className="text-red-700">Cancelar</Text>
-                        </TouchableOpacity>
-                      )}
-
-                      <TouchableOpacity className="px-4 py-2 bg-gray-100 rounded-lg">
-                        <Text className="text-gray-700">Ver Detalhes</Text>
-                      </TouchableOpacity>
-
-                      {order.status === "delivered" && (
-                        <TouchableOpacity className="px-4 py-2 bg-primary-50 rounded-lg">
-                          <Text className="text-primary-700">
-                            Pedir Novamente
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </HStack>
-                  </VStack>
-                </Card>
-              );
-            })}
-          </VStack>
-        )}
-      </ScrollView>
+        }
+      />
     </View>
   );
 }
