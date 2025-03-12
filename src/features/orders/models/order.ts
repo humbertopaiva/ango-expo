@@ -1,17 +1,45 @@
-// Path: src/features/orders/models/order.ts
+// Path: src/features/orders/models/order.model.ts
 import { CartItem } from "@/src/features/cart/models/cart";
 
-export type OrderStatus =
-  | "pending"
-  | "preparing"
-  | "shipping"
-  | "delivered"
-  | "canceled";
+export enum OrderStatus {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  PREPARING = "preparing",
+  READY_FOR_DELIVERY = "ready_for_delivery",
+  IN_TRANSIT = "in_transit",
+  DELIVERED = "delivered",
+  CANCELED = "canceled",
+}
 
-export interface OrderItem
-  extends Omit<CartItem, "companyId" | "companySlug" | "companyName"> {
-  price: number;
-  priceFormatted: string;
+export enum PaymentMethod {
+  CREDIT_CARD = "credit_card",
+  DEBIT_CARD = "debit_card",
+  PIX = "pix",
+  CASH = "cash",
+}
+
+export enum PaymentStatus {
+  PENDING = "pending",
+  PAID = "paid",
+  FAILED = "failed",
+  REFUNDED = "refunded",
+}
+
+export interface OrderDeliveryInfo {
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  complement?: string;
+  deliveryInstructions?: string;
+  contactPhone: string;
+}
+
+export interface OrderPaymentInfo {
+  method: PaymentMethod;
+  status: PaymentStatus;
+  transactionId?: string;
+  paymentDate?: Date;
 }
 
 export interface Order {
@@ -19,81 +47,28 @@ export interface Order {
   companyId: string;
   companySlug: string;
   companyName: string;
-  items: OrderItem[];
+  customerId?: string;
+  customerName: string;
+  items: CartItem[];
+  couponCode?: string;
+  discountAmount?: number;
+  discountPercentage?: number;
   subtotal: number;
-  subtotalFormatted: string;
-  deliveryFee: number;
-  deliveryFeeFormatted: string;
+  deliveryFee?: number;
   total: number;
-  totalFormatted: string;
   status: OrderStatus;
-  createdAt: string;
-  updatedAt: string;
-  address?: {
-    street: string;
-    number: string;
-    complement?: string;
-    district: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
-  paymentMethod?: string;
+  payment: OrderPaymentInfo;
+  delivery?: OrderDeliveryInfo;
+  createdAt: Date;
+  updatedAt: Date;
+  estimatedDeliveryTime?: number; // Em minutos
 }
 
-// Helper para criar um novo pedido a partir de um carrinho
-export const createOrderFromCart = (
-  cartItems: CartItem[],
-  companyId: string,
-  companySlug: string,
-  companyName: string
-): Order => {
-  // Calcular subtotal
-  const subtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
-
-  // Taxa de entrega (por enquanto fixa)
-  const deliveryFee = 5.0;
-
-  // Total do pedido
-  const total = subtotal + deliveryFee;
-
-  // Formatação de preços
-  const formatPrice = (price: number): string => {
-    return price.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
-
-  // Criar itens do pedido
-  const orderItems = cartItems.map((item) => ({
-    id: item.id,
-    productId: item.productId,
-    name: item.name,
-    quantity: item.quantity,
-    price: item.price,
-    priceFormatted: item.priceFormatted,
-    totalPrice: item.totalPrice,
-    totalPriceFormatted: item.totalPriceFormatted,
-    imageUrl: item.imageUrl,
-    description: item.description,
-  }));
-
-  // Criar pedido
-  return {
-    id: `ORD-${Date.now().toString().slice(-6)}`,
-    companyId,
-    companySlug,
-    companyName,
-    items: orderItems,
-    subtotal,
-    subtotalFormatted: formatPrice(subtotal),
-    deliveryFee,
-    deliveryFeeFormatted: formatPrice(deliveryFee),
-    total,
-    totalFormatted: formatPrice(total),
-    status: "pending", // Status inicial
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-};
+export interface OrderSummary {
+  id: string;
+  companyName: string;
+  status: OrderStatus;
+  total: number;
+  createdAt: Date;
+  itemCount: number;
+}

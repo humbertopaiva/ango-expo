@@ -14,6 +14,7 @@ interface CartState extends Cart {
   ) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
+  updateObservation: (itemId: string, observation: string) => void;
   clearCart: () => void;
 
   // Computed properties
@@ -84,7 +85,7 @@ export const useCartStore = create<CartState>()(
         );
 
         if (existingItemIndex >= 0) {
-          // Se já existe, atualiza a quantidade
+          // Se já existe, atualiza a quantidade e observação
           const newItems = [...items];
           const existingItem = newItems[existingItemIndex];
           const newQuantity = existingItem.quantity + item.quantity;
@@ -92,6 +93,10 @@ export const useCartStore = create<CartState>()(
           newItems[existingItemIndex] = {
             ...existingItem,
             quantity: newQuantity,
+            observation:
+              item.observation !== undefined
+                ? item.observation
+                : existingItem.observation,
             totalPrice: existingItem.price * newQuantity,
             totalPriceFormatted: formatPrice(existingItem.price * newQuantity),
           };
@@ -160,6 +165,24 @@ export const useCartStore = create<CartState>()(
         set({
           items: newItems,
           ...recalculateCart(newItems),
+        });
+      },
+
+      updateObservation: (itemId, observation) => {
+        const { items } = get();
+
+        const newItems = items.map((item) => {
+          if (item.id === itemId) {
+            return {
+              ...item,
+              observation,
+            };
+          }
+          return item;
+        });
+
+        set({
+          items: newItems,
         });
       },
 

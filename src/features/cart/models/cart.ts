@@ -10,6 +10,7 @@ export interface CartItem {
   totalPriceFormatted: string;
   imageUrl?: string;
   description?: string;
+  observation?: string;
   companyId: string;
   companySlug: string;
   companyName: string;
@@ -17,7 +18,7 @@ export interface CartItem {
 
 export interface Cart {
   items: CartItem[];
-  companyId?: string; // Apenas um estabelecimento por vez no carrinho
+  companyId?: string;
   companySlug?: string;
   companyName?: string;
   subtotal: number;
