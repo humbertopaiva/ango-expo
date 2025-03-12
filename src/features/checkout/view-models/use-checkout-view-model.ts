@@ -1,6 +1,9 @@
 // Path: src/features/checkout/view-models/use-checkout-view-model.ts
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Alert, Linking } from "react-native";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMultiCartStore } from "@/src/features/cart/stores/cart.store";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { companyPageService } from "@/src/features/company-page/services/company-page.service";
@@ -10,24 +13,47 @@ import { formatCurrency } from "@/src/utils/format.utils";
 export type PaymentMethod = "credit" | "debit" | "pix" | "cash" | "transfer";
 export type DeliveryMethod = "delivery" | "pickup";
 
-export interface CheckoutAddress {
-  street: string;
-  number: string;
-  complement?: string;
-  neighborhood: string;
-  city: string;
-  reference?: string;
-}
+// Esquema de validação com Zod
+export const checkoutFormSchema = z.object({
+  // Informações pessoais
+  personalInfo: z.object({
+    name: z
+      .string()
+      .min(2, "Nome é obrigatório e deve ter pelo menos 2 caracteres"),
+    phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
+  }),
 
-export interface CheckoutPersonalInfo {
-  name: string;
-  phone: string;
-}
+  // Endereço
+  address: z.object({
+    street: z.string().min(1, "Rua é obrigatória"),
+    number: z.string().min(1, "Número é obrigatório"),
+    complement: z.string().optional(),
+    neighborhood: z.string().min(1, "Bairro é obrigatório"),
+    city: z.string().min(1, "Cidade é obrigatória"),
+    reference: z.string().optional(),
+  }),
 
-export interface CheckoutPaymentInfo {
-  method: PaymentMethod;
-  changeFor?: string; // Valor para troco, apenas para método 'cash'
-}
+  // Informações de pagamento
+  paymentInfo: z.object({
+    method: z.enum(["credit", "debit", "pix", "cash", "transfer"], {
+      errorMap: () => ({ message: "Método de pagamento inválido" }),
+    }),
+    changeFor: z.string().optional(),
+  }),
+
+  // Método de entrega
+  deliveryMethod: z.enum(["delivery", "pickup"], {
+    errorMap: () => ({ message: "Método de entrega inválido" }),
+  }),
+});
+
+// Inferir tipo a partir do esquema
+export type CheckoutFormData = z.infer<typeof checkoutFormSchema>;
+
+// Tipos compatíveis para migração gradual
+export type CheckoutPersonalInfo = CheckoutFormData["personalInfo"];
+export type CheckoutAddress = CheckoutFormData["address"];
+export type CheckoutPaymentInfo = CheckoutFormData["paymentInfo"];
 
 export interface CompanyConfig {
   companyId?: string;
@@ -46,44 +72,129 @@ export interface CompanyConfig {
 }
 
 export function useCheckoutViewModel() {
-  // Estado do checkout
+  // Referência para rastrear inicialização
+  const initializedRef = useRef(false);
+
+  // Estado da configuração da empresa
   const [companyConfig, setCompanyConfig] = useState<CompanyConfig | null>(
     null
   );
-  const [personalInfo, setPersonalInfo] = useState<CheckoutPersonalInfo>({
-    name: "",
-    phone: "",
-  });
-  const [address, setAddress] = useState<CheckoutAddress>({
-    street: "",
-    number: "",
-    complement: "",
-    neighborhood: "",
-    city: "",
-    reference: "",
-  });
-  const [paymentInfo, setPaymentInfo] = useState<CheckoutPaymentInfo>({
-    method: "pix",
-    changeFor: "",
-  });
-  const [deliveryMethod, setDeliveryMethod] =
-    useState<DeliveryMethod>("delivery");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Garantir que o valor da cidade seja sempre "Lima Duarte (MG)"
-    if (deliveryMethod === "delivery" && address.city !== "Lima Duarte (MG)") {
-      setAddress((prev) => ({
-        ...prev,
+  // Inicializar o formulário com React Hook Form
+  const methods = useForm<CheckoutFormData>({
+    resolver: zodResolver(checkoutFormSchema),
+    defaultValues: {
+      personalInfo: {
+        name: "",
+        phone: "",
+      },
+      address: {
+        street: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
         city: "Lima Duarte (MG)",
-      }));
-    }
-  }, [deliveryMethod, address.city, setAddress]);
+        reference: "",
+      },
+      paymentInfo: {
+        method: "pix",
+        changeFor: "",
+      },
+      deliveryMethod: "delivery",
+    },
+    mode: "onChange",
+  });
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    getValues,
+    formState: { errors, isValid },
+    trigger,
+  } = methods;
+
+  // Observar valores para acesso mais fácil
+  const formValues = watch();
+  const personalInfo = formValues.personalInfo;
+  const address = formValues.address;
+  const paymentInfo = formValues.paymentInfo;
+  const deliveryMethod = formValues.deliveryMethod;
 
   // Acesso ao carrinho
   const cartVm = useCartViewModel();
   const multiCartStore = useMultiCartStore();
+
+  // Manter a cidade sempre como Lima Duarte quando em modo de entrega
+  useEffect(() => {
+    if (deliveryMethod === "delivery" && address.city !== "Lima Duarte (MG)") {
+      setValue("address.city", "Lima Duarte (MG)");
+    }
+  }, [deliveryMethod, address.city]);
+
+  // Setters otimizados
+  const setPersonalInfo = useCallback(
+    (info: Partial<CheckoutPersonalInfo>) => {
+      console.log("Atualizando personalInfo:", info);
+
+      Object.entries(info).forEach(([key, value]) => {
+        setValue(`personalInfo.${key}` as any, value, {
+          shouldDirty: true,
+          shouldValidate: initializedRef.current,
+        });
+      });
+    },
+    [setValue]
+  );
+
+  const setAddress = useCallback(
+    (addressInfo: Partial<CheckoutAddress>) => {
+      console.log("Atualizando address:", addressInfo);
+
+      Object.entries(addressInfo).forEach(([key, value]) => {
+        setValue(`address.${key}` as any, value, {
+          shouldDirty: true,
+          shouldValidate: initializedRef.current,
+        });
+      });
+    },
+    [setValue]
+  );
+
+  const setPaymentInfo = useCallback(
+    (info: Partial<CheckoutPaymentInfo>) => {
+      console.log("Atualizando paymentInfo:", info);
+
+      Object.entries(info).forEach(([key, value]) => {
+        setValue(`paymentInfo.${key}` as any, value, {
+          shouldDirty: true,
+          shouldValidate: initializedRef.current,
+        });
+      });
+    },
+    [setValue]
+  );
+
+  const setDeliveryMethod = useCallback(
+    (method: DeliveryMethod) => {
+      console.log("Atualizando deliveryMethod:", method);
+      setValue("deliveryMethod", method, {
+        shouldDirty: true,
+        shouldValidate: initializedRef.current,
+      });
+    },
+    [setValue]
+  );
+
+  // Após a primeira renderização, marcar como inicializado para validar formulários
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+    }
+  }, []);
 
   // Carregar configuração da empresa
   const loadCompanyConfig = useCallback(async (companySlug: string) => {
@@ -122,90 +233,71 @@ export function useCheckoutViewModel() {
     }
   }, []);
 
-  // Validações
-  const isPersonalInfoValid = useCallback(() => {
+  // Validar informações pessoais
+  const isPersonalInfoValid = useCallback(async () => {
     try {
-      // Validação básica de nome e telefone
-      if (!personalInfo.name || personalInfo.name.trim() === "") {
-        return false;
-      }
+      const isPersonalValid = await trigger("personalInfo");
 
-      const phoneDigits = personalInfo.phone.replace(/\D/g, "");
-      if (phoneDigits.length < 10) {
-        return false;
-      }
-
-      // Se for retirada, só precisamos do nome e telefone
+      // Se for retirada, só precisamos dos dados pessoais
       if (deliveryMethod === "pickup") {
-        return true;
+        return isPersonalValid;
       }
 
-      // Para entrega, validamos o endereço (exceto cidade que é automática)
-      if (!address.street || address.street.trim() === "") {
-        return false;
-      }
+      // Se for entrega, também precisamos validar o endereço
+      const isAddressValid = await trigger("address");
 
-      if (!address.number || address.number.trim() === "") {
-        return false;
-      }
-
-      if (!address.neighborhood || address.neighborhood.trim() === "") {
-        return false;
-      }
-
-      // A cidade é automaticamente "Lima Duarte (MG)", então não precisamos validar
-
-      // Se chegou aqui, tudo está válido
-      return true;
+      return isPersonalValid && isAddressValid;
     } catch (error) {
-      console.error("Erro na validação de informações pessoais:", error);
+      console.error("Erro ao validar informações pessoais:", error);
       return false;
     }
-  }, [personalInfo, address, deliveryMethod]);
+  }, [trigger, deliveryMethod]);
 
-  // Para compatibilidade com o código existente, mantemos isAddressValid
-  // mas ele agora sempre retorna true pois validamos o endereço junto com os dados pessoais
-  const isAddressValid = useCallback(() => {
-    return true;
-  }, []);
+  // Validar pagamento
+  const isPaymentValid = useCallback(async () => {
+    try {
+      const isValid = await trigger("paymentInfo");
 
-  /**
-   * Verifica se as informações de pagamento estão válidas
-   */
-  const isPaymentValid = useCallback(() => {
-    // Verificar se um método de pagamento foi selecionado
-    if (!paymentInfo.method) {
-      return false;
-    }
+      // Para pagamento em dinheiro, verificar se o troco está correto
+      if (paymentInfo.method === "cash" && paymentInfo.changeFor) {
+        try {
+          // Extrair valor numérico da string formatada (removendo R$, espaços e trocando vírgula por ponto)
+          const changeValueRaw = paymentInfo.changeFor
+            .replace(/[^\d,]/g, "") // Remove tudo exceto dígitos e vírgula
+            .replace(",", "."); // Substitui vírgula por ponto para conversão
 
-    // Para pagamento em dinheiro, verificar se o troco está correto
-    if (paymentInfo.method === "cash" && paymentInfo.changeFor) {
-      try {
-        // Extrair valor numérico da string formatada (removendo R$, espaços e trocando vírgula por ponto)
-        const changeValueRaw = paymentInfo.changeFor
-          .replace(/[^\d,]/g, "") // Remove tudo exceto dígitos e vírgula
-          .replace(",", "."); // Substitui vírgula por ponto para conversão
+          // Converter para número
+          const changeValue = parseFloat(changeValueRaw);
 
-        // Converter para número
-        const changeValue = parseFloat(changeValueRaw);
+          // Calcular total do pedido
+          const orderTotal = cartVm.items.reduce(
+            (sum, item) => sum + item.price * item.quantity,
+            0
+          );
 
-        // Calcular total do pedido
-        const orderTotal = cartVm.items.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0
-        );
-
-        // Verificar se o valor para troco é maior que o total do pedido
-        return !isNaN(changeValue) && changeValue >= orderTotal;
-      } catch (error) {
-        console.error("Erro ao validar troco:", error);
-        return false;
+          // Verificar se o valor para troco é maior que o total do pedido
+          return !isNaN(changeValue) && changeValue >= orderTotal;
+        } catch (error) {
+          console.error("Erro ao validar troco:", error);
+          return false;
+        }
       }
+
+      return isValid;
+    } catch (error) {
+      console.error("Erro ao validar pagamento:", error);
+      return false;
+    }
+  }, [trigger, paymentInfo, cartVm.items]);
+
+  // Para compatibilidade com o código existente
+  const isAddressValid = useCallback(async () => {
+    if (deliveryMethod === "pickup") {
+      return true;
     }
 
-    // Para outros métodos de pagamento, consideramos válido
-    return true;
-  }, [paymentInfo, cartVm.items]);
+    return await trigger("address");
+  }, [trigger, deliveryMethod]);
 
   // Formatar valor de troco
   const formatChangeValue = useCallback((value: string) => {
@@ -216,79 +308,6 @@ export function useCheckoutViewModel() {
     // Formatar como moeda
     return formatCurrency(floatValue);
   }, []);
-
-  // Finalizar pedido
-  const finalizeOrder = useCallback(async () => {
-    try {
-      // Verificar se temos as informações necessárias
-      if (!companyConfig?.whatsapp) {
-        Alert.alert(
-          "Erro",
-          "Não foi possível obter o contato do estabelecimento."
-        );
-        return false;
-      }
-
-      if (!isPersonalInfoValid()) {
-        Alert.alert(
-          "Dados incompletos",
-          "Por favor, preencha corretamente todos os dados solicitados."
-        );
-        return false;
-      }
-
-      if (!isPaymentValid()) {
-        Alert.alert(
-          "Pagamento inválido",
-          "Por favor, verifique as informações de pagamento."
-        );
-        return false;
-      }
-
-      // Construir a mensagem para o WhatsApp
-      const message = constructWhatsAppMessage();
-
-      // Formato do número: remover caracteres não numéricos
-      const phoneNumber = companyConfig.whatsapp.replace(/\D/g, "");
-
-      // URL do WhatsApp
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-        message
-      )}`;
-
-      // Abrir o WhatsApp
-      const canOpen = await Linking.canOpenURL(whatsappUrl);
-
-      if (canOpen) {
-        await Linking.openURL(whatsappUrl);
-
-        // Limpar o carrinho após finalizar o pedido
-        if (companyConfig.companySlug) {
-          multiCartStore.clearCart(companyConfig.companySlug);
-        }
-
-        return true;
-      } else {
-        Alert.alert(
-          "Erro",
-          "Não foi possível abrir o WhatsApp. Verifique se o aplicativo está instalado."
-        );
-        return false;
-      }
-    } catch (error) {
-      console.error("Erro ao finalizar pedido:", error);
-      return false;
-    }
-  }, [
-    companyConfig,
-    personalInfo,
-    address,
-    paymentInfo,
-    deliveryMethod,
-    cartVm.items,
-    isPersonalInfoValid,
-    isPaymentValid,
-  ]);
 
   // Construir mensagem para o WhatsApp
   const constructWhatsAppMessage = useCallback(() => {
@@ -398,8 +417,91 @@ export function useCheckoutViewModel() {
     companyConfig,
   ]);
 
+  // Finalizar pedido
+  const finalizeOrder = useCallback(async () => {
+    try {
+      // Validar todo o formulário
+      const formIsValid = await methods.trigger();
+
+      if (!formIsValid) {
+        console.log("Formulário inválido:", errors);
+        Alert.alert(
+          "Dados incompletos",
+          "Por favor, preencha corretamente todos os dados solicitados."
+        );
+        return false;
+      }
+
+      // Verificar se temos as informações necessárias
+      if (!companyConfig?.whatsapp) {
+        Alert.alert(
+          "Erro",
+          "Não foi possível obter o contato do estabelecimento."
+        );
+        return false;
+      }
+
+      // Construir a mensagem para o WhatsApp
+      const message = constructWhatsAppMessage();
+
+      // Formato do número: remover caracteres não numéricos
+      const phoneNumber = companyConfig.whatsapp.replace(/\D/g, "");
+
+      // URL do WhatsApp
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+        message
+      )}`;
+
+      // Abrir o WhatsApp
+      const canOpen = await Linking.canOpenURL(whatsappUrl);
+
+      if (canOpen) {
+        await Linking.openURL(whatsappUrl);
+
+        // Limpar o carrinho após finalizar o pedido
+        if (companyConfig.companySlug) {
+          multiCartStore.clearCart(companyConfig.companySlug);
+        }
+
+        return true;
+      } else {
+        Alert.alert(
+          "Erro",
+          "Não foi possível abrir o WhatsApp. Verifique se o aplicativo está instalado."
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error("Erro ao finalizar pedido:", error);
+      return false;
+    }
+  }, [
+    methods,
+    errors,
+    companyConfig,
+    constructWhatsAppMessage,
+    multiCartStore,
+  ]);
+
+  // Efeito para depuração
+  useEffect(() => {
+    if (initializedRef.current) {
+      console.log("Estado atual do checkout:", {
+        personalInfo,
+        address,
+        paymentInfo,
+        deliveryMethod,
+        errors,
+        isValid,
+      });
+    }
+  }, [personalInfo, address, paymentInfo, deliveryMethod, errors, isValid]);
+
   return {
     // Estado
+    formMethods: methods,
+    control,
+    errors,
     companyConfig,
     personalInfo,
     address,
@@ -418,10 +520,12 @@ export function useCheckoutViewModel() {
     loadCompanyConfig,
     finalizeOrder,
     formatChangeValue,
+    handleSubmit,
 
     // Validações
     isPersonalInfoValid,
     isAddressValid,
     isPaymentValid,
+    isValid,
   };
 }

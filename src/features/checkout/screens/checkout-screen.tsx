@@ -10,20 +10,16 @@ import {
   Platform,
   ActivityIndicator,
   Dimensions,
-  Image,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Card, HStack, VStack, Divider } from "@gluestack-ui/themed";
+import { Button, HStack } from "@gluestack-ui/themed";
 
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import ScreenHeader from "@/components/ui/screen-header";
 
-import { CartItem } from "@/src/features/cart/models/cart";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { getContrastColor } from "@/src/utils/color.utils";
-import { ImagePreview } from "@/components/custom/image-preview";
 import { CheckoutOrderSummary } from "../components/checkout-order-summary";
 import { CheckoutUserForm } from "../components/checkout-user-form";
 import { CheckoutPaymentMethod } from "../components/checkout-payment-method";
@@ -37,6 +33,11 @@ export function CheckoutScreen() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const { width } = Dimensions.get("window");
+
+  // Console.log para depuração
+  useEffect(() => {
+    console.log("Checkout Screen - currentStep:", currentStep);
+  }, [currentStep]);
 
   // Carregar a configuração da empresa e do checkout
   useEffect(() => {
@@ -63,12 +64,14 @@ export function CheckoutScreen() {
 
   // Manipuladores para navegação entre etapas
   const handleNextStep = () => {
+    console.log("Avançando para próxima etapa. Atual:", currentStep);
     if (currentStep < getTotalSteps()) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handlePreviousStep = () => {
+    console.log("Retornando para etapa anterior. Atual:", currentStep);
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
@@ -149,28 +152,6 @@ export function CheckoutScreen() {
     }
   };
 
-  // Verificar se o botão de próximo deve estar habilitado
-  const isNextButtonEnabled = () => {
-    try {
-      switch (currentStep) {
-        case 1:
-          // Sempre habilitado no resumo do pedido
-          return true;
-        case 2:
-          // Na etapa de dados pessoais, verificar se as informações são válidas
-          return checkoutVm.isPersonalInfoValid();
-        case 3:
-          // Na etapa de pagamento, verificar se o método de pagamento é válido
-          return checkoutVm.isPaymentValid();
-        default:
-          return false;
-      }
-    } catch (error) {
-      console.error("Erro ao verificar habilitação do botão:", error);
-      return false;
-    }
-  };
-
   // Obter texto do botão de próximo
   const getNextButtonText = () => {
     switch (currentStep) {
@@ -193,7 +174,6 @@ export function CheckoutScreen() {
   // Cor primária da empresa ou padrão
   const primaryColor =
     checkoutVm.companyConfig?.primaryColor || THEME_COLORS.primary;
-  const contrastTextColor = getContrastColor(primaryColor);
 
   // Se o carrinho estiver vazio, não renderizar o conteúdo
   if (cartVm.isEmpty) {
@@ -287,7 +267,6 @@ export function CheckoutScreen() {
         </ScrollView>
 
         {/* Barra de navegação inferior - omitir na etapa de conclusão */}
-        {/* Barra de navegação inferior - omitir na etapa de conclusão */}
         {currentStep < 4 && (
           <View
             className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4"
@@ -296,7 +275,7 @@ export function CheckoutScreen() {
             <Button
               onPress={currentStep === 3 ? handleFinishOrder : handleNextStep}
               style={{ backgroundColor: primaryColor }}
-              // Sem condicionais de disabled - mantenha o botão sempre habilitado
+              // Removido o disabled para sempre permitir avançar
             >
               {isProcessing ? (
                 <HStack space="sm" alignItems="center">
