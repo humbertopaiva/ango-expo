@@ -1,14 +1,14 @@
 // Path: src/features/orders/view-models/use-order-view-model.ts
 import { useState } from "react";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
-
-import { useCartStore } from "@/src/features/cart/stores/cart.store";
 import {
   Order,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
 } from "../models/order";
+import { useMultiCartStore } from "@/src/features/cart/stores/cart.store";
+import { useLocalSearchParams } from "expo-router";
 
 // Simulação de um serviço de armazenamento de pedidos
 // Em um aplicativo real, isso seria substituído por uma chamada de API
@@ -66,8 +66,9 @@ export interface OrderViewModel {
 export function useOrderViewModel(): OrderViewModel {
   const [isLoading, setIsLoading] = useState(false);
   const cartViewModel = useCartViewModel();
-  const clearCart = useCartStore((state) => state.clearCart);
+  const multiCartStore = useMultiCartStore();
   const orderStorage = OrderStorageService.getInstance();
+  const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
 
   // Obter pedidos do storage
   const orders = orderStorage.getOrders();
@@ -76,7 +77,7 @@ export function useOrderViewModel(): OrderViewModel {
   const placeOrder = async (
     paymentMethod: PaymentMethod = PaymentMethod.CREDIT_CARD
   ): Promise<Order | null> => {
-    if (cartViewModel.isEmpty) return null;
+    if (cartViewModel.isEmpty || !companySlug) return null;
 
     setIsLoading(true);
 
@@ -87,8 +88,8 @@ export function useOrderViewModel(): OrderViewModel {
       // Criar um novo pedido com os itens do carrinho
       const newOrder: Order = {
         id: `order_${Date.now()}`,
-        companyId: cartViewModel.items[0].companyId,
-        companySlug: cartViewModel.companySlug || "",
+        companyId: cartViewModel.items[0]?.companyId || "",
+        companySlug: companySlug,
         companyName: cartViewModel.companyName || "",
         customerName: "Cliente", // Em um app real, isso viria de um serviço de autenticação
         items: [...cartViewModel.items],
@@ -111,8 +112,8 @@ export function useOrderViewModel(): OrderViewModel {
       // Salvar o pedido
       const savedOrder = orderStorage.addOrder(newOrder);
 
-      // Limpar o carrinho após finalizar o pedido
-      clearCart();
+      // Limpar o carrinho específico após finalizar o pedido
+      multiCartStore.clearCart(companySlug);
 
       return savedOrder;
     } catch (error) {

@@ -1,7 +1,9 @@
 // Path: src/features/cart/view-models/use-cart-view-model.ts
-import { useCartStore } from "../stores/cart.store";
+import { useMultiCartStore } from "../stores/cart.store";
 import { CompanyProduct } from "@/src/features/company-page/models/company-product";
-import { CartItem } from "../models/cart";
+import { Cart, CartItem, emptyCart } from "../models/cart";
+import { useEffect } from "react";
+import { useLocalSearchParams } from "expo-router";
 
 export interface CartViewModel {
   // Estado
@@ -38,13 +40,43 @@ export interface CartViewModel {
  * Segue o padrão MVVM para separar a lógica da UI
  */
 export function useCartViewModel(): CartViewModel {
-  const cartStore = useCartStore();
+  const {
+    carts,
+    getCart,
+    setActiveCart,
+    addItem,
+    removeItem: removeCartItem,
+    updateQuantity: updateCartQuantity,
+    updateObservation: updateCartObservation,
+    clearCart: clearCartBySlug,
+    getItemCount,
+    getItemByProductId,
+    activeCartSlug,
+  } = useMultiCartStore();
+
+  // Pegar o parâmetro companySlug da URL para definir o carrinho ativo
+  const { companySlug: urlCompanySlug } = useLocalSearchParams<{
+    companySlug: string;
+  }>();
+
+  // Definir o carrinho ativo com base na URL, quando disponível
+  useEffect(() => {
+    if (urlCompanySlug) {
+      setActiveCart(urlCompanySlug);
+    }
+  }, [urlCompanySlug, setActiveCart]);
+
+  // Usar o carrinho ativo ou o da URL
+  const currentSlug = activeCartSlug || urlCompanySlug;
+
+  // Garantir que sempre temos um cart válido mesmo que vazio
+  const cart: Cart = currentSlug ? getCart(currentSlug) : { ...emptyCart };
 
   // Verifica se o carrinho está vazio
-  const isEmpty = cartStore.items.length === 0;
+  const isEmpty = !cart || cart.items.length === 0;
 
   // Quantidade total de itens no carrinho
-  const itemCount = cartStore.getItemCount();
+  const itemCount = currentSlug ? getItemCount(currentSlug) : 0;
 
   // Adiciona um produto ao carrinho com quantidade padrão 1
   const addProduct = (
@@ -55,7 +87,7 @@ export function useCartViewModel(): CartViewModel {
     // Gera um ID único para o item do carrinho
     const itemId = `${product.id}_${Date.now()}`;
 
-    cartStore.addItem({
+    addItem(companySlug, {
       id: itemId,
       productId: product.id,
       name: product.nome,
@@ -80,7 +112,7 @@ export function useCartViewModel(): CartViewModel {
     // Gera um ID único para o item do carrinho
     const itemId = `${product.id}_${Date.now()}`;
 
-    cartStore.addItem({
+    addItem(companySlug, {
       id: itemId,
       productId: product.id,
       name: product.nome,
@@ -95,31 +127,55 @@ export function useCartViewModel(): CartViewModel {
     });
   };
 
-  // Atualiza a observação de um item
-  const updateObservation = (itemId: string, observation: string) => {
-    cartStore.updateObservation(itemId, observation);
+  // Remover item do carrinho ativo
+  const removeItem = (itemId: string) => {
+    if (currentSlug) {
+      removeCartItem(currentSlug, itemId);
+    }
   };
 
-  // Verifica se um produto está no carrinho
+  // Atualizar quantidade do item no carrinho ativo
+  const updateQuantity = (itemId: string, quantity: number) => {
+    if (currentSlug) {
+      updateCartQuantity(currentSlug, itemId, quantity);
+    }
+  };
+
+  // Atualiza a observação de um item no carrinho ativo
+  const updateObservation = (itemId: string, observation: string) => {
+    if (currentSlug) {
+      updateCartObservation(currentSlug, itemId, observation);
+    }
+  };
+
+  // Limpar o carrinho ativo
+  const clearCart = () => {
+    if (currentSlug) {
+      clearCartBySlug(currentSlug);
+    }
+  };
+
+  // Verifica se um produto está no carrinho ativo
   const isProductInCart = (productId: string): boolean => {
-    return !!cartStore.getItemByProductId(productId);
+    if (!currentSlug) return false;
+    return !!getItemByProductId(currentSlug, productId);
   };
 
   return {
     isEmpty,
     itemCount,
-    items: cartStore.items,
-    subtotal: cartStore.subtotalFormatted,
-    total: cartStore.totalFormatted,
-    companySlug: cartStore.companySlug,
-    companyName: cartStore.companyName,
+    items: cart.items,
+    subtotal: cart.subtotalFormatted || "R$ 0,00",
+    total: cart.totalFormatted || "R$ 0,00",
+    companySlug: cart.companySlug,
+    companyName: cart.companyName,
 
     addProduct,
     addToCartWithObservation,
-    removeItem: cartStore.removeItem,
-    updateQuantity: cartStore.updateQuantity,
+    removeItem,
+    updateQuantity,
     updateObservation,
-    clearCart: cartStore.clearCart,
+    clearCart,
     isProductInCart,
   };
 }

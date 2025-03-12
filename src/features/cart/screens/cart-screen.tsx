@@ -35,6 +35,7 @@ import { ImagePreview } from "@/components/custom/image-preview";
 import { Package } from "lucide-react-native";
 import { getContrastColor } from "@/src/utils/color.utils";
 import { CartItem } from "../models/cart";
+import { useMultiCartStore } from "../stores/cart.store";
 
 /**
  * Item individual do carrinho
@@ -200,6 +201,7 @@ const CartItemComponent: React.FC<CartItemProps> = ({
  */
 export function CartScreen() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
+  const multiCartStore = useMultiCartStore();
   const cart = useCartViewModel();
   const orderViewModel = useOrderViewModel();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -208,6 +210,13 @@ export function CartScreen() {
   const [showCouponInput, setShowCouponInput] = useState(false);
   const insets = useSafeAreaInsets();
   const { width } = Dimensions.get("window");
+
+  // Efeito para definir o carrinho ativo com base no slug da URL
+  useEffect(() => {
+    if (companySlug) {
+      multiCartStore.setActiveCart(companySlug);
+    }
+  }, [companySlug]);
 
   // Verificar se o carrinho está vazio
   const cartIsEmpty = cart.isEmpty;
@@ -249,14 +258,22 @@ export function CartScreen() {
     try {
       setIsProcessing(true);
 
-      // Aqui você deveria chamar o método adequado do orderViewModel
-      // Por enquanto vamos simular um pequeno delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Verificar se temos um companySlug válido
+      if (!companySlug) {
+        Alert.alert(
+          "Erro",
+          "Não foi possível identificar a empresa para este carrinho."
+        );
+        return;
+      }
 
-      // Depois do processamento, redirecionar para a tela de checkout
+      // Garantir que o carrinho ativo seja o da empresa atual
+      multiCartStore.setActiveCart(companySlug);
+
+      // Navegar para a tela de checkout
       router.push(`/(drawer)/empresa/${companySlug}/checkout`);
     } catch (error) {
-      console.error("Erro ao finalizar pedido:", error);
+      console.error("Erro ao processar pedido:", error);
       Alert.alert(
         "Erro ao processar",
         "Não foi possível finalizar seu pedido. Tente novamente."
