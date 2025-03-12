@@ -25,6 +25,7 @@ import {
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { formatPhoneNumber } from "@/src/utils/format.utils";
 import { FormValidationFeedback } from "@/components/common/form-validation-feedback";
+import { Controller } from "react-hook-form";
 
 export function CheckoutUserForm() {
   const {
@@ -35,9 +36,12 @@ export function CheckoutUserForm() {
     companyConfig,
     deliveryMethod,
     isPersonalInfoValid,
+    control,
+    errors,
+    formMethods,
   } = useCheckoutViewModel();
 
-  // Estado local para o telefone formatado
+  // Estado local para o telefone formatado - apenas para exibição
   const [formattedPhone, setFormattedPhone] = useState(
     formatPhoneNumber(personalInfo.phone || "")
   );
@@ -45,18 +49,6 @@ export function CheckoutUserForm() {
   // Estado para o seletor de bairros
   const [showNeighborhoodSelector, setShowNeighborhoodSelector] =
     useState(false);
-
-  // Estado para validação em tempo real
-  const [formValid, setFormValid] = useState(false);
-
-  // Estado para rastrear campos que foram tocados pelo usuário
-  const [touchedFields, setTouchedFields] = useState({
-    name: false,
-    phone: false,
-    street: false,
-    number: false,
-    neighborhood: false,
-  });
 
   // Verificar se a empresa especifica bairros de entrega
   const hasNeighborhoodsList =
@@ -67,47 +59,18 @@ export function CheckoutUserForm() {
   // Cor primária da empresa ou valor padrão
   const primaryColor = companyConfig?.primaryColor || "#F4511E";
 
-  // Validar formulário cada vez que dados são alterados
+  // Verificar se o formulário é válido
+  const [formValid, setFormValid] = useState(false);
+
+  // Verificar validade do formulário sempre que os campos mudarem
   useEffect(() => {
-    const isValid = isPersonalInfoValid();
-    setFormValid(isValid);
+    const checkFormValidity = async () => {
+      const isValid = await isPersonalInfoValid();
+      setFormValid(isValid);
+    };
+
+    checkFormValidity();
   }, [personalInfo, address, deliveryMethod, isPersonalInfoValid]);
-
-  // Validações de campos individuais
-  const validations = {
-    name: personalInfo.name.trim().length > 0,
-    phone: personalInfo.phone.replace(/\D/g, "").length >= 10,
-    street:
-      deliveryMethod === "pickup" ? true : address.street.trim().length > 0,
-    number:
-      deliveryMethod === "pickup" ? true : address.number.trim().length > 0,
-    neighborhood:
-      deliveryMethod === "pickup"
-        ? true
-        : address.neighborhood.trim().length > 0,
-    // A cidade não precisa mais ser validada
-  };
-
-  // Marcar campo como tocado
-  const markFieldAsTouched = (field: keyof typeof touchedFields) => {
-    setTouchedFields((prev) => ({
-      ...prev,
-      [field]: true,
-    }));
-  };
-
-  // Verificar se um campo específico tem erro
-  const hasFieldError = (field: keyof typeof touchedFields) => {
-    return touchedFields[field] && !validations[field];
-  };
-
-  // Atualizar nome
-  const handleNameChange = (value: string) => {
-    setPersonalInfo({
-      ...personalInfo,
-      name: value,
-    });
-  };
 
   // Atualizar telefone com formatação
   const handlePhoneChange = (value: string) => {
@@ -120,29 +83,21 @@ export function CheckoutUserForm() {
 
     // Atualizar o estado com o valor numérico
     setPersonalInfo({
-      ...personalInfo,
       phone: numericValue,
     });
   };
 
   // Atualizar campos do endereço
   const updateAddress = (field: keyof typeof address, value: string) => {
-    setAddress((prevAddress) => ({
-      ...prevAddress,
+    setAddress({
       [field]: value,
-    }));
-
-    // Marcar o campo como tocado se for um campo que validamos
-    if (field === "street" || field === "number" || field === "neighborhood") {
-      markFieldAsTouched(field as keyof typeof touchedFields);
-    }
+    });
   };
 
   // Selecionar bairro da lista
   const handleSelectNeighborhood = (neighborhood: string) => {
     updateAddress("neighborhood", neighborhood);
     setShowNeighborhoodSelector(false);
-    markFieldAsTouched("neighborhood");
   };
 
   // Se o método de entrega é "pickup", não mostrar campos de endereço
@@ -162,23 +117,34 @@ export function CheckoutUserForm() {
               <Text className="text-red-500">*</Text>
             </HStack>
 
-            <TextInput
-              value={personalInfo.name}
-              onChangeText={handleNameChange}
-              onBlur={() => markFieldAsTouched("name")}
-              placeholder="Digite seu nome completo"
-              className={`bg-gray-50 border ${
-                hasFieldError("name") ? "border-red-400" : "border-gray-200"
-              } rounded-lg p-3 mt-1 text-gray-800`}
-              placeholderTextColor="#9CA3AF"
-              autoCapitalize="words"
+            <Controller
+              control={control}
+              name="personalInfo.name"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  value={value}
+                  onChangeText={(text) => {
+                    onChange(text);
+                    setPersonalInfo({ name: text });
+                  }}
+                  onBlur={onBlur}
+                  placeholder="Digite seu nome completo"
+                  className={`bg-gray-50 border ${
+                    errors.personalInfo?.name
+                      ? "border-red-400"
+                      : "border-gray-200"
+                  } rounded-lg p-3 mt-1 text-gray-800`}
+                  placeholderTextColor="#9CA3AF"
+                  autoCapitalize="words"
+                />
+              )}
             />
 
-            {hasFieldError("name") && (
+            {errors.personalInfo?.name && (
               <HStack space="xs" alignItems="center" className="mt-1">
                 <AlertCircle size={14} color="#EF4444" />
                 <Text className="text-xs text-red-500">
-                  O nome é obrigatório
+                  {errors.personalInfo.name.message}
                 </Text>
               </HStack>
             )}
@@ -192,24 +158,38 @@ export function CheckoutUserForm() {
               <Text className="text-red-500">*</Text>
             </HStack>
 
-            <TextInput
-              value={formattedPhone}
-              onChangeText={handlePhoneChange}
-              onBlur={() => markFieldAsTouched("phone")}
-              placeholder="(00) 00000-0000"
-              className={`bg-gray-50 border ${
-                hasFieldError("phone") ? "border-red-400" : "border-gray-200"
-              } rounded-lg p-3 mt-1 text-gray-800`}
-              placeholderTextColor="#9CA3AF"
-              keyboardType="phone-pad"
-              maxLength={15} // (99) 99999-9999
+            <Controller
+              control={control}
+              name="personalInfo.phone"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  value={formattedPhone}
+                  onChangeText={(text) => {
+                    const numericValue = text.replace(/\D/g, "");
+                    const formatted = formatPhoneNumber(numericValue);
+                    setFormattedPhone(formatted);
+                    onChange(numericValue);
+                    setPersonalInfo({ phone: numericValue });
+                  }}
+                  onBlur={onBlur}
+                  placeholder="(00) 00000-0000"
+                  className={`bg-gray-50 border ${
+                    errors.personalInfo?.phone
+                      ? "border-red-400"
+                      : "border-gray-200"
+                  } rounded-lg p-3 mt-1 text-gray-800`}
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="phone-pad"
+                  maxLength={15} // (99) 99999-9999
+                />
+              )}
             />
 
-            {hasFieldError("phone") ? (
+            {errors.personalInfo?.phone ? (
               <HStack space="xs" alignItems="center" className="mt-1">
                 <AlertCircle size={14} color="#EF4444" />
                 <Text className="text-xs text-red-500">
-                  Digite um número de telefone válido
+                  {errors.personalInfo.phone.message}
                 </Text>
               </HStack>
             ) : (
@@ -221,25 +201,14 @@ export function CheckoutUserForm() {
         </VStack>
 
         {/* Indicador de status do formulário */}
-        {formValid ? (
-          <View className="mt-6 p-3 rounded-lg bg-green-50 border border-green-200">
-            <HStack space="sm" alignItems="center">
-              <CheckCircle size={18} color="#10B981" />
-              <Text className="text-green-700 font-medium">
-                Pronto para continuar
-              </Text>
-            </HStack>
-          </View>
-        ) : (
-          <View className="mt-6 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-            <HStack space="sm" alignItems="center">
-              <Info size={18} color="#F59E0B" />
-              <Text className="text-yellow-700 font-medium">
-                Preencha todos os campos obrigatórios
-              </Text>
-            </HStack>
-          </View>
-        )}
+        <FormValidationFeedback
+          isValid={formValid}
+          isPartiallyValid={!!personalInfo.name || !!personalInfo.phone}
+          validMessage="Pronto para continuar"
+          invalidMessage="Preencha todos os campos obrigatórios"
+          partialMessage="Continue preenchendo os campos necessários"
+          primaryColor={primaryColor}
+        />
       </Card>
     );
   }
@@ -259,22 +228,35 @@ export function CheckoutUserForm() {
             <Text className="text-red-500">*</Text>
           </HStack>
 
-          <TextInput
-            value={personalInfo.name}
-            onChangeText={handleNameChange}
-            onBlur={() => markFieldAsTouched("name")}
-            placeholder="Digite seu nome completo"
-            className={`bg-gray-50 border ${
-              hasFieldError("name") ? "border-red-400" : "border-gray-200"
-            } rounded-lg p-3 mt-1 text-gray-800`}
-            placeholderTextColor="#9CA3AF"
-            autoCapitalize="words"
+          <Controller
+            control={control}
+            name="personalInfo.name"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                value={value}
+                onChangeText={(text) => {
+                  onChange(text);
+                  setPersonalInfo({ name: text });
+                }}
+                onBlur={onBlur}
+                placeholder="Digite seu nome completo"
+                className={`bg-gray-50 border ${
+                  errors.personalInfo?.name
+                    ? "border-red-400"
+                    : "border-gray-200"
+                } rounded-lg p-3 mt-1 text-gray-800`}
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="words"
+              />
+            )}
           />
 
-          {hasFieldError("name") && (
+          {errors.personalInfo?.name && (
             <HStack space="xs" alignItems="center" className="mt-1">
               <AlertCircle size={14} color="#EF4444" />
-              <Text className="text-xs text-red-500">O nome é obrigatório</Text>
+              <Text className="text-xs text-red-500">
+                {errors.personalInfo.name.message}
+              </Text>
             </HStack>
           )}
         </VStack>
@@ -287,24 +269,38 @@ export function CheckoutUserForm() {
             <Text className="text-red-500">*</Text>
           </HStack>
 
-          <TextInput
-            value={formattedPhone}
-            onChangeText={handlePhoneChange}
-            onBlur={() => markFieldAsTouched("phone")}
-            placeholder="(00) 00000-0000"
-            className={`bg-gray-50 border ${
-              hasFieldError("phone") ? "border-red-400" : "border-gray-200"
-            } rounded-lg p-3 mt-1 text-gray-800`}
-            placeholderTextColor="#9CA3AF"
-            keyboardType="phone-pad"
-            maxLength={15} // (99) 99999-9999
+          <Controller
+            control={control}
+            name="personalInfo.phone"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <TextInput
+                value={formattedPhone}
+                onChangeText={(text) => {
+                  const numericValue = text.replace(/\D/g, "");
+                  const formatted = formatPhoneNumber(numericValue);
+                  setFormattedPhone(formatted);
+                  onChange(numericValue);
+                  setPersonalInfo({ phone: numericValue });
+                }}
+                onBlur={onBlur}
+                placeholder="(00) 00000-0000"
+                className={`bg-gray-50 border ${
+                  errors.personalInfo?.phone
+                    ? "border-red-400"
+                    : "border-gray-200"
+                } rounded-lg p-3 mt-1 text-gray-800`}
+                placeholderTextColor="#9CA3AF"
+                keyboardType="phone-pad"
+                maxLength={15} // (99) 99999-9999
+              />
+            )}
           />
 
-          {hasFieldError("phone") ? (
+          {errors.personalInfo?.phone ? (
             <HStack space="xs" alignItems="center" className="mt-1">
               <AlertCircle size={14} color="#EF4444" />
               <Text className="text-xs text-red-500">
-                Digite um número de telefone válido
+                {errors.personalInfo.phone.message}
               </Text>
             </HStack>
           ) : (
@@ -331,22 +327,33 @@ export function CheckoutUserForm() {
               <Text className="text-red-500">*</Text>
             </HStack>
 
-            <TextInput
-              value={address.street}
-              onChangeText={(value) => updateAddress("street", value)}
-              onBlur={() => markFieldAsTouched("street")}
-              placeholder="Digite o nome da sua rua"
-              className={`bg-gray-50 border ${
-                hasFieldError("street") ? "border-red-400" : "border-gray-200"
-              } rounded-lg p-3 text-gray-800`}
-              placeholderTextColor="#9CA3AF"
+            <Controller
+              control={control}
+              name="address.street"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  value={value}
+                  onChangeText={(text) => {
+                    onChange(text);
+                    updateAddress("street", text);
+                  }}
+                  onBlur={onBlur}
+                  placeholder="Digite o nome da sua rua"
+                  className={`bg-gray-50 border ${
+                    errors.address?.street
+                      ? "border-red-400"
+                      : "border-gray-200"
+                  } rounded-lg p-3 text-gray-800`}
+                  placeholderTextColor="#9CA3AF"
+                />
+              )}
             />
 
-            {hasFieldError("street") && (
+            {errors.address?.street && (
               <HStack space="xs" alignItems="center" className="mt-1">
                 <AlertCircle size={14} color="#EF4444" />
                 <Text className="text-xs text-red-500">
-                  A rua é obrigatória
+                  {errors.address.street.message}
                 </Text>
               </HStack>
             )}
@@ -359,31 +366,54 @@ export function CheckoutUserForm() {
                 <Text className="font-medium text-gray-700">Número</Text>
                 <Text className="text-red-500">*</Text>
               </HStack>
-              <TextInput
-                value={address.number}
-                onChangeText={(value) => updateAddress("number", value)}
-                onBlur={() => markFieldAsTouched("number")}
-                placeholder="Nº"
-                className={`bg-gray-50 border ${
-                  hasFieldError("number") ? "border-red-400" : "border-gray-200"
-                } rounded-lg p-3 text-gray-800`}
-                placeholderTextColor="#9CA3AF"
-                keyboardType="numeric"
+              <Controller
+                control={control}
+                name="address.number"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    value={value}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      updateAddress("number", text);
+                    }}
+                    onBlur={onBlur}
+                    placeholder="Nº"
+                    className={`bg-gray-50 border ${
+                      errors.address?.number
+                        ? "border-red-400"
+                        : "border-gray-200"
+                    } rounded-lg p-3 text-gray-800`}
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="numeric"
+                  />
+                )}
               />
 
-              {hasFieldError("number") && (
-                <Text className="text-xs text-red-500 mt-1">Obrigatório</Text>
+              {errors.address?.number && (
+                <Text className="text-xs text-red-500 mt-1">
+                  {errors.address.number.message}
+                </Text>
               )}
             </VStack>
 
             <VStack className="flex-2" space="xs">
               <Text className="font-medium text-gray-700">Complemento</Text>
-              <TextInput
-                value={address.complement || ""}
-                onChangeText={(value) => updateAddress("complement", value)}
-                placeholder="Apto, Bloco, etc."
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
-                placeholderTextColor="#9CA3AF"
+              <Controller
+                control={control}
+                name="address.complement"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    value={value || ""}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      updateAddress("complement", text);
+                    }}
+                    onBlur={onBlur}
+                    placeholder="Apto, Bloco, etc."
+                    className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                )}
               />
             </VStack>
           </HStack>
@@ -398,81 +428,100 @@ export function CheckoutUserForm() {
 
             {hasNeighborhoodsList ? (
               // Seletor de bairros quando há uma lista predefinida
-              <TouchableOpacity
-                onPress={() =>
-                  setShowNeighborhoodSelector(!showNeighborhoodSelector)
-                }
-                onBlur={() => markFieldAsTouched("neighborhood")}
-                className={`bg-gray-50 border ${
-                  hasFieldError("neighborhood")
-                    ? "border-red-400"
-                    : "border-gray-200"
-                } rounded-lg p-3 flex-row justify-between items-center`}
-              >
-                <Text
-                  className={
-                    address.neighborhood ? "text-gray-800" : "text-gray-400"
-                  }
-                >
-                  {address.neighborhood || "Selecione seu bairro"}
-                </Text>
-                <ChevronDown size={20} color="#9CA3AF" />
-              </TouchableOpacity>
+              <Controller
+                control={control}
+                name="address.neighborhood"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setShowNeighborhoodSelector(!showNeighborhoodSelector)
+                      }
+                      className={`bg-gray-50 border ${
+                        errors.address?.neighborhood
+                          ? "border-red-400"
+                          : "border-gray-200"
+                      } rounded-lg p-3 flex-row justify-between items-center`}
+                    >
+                      <Text
+                        className={value ? "text-gray-800" : "text-gray-400"}
+                      >
+                        {value || "Selecione seu bairro"}
+                      </Text>
+                      <ChevronDown size={20} color="#9CA3AF" />
+                    </TouchableOpacity>
+
+                    {/* Mostrar seletor de bairros quando clicado */}
+                    {showNeighborhoodSelector && (
+                      <Card className="mt-2 border border-gray-200 max-h-48 overflow-hidden">
+                        <ScrollView
+                          className="p-2"
+                          showsVerticalScrollIndicator={false}
+                        >
+                          {companyConfig?.deliveryConfig?.neighborhoods?.map(
+                            (neighborhood, index) => (
+                              <TouchableOpacity
+                                key={index}
+                                onPress={() => {
+                                  handleSelectNeighborhood(neighborhood);
+                                  onChange(neighborhood);
+                                }}
+                                className={`p-3 flex-row justify-between items-center ${
+                                  index <
+                                  (companyConfig?.deliveryConfig?.neighborhoods
+                                    ?.length || 0) -
+                                    1
+                                    ? "border-b border-gray-100"
+                                    : ""
+                                }`}
+                              >
+                                <Text className="text-gray-800">
+                                  {neighborhood}
+                                </Text>
+                                {value === neighborhood && (
+                                  <CheckCircle size={16} color={primaryColor} />
+                                )}
+                              </TouchableOpacity>
+                            )
+                          )}
+                        </ScrollView>
+                      </Card>
+                    )}
+                  </>
+                )}
+              />
             ) : (
               // Campo de texto quando não há lista predefinida
-              <TextInput
-                value={address.neighborhood}
-                onChangeText={(value) => updateAddress("neighborhood", value)}
-                onBlur={() => markFieldAsTouched("neighborhood")}
-                placeholder="Digite seu bairro"
-                className={`bg-gray-50 border ${
-                  hasFieldError("neighborhood")
-                    ? "border-red-400"
-                    : "border-gray-200"
-                } rounded-lg p-3 text-gray-800`}
-                placeholderTextColor="#9CA3AF"
+              <Controller
+                control={control}
+                name="address.neighborhood"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    value={value}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      updateAddress("neighborhood", text);
+                    }}
+                    onBlur={onBlur}
+                    placeholder="Digite seu bairro"
+                    className={`bg-gray-50 border ${
+                      errors.address?.neighborhood
+                        ? "border-red-400"
+                        : "border-gray-200"
+                    } rounded-lg p-3 text-gray-800`}
+                    placeholderTextColor="#9CA3AF"
+                  />
+                )}
               />
             )}
 
-            {hasFieldError("neighborhood") && (
+            {errors.address?.neighborhood && (
               <HStack space="xs" alignItems="center" className="mt-1">
                 <AlertCircle size={14} color="#EF4444" />
                 <Text className="text-xs text-red-500">
-                  O bairro é obrigatório
+                  {errors.address.neighborhood.message}
                 </Text>
               </HStack>
-            )}
-
-            {/* Mostrar seletor de bairros quando clicado */}
-            {hasNeighborhoodsList && showNeighborhoodSelector && (
-              <Card className="mt-2 border border-gray-200 max-h-48 overflow-hidden">
-                <ScrollView
-                  className="p-2"
-                  showsVerticalScrollIndicator={false}
-                >
-                  {companyConfig?.deliveryConfig?.neighborhoods?.map(
-                    (neighborhood, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        onPress={() => handleSelectNeighborhood(neighborhood)}
-                        className={`p-3 flex-row justify-between items-center ${
-                          index <
-                          (companyConfig?.deliveryConfig?.neighborhoods
-                            ?.length || 0) -
-                            1
-                            ? "border-b border-gray-100"
-                            : ""
-                        }`}
-                      >
-                        <Text className="text-gray-800">{neighborhood}</Text>
-                        {address.neighborhood === neighborhood && (
-                          <CheckCircle size={16} color={primaryColor} />
-                        )}
-                      </TouchableOpacity>
-                    )
-                  )}
-                </ScrollView>
-              </Card>
             )}
           </VStack>
 
@@ -503,12 +552,22 @@ export function CheckoutUserForm() {
               </Text>
             </HStack>
 
-            <TextInput
-              value={address.reference || ""}
-              onChangeText={(value) => updateAddress("reference", value)}
-              placeholder="Ex: Próximo ao mercado..."
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
-              placeholderTextColor="#9CA3AF"
+            <Controller
+              control={control}
+              name="address.reference"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  value={value || ""}
+                  onChangeText={(text) => {
+                    onChange(text);
+                    updateAddress("reference", text);
+                  }}
+                  onBlur={onBlur}
+                  placeholder="Ex: Próximo ao mercado..."
+                  className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
+                  placeholderTextColor="#9CA3AF"
+                />
+              )}
             />
 
             <Text className="text-xs text-gray-500 mt-1">
@@ -571,7 +630,7 @@ export function CheckoutUserForm() {
         <FormValidationFeedback
           isValid={formValid}
           isPartiallyValid={
-            Object.values(validations).some(Boolean) && !formValid
+            !!personalInfo.name || !!personalInfo.phone || !!address.street
           }
           validMessage="Informações completas, pronto para continuar"
           invalidMessage="Preencha todos os campos obrigatórios"

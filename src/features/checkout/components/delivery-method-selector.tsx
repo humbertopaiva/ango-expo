@@ -1,6 +1,6 @@
 // Path: src/features/checkout/components/delivery-method-selector.tsx
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Card, HStack } from "@gluestack-ui/themed";
 import { MapPin, Building } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
@@ -13,6 +13,31 @@ export function DeliveryMethodSelector() {
   // Cor primária da empresa ou valor padrão
   const primaryColor = companyConfig?.primaryColor || "#F4511E";
 
+  // Função para tratar a mudança do método de entrega
+  const handleDeliveryMethodChange = (method: DeliveryMethod) => {
+    // Se estiver mudando de delivery para pickup, confirmar a mudança
+    // pois isso vai limpar os campos de endereço
+    if (deliveryMethod === "delivery" && method === "pickup") {
+      Alert.alert(
+        "Mudar para Retirada?",
+        "Ao selecionar retirada, você precisará buscar seu pedido no estabelecimento. Deseja continuar?",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel",
+          },
+          {
+            text: "Confirmar",
+            onPress: () => setDeliveryMethod(method),
+          },
+        ]
+      );
+    } else {
+      // Método mudando de pickup para delivery ou inicialização
+      setDeliveryMethod(method);
+    }
+  };
+
   return (
     <Card className="p-4 border border-gray-100 mb-4">
       <Text className="text-lg font-semibold text-gray-800 mb-4">
@@ -21,7 +46,7 @@ export function DeliveryMethodSelector() {
 
       <HStack className="mb-2 space-x-2 justify-center">
         <TouchableOpacity
-          onPress={() => setDeliveryMethod("delivery")}
+          onPress={() => handleDeliveryMethodChange("delivery")}
           className={`flex-1 p-3 rounded-lg border ${
             deliveryMethod === "delivery"
               ? "border-primary-500 bg-primary-50"
@@ -55,7 +80,7 @@ export function DeliveryMethodSelector() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setDeliveryMethod("pickup")}
+          onPress={() => handleDeliveryMethodChange("pickup")}
           className={`flex-1 p-3 rounded-lg border ${
             deliveryMethod === "pickup"
               ? "border-primary-500 bg-primary-50"
