@@ -1,4 +1,5 @@
 // Path: src/features/checkout/components/checkout-user-form.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -19,9 +20,11 @@ import {
   Info,
   ChevronDown,
   CheckCircle,
+  AlertCircle,
 } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { formatPhoneNumber } from "@/src/utils/format.utils";
+import { FormValidationFeedback } from "@/components/common/form-validation-feedback";
 
 export function CheckoutUserForm() {
   const {
@@ -46,7 +49,16 @@ export function CheckoutUserForm() {
   // Estado para validação em tempo real
   const [formValid, setFormValid] = useState(false);
 
-  // Verificar se a empresa especifica bairros de entrega (com verificações de null safety)
+  // Estado para rastrear campos que foram tocados pelo usuário
+  const [touchedFields, setTouchedFields] = useState({
+    name: false,
+    phone: false,
+    street: false,
+    number: false,
+    neighborhood: false,
+  });
+
+  // Verificar se a empresa especifica bairros de entrega
   const hasNeighborhoodsList =
     companyConfig?.deliveryConfig?.specifyNeighborhoods === true &&
     Array.isArray(companyConfig?.deliveryConfig?.neighborhoods) &&
@@ -58,9 +70,36 @@ export function CheckoutUserForm() {
   // Validar formulário cada vez que dados são alterados
   useEffect(() => {
     const isValid = isPersonalInfoValid();
-    console.log("Validação do formulário:", isValid);
     setFormValid(isValid);
   }, [personalInfo, address, deliveryMethod, isPersonalInfoValid]);
+
+  // Validações de campos individuais
+  const validations = {
+    name: personalInfo.name.trim().length > 0,
+    phone: personalInfo.phone.replace(/\D/g, "").length >= 10,
+    street:
+      deliveryMethod === "pickup" ? true : address.street.trim().length > 0,
+    number:
+      deliveryMethod === "pickup" ? true : address.number.trim().length > 0,
+    neighborhood:
+      deliveryMethod === "pickup"
+        ? true
+        : address.neighborhood.trim().length > 0,
+    // A cidade não precisa mais ser validada
+  };
+
+  // Marcar campo como tocado
+  const markFieldAsTouched = (field: keyof typeof touchedFields) => {
+    setTouchedFields((prev) => ({
+      ...prev,
+      [field]: true,
+    }));
+  };
+
+  // Verificar se um campo específico tem erro
+  const hasFieldError = (field: keyof typeof touchedFields) => {
+    return touchedFields[field] && !validations[field];
+  };
 
   // Atualizar nome
   const handleNameChange = (value: string) => {
@@ -92,12 +131,18 @@ export function CheckoutUserForm() {
       ...prevAddress,
       [field]: value,
     }));
+
+    // Marcar o campo como tocado se for um campo que validamos
+    if (field === "street" || field === "number" || field === "neighborhood") {
+      markFieldAsTouched(field as keyof typeof touchedFields);
+    }
   };
 
   // Selecionar bairro da lista
   const handleSelectNeighborhood = (neighborhood: string) => {
     updateAddress("neighborhood", neighborhood);
     setShowNeighborhoodSelector(false);
+    markFieldAsTouched("neighborhood");
   };
 
   // Se o método de entrega é "pickup", não mostrar campos de endereço
@@ -120,15 +165,23 @@ export function CheckoutUserForm() {
             <TextInput
               value={personalInfo.name}
               onChangeText={handleNameChange}
+              onBlur={() => markFieldAsTouched("name")}
               placeholder="Digite seu nome completo"
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-1 text-gray-800"
+              className={`bg-gray-50 border ${
+                hasFieldError("name") ? "border-red-400" : "border-gray-200"
+              } rounded-lg p-3 mt-1 text-gray-800`}
               placeholderTextColor="#9CA3AF"
               autoCapitalize="words"
             />
 
-            <Text className="text-xs text-gray-500 mt-1">
-              Digite seu nome completo para identificação do pedido
-            </Text>
+            {hasFieldError("name") && (
+              <HStack space="xs" alignItems="center" className="mt-1">
+                <AlertCircle size={14} color="#EF4444" />
+                <Text className="text-xs text-red-500">
+                  O nome é obrigatório
+                </Text>
+              </HStack>
+            )}
           </VStack>
 
           {/* Campo de telefone */}
@@ -142,30 +195,51 @@ export function CheckoutUserForm() {
             <TextInput
               value={formattedPhone}
               onChangeText={handlePhoneChange}
+              onBlur={() => markFieldAsTouched("phone")}
               placeholder="(00) 00000-0000"
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-1 text-gray-800"
+              className={`bg-gray-50 border ${
+                hasFieldError("phone") ? "border-red-400" : "border-gray-200"
+              } rounded-lg p-3 mt-1 text-gray-800`}
               placeholderTextColor="#9CA3AF"
               keyboardType="phone-pad"
               maxLength={15} // (99) 99999-9999
             />
 
-            <Text className="text-xs text-gray-500 mt-1">
-              Digite seu número de WhatsApp para contato
-            </Text>
+            {hasFieldError("phone") ? (
+              <HStack space="xs" alignItems="center" className="mt-1">
+                <AlertCircle size={14} color="#EF4444" />
+                <Text className="text-xs text-red-500">
+                  Digite um número de telefone válido
+                </Text>
+              </HStack>
+            ) : (
+              <Text className="text-xs text-gray-500 mt-1">
+                Digite seu número de WhatsApp para contato
+              </Text>
+            )}
           </VStack>
         </VStack>
 
-        {/* Indicador de status do formulário (apenas para debug) */}
-        <View
-          className="mt-4 p-2 rounded-lg"
-          style={{ backgroundColor: formValid ? "#d1fae5" : "#fee2e2" }}
-        >
-          <Text className={formValid ? "text-green-700" : "text-red-700"}>
-            {formValid
-              ? "Dados válidos"
-              : "Preencha todos os campos obrigatórios"}
-          </Text>
-        </View>
+        {/* Indicador de status do formulário */}
+        {formValid ? (
+          <View className="mt-6 p-3 rounded-lg bg-green-50 border border-green-200">
+            <HStack space="sm" alignItems="center">
+              <CheckCircle size={18} color="#10B981" />
+              <Text className="text-green-700 font-medium">
+                Pronto para continuar
+              </Text>
+            </HStack>
+          </View>
+        ) : (
+          <View className="mt-6 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+            <HStack space="sm" alignItems="center">
+              <Info size={18} color="#F59E0B" />
+              <Text className="text-yellow-700 font-medium">
+                Preencha todos os campos obrigatórios
+              </Text>
+            </HStack>
+          </View>
+        )}
       </Card>
     );
   }
@@ -188,11 +262,21 @@ export function CheckoutUserForm() {
           <TextInput
             value={personalInfo.name}
             onChangeText={handleNameChange}
+            onBlur={() => markFieldAsTouched("name")}
             placeholder="Digite seu nome completo"
-            className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-1 text-gray-800"
+            className={`bg-gray-50 border ${
+              hasFieldError("name") ? "border-red-400" : "border-gray-200"
+            } rounded-lg p-3 mt-1 text-gray-800`}
             placeholderTextColor="#9CA3AF"
             autoCapitalize="words"
           />
+
+          {hasFieldError("name") && (
+            <HStack space="xs" alignItems="center" className="mt-1">
+              <AlertCircle size={14} color="#EF4444" />
+              <Text className="text-xs text-red-500">O nome é obrigatório</Text>
+            </HStack>
+          )}
         </VStack>
 
         {/* Campo de telefone */}
@@ -206,16 +290,28 @@ export function CheckoutUserForm() {
           <TextInput
             value={formattedPhone}
             onChangeText={handlePhoneChange}
+            onBlur={() => markFieldAsTouched("phone")}
             placeholder="(00) 00000-0000"
-            className="bg-gray-50 border border-gray-200 rounded-lg p-3 mt-1 text-gray-800"
+            className={`bg-gray-50 border ${
+              hasFieldError("phone") ? "border-red-400" : "border-gray-200"
+            } rounded-lg p-3 mt-1 text-gray-800`}
             placeholderTextColor="#9CA3AF"
             keyboardType="phone-pad"
             maxLength={15} // (99) 99999-9999
           />
 
-          <Text className="text-xs text-gray-500 mt-1">
-            Digite seu número de WhatsApp para contato
-          </Text>
+          {hasFieldError("phone") ? (
+            <HStack space="xs" alignItems="center" className="mt-1">
+              <AlertCircle size={14} color="#EF4444" />
+              <Text className="text-xs text-red-500">
+                Digite um número de telefone válido
+              </Text>
+            </HStack>
+          ) : (
+            <Text className="text-xs text-gray-500 mt-1">
+              Digite seu número de WhatsApp para contato
+            </Text>
+          )}
         </VStack>
 
         <Divider my="$2" />
@@ -238,10 +334,22 @@ export function CheckoutUserForm() {
             <TextInput
               value={address.street}
               onChangeText={(value) => updateAddress("street", value)}
+              onBlur={() => markFieldAsTouched("street")}
               placeholder="Digite o nome da sua rua"
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
+              className={`bg-gray-50 border ${
+                hasFieldError("street") ? "border-red-400" : "border-gray-200"
+              } rounded-lg p-3 text-gray-800`}
               placeholderTextColor="#9CA3AF"
             />
+
+            {hasFieldError("street") && (
+              <HStack space="xs" alignItems="center" className="mt-1">
+                <AlertCircle size={14} color="#EF4444" />
+                <Text className="text-xs text-red-500">
+                  A rua é obrigatória
+                </Text>
+              </HStack>
+            )}
           </VStack>
 
           {/* Número e Complemento */}
@@ -254,11 +362,18 @@ export function CheckoutUserForm() {
               <TextInput
                 value={address.number}
                 onChangeText={(value) => updateAddress("number", value)}
+                onBlur={() => markFieldAsTouched("number")}
                 placeholder="Nº"
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
+                className={`bg-gray-50 border ${
+                  hasFieldError("number") ? "border-red-400" : "border-gray-200"
+                } rounded-lg p-3 text-gray-800`}
                 placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
               />
+
+              {hasFieldError("number") && (
+                <Text className="text-xs text-red-500 mt-1">Obrigatório</Text>
+              )}
             </VStack>
 
             <VStack className="flex-2" space="xs">
@@ -287,7 +402,12 @@ export function CheckoutUserForm() {
                 onPress={() =>
                   setShowNeighborhoodSelector(!showNeighborhoodSelector)
                 }
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex-row justify-between items-center"
+                onBlur={() => markFieldAsTouched("neighborhood")}
+                className={`bg-gray-50 border ${
+                  hasFieldError("neighborhood")
+                    ? "border-red-400"
+                    : "border-gray-200"
+                } rounded-lg p-3 flex-row justify-between items-center`}
               >
                 <Text
                   className={
@@ -303,10 +423,24 @@ export function CheckoutUserForm() {
               <TextInput
                 value={address.neighborhood}
                 onChangeText={(value) => updateAddress("neighborhood", value)}
+                onBlur={() => markFieldAsTouched("neighborhood")}
                 placeholder="Digite seu bairro"
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
+                className={`bg-gray-50 border ${
+                  hasFieldError("neighborhood")
+                    ? "border-red-400"
+                    : "border-gray-200"
+                } rounded-lg p-3 text-gray-800`}
                 placeholderTextColor="#9CA3AF"
               />
+            )}
+
+            {hasFieldError("neighborhood") && (
+              <HStack space="xs" alignItems="center" className="mt-1">
+                <AlertCircle size={14} color="#EF4444" />
+                <Text className="text-xs text-red-500">
+                  O bairro é obrigatório
+                </Text>
+              </HStack>
             )}
 
             {/* Mostrar seletor de bairros quando clicado */}
@@ -343,18 +477,21 @@ export function CheckoutUserForm() {
           </VStack>
 
           {/* Cidade */}
-          <VStack space="xs">
+          <VStack space="xs" className="mt-2">
             <HStack space="sm" alignItems="center">
+              <Building size={18} color={primaryColor} />
               <Text className="font-medium text-gray-700">Cidade</Text>
-              <Text className="text-red-500">*</Text>
             </HStack>
-            <TextInput
-              value={address.city}
-              onChangeText={(value) => updateAddress("city", value)}
-              placeholder="Digite sua cidade"
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
-              placeholderTextColor="#9CA3AF"
-            />
+
+            <View className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+              <HStack alignItems="center" space="sm">
+                <Info size={16} color="#3B82F6" />
+                <Text className="text-blue-700">
+                  Atendemos apenas em{" "}
+                  <Text className="font-medium">Lima Duarte (MG)</Text>
+                </Text>
+              </HStack>
+            </View>
           </VStack>
 
           {/* Ponto de referência */}
@@ -431,17 +568,16 @@ export function CheckoutUserForm() {
           </View>
         )}
 
-        {/* Indicador de status do formulário (apenas para debug) */}
-        <View
-          className="mt-4 p-2 rounded-lg"
-          style={{ backgroundColor: formValid ? "#d1fae5" : "#fee2e2" }}
-        >
-          <Text className={formValid ? "text-green-700" : "text-red-700"}>
-            {formValid
-              ? "Dados válidos"
-              : "Preencha todos os campos obrigatórios"}
-          </Text>
-        </View>
+        <FormValidationFeedback
+          isValid={formValid}
+          isPartiallyValid={
+            Object.values(validations).some(Boolean) && !formValid
+          }
+          validMessage="Informações completas, pronto para continuar"
+          invalidMessage="Preencha todos os campos obrigatórios"
+          partialMessage="Continue preenchendo os campos necessários"
+          primaryColor={primaryColor}
+        />
       </VStack>
     </Card>
   );
