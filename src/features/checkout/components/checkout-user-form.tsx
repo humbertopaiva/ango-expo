@@ -31,6 +31,7 @@ export function CheckoutUserForm() {
     setAddress,
     companyConfig,
     deliveryMethod,
+    isPersonalInfoValid,
   } = useCheckoutViewModel();
 
   // Estado local para o telefone formatado
@@ -42,13 +43,24 @@ export function CheckoutUserForm() {
   const [showNeighborhoodSelector, setShowNeighborhoodSelector] =
     useState(false);
 
-  // Verificar se a empresa especifica bairros de entrega
+  // Estado para validação em tempo real
+  const [formValid, setFormValid] = useState(false);
+
+  // Verificar se a empresa especifica bairros de entrega (com verificações de null safety)
   const hasNeighborhoodsList =
-    companyConfig?.deliveryConfig?.specifyNeighborhoods &&
-    companyConfig?.deliveryConfig?.neighborhoods?.length > 0;
+    companyConfig?.deliveryConfig?.specifyNeighborhoods === true &&
+    Array.isArray(companyConfig?.deliveryConfig?.neighborhoods) &&
+    (companyConfig?.deliveryConfig?.neighborhoods?.length || 0) > 0;
 
   // Cor primária da empresa ou valor padrão
   const primaryColor = companyConfig?.primaryColor || "#F4511E";
+
+  // Validar formulário cada vez que dados são alterados
+  useEffect(() => {
+    const isValid = isPersonalInfoValid();
+    console.log("Validação do formulário:", isValid);
+    setFormValid(isValid);
+  }, [personalInfo, address, deliveryMethod, isPersonalInfoValid]);
 
   // Atualizar nome
   const handleNameChange = (value: string) => {
@@ -76,10 +88,10 @@ export function CheckoutUserForm() {
 
   // Atualizar campos do endereço
   const updateAddress = (field: keyof typeof address, value: string) => {
-    setAddress({
-      ...address,
+    setAddress((prevAddress) => ({
+      ...prevAddress,
       [field]: value,
-    });
+    }));
   };
 
   // Selecionar bairro da lista
@@ -102,6 +114,7 @@ export function CheckoutUserForm() {
             <HStack space="sm" alignItems="center">
               <User size={18} color={primaryColor} />
               <Text className="font-medium text-gray-700">Nome completo</Text>
+              <Text className="text-red-500">*</Text>
             </HStack>
 
             <TextInput
@@ -123,6 +136,7 @@ export function CheckoutUserForm() {
             <HStack space="sm" alignItems="center">
               <Phone size={18} color={primaryColor} />
               <Text className="font-medium text-gray-700">WhatsApp</Text>
+              <Text className="text-red-500">*</Text>
             </HStack>
 
             <TextInput
@@ -140,6 +154,18 @@ export function CheckoutUserForm() {
             </Text>
           </VStack>
         </VStack>
+
+        {/* Indicador de status do formulário (apenas para debug) */}
+        <View
+          className="mt-4 p-2 rounded-lg"
+          style={{ backgroundColor: formValid ? "#d1fae5" : "#fee2e2" }}
+        >
+          <Text className={formValid ? "text-green-700" : "text-red-700"}>
+            {formValid
+              ? "Dados válidos"
+              : "Preencha todos os campos obrigatórios"}
+          </Text>
+        </View>
       </Card>
     );
   }
@@ -156,6 +182,7 @@ export function CheckoutUserForm() {
           <HStack space="sm" alignItems="center">
             <User size={18} color={primaryColor} />
             <Text className="font-medium text-gray-700">Nome completo</Text>
+            <Text className="text-red-500">*</Text>
           </HStack>
 
           <TextInput
@@ -173,6 +200,7 @@ export function CheckoutUserForm() {
           <HStack space="sm" alignItems="center">
             <Phone size={18} color={primaryColor} />
             <Text className="font-medium text-gray-700">WhatsApp</Text>
+            <Text className="text-red-500">*</Text>
           </HStack>
 
           <TextInput
@@ -204,6 +232,7 @@ export function CheckoutUserForm() {
             <HStack space="sm" alignItems="center">
               <Home size={18} color={primaryColor} />
               <Text className="font-medium text-gray-700">Rua/Avenida</Text>
+              <Text className="text-red-500">*</Text>
             </HStack>
 
             <TextInput
@@ -218,7 +247,10 @@ export function CheckoutUserForm() {
           {/* Número e Complemento */}
           <HStack space="md">
             <VStack className="flex-1" space="xs">
-              <Text className="font-medium text-gray-700">Número</Text>
+              <HStack space="sm" alignItems="center">
+                <Text className="font-medium text-gray-700">Número</Text>
+                <Text className="text-red-500">*</Text>
+              </HStack>
               <TextInput
                 value={address.number}
                 onChangeText={(value) => updateAddress("number", value)}
@@ -232,7 +264,7 @@ export function CheckoutUserForm() {
             <VStack className="flex-2" space="xs">
               <Text className="font-medium text-gray-700">Complemento</Text>
               <TextInput
-                value={address.complement}
+                value={address.complement || ""}
                 onChangeText={(value) => updateAddress("complement", value)}
                 placeholder="Apto, Bloco, etc."
                 className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
@@ -246,6 +278,7 @@ export function CheckoutUserForm() {
             <HStack space="sm" alignItems="center">
               <Building size={18} color={primaryColor} />
               <Text className="font-medium text-gray-700">Bairro</Text>
+              <Text className="text-red-500">*</Text>
             </HStack>
 
             {hasNeighborhoodsList ? (
@@ -290,7 +323,9 @@ export function CheckoutUserForm() {
                         onPress={() => handleSelectNeighborhood(neighborhood)}
                         className={`p-3 flex-row justify-between items-center ${
                           index <
-                          companyConfig.deliveryConfig.neighborhoods!.length - 1
+                          (companyConfig?.deliveryConfig?.neighborhoods
+                            ?.length || 0) -
+                            1
                             ? "border-b border-gray-100"
                             : ""
                         }`}
@@ -309,7 +344,10 @@ export function CheckoutUserForm() {
 
           {/* Cidade */}
           <VStack space="xs">
-            <Text className="font-medium text-gray-700">Cidade</Text>
+            <HStack space="sm" alignItems="center">
+              <Text className="font-medium text-gray-700">Cidade</Text>
+              <Text className="text-red-500">*</Text>
+            </HStack>
             <TextInput
               value={address.city}
               onChangeText={(value) => updateAddress("city", value)}
@@ -329,7 +367,7 @@ export function CheckoutUserForm() {
             </HStack>
 
             <TextInput
-              value={address.reference}
+              value={address.reference || ""}
               onChangeText={(value) => updateAddress("reference", value)}
               placeholder="Ex: Próximo ao mercado..."
               className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-800"
@@ -392,6 +430,18 @@ export function CheckoutUserForm() {
             </VStack>
           </View>
         )}
+
+        {/* Indicador de status do formulário (apenas para debug) */}
+        <View
+          className="mt-4 p-2 rounded-lg"
+          style={{ backgroundColor: formValid ? "#d1fae5" : "#fee2e2" }}
+        >
+          <Text className={formValid ? "text-green-700" : "text-red-700"}>
+            {formValid
+              ? "Dados válidos"
+              : "Preencha todos os campos obrigatórios"}
+          </Text>
+        </View>
       </VStack>
     </Card>
   );

@@ -114,25 +114,46 @@ export function useCheckoutViewModel() {
 
   // Validações
   const isPersonalInfoValid = useCallback(() => {
+    // Verificação dos dados pessoais
     const isNameValid = personalInfo.name.trim().length > 0;
     const isPhoneValid = personalInfo.phone.replace(/\D/g, "").length >= 10;
 
-    // Também validamos o endereço se o método de entrega for delivery
-    if (deliveryMethod === "delivery") {
-      const isAddressValid =
-        address.street.trim().length > 0 &&
-        address.number.trim().length > 0 &&
-        address.neighborhood.trim().length > 0 &&
-        address.city.trim().length > 0;
+    // Para debug - ajuda a identificar por que a validação está falhando
+    console.log("Validando dados pessoais:", {
+      isNameValid,
+      isPhoneValid,
+      deliveryMethod,
+      address: {
+        street: address.street,
+        number: address.number,
+        neighborhood: address.neighborhood,
+        city: address.city,
+      },
+    });
 
-      return isNameValid && isPhoneValid && isAddressValid;
+    // Se o método de entrega for retirada, só validamos os dados pessoais
+    if (deliveryMethod === "pickup") {
+      return isNameValid && isPhoneValid;
     }
 
-    return isNameValid && isPhoneValid;
+    // Se for delivery, validamos também o endereço
+    const isStreetValid = address.street.trim().length > 0;
+    const isNumberValid = address.number.trim().length > 0;
+    const isNeighborhoodValid = address.neighborhood.trim().length > 0;
+    const isCityValid = address.city.trim().length > 0;
+
+    return (
+      isNameValid &&
+      isPhoneValid &&
+      isStreetValid &&
+      isNumberValid &&
+      isNeighborhoodValid &&
+      isCityValid
+    );
   }, [personalInfo, address, deliveryMethod]);
 
-  // Para compatibilidade com o código existente, mantemos isAddressValid mas
-  // ele agora sempre retorna true, pois o endereço já foi validado na etapa anterior
+  // Para compatibilidade com o código existente, mantemos isAddressValid
+  // mas ele agora sempre retorna true pois validamos o endereço junto com os dados pessoais
   const isAddressValid = useCallback(() => {
     return true;
   }, []);

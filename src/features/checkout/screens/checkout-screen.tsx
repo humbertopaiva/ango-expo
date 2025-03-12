@@ -151,15 +151,27 @@ export function CheckoutScreen() {
 
   // Verificar se o botão de próximo deve estar habilitado
   const isNextButtonEnabled = () => {
-    switch (currentStep) {
-      case 1:
-        return true; // Sempre habilitado no resumo do pedido
-      case 2:
-        return checkoutVm.isPersonalInfoValid(); // Verificar se os dados pessoais e endereço estão preenchidos
-      case 3:
-        return checkoutVm.isPaymentValid(); // Verificar se o método de pagamento foi selecionado
-      default:
-        return false;
+    try {
+      switch (currentStep) {
+        case 1:
+          return true; // Sempre habilitado no resumo do pedido
+        case 2: {
+          // Validação explícita para debug
+          const valid = checkoutVm.isPersonalInfoValid();
+          console.log("[DEBUG] Botão próximo etapa 2:", valid);
+          return valid;
+        }
+        case 3: {
+          const valid = checkoutVm.isPaymentValid();
+          console.log("[DEBUG] Botão próximo etapa 3:", valid);
+          return valid;
+        }
+        default:
+          return false;
+      }
+    } catch (error) {
+      console.error("[DEBUG] Erro ao verificar habilitação do botão:", error);
+      return false;
     }
   };
 
@@ -284,10 +296,22 @@ export function CheckoutScreen() {
             className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4"
             style={{ paddingBottom: Math.max(insets.bottom, 16) }}
           >
+            {/* Button para debug - força uma validação explícita */}
             <Button
               onPress={currentStep === 3 ? handleFinishOrder : handleNextStep}
-              style={{ backgroundColor: primaryColor }}
-              isDisabled={!isNextButtonEnabled() || isProcessing}
+              style={{
+                backgroundColor:
+                  currentStep === 1 ||
+                  (currentStep === 2 && checkoutVm.isPersonalInfoValid()) ||
+                  (currentStep === 3 && checkoutVm.isPaymentValid())
+                    ? primaryColor
+                    : "#9CA3AF", // Cinza quando desabilitado
+              }}
+              isDisabled={
+                (currentStep === 2 && !checkoutVm.isPersonalInfoValid()) ||
+                (currentStep === 3 && !checkoutVm.isPaymentValid()) ||
+                isProcessing
+              }
             >
               {isProcessing ? (
                 <HStack space="sm" alignItems="center">
