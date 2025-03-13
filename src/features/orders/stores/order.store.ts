@@ -35,6 +35,20 @@ interface OrderState {
   getAllOrders: () => Order[];
 }
 
+const ensureDateObjects = (orders: Order[]): Order[] => {
+  return orders.map((order) => ({
+    ...order,
+    createdAt:
+      order.createdAt instanceof Date
+        ? order.createdAt
+        : new Date(order.createdAt || Date.now()),
+    updatedAt:
+      order.updatedAt instanceof Date
+        ? order.updatedAt
+        : new Date(order.updatedAt || Date.now()),
+  }));
+};
+
 // Cria o store de pedidos com persistência
 export const useOrderStore = create<OrderState>()(
   persist(
@@ -104,21 +118,24 @@ export const useOrderStore = create<OrderState>()(
       },
 
       getOrdersByCompany: (companySlug) => {
-        return get().orders.filter(
-          (order) => order.companySlug === companySlug
+        return ensureDateObjects(
+          get().orders.filter((order) => order.companySlug === companySlug)
         );
       },
 
       getOrderById: (orderId) => {
-        return get().orders.find((order) => order.id === orderId);
+        const order = get().orders.find((order) => order.id === orderId);
+        return order ? ensureDateObjects([order])[0] : undefined;
       },
 
       getOrdersByStatus: (status) => {
-        return get().orders.filter((order) => order.status === status);
+        return ensureDateObjects(
+          get().orders.filter((order) => order.status === status)
+        );
       },
 
       getAllOrders: () => {
-        return get().orders;
+        return ensureDateObjects(get().orders);
       },
     }),
     {
@@ -135,6 +152,14 @@ export const useOrderStore = create<OrderState>()(
           await storage.removeItem(name);
         },
       })),
+      // Adicione esta função para processar os dados durante a hidratação do store
+      partialize: (state) => ({ ...state }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Garantir que as datas sejam objetos Date após a hidratação
+          state.orders = ensureDateObjects(state.orders);
+        }
+      },
     }
   )
 );
