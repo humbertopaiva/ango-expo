@@ -1,4 +1,5 @@
 // Path: src/features/checkout/components/personal-info-step.tsx
+
 import React, { useEffect } from "react";
 import {
   View,
@@ -24,6 +25,7 @@ import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutDeliveryType, PersonalInfo } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { FormValidationFeedback } from "@/components/common/form-validation-feedback";
+import { maskPhoneNumber } from "../utils/checkout.utils";
 
 export function PersonalInfoStep() {
   const { checkout, personalInfoForm, savePersonalInfo, prevStep } =
@@ -35,7 +37,11 @@ export function PersonalInfoStep() {
     handleSubmit,
     formState: { errors, isValid, isDirty },
     reset,
+    watch,
   } = personalInfoForm;
+
+  // Observar alterações em tempo real
+  const watchedFields = watch();
 
   // Inicializar o formulário com os valores do checkout
   useEffect(() => {
@@ -69,9 +75,6 @@ export function PersonalInfoStep() {
                       value={value}
                       onChangeText={onChange}
                       onBlur={onBlur}
-                      //   leftElement={
-                      //     <User size={18} color="#6B7280" className="ml-2" />
-                      //   }
                     />
                   </Input>
                 )}
@@ -83,7 +86,7 @@ export function PersonalInfoStep() {
               </FormControlError>
             </FormControl>
 
-            {/* WhatsApp */}
+            {/* WhatsApp com máscara */}
             <FormControl isInvalid={!!errors.whatsapp}>
               <Controller
                 control={control}
@@ -92,7 +95,7 @@ export function PersonalInfoStep() {
                   <Input>
                     <InputField
                       placeholder="WhatsApp (com DDD)"
-                      value={value}
+                      value={maskPhoneNumber(value)}
                       onChangeText={(text) => {
                         // Permitir apenas números
                         const cleaned = text.replace(/\D/g, "");
@@ -100,9 +103,6 @@ export function PersonalInfoStep() {
                       }}
                       onBlur={onBlur}
                       keyboardType="phone-pad"
-                      //   leftElement={
-                      //     <Phone size={18} color="#6B7280" className="ml-2" />
-                      //   }
                     />
                   </Input>
                 )}
@@ -114,6 +114,7 @@ export function PersonalInfoStep() {
               </FormControlError>
             </FormControl>
 
+            {/* Campos de endereço (apenas se for entrega) */}
             {isDelivery && (
               <>
                 <Text className="text-lg font-semibold text-gray-800 mb-1 mt-2">
@@ -132,13 +133,6 @@ export function PersonalInfoStep() {
                           value={value}
                           onChangeText={onChange}
                           onBlur={onBlur}
-                          //   leftElement={
-                          //     <MapPin
-                          //       size={18}
-                          //       color="#6B7280"
-                          //       className="ml-2"
-                          //     />
-                          //   }
                         />
                       </Input>
                     )}
@@ -225,9 +219,6 @@ export function PersonalInfoStep() {
                           value={value}
                           onChangeText={onChange}
                           onBlur={onBlur}
-                          //   leftElement={
-                          //     <Info size={18} color="#6B7280" className="ml-2" />
-                          //   }
                         />
                       </Input>
                     )}
@@ -239,8 +230,16 @@ export function PersonalInfoStep() {
             <FormValidationFeedback
               isValid={isValid && isDirty}
               isPartiallyValid={isDirty && !isValid}
-              validMessage="Todos os campos preenchidos"
-              invalidMessage="Preencha os campos obrigatórios"
+              validMessage={
+                isDelivery
+                  ? "Todos os campos preenchidos"
+                  : "Dados básicos preenchidos"
+              }
+              invalidMessage={
+                isDelivery
+                  ? "Preencha os campos obrigatórios"
+                  : "Preencha seu nome e WhatsApp"
+              }
               partialMessage="Continue preenchendo os campos"
               primaryColor={primaryColor}
             />

@@ -103,3 +103,35 @@ export async function sendWhatsAppMessage(
     throw new Error("Não foi possível abrir o WhatsApp");
   }
 }
+
+/**
+ * Aplicar máscara de telefone no formato (99) 9 9999-9999
+ * @param phone Número de telefone (apenas dígitos)
+ * @returns Número formatado ou string original se inválido
+ */
+export function maskPhoneNumber(phone: string): string {
+  // Remover qualquer caracter não numérico
+  const numericValue = phone.replace(/\D/g, "");
+
+  // Aplicar máscara dependendo do comprimento
+  if (numericValue.length <= 2) {
+    return `(${numericValue}`;
+  } else if (numericValue.length <= 3) {
+    return `(${numericValue.slice(0, 2)}) ${numericValue.slice(2)}`;
+  } else if (numericValue.length <= 7) {
+    return `(${numericValue.slice(0, 2)}) ${numericValue.slice(
+      2,
+      3
+    )} ${numericValue.slice(3)}`;
+  } else if (numericValue.length <= 11) {
+    return `(${numericValue.slice(0, 2)}) ${numericValue.slice(
+      2,
+      3
+    )} ${numericValue.slice(3, 7)}-${numericValue.slice(7)}`;
+  } else {
+    return `(${numericValue.slice(0, 2)}) ${numericValue.slice(
+      2,
+      3
+    )} ${numericValue.slice(3, 7)}-${numericValue.slice(7, 11)}`;
+  }
+}

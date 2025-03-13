@@ -1,4 +1,5 @@
 // Path: src/features/checkout/models/checkout.ts
+
 import { z } from "zod";
 import { CartItem } from "@/src/features/cart/models/cart";
 
@@ -14,16 +15,33 @@ export enum CheckoutPaymentMethod {
   CASH = "cash",
 }
 
-// Schema para validação dos dados pessoais
+// Schema para validação dos dados básicos (nome e whatsapp)
+const basicInfoSchema = z.object({
+  fullName: z.string().min(5, "Nome completo é obrigatório"),
+  whatsapp: z
+    .string()
+    .min(11, "Número de WhatsApp inválido")
+    .max(15, "Número de WhatsApp inválido"),
+});
+
+// Schema adicional para entrega (endereço completo)
+const deliveryInfoSchema = z.object({
+  address: z.string().min(5, "Endereço é obrigatório"),
+  number: z.string().min(1, "Número é obrigatório"),
+  neighborhood: z.string().min(3, "Bairro é obrigatório"),
+  reference: z.string().optional(),
+});
+
+// Schema para validação dos dados pessoais com condicionais baseadas no tipo de entrega
 export const personalInfoSchema = z.object({
   fullName: z.string().min(5, "Nome completo é obrigatório"),
   whatsapp: z
     .string()
     .min(11, "Número de WhatsApp inválido")
     .max(15, "Número de WhatsApp inválido"),
-  address: z.string().min(5, "Endereço é obrigatório"),
-  number: z.string().min(1, "Número é obrigatório"),
-  neighborhood: z.string().min(3, "Bairro é obrigatório"),
+  address: z.string().optional(),
+  number: z.string().optional(),
+  neighborhood: z.string().optional(),
   reference: z.string().optional(),
 });
 

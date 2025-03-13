@@ -1,5 +1,5 @@
 // Path: src/features/checkout/view-models/use-checkout-view-model.ts
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useCheckoutStore } from "../stores/checkout.store";
 import {
   CheckoutDeliveryType,
@@ -21,6 +21,7 @@ import {
   formatWhatsAppMessage,
   sendWhatsAppMessage,
 } from "../utils/checkout.utils";
+import { z } from "zod";
 
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -42,6 +43,37 @@ export function useCheckoutViewModel() {
     resetCheckout,
   } = useCheckoutStore();
 
+  // Criar um schema dinâmico baseado no tipo de entrega
+  const getDynamicPersonalInfoSchema = useCallback(() => {
+    if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
+      // Para retirada, validar apenas nome e whatsapp
+      return z.object({
+        fullName: z.string().min(5, "Nome completo é obrigatório"),
+        whatsapp: z
+          .string()
+          .min(11, "Número de WhatsApp inválido")
+          .max(15, "Número de WhatsApp inválido"),
+        address: z.string().optional(),
+        number: z.string().optional(),
+        neighborhood: z.string().optional(),
+        reference: z.string().optional(),
+      });
+    } else {
+      // Para entrega, validar todos os campos
+      return z.object({
+        fullName: z.string().min(5, "Nome completo é obrigatório"),
+        whatsapp: z
+          .string()
+          .min(11, "Número de WhatsApp inválido")
+          .max(15, "Número de WhatsApp inválido"),
+        address: z.string().min(5, "Endereço é obrigatório"),
+        number: z.string().min(1, "Número é obrigatório"),
+        neighborhood: z.string().min(3, "Bairro é obrigatório"),
+        reference: z.string().optional(),
+      });
+    }
+  }, [checkout.deliveryType]);
+
   // Inicializar checkout com dados do carrinho
   const initialize = useCallback(() => {
     if (cartViewModel.isEmpty || !companySlug) {
@@ -61,11 +93,17 @@ export function useCheckoutViewModel() {
     );
   }, [cartViewModel, companySlug]);
 
-  // Form para dados pessoais
+  // Form para dados pessoais com schema dinâmico
   const personalInfoForm = useForm<PersonalInfo>({
-    resolver: zodResolver(personalInfoSchema),
+    resolver: zodResolver(getDynamicPersonalInfoSchema()),
     defaultValues: checkout.personalInfo,
+    mode: "onChange", // Validar ao digitar
   });
+
+  useEffect(() => {
+    personalInfoForm.clearErrors();
+    personalInfoForm.reset(checkout.personalInfo);
+  }, [checkout.deliveryType]);
 
   // Form para método de pagamento
   const paymentInfoForm = useForm<PaymentInfo>({
@@ -92,6 +130,25 @@ export function useCheckoutViewModel() {
   // Salvar método de pagamento e avançar
   const savePaymentInfo = (data: PaymentInfo) => {
     try {
+      // Validação especial para pagamento em dinheiro (cash)
+      if (data.method === CheckoutPaymentMethod.CASH && data.change) {
+        // Certifique-se de que o valor de troco é um número válido e maior que o total do pedido
+        const changeValue = parseFloat(data.change.replace(",", "."));
+
+        if (isNaN(changeValue)) {
+          toastUtils.error(toast, "Valor de troco inválido");
+          return;
+        }
+
+        if (changeValue <= checkout.total) {
+          toastUtils.error(
+            toast,
+            "Valor para troco deve ser maior que o total do pedido"
+          );
+          return;
+        }
+      }
+
       updatePaymentInfo(data);
       nextStep();
     } catch (error) {
