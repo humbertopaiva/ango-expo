@@ -65,6 +65,8 @@ export function CheckoutScreen() {
   // Manipuladores para navegação entre etapas
   const handleNextStep = async () => {
     console.log("Avançando para próxima etapa. Atual:", currentStep);
+    const formValues = checkoutVm.formMethods.getValues();
+    console.log("FORM VALUES:", formValues);
 
     // Verificações específicas por etapa
     if (currentStep === 1) {

@@ -150,8 +150,18 @@ export function useCheckoutViewModel() {
           shouldValidate: false, // Não validar automaticamente
         });
       });
+
+      // Atualizar o objeto que está sendo observado pelo watch
+      const currentValues = getValues();
+      const updatedPersonalInfo = {
+        ...currentValues.personalInfo,
+        ...info,
+      };
+
+      // Forçar uma atualização do estado
+      setValue("personalInfo", updatedPersonalInfo);
     },
-    [setValue]
+    [setValue, getValues]
   );
 
   const setAddress = useCallback(
@@ -164,8 +174,18 @@ export function useCheckoutViewModel() {
           shouldValidate: false, // Não validar automaticamente
         });
       });
+
+      // Atualizar o objeto que está sendo observado pelo watch
+      const currentValues = getValues();
+      const updatedAddress = {
+        ...currentValues.address,
+        ...addressInfo,
+      };
+
+      // Forçar uma atualização do estado
+      setValue("address", updatedAddress);
     },
-    [setValue]
+    [setValue, getValues]
   );
 
   const setPaymentInfo = useCallback(

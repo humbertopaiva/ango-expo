@@ -101,6 +101,37 @@ export function CheckoutUserForm() {
     setShowNeighborhoodSelector(false);
   };
 
+  useEffect(() => {
+    // Esta função vai garantir que os dados sejam sincronizados corretamente
+    const syncFormData = () => {
+      // Certifique-se de que os valores atuais sejam aplicados ao formulário
+      if (personalInfo.name) {
+        formMethods.setValue("personalInfo.name", personalInfo.name, {
+          shouldValidate: false,
+        });
+      }
+
+      if (personalInfo.phone) {
+        formMethods.setValue("personalInfo.phone", personalInfo.phone, {
+          shouldValidate: false,
+        });
+      }
+
+      if (deliveryMethod === "delivery") {
+        // Também atualizar os campos de endereço
+        Object.entries(address).forEach(([key, value]) => {
+          if (value) {
+            formMethods.setValue(`address.${key}` as any, value, {
+              shouldValidate: false,
+            });
+          }
+        });
+      }
+    };
+
+    syncFormData();
+  }, [personalInfo, address, deliveryMethod, formMethods]);
+
   // Se o método de entrega é "pickup", não mostrar campos de endereço
   if (deliveryMethod === "pickup") {
     return (
