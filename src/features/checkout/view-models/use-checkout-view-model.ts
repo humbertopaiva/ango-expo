@@ -82,6 +82,9 @@ export function useCheckoutViewModel() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Estado para controlar quando exibir erros de validação
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
+
   // Inicializar o formulário com React Hook Form
   const methods = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutFormSchema),
@@ -104,7 +107,8 @@ export function useCheckoutViewModel() {
       },
       deliveryMethod: "delivery",
     },
-    mode: "onChange",
+    mode: "onSubmit", // Validação apenas quando o formulário for submetido
+    reValidateMode: "onSubmit", // Revalidar apenas em nova submissão
   });
 
   const {
@@ -143,7 +147,7 @@ export function useCheckoutViewModel() {
       Object.entries(info).forEach(([key, value]) => {
         setValue(`personalInfo.${key}` as any, value, {
           shouldDirty: true,
-          shouldValidate: initializedRef.current,
+          shouldValidate: false, // Não validar automaticamente
         });
       });
     },
@@ -157,7 +161,7 @@ export function useCheckoutViewModel() {
       Object.entries(addressInfo).forEach(([key, value]) => {
         setValue(`address.${key}` as any, value, {
           shouldDirty: true,
-          shouldValidate: initializedRef.current,
+          shouldValidate: false, // Não validar automaticamente
         });
       });
     },
@@ -171,7 +175,7 @@ export function useCheckoutViewModel() {
       Object.entries(info).forEach(([key, value]) => {
         setValue(`paymentInfo.${key}` as any, value, {
           shouldDirty: true,
-          shouldValidate: initializedRef.current,
+          shouldValidate: false, // Não validar automaticamente
         });
       });
     },
@@ -183,7 +187,7 @@ export function useCheckoutViewModel() {
       console.log("Atualizando deliveryMethod:", method);
       setValue("deliveryMethod", method, {
         shouldDirty: true,
-        shouldValidate: initializedRef.current,
+        shouldValidate: false, // Não validar automaticamente
       });
     },
     [setValue]
@@ -420,6 +424,9 @@ export function useCheckoutViewModel() {
   // Finalizar pedido
   const finalizeOrder = useCallback(async () => {
     try {
+      // Ativar visualização de erros
+      setShowValidationErrors(true);
+
       // Validar todo o formulário
       const formIsValid = await methods.trigger();
 
@@ -493,9 +500,18 @@ export function useCheckoutViewModel() {
         deliveryMethod,
         errors,
         isValid,
+        showValidationErrors,
       });
     }
-  }, [personalInfo, address, paymentInfo, deliveryMethod, errors, isValid]);
+  }, [
+    personalInfo,
+    address,
+    paymentInfo,
+    deliveryMethod,
+    errors,
+    isValid,
+    showValidationErrors,
+  ]);
 
   return {
     // Estado
@@ -509,6 +525,8 @@ export function useCheckoutViewModel() {
     deliveryMethod,
     isLoading,
     error,
+    showValidationErrors,
+    setShowValidationErrors,
 
     // Setters
     setPersonalInfo,
