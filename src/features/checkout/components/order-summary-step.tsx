@@ -1,15 +1,49 @@
 // Path: src/features/checkout/components/order-summary-step.tsx
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { Card, VStack, HStack, Button, Radio } from "@gluestack-ui/themed";
-import { Truck, Home, Package } from "lucide-react-native";
+import { View, Text } from "react-native";
+import { Card, VStack, HStack, Button, RadioGroup } from "@gluestack-ui/themed";
+import { Truck, Home } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutDeliveryType } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { RadioOptionButton } from "@/components/ui/radio-option-button";
 
 export function OrderSummaryStep() {
   const { checkout, setDeliveryType, nextStep } = useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
+
+  const deliveryOptions = [
+    {
+      type: CheckoutDeliveryType.DELIVERY,
+      label: "Entrega",
+      description: "Receba seu pedido em casa",
+      icon: (
+        <Truck
+          size={20}
+          color={
+            checkout.deliveryType === CheckoutDeliveryType.DELIVERY
+              ? primaryColor
+              : "#64748b"
+          }
+        />
+      ),
+    },
+    {
+      type: CheckoutDeliveryType.PICKUP,
+      label: "Retirada no local",
+      description: "Retire seu pedido no estabelecimento",
+      icon: (
+        <Home
+          size={20}
+          color={
+            checkout.deliveryType === CheckoutDeliveryType.PICKUP
+              ? primaryColor
+              : "#64748b"
+          }
+        />
+      ),
+    },
+  ];
 
   return (
     <View className="flex-1 p-4">
@@ -61,102 +95,23 @@ export function OrderSummaryStep() {
           Como você quer receber seu pedido?
         </Text>
 
-        <Radio.Group
+        <RadioGroup
           value={checkout.deliveryType}
           onChange={(value) => setDeliveryType(value as CheckoutDeliveryType)}
         >
-          <View className="mb-3">
-            <TouchableOpacity
-              onPress={() => setDeliveryType(CheckoutDeliveryType.DELIVERY)}
-              className={`p-4 border rounded-lg ${
-                checkout.deliveryType === CheckoutDeliveryType.DELIVERY
-                  ? `border-primary-500 bg-primary-50`
-                  : "border-gray-200"
-              }`}
-            >
-              <HStack space="md" alignItems="center">
-                <View
-                  className="h-10 w-10 rounded-full items-center justify-center"
-                  style={{
-                    backgroundColor:
-                      checkout.deliveryType === CheckoutDeliveryType.DELIVERY
-                        ? `${primaryColor}20`
-                        : "#f3f4f6",
-                  }}
-                >
-                  <Truck
-                    size={20}
-                    color={
-                      checkout.deliveryType === CheckoutDeliveryType.DELIVERY
-                        ? primaryColor
-                        : "#64748b"
-                    }
-                  />
-                </View>
-
-                <VStack>
-                  <Text className="font-medium text-gray-800">Entrega</Text>
-                  <Text className="text-sm text-gray-500">
-                    Receba seu pedido em casa
-                  </Text>
-                </VStack>
-
-                <Radio
-                  value={CheckoutDeliveryType.DELIVERY}
-                  accessibilityLabel="Entrega"
-                  className="ml-auto"
-                />
-              </HStack>
-            </TouchableOpacity>
-          </View>
-
-          <View>
-            <TouchableOpacity
-              onPress={() => setDeliveryType(CheckoutDeliveryType.PICKUP)}
-              className={`p-4 border rounded-lg ${
-                checkout.deliveryType === CheckoutDeliveryType.PICKUP
-                  ? `border-primary-500 bg-primary-50`
-                  : "border-gray-200"
-              }`}
-            >
-              <HStack space="md" alignItems="center">
-                <View
-                  className="h-10 w-10 rounded-full items-center justify-center"
-                  style={{
-                    backgroundColor:
-                      checkout.deliveryType === CheckoutDeliveryType.PICKUP
-                        ? `${primaryColor}20`
-                        : "#f3f4f6",
-                  }}
-                >
-                  <Home
-                    size={20}
-                    color={
-                      checkout.deliveryType === CheckoutDeliveryType.PICKUP
-                        ? primaryColor
-                        : "#64748b"
-                    }
-                  />
-                </View>
-
-                <VStack>
-                  <Text className="font-medium text-gray-800">
-                    Retirada no local
-                  </Text>
-                  <Text className="text-sm text-gray-500">
-                    Retire seu pedido no estabelecimento
-                  </Text>
-                </VStack>
-
-                <Radio
-                  value={CheckoutDeliveryType.PICKUP}
-                  accessibilityLabel="Retirada no local"
-                  className="ml-auto"
-                />
-              </HStack>
-            </TouchableOpacity>
-          </View>
-        </Radio.Group>
+          {deliveryOptions.map((option) => (
+            <RadioOptionButton
+              key={option.type}
+              value={option.type}
+              label={option.label}
+              description={option.description}
+              icon={option.icon}
+              isSelected={checkout.deliveryType === option.type}
+              onPress={() => setDeliveryType(option.type)}
+              primaryColor={primaryColor}
+            />
+          ))}
+        </RadioGroup>
       </Card>
 
       <Button onPress={nextStep} style={{ backgroundColor: primaryColor }}>

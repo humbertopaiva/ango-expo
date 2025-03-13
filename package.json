@@ -31,6 +31,7 @@
     "@gluestack-ui/modal": "^0.1.39",
     "@gluestack-ui/nativewind-utils": "^1.0.26",
     "@gluestack-ui/overlay": "^0.1.20",
+    "@gluestack-ui/radio": "^0.1.40",
     "@gluestack-ui/switch": "^0.1.27",
     "@gluestack-ui/themed": "^1.1.69",
     "@gluestack-ui/toast": "^1.0.9",

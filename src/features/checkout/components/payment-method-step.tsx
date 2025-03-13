@@ -1,13 +1,13 @@
-// Path: src/features/checkout/components/payment-method-step.tsx (continuação)
+// Path: src/features/checkout/components/payment-method-step.tsx
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import {
   Card,
   VStack,
   HStack,
   Button,
-  Radio,
+  RadioGroup,
   Input,
   InputField,
   FormControl,
@@ -21,6 +21,7 @@ import {
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutPaymentMethod, PaymentInfo } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { RadioOptionButton } from "@/components/ui/radio-option-button";
 
 export function PaymentMethodStep() {
   const { checkout, paymentInfoForm, savePaymentInfo, prevStep } =
@@ -53,57 +54,67 @@ export function PaymentMethodStep() {
     if (paymentMethod !== CheckoutPaymentMethod.CASH) {
       setValue("change", "");
     }
-  }, [paymentMethod]);
+  }, [paymentMethod, setValue]);
 
-  const PaymentMethodOption = ({
-    method,
-    label,
-    icon: Icon,
-  }: {
-    method: CheckoutPaymentMethod;
-    label: string;
-    icon: any;
-  }) => (
-    <TouchableOpacity
-      onPress={() => setValue("method", method)}
-      className={`p-4 border rounded-lg mb-3 ${
-        paymentMethod === method
-          ? `border-primary-500 bg-primary-50`
-          : "border-gray-200"
-      }`}
-    >
-      <HStack space="md" alignItems="center">
-        <View
-          className="h-10 w-10 rounded-full items-center justify-center"
-          style={{
-            backgroundColor:
-              paymentMethod === method ? `${primaryColor}20` : "#f3f4f6",
-          }}
-        >
-          <Icon
-            size={20}
-            color={paymentMethod === method ? primaryColor : "#64748b"}
-          />
-        </View>
-
-        <Text className="font-medium text-gray-800">{label}</Text>
-
-        <Controller
-          control={control}
-          name="method"
-          render={({ field }) => (
-            <Radio
-              value={method}
-              isChecked={field.value === method}
-              onChange={() => field.onChange(method)}
-              accessibilityLabel={label}
-              className="ml-auto"
-            />
-          )}
+  // Opções de pagamento
+  const paymentOptions = [
+    {
+      method: CheckoutPaymentMethod.PIX,
+      label: "PIX",
+      icon: (
+        <Smartphone
+          size={20}
+          color={
+            paymentMethod === CheckoutPaymentMethod.PIX
+              ? primaryColor
+              : "#64748b"
+          }
         />
-      </HStack>
-    </TouchableOpacity>
-  );
+      ),
+    },
+    {
+      method: CheckoutPaymentMethod.CREDIT_CARD,
+      label: "Cartão de Crédito",
+      icon: (
+        <CreditCard
+          size={20}
+          color={
+            paymentMethod === CheckoutPaymentMethod.CREDIT_CARD
+              ? primaryColor
+              : "#64748b"
+          }
+        />
+      ),
+    },
+    {
+      method: CheckoutPaymentMethod.DEBIT_CARD,
+      label: "Cartão de Débito",
+      icon: (
+        <CreditCard
+          size={20}
+          color={
+            paymentMethod === CheckoutPaymentMethod.DEBIT_CARD
+              ? primaryColor
+              : "#64748b"
+          }
+        />
+      ),
+    },
+    {
+      method: CheckoutPaymentMethod.CASH,
+      label: "Dinheiro",
+      icon: (
+        <Banknote
+          size={20}
+          color={
+            paymentMethod === CheckoutPaymentMethod.CASH
+              ? primaryColor
+              : "#64748b"
+          }
+        />
+      ),
+    },
+  ];
 
   return (
     <ScrollView className="flex-1 p-4">
@@ -117,29 +128,25 @@ export function PaymentMethodStep() {
             control={control}
             name="method"
             defaultValue={CheckoutPaymentMethod.PIX}
-            render={() => (
-              <View>
-                <PaymentMethodOption
-                  method={CheckoutPaymentMethod.PIX}
-                  label="PIX"
-                  icon={Smartphone}
-                />
-                <PaymentMethodOption
-                  method={CheckoutPaymentMethod.CREDIT_CARD}
-                  label="Cartão de Crédito"
-                  icon={CreditCard}
-                />
-                <PaymentMethodOption
-                  method={CheckoutPaymentMethod.DEBIT_CARD}
-                  label="Cartão de Débito"
-                  icon={CreditCard}
-                />
-                <PaymentMethodOption
-                  method={CheckoutPaymentMethod.CASH}
-                  label="Dinheiro"
-                  icon={Banknote}
-                />
-              </View>
+            render={({ field }) => (
+              <RadioGroup
+                value={field.value}
+                onChange={(newValue) => {
+                  field.onChange(newValue);
+                }}
+              >
+                {paymentOptions.map((option) => (
+                  <RadioOptionButton
+                    key={option.method}
+                    value={option.method}
+                    label={option.label}
+                    icon={option.icon}
+                    isSelected={field.value === option.method}
+                    onPress={() => field.onChange(option.method)}
+                    primaryColor={primaryColor}
+                  />
+                ))}
+              </RadioGroup>
             )}
           />
 
@@ -157,13 +164,6 @@ export function PaymentMethodStep() {
                       onChangeText={onChange}
                       onBlur={onBlur}
                       keyboardType="numeric"
-                      //   leftElement={
-                      //     <DollarSign
-                      //       size={18}
-                      //       color="#6B7280"
-                      //       className="ml-2"
-                      //     />
-                      //   }
                     />
                   </Input>
                 )}
