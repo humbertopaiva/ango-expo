@@ -39,6 +39,7 @@ export function CheckoutUserForm() {
     control,
     errors,
     formMethods,
+    showValidationErrors, // Use o estado de controle de exibição de erros
   } = useCheckoutViewModel();
 
   // Estado local para o telefone formatado - apenas para exibição
@@ -130,7 +131,7 @@ export function CheckoutUserForm() {
                   onBlur={onBlur}
                   placeholder="Digite seu nome completo"
                   className={`bg-gray-50 border ${
-                    errors.personalInfo?.name
+                    errors.personalInfo?.name && showValidationErrors
                       ? "border-red-400"
                       : "border-gray-200"
                   } rounded-lg p-3 mt-1 text-gray-800`}
@@ -140,7 +141,7 @@ export function CheckoutUserForm() {
               )}
             />
 
-            {errors.personalInfo?.name && (
+            {errors.personalInfo?.name && showValidationErrors && (
               <HStack space="xs" alignItems="center" className="mt-1">
                 <AlertCircle size={14} color="#EF4444" />
                 <Text className="text-xs text-red-500">
@@ -174,7 +175,7 @@ export function CheckoutUserForm() {
                   onBlur={onBlur}
                   placeholder="(00) 00000-0000"
                   className={`bg-gray-50 border ${
-                    errors.personalInfo?.phone
+                    errors.personalInfo?.phone && showValidationErrors
                       ? "border-red-400"
                       : "border-gray-200"
                   } rounded-lg p-3 mt-1 text-gray-800`}
@@ -185,7 +186,7 @@ export function CheckoutUserForm() {
               )}
             />
 
-            {errors.personalInfo?.phone ? (
+            {errors.personalInfo?.phone && showValidationErrors ? (
               <HStack space="xs" alignItems="center" className="mt-1">
                 <AlertCircle size={14} color="#EF4444" />
                 <Text className="text-xs text-red-500">
@@ -241,7 +242,7 @@ export function CheckoutUserForm() {
                 onBlur={onBlur}
                 placeholder="Digite seu nome completo"
                 className={`bg-gray-50 border ${
-                  errors.personalInfo?.name
+                  errors.personalInfo?.name && showValidationErrors
                     ? "border-red-400"
                     : "border-gray-200"
                 } rounded-lg p-3 mt-1 text-gray-800`}
@@ -251,7 +252,7 @@ export function CheckoutUserForm() {
             )}
           />
 
-          {errors.personalInfo?.name && (
+          {errors.personalInfo?.name && showValidationErrors && (
             <HStack space="xs" alignItems="center" className="mt-1">
               <AlertCircle size={14} color="#EF4444" />
               <Text className="text-xs text-red-500">
@@ -285,7 +286,7 @@ export function CheckoutUserForm() {
                 onBlur={onBlur}
                 placeholder="(00) 00000-0000"
                 className={`bg-gray-50 border ${
-                  errors.personalInfo?.phone
+                  errors.personalInfo?.phone && showValidationErrors
                     ? "border-red-400"
                     : "border-gray-200"
                 } rounded-lg p-3 mt-1 text-gray-800`}
@@ -296,7 +297,7 @@ export function CheckoutUserForm() {
             )}
           />
 
-          {errors.personalInfo?.phone ? (
+          {errors.personalInfo?.phone && showValidationErrors ? (
             <HStack space="xs" alignItems="center" className="mt-1">
               <AlertCircle size={14} color="#EF4444" />
               <Text className="text-xs text-red-500">
@@ -340,7 +341,7 @@ export function CheckoutUserForm() {
                   onBlur={onBlur}
                   placeholder="Digite o nome da sua rua"
                   className={`bg-gray-50 border ${
-                    errors.address?.street
+                    errors.address?.street && showValidationErrors
                       ? "border-red-400"
                       : "border-gray-200"
                   } rounded-lg p-3 text-gray-800`}
@@ -349,7 +350,7 @@ export function CheckoutUserForm() {
               )}
             />
 
-            {errors.address?.street && (
+            {errors.address?.street && showValidationErrors && (
               <HStack space="xs" alignItems="center" className="mt-1">
                 <AlertCircle size={14} color="#EF4444" />
                 <Text className="text-xs text-red-500">
@@ -379,7 +380,7 @@ export function CheckoutUserForm() {
                     onBlur={onBlur}
                     placeholder="Nº"
                     className={`bg-gray-50 border ${
-                      errors.address?.number
+                      errors.address?.number && showValidationErrors
                         ? "border-red-400"
                         : "border-gray-200"
                     } rounded-lg p-3 text-gray-800`}
@@ -389,7 +390,7 @@ export function CheckoutUserForm() {
                 )}
               />
 
-              {errors.address?.number && (
+              {errors.address?.number && showValidationErrors && (
                 <Text className="text-xs text-red-500 mt-1">
                   {errors.address.number.message}
                 </Text>
@@ -438,7 +439,7 @@ export function CheckoutUserForm() {
                         setShowNeighborhoodSelector(!showNeighborhoodSelector)
                       }
                       className={`bg-gray-50 border ${
-                        errors.address?.neighborhood
+                        errors.address?.neighborhood && showValidationErrors
                           ? "border-red-400"
                           : "border-gray-200"
                       } rounded-lg p-3 flex-row justify-between items-center`}
@@ -505,7 +506,7 @@ export function CheckoutUserForm() {
                     onBlur={onBlur}
                     placeholder="Digite seu bairro"
                     className={`bg-gray-50 border ${
-                      errors.address?.neighborhood
+                      errors.address?.neighborhood && showValidationErrors
                         ? "border-red-400"
                         : "border-gray-200"
                     } rounded-lg p-3 text-gray-800`}
@@ -515,7 +516,7 @@ export function CheckoutUserForm() {
               />
             )}
 
-            {errors.address?.neighborhood && (
+            {errors.address?.neighborhood && showValidationErrors && (
               <HStack space="xs" alignItems="center" className="mt-1">
                 <AlertCircle size={14} color="#EF4444" />
                 <Text className="text-xs text-red-500">

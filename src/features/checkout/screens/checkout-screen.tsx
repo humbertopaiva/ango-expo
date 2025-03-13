@@ -63,15 +63,59 @@ export function CheckoutScreen() {
   }, [cartVm.isEmpty, companySlug]);
 
   // Manipuladores para navegação entre etapas
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     console.log("Avançando para próxima etapa. Atual:", currentStep);
-    if (currentStep < getTotalSteps()) {
+
+    // Verificações específicas por etapa
+    if (currentStep === 1) {
+      // Da etapa 1 (Resumo do Pedido) para etapa 2 (Informações Pessoais)
+      // Não há validação na primeira etapa, então apenas avançamos
+      // Ao entrar na etapa 2, não mostraremos erros ainda
+      checkoutVm.setShowValidationErrors(false);
       setCurrentStep(currentStep + 1);
+    } else if (currentStep === 2) {
+      // Da etapa 2 (Informações Pessoais) para etapa 3 (Pagamento)
+      // Validamos as informações pessoais e endereço
+      const isValid = await checkoutVm.isPersonalInfoValid();
+
+      if (isValid) {
+        // Se for válido, esconder erros e avançar
+        checkoutVm.setShowValidationErrors(false);
+        setCurrentStep(currentStep + 1);
+      } else {
+        // Se não for válido, mostrar erros e ficar na mesma etapa
+        checkoutVm.setShowValidationErrors(true);
+        // Opcionalmente, exibir um alerta
+        Alert.alert(
+          "Informações incompletas",
+          "Por favor, preencha todos os campos obrigatórios corretamente."
+        );
+      }
+    } else if (currentStep === 3) {
+      // Da etapa 3 (Pagamento) para etapa 4 (Finalização)
+      // Valida o método de pagamento
+      const isValid = await checkoutVm.isPaymentValid();
+
+      if (isValid) {
+        // Avança para a finalização (handleFinishOrder se encarrega disso)
+        handleFinishOrder();
+      } else {
+        // Se não for válido, mostrar erros
+        checkoutVm.setShowValidationErrors(true);
+        Alert.alert(
+          "Método de pagamento inválido",
+          "Por favor, verifique as informações de pagamento."
+        );
+      }
     }
   };
 
   const handlePreviousStep = () => {
     console.log("Retornando para etapa anterior. Atual:", currentStep);
+
+    // Esconder mensagens de erro ao voltar para etapa anterior
+    checkoutVm.setShowValidationErrors(false);
+
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
@@ -273,9 +317,9 @@ export function CheckoutScreen() {
             style={{ paddingBottom: Math.max(insets.bottom, 16) }}
           >
             <Button
-              onPress={currentStep === 3 ? handleFinishOrder : handleNextStep}
+              onPress={handleNextStep}
               style={{ backgroundColor: primaryColor }}
-              // Removido o disabled para sempre permitir avançar
+              // Nunca desabilitar o botão, pois a validação ocorre no handleNextStep
             >
               {isProcessing ? (
                 <HStack space="sm" alignItems="center">
