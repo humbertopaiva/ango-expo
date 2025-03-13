@@ -99,6 +99,11 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
       path: "/(drawer)/(tabs)/encartes",
     },
     {
+      label: "Meu Perfil",
+      icon: User,
+      path: "/(drawer)/profile",
+    },
+    {
       label: "Suporte",
       icon: HelpCircle,
       path: "/(drawer)/support",
@@ -107,6 +112,11 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
       label: "Quem Somos",
       icon: Info,
       path: "/(drawer)/about",
+    },
+    {
+      label: "Meus Pedidos",
+      icon: ShoppingBag,
+      path: "/(drawer)/orders",
     },
   ];
 

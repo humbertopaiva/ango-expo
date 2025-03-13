@@ -1,5 +1,5 @@
 // Path: components/navigation/app-bar.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   TouchableOpacity,
@@ -15,6 +15,7 @@ import { DrawerActions } from "@react-navigation/native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { useCompanyData } from "@/src/hooks/use-company-data";
 import { HStack } from "@gluestack-ui/themed";
+import { userPersistenceService } from "@/src/services/user-persistence.service";
 
 interface AppBarProps {
   title?: string;
@@ -46,6 +47,8 @@ export function AppBar({
   const statusBarHeight =
     Platform.OS === "ios" ? insets.top : StatusBar.currentHeight || 0;
 
+  const [userInitials, setUserInitials] = useState("");
+
   const handleBackPress = () => {
     if (onBackButtonPress) {
       onBackButtonPress();
@@ -65,6 +68,23 @@ export function AppBar({
       );
     }
   };
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const userData = await userPersistenceService.getUserPersonalInfo();
+      if (userData && userData.fullName) {
+        // Obter iniciais do nome
+        const names = userData.fullName.split(" ");
+        const initials =
+          names.length > 1
+            ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
+            : names[0].substring(0, 2).toUpperCase();
+        setUserInitials(initials);
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   return (
     <View>
@@ -119,7 +139,16 @@ export function AppBar({
           </HStack>
 
           {/* Conteúdo do lado direito (opcional) */}
-          {rightContent}
+          {!rightContent && userInitials && (
+            <TouchableOpacity
+              onPress={() => router.push("/(drawer)/profile")}
+              className="w-8 h-8 rounded-full bg-white/20 items-center justify-center"
+            >
+              <Text className="text-white font-medium text-xs">
+                {userInitials}
+              </Text>
+            </TouchableOpacity>
+          )}
         </HStack>
       </View>
     </View>

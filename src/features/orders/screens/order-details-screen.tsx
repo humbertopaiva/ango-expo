@@ -1,6 +1,6 @@
 // Path: src/features/orders/screens/order-details-screen.tsx
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
 import { Card, VStack, HStack, Divider } from "@gluestack-ui/themed";
@@ -15,6 +15,7 @@ import {
   CreditCard,
   MessageSquare,
   Phone,
+  RefreshCw,
 } from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -22,6 +23,8 @@ import { Order, OrderStatus, PaymentMethod } from "../models/order";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ImagePreview } from "@/components/custom/image-preview";
+import { useMultiCartStore } from "../../cart/stores/cart.store";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 export function OrderDetailsScreen() {
   const { orderId, companySlug } = useLocalSearchParams<{
@@ -31,6 +34,8 @@ export function OrderDetailsScreen() {
 
   const orderViewModel = useOrderViewModel();
   const [order, setOrder] = useState<Order | null>(null);
+
+  const multiCartStore = useMultiCartStore();
 
   const primaryColor = THEME_COLORS.primary;
 
@@ -53,6 +58,17 @@ export function OrderDetailsScreen() {
       </View>
     );
   }
+
+  const handleRepeatOrder = () => {
+    // Adicionar itens ao carrinho
+    multiCartStore.clearCart(companySlug);
+    order.items.forEach((item) => {
+      multiCartStore.addItem(companySlug, item);
+    });
+
+    // Navegar para o carrinho
+    router.push(`/(drawer)/empresa/${companySlug}/cart`);
+  };
 
   const getStatusInfo = (status: OrderStatus) => {
     switch (status) {
@@ -401,10 +417,48 @@ export function OrderDetailsScreen() {
         {/* Botões de ação */}
         <View className="mb-8">
           {order.status === OrderStatus.PENDING && (
-            <TouchableOpacity className="py-3 rounded-lg border border-red-500 mb-3">
+            <TouchableOpacity
+              className="py-3 rounded-lg border border-red-500 mb-3"
+              onPress={() => {
+                Alert.alert(
+                  "Cancelar Pedido",
+                  "Tem certeza que deseja cancelar este pedido?",
+                  [
+                    { text: "Não", style: "cancel" },
+                    {
+                      text: "Sim, cancelar",
+                      style: "destructive",
+                      onPress: () => {
+                        orderViewModel.cancelOrder(order.id);
+                        setOrder({
+                          ...order,
+                          status: OrderStatus.CANCELED,
+                          updatedAt: new Date(),
+                        });
+                      },
+                    },
+                  ]
+                );
+              }}
+            >
               <Text className="text-center font-medium text-red-500">
                 Cancelar Pedido
               </Text>
+            </TouchableOpacity>
+          )}
+
+          {(order.status === OrderStatus.DELIVERED ||
+            order.status === OrderStatus.CANCELED) && (
+            <TouchableOpacity
+              className="py-3 rounded-lg border border-primary-500 mb-3"
+              onPress={handleRepeatOrder}
+            >
+              <HStack space="sm" className="items-center justify-center">
+                <RefreshCw size={18} color={primaryColor} />
+                <Text className="font-medium" style={{ color: primaryColor }}>
+                  Repetir Pedido
+                </Text>
+              </HStack>
             </TouchableOpacity>
           )}
 

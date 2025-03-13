@@ -2,7 +2,14 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storage } from "@/src/lib/storage";
-import { Order, OrderStatus, createOrderFromCart } from "../models/order";
+import {
+  Order,
+  OrderStatus,
+  createOrderFromCart,
+  createOrderFromExisting,
+  PaymentMethod,
+  PaymentStatus,
+} from "../models/order";
 import { CartItem } from "@/src/features/cart/models/cart";
 
 interface OrderState {
@@ -18,11 +25,14 @@ interface OrderState {
   ) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   cancelOrder: (orderId: string) => void;
+  deleteOrder: (orderId: string) => void;
+  repeatOrder: (orderId: string) => Order | null;
 
   // Getters
   getOrdersByCompany: (companySlug: string) => Order[];
   getOrderById: (orderId: string) => Order | undefined;
   getOrdersByStatus: (status: OrderStatus) => Order[];
+  getAllOrders: () => Order[];
 }
 
 // Cria o store de pedidos com persistência
@@ -53,7 +63,7 @@ export const useOrderStore = create<OrderState>()(
               ? {
                   ...order,
                   status,
-                  updatedAt: new Date().toISOString(),
+                  updatedAt: new Date(),
                 }
               : order
           ),
@@ -66,12 +76,31 @@ export const useOrderStore = create<OrderState>()(
             order.id === orderId
               ? {
                   ...order,
-                  status: "canceled",
-                  updatedAt: new Date().toISOString(),
+                  status: OrderStatus.CANCELED,
+                  updatedAt: new Date(),
                 }
               : order
           ),
         }));
+      },
+
+      deleteOrder: (orderId) => {
+        set((state) => ({
+          orders: state.orders.filter((order) => order.id !== orderId),
+        }));
+      },
+
+      repeatOrder: (orderId) => {
+        const existingOrder = get().getOrderById(orderId);
+        if (!existingOrder) return null;
+
+        const newOrder = createOrderFromExisting(existingOrder);
+
+        set((state) => ({
+          orders: [newOrder, ...state.orders],
+        }));
+
+        return newOrder;
       },
 
       getOrdersByCompany: (companySlug) => {
@@ -86,6 +115,10 @@ export const useOrderStore = create<OrderState>()(
 
       getOrdersByStatus: (status) => {
         return get().orders.filter((order) => order.status === status);
+      },
+
+      getAllOrders: () => {
+        return get().orders;
       },
     }),
     {

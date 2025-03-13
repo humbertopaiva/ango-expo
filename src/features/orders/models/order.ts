@@ -72,3 +72,72 @@ export interface OrderSummary {
   createdAt: Date;
   itemCount: number;
 }
+
+export function createOrderFromExisting(existingOrder: Order): Order {
+  return {
+    id: `order_${Date.now()}`,
+    companyId: existingOrder.companyId,
+    companySlug: existingOrder.companySlug,
+    companyName: existingOrder.companyName,
+    customerId: existingOrder.customerId,
+    customerName: existingOrder.customerName,
+    items: [...existingOrder.items],
+    subtotal: existingOrder.subtotal,
+    deliveryFee: existingOrder.deliveryFee,
+    total: existingOrder.total,
+    status: OrderStatus.PENDING,
+    payment: {
+      method: existingOrder.payment.method,
+      status: PaymentStatus.PENDING,
+    },
+    delivery: existingOrder.delivery
+      ? { ...existingOrder.delivery }
+      : undefined,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    estimatedDeliveryTime: existingOrder.estimatedDeliveryTime,
+  };
+}
+
+// Função para gerar a representação resumida de um pedido
+export function getOrderSummary(order: Order): OrderSummary {
+  return {
+    id: order.id,
+    companyName: order.companyName,
+    status: order.status,
+    total: order.total,
+    createdAt: order.createdAt,
+    itemCount: order.items.length,
+  };
+}
+
+/**
+ * Cria um novo pedido a partir dos itens do carrinho
+ */
+export function createOrderFromCart(
+  cartItems: CartItem[],
+  companyId: string,
+  companySlug: string,
+  companyName: string
+): Order {
+  const subtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+
+  return {
+    id: `order_${Date.now()}`,
+    companyId,
+    companySlug,
+    companyName,
+    customerName: "Cliente", // Em um app real, viria de um serviço de autenticação
+    items: [...cartItems],
+    subtotal,
+    total: subtotal, // Sem taxas adicionais por enquanto
+    status: OrderStatus.PENDING,
+    payment: {
+      method: PaymentMethod.CREDIT_CARD,
+      status: PaymentStatus.PENDING,
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    estimatedDeliveryTime: 45, // 45 minutos de estimativa padrão
+  };
+}
