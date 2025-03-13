@@ -22,12 +22,16 @@ import {
   sendWhatsAppMessage,
 } from "../utils/checkout.utils";
 import { z } from "zod";
+import { userPersistenceService } from "@/src/services/user-persistence.service";
+import { useOrderStore } from "@/src/features/orders/stores/order.store";
+import { PaymentMethod } from "@/src/features/orders/models/order";
 
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const cartViewModel = useCartViewModel();
   const toast = useToast();
+  const orderStore = useOrderStore();
 
   // Acesso ao store de checkout
   const {
@@ -74,13 +78,14 @@ export function useCheckoutViewModel() {
     }
   }, [checkout.deliveryType]);
 
-  // Inicializar checkout com dados do carrinho
-  const initialize = useCallback(() => {
+  // Inicializar checkout com dados do carrinho e recuperar dados do usuário
+  const initialize = useCallback(async () => {
     if (cartViewModel.isEmpty || !companySlug) {
       router.replace(`/(drawer)/empresa/${companySlug}`);
       return;
     }
 
+    // Inicializa o checkout com os dados do carrinho
     initCheckout(
       cartViewModel.items,
       cartViewModel.items[0]?.companyId || "",
@@ -91,6 +96,39 @@ export function useCheckoutViewModel() {
       ),
       parseFloat(cartViewModel.total.replace(/[^\d,]/g, "").replace(",", "."))
     );
+
+    // Tenta recuperar os dados do usuário
+    try {
+      const savedUserData = await userPersistenceService.getUserPersonalInfo();
+      if (savedUserData) {
+        // Atualiza os dados pessoais no checkout
+        updatePersonalInfo(savedUserData);
+
+        // Reset do formulário com os dados carregados
+        // Importante para garantir que o formulário seja preenchido corretamente
+        setTimeout(() => {
+          personalInfoForm.reset(savedUserData);
+        }, 100);
+
+        // Se os dados estiverem completos e for tipo pickup,
+        // ou se os dados de endereço também estiverem completos para delivery,
+        // podemos pular automaticamente para o próximo passo
+        const isPickup = checkout.deliveryType === CheckoutDeliveryType.PICKUP;
+        const hasBasicInfo = savedUserData.fullName && savedUserData.whatsapp;
+        const hasAddressInfo =
+          savedUserData.address &&
+          savedUserData.number &&
+          savedUserData.neighborhood;
+
+        if (hasBasicInfo && (isPickup || hasAddressInfo)) {
+          // Opcionalmente, podemos pular o passo de informações pessoais
+          // Descomente se desejar implementar este comportamento
+          // nextStep();
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao recuperar dados do usuário:", error);
+    }
   }, [cartViewModel, companySlug]);
 
   // Form para dados pessoais com schema dinâmico
@@ -116,10 +154,16 @@ export function useCheckoutViewModel() {
     updateDeliveryType(type);
   };
 
-  // Salvar dados pessoais e avançar
+  // Salvar dados pessoais, persistir localmente e avançar
   const savePersonalInfo = async (data: PersonalInfo) => {
     try {
+      // Atualiza no checkout
       updatePersonalInfo(data);
+
+      // Persiste localmente
+      await userPersistenceService.saveUserPersonalInfo(data);
+
+      // Avança para o próximo passo
       nextStep();
     } catch (error) {
       console.error("Erro ao salvar dados pessoais:", error);
@@ -157,11 +201,25 @@ export function useCheckoutViewModel() {
     }
   };
 
-  // Concluir o pedido
+  // Finalizar o pedido e criar um registro no OrderStore
   const finalizeOrder = async () => {
     setIsProcessing(true);
 
     try {
+      // Criar pedido no OrderStore
+      const orderItems = checkout.items.map((item) => ({
+        ...item,
+        companyId: checkout.companyId,
+        companySlug: checkout.companySlug,
+      }));
+
+      const order = orderStore.createOrder(
+        orderItems,
+        checkout.companyId,
+        checkout.companySlug,
+        checkout.companyName
+      );
+
       // Construir mensagem para WhatsApp
       const message = formatWhatsAppMessage(checkout);
 

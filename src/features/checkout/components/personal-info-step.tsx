@@ -1,6 +1,6 @@
 // Path: src/features/checkout/components/personal-info-step.tsx
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -26,6 +26,8 @@ import { CheckoutDeliveryType, PersonalInfo } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { FormValidationFeedback } from "@/components/common/form-validation-feedback";
 import { maskPhoneNumber } from "../utils/checkout.utils";
+import { toastUtils } from "@/src/utils/toast.utils";
+import { useToast } from "@/src/providers/toast-provider";
 
 export function PersonalInfoStep() {
   const { checkout, personalInfoForm, savePersonalInfo, prevStep } =
@@ -43,9 +45,13 @@ export function PersonalInfoStep() {
   // Observar alterações em tempo real
   const watchedFields = watch();
 
+  const [showDataLoadedToast, setShowDataLoadedToast] = useState(false);
+
   // Inicializar o formulário com os valores do checkout
   useEffect(() => {
-    reset(checkout.personalInfo);
+    if (checkout.personalInfo.fullName && !showDataLoadedToast) {
+      setShowDataLoadedToast(true);
+    }
   }, [checkout.personalInfo]);
 
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
@@ -56,6 +62,16 @@ export function PersonalInfoStep() {
       style={{ flex: 1 }}
       keyboardVerticalOffset={100}
     >
+      {showDataLoadedToast && (
+        <View className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <HStack space="sm" alignItems="center">
+            <Info size={18} color="#3B82F6" />
+            <Text className="text-sm text-blue-700">
+              Seus dados foram recuperados automaticamente
+            </Text>
+          </HStack>
+        </View>
+      )}
       <ScrollView className="flex-1 p-4">
         <Card className="p-4 mb-4 border border-gray-100">
           <Text className="text-lg font-semibold text-gray-800 mb-4">
