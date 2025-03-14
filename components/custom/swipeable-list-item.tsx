@@ -98,7 +98,7 @@ export function SwipeableListItem({
         {onDelete && (
           <TouchableOpacity
             onPress={onDelete}
-            className="bg-red-100 h-full w-1/2 items-center justify-center"
+            className="bg-red-100 h-full w-1/2 items-center justify-center rounded-lg"
           >
             <Trash size={20} color="#ef4444" />
           </TouchableOpacity>
