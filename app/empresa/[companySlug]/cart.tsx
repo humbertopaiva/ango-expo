@@ -1,4 +1,4 @@
-// Path: app/(drawer)/empresa/[companySlug]/cart.tsx
+// Path: app/empresa/[companySlug]/cart.tsx
 import React from "react";
 import { View } from "react-native";
 import { CartScreen } from "@/src/features/cart/screens/cart-screen";

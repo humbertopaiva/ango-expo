@@ -1,4 +1,4 @@
-// app/(drawer)/admin/_layout.tsx
+// app/admin/_layout.tsx
 import { Stack, router } from "expo-router";
 import useAuthStore from "@/src/stores/auth";
 import { StatusBar, View, TouchableOpacity } from "react-native";
@@ -15,7 +15,7 @@ export default function AdminLayout() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.replace("/(drawer)/(auth)/login");
+      router.replace("/(auth)/login");
     }
   }, [isAuthenticated]);
 

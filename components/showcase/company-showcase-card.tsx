@@ -19,7 +19,7 @@ export function CompanyVitrineCard({ company }: CompanyVitrineCardProps) {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const handleNavigateToCompany = () => {
-    router.push(`/(drawer)/empresa/${company.slug}`);
+    router.push(`/empresa/${company.slug}`);
   };
 
   const handleScrollLeft = () => {

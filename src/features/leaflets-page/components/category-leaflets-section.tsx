@@ -37,7 +37,7 @@ export function CategoryLeafletsSection({
         </View>
 
         <TouchableOpacity
-          onPress={() => router.push(`/(drawer)/categoria/${categorySlug}`)}
+          onPress={() => router.push(`/categoria/${categorySlug}`)}
           className="flex-row items-center"
         >
           <Text className="text-secondary-600 text-sm font-medium mr-1">

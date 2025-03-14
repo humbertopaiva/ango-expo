@@ -60,7 +60,7 @@ export function AdaptiveProductCard({
   // Navegar para a página de detalhes do produto
   const handleProductPress = () => {
     router.push({
-      pathname: `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}`,
+      pathname: `/empresa/${vm.profile?.empresa.slug}/product/${product.id}`,
       params: { productId: product.id },
     });
   };

@@ -69,7 +69,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
   };
 
   const handleLogin = () => {
-    router.push("/(drawer)/(auth)/login");
+    router.push("/(auth)/login");
     navigation.dispatch(DrawerActions.closeDrawer());
   };
 
@@ -101,7 +101,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
     {
       label: "Meu Perfil",
       icon: User,
-      path: "/(drawer)/profile",
+      path: "/profile",
     },
     {
       label: "Suporte",
@@ -116,7 +116,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
     {
       label: "Meus Pedidos",
       icon: ShoppingBag,
-      path: "/(drawer)/orders",
+      path: "/orders",
     },
   ];
 
@@ -125,32 +125,32 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
     {
       label: "Dashboard",
       icon: BarChart2,
-      path: "/(drawer)/admin/dashboard",
+      path: "/admin/dashboard",
     },
     {
       label: "Categorias",
       icon: Store,
-      path: "/(drawer)/admin/categories",
+      path: "/admin/categories",
     },
     {
       label: "Produtos",
       icon: Package,
-      path: "/(drawer)/admin/products",
+      path: "/admin/products",
     },
     {
       label: "Vitrine",
       icon: ShoppingBag,
-      path: "/(drawer)/admin/vitrine",
+      path: "/admin/vitrine",
     },
     {
       label: "Encartes",
       icon: FileText,
-      path: "/(drawer)/admin/leaflets",
+      path: "/admin/leaflets",
     },
     {
       label: "Configurações",
       icon: Settings,
-      path: "/(drawer)/admin/profile",
+      path: "/admin/profile",
     },
   ];
 

@@ -65,7 +65,7 @@ export function DeliveryShowcaseCarousel({
 
         <TouchableOpacity
           className="flex-row items-center"
-          onPress={() => router.push(`/(drawer)/empresa/${companySlug}`)}
+          onPress={() => router.push(`/empresa/${companySlug}`)}
         >
           <Text className="text-sm text-primary-600 font-medium mr-1">
             Ver todos
@@ -83,7 +83,7 @@ export function DeliveryShowcaseCarousel({
           <TouchableOpacity
             key={item.id}
             className="mr-3"
-            onPress={() => router.push(`/(drawer)/empresa/${companySlug}`)}
+            onPress={() => router.push(`/empresa/${companySlug}`)}
             activeOpacity={0.9}
           >
             <Card
@@ -162,7 +162,7 @@ export function DeliveryShowcaseCarousel({
         <TouchableOpacity
           className="mr-4 items-center justify-center"
           style={{ width: cardWidth / 2 }}
-          onPress={() => router.push(`/(drawer)/empresa/${companySlug}`)}
+          onPress={() => router.push(`/empresa/${companySlug}`)}
         >
           <View className="aspect-square rounded-xl border border-gray-200 items-center justify-center">
             <View className="w-12 h-12 rounded-full bg-primary-50 items-center justify-center mb-3">

@@ -1,4 +1,4 @@
-// Path: app/(drawer)/empresa/[companySlug]/checkout.tsx
+// Path: app/empresa/[companySlug]/checkout.tsx
 import React from "react";
 import { View } from "react-native";
 import { CheckoutScreen } from "@/src/features/checkout/screens/checkout-screen";

@@ -14,7 +14,7 @@ export function CartFAB() {
   if (cartVm.itemCount === 0 || !vm.profile?.empresa.slug) return null;
 
   const handlePress = () => {
-    router.push(`/(drawer)/empresa/${vm.profile?.empresa.slug}/cart`);
+    router.push(`/empresa/${vm.profile?.empresa.slug}/cart`);
   };
 
   return (

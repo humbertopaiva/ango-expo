@@ -88,7 +88,7 @@ export function AllOrdersScreen() {
   };
 
   const navigateToCompanyOrders = (companySlug: string) => {
-    router.push(`/(drawer)/empresa/${companySlug}/orders`);
+    router.push(`/empresa/${companySlug}/orders`);
   };
 
   const formatDate = (date: Date) => {
@@ -143,9 +143,7 @@ export function AllOrdersScreen() {
               <TouchableOpacity
                 key={order.id}
                 onPress={() =>
-                  router.push(
-                    `/(drawer)/empresa/${companySlug}/orders/${order.id}`
-                  )
+                  router.push(`/empresa/${companySlug}/orders/${order.id}`)
                 }
                 className={`p-4 ${
                   index < companyOrders.slice(0, 3).length - 1

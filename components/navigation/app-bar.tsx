@@ -141,7 +141,7 @@ export function AppBar({
           {/* Conteúdo do lado direito (opcional) */}
           {!rightContent && userInitials && (
             <TouchableOpacity
-              onPress={() => router.push("/(drawer)/profile")}
+              onPress={() => router.push("/profile")}
               className="w-8 h-8 rounded-full bg-white/20 items-center justify-center"
             >
               <Text className="text-white font-medium text-xs">

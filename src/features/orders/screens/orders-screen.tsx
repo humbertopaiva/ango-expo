@@ -67,7 +67,7 @@ export function OrdersScreen() {
   };
 
   const handleOrderPress = (orderId: string) => {
-    router.push(`/(drawer)/empresa/${companySlug}/orders/${orderId}`);
+    router.push(`/empresa/${companySlug}/orders/${orderId}`);
   };
 
   // Handler para deletar um pedido
@@ -105,7 +105,7 @@ export function OrdersScreen() {
       });
 
       // Navegar para o carrinho
-      router.push(`/(drawer)/empresa/${companySlug}/cart`);
+      router.push(`/empresa/${companySlug}/cart`);
 
       // Exibir alerta de sucesso
       toastUtils.success(toast, "Itens adicionados ao carrinho!");

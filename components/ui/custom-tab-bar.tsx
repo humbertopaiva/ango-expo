@@ -290,7 +290,7 @@ export function CustomTabBar() {
                       <TouchableOpacity
                         className="bg-primary-500 py-2 px-6 rounded-lg"
                         onPress={() => {
-                          router.push("/(drawer)/(auth)/login");
+                          router.push("/(auth)/login");
                           setIsMenuOpen(false);
                         }}
                       >

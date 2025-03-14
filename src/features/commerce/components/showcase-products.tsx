@@ -58,7 +58,7 @@ export function ShowcaseProducts({
         {companySlug && (
           <TouchableOpacity
             className="flex-row items-center"
-            onPress={() => router.push(`/(drawer)/empresa/${companySlug}`)}
+            onPress={() => router.push(`/empresa/${companySlug}`)}
           >
             <Text className="text-primary-600 text-sm font-medium mr-1">
               Ver mais

@@ -39,14 +39,14 @@ export function RecentOrdersSummary() {
 
   // Navegar para detalhes do pedido
   const goToOrderDetails = (order: Order) => {
-    router.push(`/(drawer)/empresa/${order.companySlug}/orders/${order.id}`);
+    router.push(`/empresa/${order.companySlug}/orders/${order.id}`);
   };
 
   // Navegar para a lista completa de pedidos
   const seeAllOrders = () => {
     if (recentOrders.length > 0) {
       // Navegar para a lista de pedidos da empresa do pedido mais recente
-      router.push(`/(drawer)/empresa/${recentOrders[0].companySlug}/orders`);
+      router.push(`/empresa/${recentOrders[0].companySlug}/orders`);
     }
   };
 

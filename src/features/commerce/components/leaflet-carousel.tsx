@@ -149,9 +149,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
                 width: itemWidth,
                 marginRight: index < leaflets.length - 1 ? 16 : 0,
               }}
-              onPress={() =>
-                router.push(`/(drawer)/empresa/${leaflet.empresa}`)
-              }
+              onPress={() => router.push(`/empresa/${leaflet.empresa}`)}
             >
               <Card className="w-full overflow-hidden border border-gray-200 shadow-sm rounded-xl">
                 <View

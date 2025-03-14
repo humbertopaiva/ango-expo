@@ -37,12 +37,12 @@ export function CompanyActionBar() {
 
   // Navegação para a página de carrinho
   const handleCartPress = () => {
-    router.push(`/(drawer)/empresa/${companySlug}/cart`);
+    router.push(`/empresa/${companySlug}/cart`);
   };
 
   // Navegação para a página de pedidos
   const handleOrdersPress = () => {
-    router.push(`/(drawer)/empresa/${companySlug}/orders`);
+    router.push(`/empresa/${companySlug}/orders`);
   };
 
   // Calcula o padding bottom baseado na área segura (para dispositivos com notch)

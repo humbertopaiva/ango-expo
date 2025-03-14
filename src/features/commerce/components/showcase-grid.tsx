@@ -75,7 +75,7 @@ export function ShowcaseGrid({ companies, isLoading }: ShowcaseGridProps) {
         {companies.map((item) => (
           <TouchableOpacity
             key={item.id}
-            onPress={() => router.push(`/(drawer)/empresa/${item.slug}`)}
+            onPress={() => router.push(`/empresa/${item.slug}`)}
           >
             <Card className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
               <View className="relative h-32">

@@ -32,7 +32,7 @@ export function DeliveryCompanyShowcaseCard({
 
   const handleNavigateToCompany = () => {
     if (!company.empresa || !company.empresa.slug) return;
-    router.push(`/(drawer)/empresa/${company.empresa.slug}`);
+    router.push(`/empresa/${company.empresa.slug}`);
   };
 
   const handleScrollLeft = () => {

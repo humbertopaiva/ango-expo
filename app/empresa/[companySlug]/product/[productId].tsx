@@ -1,4 +1,4 @@
-// Path: app/(drawer)/empresa/[companySlug]/product/[productId].tsx
+// Path: app/empresa/[companySlug]/product/[productId].tsx
 import React from "react";
 import { useLocalSearchParams } from "expo-router";
 import { CompanyPageProvider } from "@/src/features/company-page/contexts/company-page-provider";

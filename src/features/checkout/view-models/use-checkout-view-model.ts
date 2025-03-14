@@ -81,7 +81,7 @@ export function useCheckoutViewModel() {
   // Inicializar checkout com dados do carrinho e recuperar dados do usuário
   const initialize = useCallback(async () => {
     if (cartViewModel.isEmpty || !companySlug) {
-      router.replace(`/(drawer)/empresa/${companySlug}`);
+      router.replace(`/empresa/${companySlug}`);
       return;
     }
 
@@ -235,7 +235,7 @@ export function useCheckoutViewModel() {
       resetCheckout();
 
       // Redirecionar para a tela de pedidos
-      router.replace(`/(drawer)/empresa/${companySlug}/orders`);
+      router.replace(`/empresa/${companySlug}/orders`);
 
       toastUtils.success(toast, "Pedido enviado com sucesso!");
     } catch (error) {

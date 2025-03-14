@@ -355,7 +355,7 @@ export function ProductsByCategory({
                   products={products}
                   viewAllPath={
                     vm.profile?.empresa.slug
-                      ? `/(drawer)/empresa/${
+                      ? `/empresa/${
                           vm.profile.empresa.slug
                         }/products?category=${encodeURIComponent(category)}`
                       : undefined

@@ -15,7 +15,7 @@ interface CompanyCardProps {
 
 export function CompanyCard({ company }: CompanyCardProps) {
   const navigateToCompany = () => {
-    router.push(`/(drawer)/empresa/${company.empresa.slug}`);
+    router.push(`/empresa/${company.empresa.slug}`);
   };
 
   // Verificar se o comércio está aberto

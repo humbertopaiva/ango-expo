@@ -46,11 +46,11 @@ export function CategoryProductsList({
   // Handler para "Ver todos"
   const handleViewAll = () => {
     if (viewAllPath) {
-      router.push(`/(drawer)/empresa/${vm.profile?.empresa.slug}`);
+      router.push(`/empresa/${vm.profile?.empresa.slug}`);
     } else if (vm.profile?.empresa.slug) {
       // Construir URL com parâmetros para filtrar por categoria
       router.push({
-        pathname: `/(drawer)/empresa/${vm.profile.empresa.slug}/products`,
+        pathname: `/empresa/${vm.profile.empresa.slug}/products`,
         params: { category: encodeURIComponent(title) },
       });
     }

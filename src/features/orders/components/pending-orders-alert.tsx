@@ -50,7 +50,7 @@ export function PendingOrdersAlert() {
 
   // Ir para o pedido
   const goToOrder = (order: Order) => {
-    router.push(`/(drawer)/empresa/${order.companySlug}/orders/${order.id}`);
+    router.push(`/empresa/${order.companySlug}/orders/${order.id}`);
   };
 
   return (

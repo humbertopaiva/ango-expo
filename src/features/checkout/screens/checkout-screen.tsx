@@ -56,9 +56,7 @@ export function CheckoutScreen() {
         title={getStepTitle()}
         subtitle="Finalize seu pedido"
         showBackButton={true}
-        onBackPress={() =>
-          router.replace(`/(drawer)/empresa/${companySlug}/cart`)
-        }
+        onBackPress={() => router.replace(`/empresa/${companySlug}/cart`)}
       />
 
       <CheckoutStepper

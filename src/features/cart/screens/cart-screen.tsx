@@ -226,12 +226,12 @@ export function CartScreen() {
 
   // Botão para retornar à página da empresa
   const handleBackToCompany = () => {
-    router.push(`/(drawer)/empresa/${companySlug}`);
+    router.push(`/empresa/${companySlug}`);
   };
 
   // Botão para adicionar produtos
   const handleAddProducts = () => {
-    router.push(`/(drawer)/empresa/${companySlug}`);
+    router.push(`/empresa/${companySlug}`);
   };
 
   // Verificar cupom (mockado por enquanto)
@@ -271,7 +271,7 @@ export function CartScreen() {
       multiCartStore.setActiveCart(companySlug);
 
       // Navegar para a tela de checkout
-      router.push(`/(drawer)/empresa/${companySlug}/checkout`);
+      router.push(`/empresa/${companySlug}/checkout`);
     } catch (error) {
       console.error("Erro ao processar pedido:", error);
       Alert.alert(

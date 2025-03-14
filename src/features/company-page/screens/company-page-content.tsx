@@ -54,7 +54,7 @@ export function CompanyPageContent() {
   const handleBackPress = () => {
     if (categorySlug) {
       // Se temos o slug da categoria, vamos diretamente para ela
-      router.push(`/(drawer)/categoria/${categorySlug}`);
+      router.push(`/categoria/${categorySlug}`);
     } else {
       // Fallback para a navegação padrão
       router.back();

@@ -263,7 +263,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
 
           {/* Forgot Password Link */}
           <TouchableOpacity
-            onPress={() => router.push("/(drawer)/(auth)/reset-password")}
+            onPress={() => router.push("/(auth)/reset-password")}
           >
             <Text className="text-center text-md font-medium text-primary-600 mb-2">
               Esqueceu sua senha?

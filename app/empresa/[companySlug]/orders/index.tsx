@@ -1,4 +1,4 @@
-// Path: app/(drawer)/empresa/[companySlug]/orders.tsx
+// Path: app/empresa/[companySlug]/orders.tsx
 import React from "react";
 import { View } from "react-native";
 import { OrdersScreen } from "@/src/features/orders/screens/orders-screen";

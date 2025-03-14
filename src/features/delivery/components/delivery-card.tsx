@@ -97,7 +97,7 @@ export function DeliveryCard({ profile }: DeliveryCardProps) {
   const navigateToCompany = () => {
     try {
       if (!profile.empresa || !profile.empresa.slug) return;
-      router.push(`/(drawer)/empresa/${profile.empresa.slug}`);
+      router.push(`/empresa/${profile.empresa.slug}`);
     } catch (error) {
       console.error("Error navigating to company:", error);
     }

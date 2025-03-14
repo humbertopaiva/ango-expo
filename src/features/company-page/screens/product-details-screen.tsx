@@ -111,7 +111,7 @@ export function ProductDetailsScreen() {
       },
       {
         text: "Ver carrinho",
-        onPress: () => router.push(`/(drawer)/empresa/${companySlug}/cart`),
+        onPress: () => router.push(`/empresa/${companySlug}/cart`),
       },
     ]);
   };

@@ -63,7 +63,7 @@ export function LatestCompaniesCarousel({
         renderItem={({ item }) => (
           <TouchableOpacity
             className="items-center mr-4"
-            onPress={() => router.push(`/(drawer)/empresa/${item.slug}`)}
+            onPress={() => router.push(`/empresa/${item.slug}`)}
           >
             <View
               style={{ width: logoSize, height: logoSize }}

@@ -77,7 +77,7 @@ export function useAuthViewModel(): IAuthViewModel {
 
         // Pequeno delay antes de redirecionar para a dashboard
         setTimeout(() => {
-          router.replace("/(drawer)/admin/dashboard");
+          router.replace("/admin/dashboard");
         }, 300);
       } catch (error: unknown) {
         // Tratamento de erro amigável
@@ -123,7 +123,7 @@ export function useAuthViewModel(): IAuthViewModel {
       // Exibir toast de sucesso
       toastUtils.success(toast, "Logout realizado com sucesso!");
 
-      router.replace("/(drawer)/(auth)/login");
+      router.replace("/(auth)/login");
     } catch (error: unknown) {
       console.error(error);
 

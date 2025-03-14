@@ -67,7 +67,7 @@ export function OrderDetailsScreen() {
     });
 
     // Navegar para o carrinho
-    router.push(`/(drawer)/empresa/${companySlug}/cart`);
+    router.push(`/empresa/${companySlug}/cart`);
   };
 
   const getStatusInfo = (status: OrderStatus) => {
