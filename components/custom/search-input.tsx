@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { Search } from "lucide-react-native";
 import { Input, InputField, InputIcon, InputSlot } from "../ui/input";
 import { SearchIcon } from "@gluestack-ui/themed";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface SearchInputProps {
   value: string;
@@ -20,9 +21,9 @@ export function SearchInput({
 }: SearchInputProps) {
   return (
     <View className="relative mb-4">
-      <Input isDisabled={disabled} className="bg-white">
+      <Input isDisabled={disabled} className="bg-white rounded-xl h-12">
         <InputSlot className="pl-3 ">
-          <InputIcon as={SearchIcon} />
+          <InputIcon as={SearchIcon} color={THEME_COLORS.primary} />
         </InputSlot>
         <InputField
           placeholder={placeholder}

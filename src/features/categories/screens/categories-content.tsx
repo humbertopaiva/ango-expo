@@ -50,7 +50,7 @@ export function CategoriesContent() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <View className="flex-1">
-        <View className="px-4 pt-3 bg-background-100">
+        <View className="px-4 pt-6 bg-background-100">
           <SearchInput
             value={vm.searchTerm}
             onChangeText={vm.setSearchTerm}
@@ -59,7 +59,7 @@ export function CategoriesContent() {
           />
         </View>
 
-        <View className="flex-1 px-4 pt-2 pb-20 bg-background-100">
+        <View className="flex-1 px-4 pb-20 bg-background-100">
           <CategoriesList
             categories={vm.categories}
             isLoading={vm.isLoading}

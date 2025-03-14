@@ -12,13 +12,11 @@ export interface Category {
 
 export interface CreateCategoryDTO {
   nome: string;
-  imagem: string | null;
   empresa: string;
   categoria_ativa?: boolean;
 }
 
 export interface UpdateCategoryDTO {
   nome?: string;
-  imagem?: string | null;
   categoria_ativa?: boolean;
 }
