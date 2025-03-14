@@ -22,10 +22,12 @@ export function PendingOrdersAlert() {
     );
 
     // Ordenar por data mais recente
-    pending.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const sortedPending = [...pending].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
 
     // Limitar a 3 pedidos pendentes
-    setPendingOrders(pending.slice(0, 3));
+    setPendingOrders(sortedPending.slice(0, 3));
   }, [orders]);
 
   // Se não houver pedidos pendentes, não exibir nada

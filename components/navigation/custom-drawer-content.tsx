@@ -53,8 +53,17 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 
   // Handler para navegação
   const handleNavigation = (path: string) => {
-    router.push(path as any);
-    navigation.dispatch(DrawerActions.closeDrawer());
+    // Primeiro feche o drawer - deixe isso fora do try-catch
+    try {
+      navigation.dispatch(DrawerActions.closeDrawer());
+    } catch (error) {
+      console.log("Warning: Não foi possível fechar o drawer:", error);
+    }
+
+    // Depois navegue para o caminho - com um pequeno delay para garantir uma boa UX
+    setTimeout(() => {
+      router.push(path as any);
+    }, 50);
   };
 
   // Verificar se um item está ativo

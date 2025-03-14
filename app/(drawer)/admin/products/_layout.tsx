@@ -1,4 +1,5 @@
-// Path: app/(app)/admin/products/_layout.tsx
+// Path: app/(drawer)/admin/products/_layout.tsx
+
 import { Stack } from "expo-router";
 import { ProductsProvider } from "@/src/features/products/contexts/products-provider";
 

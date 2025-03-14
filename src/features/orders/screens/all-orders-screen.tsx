@@ -1,5 +1,5 @@
 // Path: src/features/orders/screens/all-orders-screen.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -9,18 +9,8 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
-import { Card, HStack, VStack, Divider } from "@gluestack-ui/themed";
-import {
-  Clock,
-  CheckCircle,
-  Truck,
-  XCircle,
-  AlertCircle,
-  ChevronRight,
-  Calendar,
-  Package,
-  Store,
-} from "lucide-react-native";
+import { Card, HStack, VStack } from "@gluestack-ui/themed";
+import { ChevronRight, Package, Store } from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
 import { Order, OrderStatus } from "../models/order";
 import { format } from "date-fns";
@@ -29,70 +19,109 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { CompanyFilterDropdown } from "../components/company-filter-dropdown";
 
 export function AllOrdersScreen() {
-  const { orders } = useOrderViewModel();
-  const [groupedOrders, setGroupedOrders] = useState<Record<string, Order[]>>(
-    {}
-  );
+  // Estados iniciais vazios
+  const [displayData, setDisplayData] = useState<{
+    groupedOrders: Record<string, Order[]>;
+    companies: Array<{ id: string; slug: string; name: string }>;
+  }>({
+    groupedOrders: {},
+    companies: [],
+  });
+  const [selectedCompany, setSelectedCompany] = useState<{
+    id: string;
+    slug: string;
+    name: string;
+  } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const initialRenderDone = useRef(false);
 
+  // ViewModel para obter os dados
+  const { orders } = useOrderViewModel();
   const primaryColor = THEME_COLORS.primary;
 
-  // Adicionar estado para a empresa selecionada
-  const [companies, setCompanies] = useState<
-    { id: string; slug: string; name: string }[]
-  >([]);
-  const [selectedCompany, setSelectedCompany] = useState<
-    (typeof companies)[0] | null
-  >(null);
-
-  // Agrupar pedidos por empresa
+  // Processar dados uma única vez na montagem inicial
   useEffect(() => {
-    const grouped = orders.reduce((acc, order) => {
-      if (!acc[order.companySlug]) {
-        acc[order.companySlug] = [];
-      }
-      acc[order.companySlug].push(order);
-      return acc;
-    }, {} as Record<string, Order[]>);
+    if (!initialRenderDone.current) {
+      processOrderData(orders, selectedCompany);
+      initialRenderDone.current = true;
+    }
+  }, []);
 
-    // Ordenar pedidos de cada empresa por data (mais recentes primeiro)
-    Object.keys(grouped).forEach((companySlug) => {
-      grouped[companySlug].sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-      );
-    });
+  // Função para processar os dados dos pedidos
+  const processOrderData = useCallback(
+    (ordersList: Order[], companyFilter: typeof selectedCompany) => {
+      // Criar grupos de pedidos por empresa
+      const grouped: Record<string, Order[]> = {};
+      const companyList: Array<{ id: string; slug: string; name: string }> = [];
+      const companyMap: Record<string, boolean> = {};
 
-    // Se uma empresa estiver selecionada, filtrar apenas seus pedidos
-    const filteredGrouped = selectedCompany
-      ? { [selectedCompany.slug]: grouped[selectedCompany.slug] || [] }
-      : grouped;
+      // Agrupar pedidos por empresa
+      ordersList.forEach((order) => {
+        const slug = order.companySlug;
 
-    setGroupedOrders(filteredGrouped);
+        if (!grouped[slug]) {
+          grouped[slug] = [];
 
-    // Extrair lista de empresas para o filtro
-    const companyList = Object.entries(grouped).map(
-      ([slug, companyOrders]) => ({
-        id: companyOrders[0].companyId,
-        slug,
-        name: companyOrders[0].companyName,
-      })
-    );
+          // Adicionar empresa à lista apenas se ainda não estiver lá
+          if (!companyMap[slug]) {
+            companyList.push({
+              id: order.companyId,
+              slug,
+              name: order.companyName,
+            });
+            companyMap[slug] = true;
+          }
+        }
 
-    setCompanies(companyList);
-  }, [orders, selectedCompany]);
+        grouped[slug].push({ ...order });
+      });
 
-  const handleRefresh = () => {
+      // Ordenar pedidos em cada grupo
+      Object.keys(grouped).forEach((slug) => {
+        grouped[slug].sort((a, b) => {
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        });
+      });
+
+      // Filtrar para empresa selecionada, se houver
+      const filteredGrouped = companyFilter
+        ? { [companyFilter.slug]: grouped[companyFilter.slug] || [] }
+        : grouped;
+
+      // Atualizar estado em uma única chamada
+      setDisplayData({
+        groupedOrders: filteredGrouped,
+        companies: companyList,
+      });
+    },
+    []
+  );
+
+  // Manipuladores de eventos
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    // Recarregar pedidos se necessário
+    processOrderData(orders, selectedCompany);
     setRefreshing(false);
-  };
+  }, [orders, selectedCompany, processOrderData]);
 
-  const navigateToCompanyOrders = (companySlug: string) => {
-    router.push(`/(drawer)/empresa/${companySlug}/orders`);
-  };
+  const handleSelectCompany = useCallback(
+    (company: typeof selectedCompany) => {
+      setSelectedCompany(company);
+      // Reprocessar dados com o novo filtro
+      processOrderData(orders, company);
+    },
+    [orders, processOrderData]
+  );
 
+  // Formatadores
   const formatDate = (date: Date) => {
-    return format(date, "dd 'de' MMMM", { locale: ptBR });
+    try {
+      return format(new Date(date), "dd 'de' MMMM", { locale: ptBR });
+    } catch (e) {
+      return "Data inválida";
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -102,15 +131,20 @@ export function AllOrdersScreen() {
     });
   };
 
-  // Renderizar grupos de pedidos por empresa
+  // Renderizador de seção de empresa
   const renderCompanySection = ({ item }: { item: [string, Order[]] }) => {
     const [companySlug, companyOrders] = item;
-    const company = companyOrders[0].companyName;
+
+    if (!companyOrders || companyOrders.length === 0) {
+      return null;
+    }
+
+    const company = companyOrders[0]?.companyName || "";
 
     return (
       <Card className="mb-4 border border-gray-100 overflow-hidden">
         <TouchableOpacity
-          onPress={() => navigateToCompanyOrders(companySlug)}
+          onPress={() => router.push(`/(drawer)/empresa/${companySlug}/orders`)}
           className="p-4 border-b border-gray-100"
         >
           <HStack className="justify-between items-center">
@@ -195,10 +229,11 @@ export function AllOrdersScreen() {
             );
           })}
 
-          {/* Ver mais link se houver mais de 3 pedidos */}
           {companyOrders.length > 3 && (
             <TouchableOpacity
-              onPress={() => navigateToCompanyOrders(companySlug)}
+              onPress={() =>
+                router.push(`/(drawer)/empresa/${companySlug}/orders`)
+              }
               className="p-4 bg-gray-50"
             >
               <Text
@@ -215,6 +250,19 @@ export function AllOrdersScreen() {
     );
   };
 
+  // Componente de lista vazia
+  const EmptyComponent = () => (
+    <Card className="p-6 items-center justify-center border border-gray-100">
+      <Package size={48} color="#9CA3AF" className="mb-3" />
+      <Text className="text-gray-800 font-semibold text-lg mb-2 text-center">
+        Nenhum pedido encontrado
+      </Text>
+      <Text className="text-gray-500 text-center">
+        Você ainda não fez nenhum pedido.
+      </Text>
+    </Card>
+  );
+
   return (
     <View className="flex-1 bg-gray-50">
       <ScreenHeader
@@ -223,13 +271,15 @@ export function AllOrdersScreen() {
         showBackButton={true}
         onBackPress={() => router.back()}
       />
+
       <CompanyFilterDropdown
-        companies={companies}
+        companies={displayData.companies}
         selectedCompany={selectedCompany}
-        onSelectCompany={setSelectedCompany}
+        onSelectCompany={handleSelectCompany}
       />
+
       <FlatList
-        data={Object.entries(groupedOrders)}
+        data={Object.entries(displayData.groupedOrders)}
         keyExtractor={([companySlug]) => companySlug}
         renderItem={renderCompanySection}
         contentContainerStyle={{ padding: 16 }}
@@ -237,17 +287,7 @@ export function AllOrdersScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
-        ListEmptyComponent={
-          <Card className="p-6 items-center justify-center border border-gray-100">
-            <Package size={48} color="#9CA3AF" className="mb-3" />
-            <Text className="text-gray-800 font-semibold text-lg mb-2 text-center">
-              Nenhum pedido encontrado
-            </Text>
-            <Text className="text-gray-500 text-center">
-              Você ainda não fez nenhum pedido.
-            </Text>
-          </Card>
-        }
+        ListEmptyComponent={EmptyComponent}
       />
     </View>
   );
