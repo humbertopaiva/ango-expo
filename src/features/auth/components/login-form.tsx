@@ -157,7 +157,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
           <Text className="text-2xl font-semibold text-center text-gray-900">
             Login
           </Text>
-          <Text className="text-sm text-center font-sans text-gray-500 mt-2">
+          <Text className="text-md text-center font-sans text-gray-500 mt-2">
             Acesse sua conta para gerenciar sua loja
           </Text>
         </View>
@@ -247,7 +247,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
 
           {/* Forgot Password Link */}
           <TouchableOpacity>
-            <Text className="text-center text-sm font-medium text-primary-600 mb-2">
+            <Text className="text-center text-md font-medium text-primary-600 mb-2">
               Esqueceu sua senha?
             </Text>
           </TouchableOpacity>
