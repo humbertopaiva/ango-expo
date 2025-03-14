@@ -168,8 +168,6 @@ export function ProductDetailsScreen() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
       <View className="flex-1 bg-gray-50">
-        <StatusBar barStyle="light-content" />
-
         {/* Área da imagem em aspecto quadrado com botões sobrepostos */}
         <View
           style={{ width: width, height: width * 0.8 }}

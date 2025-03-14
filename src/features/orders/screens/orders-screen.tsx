@@ -51,7 +51,6 @@ export function OrdersScreen() {
   const loadOrders = () => {
     if (companySlug) {
       const companyOrders = orderViewModel.getOrdersByCompany(companySlug);
-      // Ordenar por data, mais recentes primeiro
       setOrders(
         companyOrders.sort(
           (a, b) => b.createdAt.getTime() - a.createdAt.getTime()

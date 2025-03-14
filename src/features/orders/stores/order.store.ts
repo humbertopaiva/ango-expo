@@ -9,6 +9,7 @@ import {
   createOrderFromExisting,
   PaymentMethod,
   PaymentStatus,
+  OrderPaymentInfo,
 } from "../models/order";
 import { CartItem } from "@/src/features/cart/models/cart";
 
@@ -36,17 +37,49 @@ interface OrderState {
 }
 
 const ensureDateObjects = (orders: Order[]): Order[] => {
-  return orders.map((order) => ({
-    ...order,
-    createdAt:
-      order.createdAt instanceof Date
-        ? order.createdAt
-        : new Date(order.createdAt || Date.now()),
-    updatedAt:
-      order.updatedAt instanceof Date
-        ? order.updatedAt
-        : new Date(order.updatedAt || Date.now()),
-  }));
+  if (!orders) return [];
+
+  return orders
+    .map((order) => {
+      if (!order) return order as Order;
+
+      try {
+        // Garantir que payment nunca será undefined
+        const paymentInfo: OrderPaymentInfo = order.payment || {
+          method: PaymentMethod.CREDIT_CARD, // Valor padrão
+          status: PaymentStatus.PENDING, // Valor padrão
+        };
+
+        // Tratar a data de pagamento
+        if (paymentInfo.paymentDate) {
+          paymentInfo.paymentDate =
+            paymentInfo.paymentDate instanceof Date
+              ? new Date(paymentInfo.paymentDate.getTime())
+              : new Date(paymentInfo.paymentDate);
+        }
+
+        // Criar um novo objeto com as datas convertidas
+        return {
+          ...order,
+          // Converter datas garantindo valores válidos
+          createdAt:
+            order.createdAt instanceof Date
+              ? new Date(order.createdAt.getTime())
+              : new Date(order.createdAt || Date.now()),
+          updatedAt:
+            order.updatedAt instanceof Date
+              ? new Date(order.updatedAt.getTime())
+              : new Date(order.updatedAt || Date.now()),
+          // Atribuir o objeto payment corrigido
+          payment: paymentInfo,
+        };
+      } catch (error) {
+        console.error("Error processing order dates:", error);
+        // Em caso de erro, retornar o objeto original garantindo o tipo correto
+        return order;
+      }
+    })
+    .filter((order): order is Order => Boolean(order)); // Type guard para garantir que é Order
 };
 
 // Cria o store de pedidos com persistência

@@ -38,14 +38,7 @@ export function AppBar({
   showMenuButton = true,
   rightContent,
 }: AppBarProps) {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const pathname = usePathname();
-  const { company } = useCompanyData();
-  const isWeb = Platform.OS === "web";
-
-  const statusBarHeight =
-    Platform.OS === "ios" ? insets.top : StatusBar.currentHeight || 0;
 
   const [userInitials, setUserInitials] = useState("");
 
