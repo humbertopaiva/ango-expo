@@ -196,7 +196,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
                   />
                 </View>
                 {errors.email && (
-                  <Text className="text-sm text-red-500 flex-row items-center">
+                  <Text className="text-sm text-red-500 flex-row items-center mt-2">
                     <AlertCircle size={14} color="#EF4444" />{" "}
                     {errors.email.message}
                   </Text>
@@ -236,7 +236,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
                   />
                 </View>
                 {errors.password && (
-                  <Text className="text-sm text-red-500 flex-row items-center">
+                  <Text className="text-sm text-red-500 flex-row items-center mt-2">
                     <AlertCircle size={14} color="#EF4444" />{" "}
                     {errors.password.message}
                   </Text>
