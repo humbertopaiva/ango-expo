@@ -85,7 +85,11 @@ class CategoryService {
     try {
       const response = await api.post<{ data: Category }>(
         "/api/product-categories",
-        data
+        {
+          nome: data.nome,
+          categoria_ativa: data.categoria_ativa,
+          empresa: data.empresa,
+        }
       );
 
       // Invalidar cache
@@ -105,7 +109,10 @@ class CategoryService {
     try {
       const response = await api.patch<{ data: Category }>(
         `/api/product-categories/${id}`,
-        data
+        {
+          nome: data.nome,
+          categoria_ativa: data.categoria_ativa,
+        }
       );
 
       // Invalidar cache

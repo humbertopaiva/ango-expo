@@ -22,7 +22,6 @@ import { toastUtils } from "@/src/utils/toast.utils";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Check, FolderIcon, X } from "lucide-react-native";
-import { ImageUpload } from "@/components/common/image-upload";
 import { Switch } from "@/components/ui/switch";
 import { ScrollView } from "react-native";
 
@@ -58,7 +57,6 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
     resolver: zodResolver(categoryFormSchema),
     defaultValues: {
       nome: "",
-      imagem: null,
       categoria_ativa: true,
     },
   });
@@ -71,7 +69,6 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
         if (category) {
           form.reset({
             nome: category.nome,
-            imagem: category.imagem,
             categoria_ativa: category.categoria_ativa,
           });
           setStatusValue(category.categoria_ativa);
@@ -84,7 +81,6 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
           if (fetchedCategory) {
             form.reset({
               nome: fetchedCategory.nome,
-              imagem: fetchedCategory.imagem,
               categoria_ativa: fetchedCategory.categoria_ativa,
             });
             setStatusValue(fetchedCategory.categoria_ativa);
@@ -122,7 +118,6 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
           id,
           data: {
             nome: data.nome,
-            imagem: data.imagem,
             categoria_ativa: data.categoria_ativa,
           },
         });
@@ -130,7 +125,6 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
       } else {
         await createCategory({
           nome: data.nome,
-          imagem: data.imagem,
           categoria_ativa: data.categoria_ativa,
         });
         toastUtils.success(toast, "Categoria criada com sucesso!");
@@ -203,36 +197,6 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
                 <FormControl.Error>
                   <FormControl.Error.Text>
                     {form.formState.errors.nome.message}
-                  </FormControl.Error.Text>
-                </FormControl.Error>
-              )}
-            </FormControl>
-
-            {/* Imagem */}
-            <FormControl isInvalid={!!form.formState.errors.imagem}>
-              <FormControl.Label>
-                <Text className="text-sm font-medium text-gray-700">
-                  Imagem da Categoria
-                </Text>
-              </FormControl.Label>
-              <Text className="text-xs text-gray-500 mb-2">
-                Esta imagem será exibida nos menus e listagens
-              </Text>
-              <Controller
-                control={form.control}
-                name="imagem"
-                render={({ field: { onChange, value } }) => (
-                  <ImageUpload
-                    value={value || ""}
-                    onChange={onChange}
-                    disabled={isPending}
-                  />
-                )}
-              />
-              {form.formState.errors.imagem && (
-                <FormControl.Error>
-                  <FormControl.Error.Text>
-                    {form.formState.errors.imagem.message}
                   </FormControl.Error.Text>
                 </FormControl.Error>
               )}

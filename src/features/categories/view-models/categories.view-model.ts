@@ -25,9 +25,6 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
-  // Estado para controlar carregamento de imagem
-  const [isImageLoading, setIsImageLoading] = useState(false);
-
   const {
     categories,
     isLoading,
@@ -137,11 +134,6 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     setIsFormVisible(true);
   }, []);
 
-  // Handlers para estados de imagem
-  const setImageLoadingState = useCallback((isLoading: boolean) => {
-    setIsImageLoading(isLoading);
-  }, []);
-
   return {
     categories: filteredCategories,
     isLoading,
@@ -153,8 +145,6 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     isDeleting,
     isDeleteDialogOpen,
     categoryToDelete,
-    isImageLoading,
-    setSearchTerm,
     setSelectedCategory,
     setIsFormVisible,
     handleCreateCategory,
@@ -165,6 +155,6 @@ export function useCategoriesViewModel(): ICategoriesViewModel {
     openCreateCategoryModal,
     openEditCategoryModal,
     loadCategoryDetails,
-    setImageLoadingState,
+    setSearchTerm,
   };
 }

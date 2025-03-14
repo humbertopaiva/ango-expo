@@ -20,7 +20,6 @@ import {
   CategoryFormData,
 } from "../schemas/category.schema";
 import { Category } from "../models/category";
-import { CategoryImageUploader } from "./category-image-uploader";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { Check, X } from "lucide-react-native";
 
@@ -40,7 +39,6 @@ export function CategoryFormModal({
   category,
 }: CategoryFormModalProps) {
   const isEditing = !!category;
-  const [imageLoading, setImageLoading] = useState(false);
   const [statusValue, setStatusValue] = useState(true);
   const [localIsSubmitting, setLocalIsSubmitting] = useState(false);
 
@@ -48,7 +46,6 @@ export function CategoryFormModal({
     resolver: zodResolver(categoryFormSchema),
     defaultValues: {
       nome: "",
-      imagem: null,
       categoria_ativa: true,
     },
   });
@@ -58,7 +55,6 @@ export function CategoryFormModal({
     handleSubmit,
     formState: { errors },
     reset,
-    setValue,
   } = form;
 
   // Reset form when modal opens with category data
@@ -67,14 +63,12 @@ export function CategoryFormModal({
       if (category) {
         reset({
           nome: category.nome,
-          imagem: category.imagem,
           categoria_ativa: category.categoria_ativa,
         });
         setStatusValue(category.categoria_ativa);
       } else {
         reset({
           nome: "",
-          imagem: null,
           categoria_ativa: true,
         });
         setStatusValue(true);
@@ -82,17 +76,6 @@ export function CategoryFormModal({
       setLocalIsSubmitting(false);
     }
   }, [category, reset, isOpen]);
-
-  // Handler para quando a imagem é alterada ou removida
-  const handleImageChange = (imageUrl: string | null) => {
-    setValue("imagem", imageUrl);
-  };
-
-  // Handler para receber o caminho da imagem
-  const handleImagePathChange = (path: string | null) => {
-    // Você pode fazer algo com este path se necessário
-    console.log("Caminho da imagem alterado:", path);
-  };
 
   // Handler para o submit do formulário
   const handleFormSubmit = async (data: CategoryFormData) => {
@@ -107,7 +90,7 @@ export function CategoryFormModal({
   };
 
   // Determinar se o botão deve estar desabilitado
-  const isButtonDisabled = isLoading || imageLoading || localIsSubmitting;
+  const isButtonDisabled = isLoading || localIsSubmitting;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -147,34 +130,6 @@ export function CategoryFormModal({
                 </FormControlErrorText>
               </FormControlError>
             )}
-          </FormControl>
-
-          {/* Imagem */}
-          <FormControl>
-            <FormControlLabel>
-              <FormControlLabelText className="text-sm font-medium text-gray-700">
-                Imagem da Categoria
-              </FormControlLabelText>
-            </FormControlLabel>
-            <Text className="text-xs text-gray-500 mb-2">
-              Esta imagem será exibida nos menus e listagens
-            </Text>
-            <Controller
-              control={control}
-              name="imagem"
-              render={({ field: { value } }) => (
-                <CategoryImageUploader
-                  value={value}
-                  onChange={(url) => {
-                    handleImageChange(url);
-                    setImageLoading(false);
-                  }}
-                  onPathChange={handleImagePathChange}
-                  disabled={isButtonDisabled}
-                  showEditOption={isEditing}
-                />
-              )}
-            />
           </FormControl>
 
           {/* Status com visual melhorado */}
