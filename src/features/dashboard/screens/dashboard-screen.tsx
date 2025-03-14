@@ -22,12 +22,13 @@ import {
 } from "lucide-react-native";
 import { DrawerActions } from "@react-navigation/native";
 
-import { ResilientImage } from "@/components/common/resilient-image";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { DashboardMenuCard } from "../components/dashboard-menu-card";
 import { DashboardSupportCard } from "../components/dashboard-support-card";
 import { useCompanyDetails } from "../hooks/use-company-details";
 import { SimpleDashboardCompanyCard } from "../components/dashboard-company-card";
+import { DashboardCompanyLinksCard } from "../components/dashboard-company-links-card";
+import { DashboardReportsButton } from "../components/dashboard-reports-button";
 import { Box } from "@/components/ui/box";
 
 const { width } = Dimensions.get("window");
@@ -123,38 +124,48 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Empresa Card - Versão simplificada que não tenta usar navegação */}
-        <SimpleDashboardCompanyCard
-          name={company?.nome || "Minha Empresa"}
-          logo={company?.logo}
-          categoryName={company?.categoria?.nome}
-          subcategoryNames={subcategoryNames}
-          primaryColor={company?.cor_primaria}
-          slug={company?.slug}
-        />
+        <Box className="">
+          {/* Empresa Card - Versão simplificada sem os botões */}
+          <SimpleDashboardCompanyCard
+            name={company?.nome || "Minha Empresa"}
+            logo={company?.logo}
+            categoryName={company?.categoria?.nome}
+            subcategoryNames={subcategoryNames}
+            primaryColor={company?.cor_primaria}
+          />
 
-        <Box className="px-4 pt-2">
-          {/* Menu Grid */}
-          <View style={styles.menuGrid}>
-            {menuItems.map((item) => (
-              <View key={item.id} style={styles.cardContainer}>
-                <DashboardMenuCard
-                  title={item.title}
-                  icon={item.icon}
-                  color={item.color}
-                  onPress={() => router.push(item.path as any)}
-                />
-              </View>
-            ))}
-          </View>
+          <Box className="px-4 pt-4">
+            {/* Novo card de links da empresa */}
+            <DashboardCompanyLinksCard
+              slug={company?.slug}
+              primaryColor={company?.cor_primaria || THEME_COLORS.primary}
+            />
 
-          {/* Support Card */}
-          <View style={styles.supportCardContainer}>
+            {/* Botão de Relatórios */}
+            <DashboardReportsButton
+              primaryColor={company?.cor_primaria || THEME_COLORS.primary}
+            />
+
+            {/* Menu Grid */}
+            <View style={styles.menuGrid}>
+              {menuItems.map((item) => (
+                <View key={item.id} style={styles.cardContainer}>
+                  <DashboardMenuCard
+                    title={item.title}
+                    icon={item.icon}
+                    color={item.color}
+                    onPress={() => router.push(item.path as any)}
+                  />
+                </View>
+              ))}
+            </View>
+
+            {/* Card de Suporte - Versão compacta */}
             <DashboardSupportCard
               primaryColor={THEME_COLORS.primary}
               onPress={() => router.push("/(drawer)/support")}
             />
-          </View>
+          </Box>
         </Box>
       </ScrollView>
     </View>
@@ -193,7 +204,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
-  scrollContent: {},
+  scrollContent: {
+    paddingBottom: 24,
+  },
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -202,9 +215,6 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     width: cardWidth,
-    marginBottom: 16,
-  },
-  supportCardContainer: {
     marginBottom: 16,
   },
 });
