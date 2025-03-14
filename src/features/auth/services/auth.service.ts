@@ -1,4 +1,4 @@
-// src/features/auth/services/auth.service.ts
+// Path: src/features/auth/services/auth.service.ts
 import { supabase } from "@/src/lib/supabase";
 import { LoginFormData } from "../schemas/auth.schema";
 import useAuthStore from "@/src/stores/auth";
@@ -17,7 +17,18 @@ export class AuthService {
           password,
         });
 
-      if (authError) throw new Error(authError.message);
+      if (authError) {
+        // Fornecer mensagens de erro mais específicas
+        if (authError.message.includes("Invalid login credentials")) {
+          throw new Error("Email ou senha incorretos");
+        } else if (authError.message.includes("Too many")) {
+          throw new Error(
+            "Muitas tentativas de login. Tente novamente mais tarde"
+          );
+        } else {
+          throw new Error(authError.message);
+        }
+      }
 
       // Busca os dados do perfil
       const { data: profileData, error: profileError } = await supabase

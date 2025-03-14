@@ -1,3 +1,4 @@
+// Path: src/features/auth/view-models/auth.view-model.interface.ts
 import { Profile } from "@/src/features/auth/models/auth";
 import { LoginFormData } from "@/src/features/auth/schemas/auth.schema";
 import { UseFormReturn } from "react-hook-form";

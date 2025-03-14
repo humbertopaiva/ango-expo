@@ -256,9 +256,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
         {/* Submit Button - Estilo similar ao PrimaryActionButton */}
         <View className="mt-4">
           <TouchableOpacity
-            className={`w-full rounded-xl overflow-hidden ${
-              isLoading ? "opacity-80" : ""
-            }`}
+            className={`w-full rounded-xl overflow-hidden`}
             onPress={handleSubmit(handleFormSubmit)}
             disabled={isLoading}
             activeOpacity={0.8}

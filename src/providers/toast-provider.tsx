@@ -1,4 +1,4 @@
-// src/providers/toast-provider.tsx
+// Path: src/providers/toast-provider.tsx
 import React, { ReactNode, createContext, useContext } from "react";
 import {
   Toast,
@@ -11,7 +11,7 @@ import {
 } from "@gluestack-ui/themed";
 import { Icon } from "@gluestack-ui/themed";
 import { CheckCircle, AlertTriangle, Info, XCircle } from "lucide-react-native";
-import { Platform } from "react-native";
+import { Platform, StyleSheet, Dimensions } from "react-native";
 
 type ToastType = "success" | "error" | "info" | "warning";
 
@@ -28,6 +28,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const gluestackToast = useGluestackToast();
+  const { width: screenWidth } = Dimensions.get("window");
 
   const getIcon = (type: ToastType = "info") => {
     switch (type) {
@@ -85,11 +86,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Obtém a largura da plataforma
-  const toastWidth =
-    Platform.OS === "web"
-      ? 400
-      : Math.min(400, Platform.OS === "ios" ? 375 : 320);
+  // Calculando valores numéricos compatíveis com DimensionValue
+  const maxToastWidth = Platform.OS === "web" ? 400 : screenWidth * 0.92;
+
+  // Usando StyleSheet para definir os estilos
+  const styles = StyleSheet.create({
+    toast: {
+      elevation: 4,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderRadius: 8,
+      maxWidth: maxToastWidth,
+      width: "auto",
+      alignSelf: "center",
+      zIndex: 9999,
+    },
+  });
 
   const show = ({
     title,
@@ -103,28 +115,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     duration?: number;
   }) => {
     gluestackToast.show({
-      placement: "top",
+      placement: "bottom", // Posicionamento na parte inferior
       duration,
       render: ({ id }) => {
         const toastId = "toast-" + id;
-
-        // Construa um estilo base que funcione bem em todas as plataformas
-        const baseStyle = {
-          elevation: 4,
-          marginTop: 8,
-          borderWidth: 1,
-          borderRadius: 8,
-          maxWidth: Platform.OS === "web" ? 400 : "92%",
-          width: Platform.OS === "web" ? "auto" : undefined,
-          alignSelf: "center" as
-            | "auto"
-            | "flex-start"
-            | "flex-end"
-            | "center"
-            | "stretch"
-            | "baseline",
-          zIndex: 9999,
-        };
 
         return (
           <Toast
@@ -132,6 +126,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             action="attention"
             variant="solid"
             className={`${getBgColor(type)} border ${getBorderColor(type)}`}
+            style={styles.toast}
           >
             <HStack space="sm" alignItems="flex-start" className="p-4">
               <Box className="mt-0.5">{getIcon(type)}</Box>
