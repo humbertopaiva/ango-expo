@@ -1,4 +1,4 @@
-// src/features/auth/view-models/auth.view-model.ts
+// Path: src/features/auth/view-models/auth.view-model.ts
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,6 +6,8 @@ import { router } from "expo-router";
 import { IAuthViewModel } from "./auth.view-model.interface";
 import * as Haptics from "expo-haptics";
 import { Platform } from "react-native";
+import { useToast } from "@gluestack-ui/themed";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 import {
   LoginFormData,
@@ -20,6 +22,7 @@ export function useAuthViewModel(): IAuthViewModel {
   const [authError, setAuthError] = useState<string | null>(null);
   const { profile, setAuth, clearAuth } = useAuthStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const toast = useToast();
 
   // Form setup
   const form = useForm<LoginFormData>({
@@ -52,6 +55,9 @@ export function useAuthViewModel(): IAuthViewModel {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
 
+        // Exibir toast de sucesso
+        toastUtils.success(toast, "Login realizado com sucesso!");
+
         // Pequeno delay antes de redirecionar para a dashboard
         setTimeout(() => {
           router.replace("/(drawer)/admin/dashboard");
@@ -81,11 +87,14 @@ export function useAuthViewModel(): IAuthViewModel {
         }
 
         setAuthError(errorMessage);
+
+        // Exibir toast de erro
+        toastUtils.error(toast, errorMessage);
       } finally {
         setIsLoading(false);
       }
     },
-    [clearAuthError]
+    [clearAuthError, toast]
   );
 
   const logout = useCallback(async () => {
@@ -93,6 +102,10 @@ export function useAuthViewModel(): IAuthViewModel {
       setIsLoading(true);
       await authService.logout();
       clearAuth();
+
+      // Exibir toast de sucesso
+      toastUtils.success(toast, "Logout realizado com sucesso!");
+
       router.replace("/(drawer)/(auth)/login");
     } catch (error: unknown) {
       console.error(error);
@@ -103,10 +116,13 @@ export function useAuthViewModel(): IAuthViewModel {
       }
 
       setAuthError(errorMessage);
+
+      // Exibir toast de erro
+      toastUtils.error(toast, errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   return {
     isLoading,
