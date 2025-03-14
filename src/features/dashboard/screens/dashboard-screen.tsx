@@ -28,6 +28,7 @@ import { DashboardMenuCard } from "../components/dashboard-menu-card";
 import { DashboardSupportCard } from "../components/dashboard-support-card";
 import { useCompanyDetails } from "../hooks/use-company-details";
 import { SimpleDashboardCompanyCard } from "../components/dashboard-company-card";
+import { Box } from "@/components/ui/box";
 
 const { width } = Dimensions.get("window");
 const cardWidth = (width - 48) / 2; // 2 cards por linha com margem total de 48
@@ -109,7 +110,6 @@ export default function DashboardScreen() {
             />
           </View>
 
-          {/* Botão do menu */}
           <TouchableOpacity
             style={styles.menuButton}
             onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
@@ -133,27 +133,29 @@ export default function DashboardScreen() {
           slug={company?.slug}
         />
 
-        {/* Menu Grid */}
-        <View style={styles.menuGrid}>
-          {menuItems.map((item) => (
-            <View key={item.id} style={styles.cardContainer}>
-              <DashboardMenuCard
-                title={item.title}
-                icon={item.icon}
-                color={item.color}
-                onPress={() => router.push(item.path as any)}
-              />
-            </View>
-          ))}
-        </View>
+        <Box className="px-4 pt-2">
+          {/* Menu Grid */}
+          <View style={styles.menuGrid}>
+            {menuItems.map((item) => (
+              <View key={item.id} style={styles.cardContainer}>
+                <DashboardMenuCard
+                  title={item.title}
+                  icon={item.icon}
+                  color={item.color}
+                  onPress={() => router.push(item.path as any)}
+                />
+              </View>
+            ))}
+          </View>
 
-        {/* Support Card */}
-        <View style={styles.supportCardContainer}>
-          <DashboardSupportCard
-            primaryColor={THEME_COLORS.primary}
-            onPress={() => router.push("/(drawer)/support")}
-          />
-        </View>
+          {/* Support Card */}
+          <View style={styles.supportCardContainer}>
+            <DashboardSupportCard
+              primaryColor={THEME_COLORS.primary}
+              onPress={() => router.push("/(drawer)/support")}
+            />
+          </View>
+        </Box>
       </ScrollView>
     </View>
   );
@@ -191,10 +193,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
+  scrollContent: {},
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

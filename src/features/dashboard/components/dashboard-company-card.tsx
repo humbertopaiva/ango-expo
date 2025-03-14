@@ -13,6 +13,7 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { ResilientImage } from "@/components/common/resilient-image";
 import { router } from "expo-router";
 import * as Clipboard from "expo-clipboard";
+import { HStack } from "@gluestack-ui/themed";
 
 interface SimpleDashboardCompanyCardProps {
   name: string;
@@ -102,10 +103,7 @@ export function SimpleDashboardCompanyCard({
       : null;
 
   return (
-    <View
-      className="bg-white rounded-xl mb-4 shadow-sm border border-gray-100 overflow-hidden"
-      style={{ borderTopColor: primaryColor, borderTopWidth: 4 }}
-    >
+    <View className="bg-primary-500 rounded-b-2xl mb-4 shadow-sm overflow-hidden">
       <View className="p-4">
         {/* Conteúdo principal - layout horizontal */}
         <View className="flex-row">
@@ -130,21 +128,26 @@ export function SimpleDashboardCompanyCard({
 
           {/* Informações da empresa à direita */}
           <View className="flex-1">
-            <Text className="text-lg font-bold text-gray-800 mb-1">{name}</Text>
+            <Text className="text-lg font-semibold text-white mb-1">
+              {name}
+            </Text>
 
             <View className="flex-row flex-wrap gap-1 mb-1">
               {/* Badge da categoria */}
               {categoryName && (
-                <View className="flex-row items-center px-2 py-1 rounded-full bg-gray-100">
-                  <Tag size={10} color="#4B5563" className="mr-1" />
-                  <Text className="text-xs text-gray-600">{categoryName}</Text>
-                </View>
+                <HStack
+                  className="flex-row items-center px-2 py-1 rounded-full bg-white/90"
+                  space="xs"
+                >
+                  <Tag size={10} color="#4B5563" />
+                  <Text className="text-sm text-gray-600">{categoryName}</Text>
+                </HStack>
               )}
 
               {/* Subcategorias */}
               {displaySubcategories && (
-                <View className="flex-row items-center px-2 py-1 rounded-full bg-gray-50">
-                  <Text className="text-xs text-gray-500">
+                <View className="flex-row items-center px-2 py-1 rounded-full bg-white/90">
+                  <Text className="text-sm text-gray-500">
                     {displaySubcategories}
                   </Text>
                 </View>
@@ -154,17 +157,14 @@ export function SimpleDashboardCompanyCard({
         </View>
 
         {/* Botões de ação */}
-        <View className="flex-row mt-3 pt-3 gap-2 border-t border-gray-100">
+        <View className="flex-row mt-3 pt-3 gap-2 border-t border-primary-400">
           <TouchableOpacity
             className="flex-1 flex-row items-center justify-center py-2 rounded-lg"
             style={{ backgroundColor: `${primaryColor}15` }}
             onPress={navigateToProfile}
           >
-            <ExternalLink size={14} color={primaryColor} className="mr-1" />
-            <Text
-              style={{ color: primaryColor }}
-              className="text-xs font-medium ml-2"
-            >
+            <ExternalLink size={14} color={"#FFFFFF"} className="mr-1" />
+            <Text className="text-md font-medium ml-2 text-white">
               Ver Perfil
             </Text>
           </TouchableOpacity>
@@ -175,7 +175,7 @@ export function SimpleDashboardCompanyCard({
             onLongPress={copyExternalLink} // Mantém a funcionalidade de cópia em pressão longa
           >
             <Link size={14} color="#6B7280" className="mr-1" />
-            <Text className="text-xs font-medium text-gray-600 ml-2">
+            <Text className="text-md font-medium text-gray-600 ml-2">
               Página de Links
             </Text>
           </TouchableOpacity>
