@@ -16,7 +16,7 @@ export function DashboardSupportCard({
   return (
     <TouchableOpacity
       activeOpacity={0.8}
-      className="bg-primary-100 rounded-xl overflow-hidden shadow-sm mb-6"
+      className="bg-white rounded-xl overflow-hidden shadow-sm mb-6"
       onPress={onPress}
     >
       <HStack space="md" alignItems="center" className="p-4">

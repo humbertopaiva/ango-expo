@@ -25,7 +25,7 @@ export function DashboardReportsButton({
       onPress={handlePress}
     >
       <BarChart size={20} color="white" />
-      <Text className="ml-2 text-white font-semibold text-base">
+      <Text className="ml-2 text-white font-semibold text-md">
         Acessar Relatórios
       </Text>
     </TouchableOpacity>
