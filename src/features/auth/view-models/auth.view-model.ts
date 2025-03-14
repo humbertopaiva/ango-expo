@@ -16,10 +16,15 @@ import {
 
 import useAuthStore from "@/src/stores/auth";
 import { authService } from "../services/auth.service";
+import {
+  ResetPasswordFormData,
+  resetPasswordSchema,
+} from "../schemas/reset-password.schema";
 
 export function useAuthViewModel(): IAuthViewModel {
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [resetSuccess, setResetSuccess] = useState(false);
   const { profile, setAuth, clearAuth } = useAuthStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
   const toast = useToast();
@@ -33,8 +38,20 @@ export function useAuthViewModel(): IAuthViewModel {
     },
   });
 
+  // Reset password form setup
+  const resetPasswordForm = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
   const clearAuthError = useCallback(() => {
     setAuthError(null);
+  }, []);
+
+  const clearResetSuccess = useCallback(() => {
+    setResetSuccess(false);
   }, []);
 
   // Handlers
@@ -124,14 +141,70 @@ export function useAuthViewModel(): IAuthViewModel {
     }
   }, [toast]);
 
+  const onResetPassword = useCallback(
+    async (data: ResetPasswordFormData) => {
+      try {
+        setIsLoading(true);
+        clearAuthError();
+
+        // Adiciona um pequeno delay para tornar a animação do botão perceptível
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        await authService.requestPasswordReset(data.email);
+
+        // Feedback tátil de sucesso
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+
+        // Indica sucesso
+        setResetSuccess(true);
+
+        // Exibir toast de sucesso
+        toastUtils.success(
+          toast,
+          "Instruções de recuperação enviadas para seu e-mail!"
+        );
+      } catch (error: unknown) {
+        console.error(error);
+
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+
+        // Mensagens de erro mais amigáveis
+        let errorMessage = "Ocorreu um erro ao solicitar redefinição de senha.";
+
+        if (error instanceof Error) {
+          if (error.message.includes("network")) {
+            errorMessage =
+              "Falha na conexão. Verifique sua internet e tente novamente.";
+          } else {
+            errorMessage = error.message;
+          }
+        }
+
+        setAuthError(errorMessage);
+        toastUtils.error(toast, errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [clearAuthError, toast]
+  );
+
   return {
     isLoading,
     isAuthenticated,
     authError,
+    resetSuccess,
     form,
+    resetPasswordForm,
     onSubmit,
+    onResetPassword,
     logout,
     clearAuthError,
+    clearResetSuccess,
     profile,
   };
 }

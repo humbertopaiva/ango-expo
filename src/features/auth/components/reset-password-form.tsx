@@ -1,4 +1,4 @@
-// src/features/auth/components/login-form.tsx
+// Path: src/features/auth/components/reset-password-form.tsx
 import React, { useEffect } from "react";
 import {
   View,
@@ -6,52 +6,57 @@ import {
   TextInput,
   TouchableOpacity,
   Platform,
-  SafeAreaView,
-  Dimensions,
-  Image,
-  StyleSheet,
   Animated,
-  Keyboard,
+  Image,
   KeyboardAvoidingView,
   ScrollView,
 } from "react-native";
 import { Controller } from "react-hook-form";
 import {
   Mail,
-  Lock,
-  ArrowRight,
   AlertCircle,
+  ArrowRight,
   ArrowLeft,
+  Send,
 } from "lucide-react-native";
-import { IAuthViewModel } from "../view-models/auth.view-model.interface";
 import { LinearGradient } from "expo-linear-gradient";
 import { THEME_COLORS } from "@/src/styles/colors";
-import * as Haptics from "expo-haptics";
+import { IAuthViewModel } from "../view-models/auth.view-model.interface";
 import { Box } from "@/components/ui/box";
 import { router } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-interface LoginFormProps {
+interface ResetPasswordFormProps {
   viewModel: IAuthViewModel;
 }
 
-export function LoginForm({ viewModel }: LoginFormProps) {
-  const { form, isLoading, onSubmit, authError, clearAuthError } = viewModel;
+export function ResetPasswordForm({ viewModel }: ResetPasswordFormProps) {
+  const {
+    resetPasswordForm,
+    isLoading,
+    onResetPassword,
+    authError,
+    clearAuthError,
+    resetSuccess,
+  } = viewModel;
+
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = form;
-
-  const windowWidth = Dimensions.get("window").width;
-  const windowHeight = Dimensions.get("window").height;
-  const isWeb = Platform.OS === "web";
-  const isWideScreen = isWeb && windowWidth >= 1024;
+  } = resetPasswordForm;
 
   // Animações
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(30)).current;
   const errorSlideAnim = React.useRef(new Animated.Value(-100)).current;
   const errorFadeAnim = React.useRef(new Animated.Value(0)).current;
+  const successFadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  // Dimensões e plataforma
+  const isWeb = Platform.OS === "web";
+  const isWideScreen =
+    isWeb && typeof window !== "undefined" && window.innerWidth >= 1024;
 
   // Animação de entrada
   useEffect(() => {
@@ -85,11 +90,6 @@ export function LoginForm({ viewModel }: LoginFormProps) {
         }),
       ]).start();
 
-      // Feedback tátil para o erro
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-
       // Auto-esconder o erro após 5 segundos
       const timer = setTimeout(() => {
         Animated.parallel([
@@ -112,13 +112,18 @@ export function LoginForm({ viewModel }: LoginFormProps) {
     }
   }, [authError]);
 
-  const handleFormSubmit = (data: any) => {
-    Keyboard.dismiss();
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  // Animação de sucesso
+  useEffect(() => {
+    if (resetSuccess) {
+      Animated.timing(successFadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      successFadeAnim.setValue(0);
     }
-    onSubmit(data);
-  };
+  }, [resetSuccess]);
 
   const WelcomeSection = () => (
     <Animated.View
@@ -148,18 +153,47 @@ export function LoginForm({ viewModel }: LoginFormProps) {
 
       {/* Welcome text */}
       <Text className="text-3xl font-semibold text-center text-white mb-3">
-        Bem-vindo de volta!
+        Recuperar Senha
       </Text>
       <Text className="text-base text-white text-center font-sans opacity-90 px-6">
-        Gerencie sua loja e acompanhe seus negócios em um só lugar.
+        Informe seu e-mail para receber instruções de recuperação de senha.
       </Text>
     </Animated.View>
   );
 
-  const LoginContainer = () => {
+  const FormContainer = () => {
     const containerAnimation = isWideScreen
       ? { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
       : { opacity: fadeAnim };
+
+    // Se o resetSuccess for true, mostra a mensagem de sucesso
+    if (resetSuccess) {
+      return (
+        <Animated.View
+          style={{ ...containerAnimation, opacity: successFadeAnim }}
+          className="w-full bg-green-50 p-6 rounded-xl border border-green-200"
+        >
+          <View className="items-center justify-center">
+            <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center mb-4">
+              <Send size={32} color="#22C55E" />
+            </View>
+            <Text className="text-xl font-semibold text-green-800 mb-2 text-center">
+              E-mail enviado com sucesso!
+            </Text>
+            <Text className="text-green-700 text-center mb-6">
+              Verifique sua caixa de entrada e siga as instruções para recuperar
+              sua senha.
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="bg-green-600 py-3 px-6 rounded-lg"
+            >
+              <Text className="text-white font-medium">Voltar para login</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      );
+    }
 
     return (
       <Animated.View
@@ -171,10 +205,10 @@ export function LoginForm({ viewModel }: LoginFormProps) {
         {/* Header */}
         <View className="mb-8">
           <Text className="text-2xl font-semibold text-center text-gray-900">
-            Login
+            Recuperar Senha
           </Text>
           <Text className="text-md text-center font-sans text-gray-500 mt-2">
-            Acesse sua conta para gerenciar sua loja
+            Enviaremos um link para você redefinir sua senha
           </Text>
         </View>
 
@@ -220,62 +254,13 @@ export function LoginForm({ viewModel }: LoginFormProps) {
               </View>
             )}
           />
-
-          {/* Password Field */}
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, value } }) => (
-              <View className="space-y-2">
-                <Text className="text-sm font-medium text-gray-700 mb-1">
-                  Senha
-                </Text>
-                <View className="relative">
-                  <View className="absolute left-3 top-3 z-10">
-                    <Lock
-                      size={20}
-                      color={errors.password ? "#EF4444" : "#6B7280"}
-                    />
-                  </View>
-                  <TextInput
-                    className={`w-full h-14 pl-10 pr-4 bg-gray-50 border rounded-xl text-gray-900
-                      ${
-                        errors.password
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-300"
-                      }`}
-                    secureTextEntry
-                    placeholder="Sua senha"
-                    value={value}
-                    onChangeText={onChange}
-                    placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-                {errors.password && (
-                  <Text className="text-sm text-red-500 flex-row items-center mt-2">
-                    <AlertCircle size={14} color="#EF4444" />{" "}
-                    {errors.password.message}
-                  </Text>
-                )}
-              </View>
-            )}
-          />
-
-          {/* Forgot Password Link */}
-          <TouchableOpacity
-            onPress={() => router.push("/(drawer)/(auth)/reset-password")}
-          >
-            <Text className="text-center text-md font-medium text-primary-600 mb-2">
-              Esqueceu sua senha?
-            </Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Submit Button - Estilo similar ao PrimaryActionButton */}
+        {/* Submit Button */}
         <View className="mt-4">
           <TouchableOpacity
             className={`w-full rounded-xl overflow-hidden`}
-            onPress={handleSubmit(handleFormSubmit)}
+            onPress={handleSubmit(onResetPassword)}
             disabled={isLoading}
             activeOpacity={0.8}
           >
@@ -294,13 +279,20 @@ export function LoginForm({ viewModel }: LoginFormProps) {
             >
               <View className="flex-row items-center px-4">
                 <Text className="text-white font-semibold mr-2 text-xl">
-                  {isLoading ? "Entrando..." : "Entrar"}
+                  {isLoading ? "Enviando..." : "Enviar"}
                 </Text>
-                {!isLoading && <ArrowRight size={20} color="white" />}
+                {!isLoading && <Send size={20} color="white" />}
               </View>
             </LinearGradient>
           </TouchableOpacity>
         </View>
+
+        {/* Voltar para login */}
+        <TouchableOpacity onPress={() => router.back()} className="mt-6">
+          <Text className="text-center text-primary-600 font-medium">
+            Voltar para o login
+          </Text>
+        </TouchableOpacity>
       </Animated.View>
     );
   };
@@ -357,9 +349,9 @@ export function LoginForm({ viewModel }: LoginFormProps) {
           </View>
         </View>
 
-        {/* Right side - Login form */}
+        {/* Right side - Form */}
         <View className="w-1/2 bg-gray-50 items-center justify-center p-8">
-          <LoginContainer />
+          <FormContainer />
         </View>
       </View>
     );
@@ -392,7 +384,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
           <View className="flex-1 items-center px-6 pt-8">
             <WelcomeSection />
             <Box className="bg-white w-full flex-1 p-8 rounded-t-xl">
-              <LoginContainer />
+              <FormContainer />
               <Box className=" flex-1 flex justify-end items-center">
                 <Text className="text-sm font-medium text-gray-500">
                   Desenvolvido com ❤️ em Lima Duarte
@@ -405,13 +397,3 @@ export function LoginForm({ viewModel }: LoginFormProps) {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  gradient: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-});
