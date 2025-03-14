@@ -31,7 +31,9 @@ export function DashboardMenuCard({
       <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
         <Icon size={24} color={color} />
       </View>
-      <Text style={styles.cardTitle}>{title}</Text>
+      <Text style={styles.cardTitle} className="font-semibold">
+        {title}
+      </Text>
       <ArrowRight size={16} color="#9CA3AF" style={styles.cardIcon} />
     </TouchableOpacity>
   );
@@ -71,7 +73,6 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: "600",
     color: "#374151",
     marginTop: 8,
   },

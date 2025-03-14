@@ -36,7 +36,7 @@ export function DashboardStatCard({
         <View className="flex-row justify-between items-start">
           <View>
             <Text className="text-sm text-gray-600">{title}</Text>
-            <Text className="text-2xl font-bold mt-1">{value}</Text>
+            <Text className="text-2xl font-semilbold mt-1">{value}</Text>
             {subtitle && (
               <Text className="text-xs text-gray-500 mt-1">{subtitle}</Text>
             )}
