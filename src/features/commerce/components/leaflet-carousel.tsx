@@ -6,8 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
-  Platform,
   Modal,
+  ActivityIndicator,
+  FlatList,
 } from "react-native";
 import { FileText, ChevronRight, X, Share2 } from "lucide-react-native";
 import { Card, HStack } from "@gluestack-ui/themed";
@@ -18,11 +19,19 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ImageViewer from "react-native-image-zoom-viewer";
 import { IImageInfo } from "react-native-image-zoom-viewer/built/image-viewer.type";
-import { ActivityIndicator, FlatList } from "react-native";
+
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system";
+import { WebViewPdfViewer } from "@/components/pdf/webview-pdf-viewer";
 
 interface LeafletCarouselProps {
   leaflets: Leaflet[];
   isLoading: boolean;
+}
+
+// Estenda o modelo Leaflet para incluir o campo PDF
+interface ExtendedLeaflet extends Leaflet {
+  pdf?: string; // URL para o PDF do encarte
 }
 
 export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
@@ -30,12 +39,14 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
   const [screenWidth, setScreenWidth] = useState(
     Dimensions.get("window").width
   );
-  const [selectedLeaflet, setSelectedLeaflet] = useState<Leaflet | null>(null);
+  const [selectedLeaflet, setSelectedLeaflet] =
+    useState<ExtendedLeaflet | null>(null);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [leafletImages, setLeafletImages] = useState<IImageInfo[]>([]);
+  const [isSharing, setIsSharing] = useState(false);
 
-  // Atualizar largura da tela quando houver mudanças (importante para web)
+  // Atualizar largura da tela quando houver mudanças
   useEffect(() => {
     const handleDimensionsChange = ({ window }: any) => {
       setScreenWidth(window.width);
@@ -51,28 +62,20 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
 
   // Calcular a largura do item baseado na tela
   const calculateItemWidth = () => {
-    // Em telas menores, usamos uma proporção maior da tela
     if (screenWidth < 768) {
-      return screenWidth * 0.75; // 75% da largura da tela em dispositivos móveis
-    }
-    // Em telas médias
-    else if (screenWidth < 1024) {
-      return 280; // Tamanho fixo
-    }
-    // Em telas grandes
-    else {
-      return 320; // Tamanho fixo maior
+      return screenWidth * 0.75;
+    } else if (screenWidth < 1024) {
+      return 280;
+    } else {
+      return 320;
     }
   };
 
   const itemWidth = calculateItemWidth();
-
-  // Determinar altura baseada numa proporção fixa (3:4)
   const itemHeight = itemWidth * (4 / 3);
 
   // Função para preparar as imagens do encarte
-  const prepareLeafletImages = (leaflet: Leaflet) => {
-    // Mapear todos os campos de imagem possíveis
+  const prepareLeafletImages = (leaflet: ExtendedLeaflet) => {
     const imageFields = [
       "imagem_01",
       "imagem_02",
@@ -86,7 +89,6 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
       "imagem_10",
     ];
 
-    // Filtrar apenas as propriedades que existem e têm valor
     const images = imageFields
       .map((field) => {
         const imageUrl = leaflet[field as keyof Leaflet];
@@ -100,8 +102,14 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
     return images;
   };
 
-  // Função para abrir o visualizador de encarte
-  const handleOpenEncarte = (leaflet: Leaflet) => {
+  // Função para abrir o visualizador
+  const handleOpenEncarte = (leaflet: ExtendedLeaflet) => {
+    if (leaflet.pdf) {
+      setSelectedLeaflet(leaflet);
+      setViewerVisible(true);
+      return;
+    }
+
     const images = prepareLeafletImages(leaflet);
     if (images.length > 0) {
       setLeafletImages(images);
@@ -116,10 +124,44 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
     setViewerVisible(false);
   };
 
-  // Função para compartilhar o encarte
-  const handleShare = () => {
-    // Implementação futura para compartilhamento
-    console.log("Compartilhar encarte:", selectedLeaflet?.nome);
+  // Função para compartilhar
+  const handleShare = async () => {
+    if (!selectedLeaflet) return;
+
+    try {
+      setIsSharing(true);
+
+      if (selectedLeaflet.pdf) {
+        const fileName = `encarte_${selectedLeaflet.id}.pdf`;
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+        await FileSystem.downloadAsync(selectedLeaflet.pdf, fileUri);
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "application/pdf",
+            dialogTitle: `Encarte: ${selectedLeaflet.nome}`,
+          });
+        }
+      } else if (leafletImages.length > 0) {
+        const currentImage = leafletImages[currentPage].url;
+        const fileName = `encarte_${selectedLeaflet.id}_${currentPage}.jpg`;
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+        await FileSystem.downloadAsync(currentImage, fileUri);
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "image/jpeg",
+            dialogTitle: `Encarte: ${selectedLeaflet.nome}`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao compartilhar encarte:", error);
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   if (isLoading) {
@@ -203,58 +245,71 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
         contentContainerStyle={{ paddingHorizontal: 16 }}
       >
         <View className="flex-row py-2 pb-4">
-          {leaflets.map((leaflet, index) => (
-            <TouchableOpacity
-              key={leaflet.id}
-              style={{
-                width: itemWidth,
-                marginRight: index < leaflets.length - 1 ? 16 : 0,
-              }}
-              onPress={() => handleOpenEncarte(leaflet)}
-              activeOpacity={0.8}
-            >
-              <Card className="w-full overflow-hidden border border-gray-200 shadow-sm rounded-xl">
-                <View
-                  style={{
-                    width: itemWidth,
-                    height: itemHeight,
-                  }}
-                  className="relative"
-                >
-                  {leaflet.imagem_01 ? (
-                    <ImagePreview
-                      uri={leaflet.imagem_01}
-                      width="100%"
-                      height="100%"
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View className="w-full h-full items-center justify-center bg-gray-100">
-                      <FileText size={48} color="#6B7280" />
-                    </View>
-                  )}
+          {leaflets.map((leaflet, index) => {
+            const extendedLeaflet = leaflet as ExtendedLeaflet;
 
-                  <View className="absolute top-3 right-3 bg-secondary-500 rounded-full px-3 py-1">
-                    <Text className="text-white text-xs font-medium">
-                      Até {new Date(leaflet.validade).toLocaleDateString()}
-                    </Text>
+            return (
+              <TouchableOpacity
+                key={leaflet.id}
+                style={{
+                  width: itemWidth,
+                  marginRight: index < leaflets.length - 1 ? 16 : 0,
+                }}
+                onPress={() => handleOpenEncarte(extendedLeaflet)}
+                activeOpacity={0.8}
+              >
+                <Card className="w-full overflow-hidden border border-gray-200 shadow-sm rounded-xl">
+                  <View
+                    style={{
+                      width: itemWidth,
+                      height: itemHeight,
+                    }}
+                    className="relative"
+                  >
+                    {leaflet.imagem_01 ? (
+                      <ImagePreview
+                        uri={leaflet.imagem_01}
+                        width="100%"
+                        height="100%"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="w-full h-full items-center justify-center bg-gray-100">
+                        <FileText size={48} color="#6B7280" />
+                      </View>
+                    )}
+
+                    {/* Badge para PDF */}
+                    {extendedLeaflet.pdf && (
+                      <View className="absolute top-3 left-3 bg-red-500 rounded-full px-3 py-1">
+                        <Text className="text-white text-xs font-medium">
+                          PDF
+                        </Text>
+                      </View>
+                    )}
+
+                    <View className="absolute top-3 right-3 bg-secondary-500 rounded-full px-3 py-1">
+                      <Text className="text-white text-xs font-medium">
+                        Até {new Date(leaflet.validade).toLocaleDateString()}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                <View className="p-4">
-                  <Text className="font-medium text-lg mb-1">
-                    {leaflet.nome}
-                  </Text>
-                  <View className="flex-row items-center justify-between mt-2">
-                    <Text className="text-sm text-gray-500">
-                      Válido até{" "}
-                      {new Date(leaflet.validade).toLocaleDateString()}
+                  <View className="p-4">
+                    <Text className="font-medium text-lg mb-1">
+                      {leaflet.nome}
                     </Text>
-                    <ChevronRight size={16} color="#6B7280" />
+                    <View className="flex-row items-center justify-between mt-2">
+                      <Text className="text-sm text-gray-500">
+                        Válido até{" "}
+                        {new Date(leaflet.validade).toLocaleDateString()}
+                      </Text>
+                      <ChevronRight size={16} color="#6B7280" />
+                    </View>
                   </View>
-                </View>
-              </Card>
-            </TouchableOpacity>
-          ))}
+                </Card>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -269,7 +324,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
         <ChevronRight size={16} color="white" />
       </TouchableOpacity>
 
-      {/* Visualizador de Encarte */}
+      {/* Visualizador Modal */}
       {selectedLeaflet && viewerVisible && (
         <Modal
           visible={viewerVisible}
@@ -301,68 +356,92 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
               <TouchableOpacity
                 onPress={handleShare}
                 className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
+                disabled={isSharing}
               >
-                <Share2 size={20} color="#FFF" />
+                {isSharing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Share2 size={20} color="#FFF" />
+                )}
               </TouchableOpacity>
             </View>
 
-            {/* Visualizador de imagens com zoom */}
+            {/* Conteúdo do Visualizador */}
             <View className="flex-1">
-              <ImageViewer
-                imageUrls={leafletImages}
-                index={currentPage}
-                onChange={(index) => setCurrentPage(index as number)}
-                backgroundColor="#000"
-                renderIndicator={(currentIndex: any, allSize) => (
-                  <View className="absolute top-4 right-4 px-2 py-1 bg-black bg-opacity-70 rounded-full">
-                    <Text className="text-white text-xs">
-                      {currentIndex + 1}/{allSize}
-                    </Text>
-                  </View>
-                )}
-                loadingRender={() => (
-                  <ActivityIndicator
-                    size="large"
-                    color={THEME_COLORS.secondary}
+              {selectedLeaflet.pdf ? (
+                // Visualizador de PDF usando WebView
+                <WebViewPdfViewer pdfUrl={selectedLeaflet.pdf} />
+              ) : (
+                // Visualizador de imagens
+                <>
+                  <ImageViewer
+                    imageUrls={leafletImages}
+                    index={currentPage}
+                    onChange={(index?: number) => {
+                      if (index !== undefined) {
+                        setCurrentPage(index);
+                      }
+                    }}
+                    backgroundColor="#000"
+                    renderIndicator={(currentIndex: any, allSize) => (
+                      <View className="absolute top-4 right-4 px-2 py-1 bg-black bg-opacity-70 rounded-full">
+                        <Text className="text-white text-xs">
+                          {currentIndex + 1}/{allSize}
+                        </Text>
+                      </View>
+                    )}
+                    loadingRender={() => (
+                      <ActivityIndicator
+                        size="large"
+                        color={THEME_COLORS.secondary}
+                      />
+                    )}
+                    enableSwipeDown
+                    onSwipeDown={handleCloseViewer}
+                    saveToLocalByLongPress={false}
+                    pageAnimateTime={200}
                   />
-                )}
-                enableSwipeDown
-                onSwipeDown={handleCloseViewer}
-                saveToLocalByLongPress={false}
-                pageAnimateTime={200}
-              />
-            </View>
 
-            {/* Miniaturas para navegação */}
-            <View className="h-20 bg-black">
-              <FlatList
-                data={leafletImages}
-                keyExtractor={(_, index) => `thumb_${index}`}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 10 }}
-                renderItem={({ item, index }) => (
-                  <TouchableOpacity
-                    className={`mx-1 rounded-md overflow-hidden border-2 ${
-                      currentPage === index
-                        ? "border-secondary-500"
-                        : "border-transparent"
-                    }`}
-                    style={{ width: 60, height: 60 }}
-                    onPress={() => setCurrentPage(index)}
-                  >
-                    <ImagePreview
-                      uri={item.url}
-                      width="100%"
-                      height="100%"
-                      resizeMode="cover"
-                    />
-                    <View className="absolute bottom-0 right-0 bg-black bg-opacity-60 px-1">
-                      <Text className="text-white text-xs">{index + 1}</Text>
+                  {/* Miniaturas para navegação entre imagens */}
+                  {leafletImages.length > 1 && (
+                    <View className="h-20 bg-black">
+                      <FlatList
+                        data={leafletImages}
+                        keyExtractor={(_, index) => `thumb_${index}`}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{
+                          paddingHorizontal: 10,
+                          paddingVertical: 8,
+                        }}
+                        renderItem={({ item, index }) => (
+                          <TouchableOpacity
+                            className={`mx-1 rounded-md overflow-hidden border-2 ${
+                              currentPage === index
+                                ? "border-secondary-500"
+                                : "border-transparent"
+                            }`}
+                            style={{ width: 60, height: 60 }}
+                            onPress={() => setCurrentPage(index)}
+                          >
+                            <ImagePreview
+                              uri={item.url}
+                              width="100%"
+                              height="100%"
+                              resizeMode="cover"
+                            />
+                            <View className="absolute bottom-0 right-0 bg-black bg-opacity-60 px-1">
+                              <Text className="text-white text-xs">
+                                {index + 1}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        )}
+                      />
                     </View>
-                  </TouchableOpacity>
-                )}
-              />
+                  )}
+                </>
+              )}
             </View>
           </SafeAreaView>
         </Modal>

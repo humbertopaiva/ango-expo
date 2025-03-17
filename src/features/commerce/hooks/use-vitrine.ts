@@ -51,8 +51,6 @@ export function useVitrine() {
 
       setCompaniesWithVitrine(filteredCompanies);
     }
-
-    console.log("EMPRESAS VITRINE", companies);
   }, [companies, isLoadingCompanies, isAllQueriesSettled]);
 
   return {

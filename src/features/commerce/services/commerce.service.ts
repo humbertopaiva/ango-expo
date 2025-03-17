@@ -20,6 +20,7 @@ class CommerceService {
   async getLatestLeaflets() {
     try {
       const response = await api.get("/api/encartes/ultimos");
+      console.log("XERECA", response.data.data);
       return response.data.data as Leaflet[];
     } catch (error) {
       console.error("Erro ao buscar encartes:", error);
