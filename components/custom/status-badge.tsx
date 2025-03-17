@@ -3,7 +3,7 @@ import React from "react";
 import { View, Text, ViewProps } from "react-native";
 
 interface StatusBadgeProps extends ViewProps {
-  status: "aberto" | "fechado" | "disponivel" | "indisponivel" | "info";
+  status: string;
   customLabel?: string;
   className?: string;
   textClassName?: string;
