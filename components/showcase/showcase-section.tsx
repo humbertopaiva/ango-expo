@@ -11,8 +11,6 @@ import { CompanyVitrineCard } from "./company-showcase-card";
 export function EnhancedVitrineSection() {
   const { companiesWithVitrine, isLoading } = useVitrine();
 
-  console.log("EMPRESAS COM VITRINE", companiesWithVitrine);
-
   if (isLoading) {
     return (
       <View className="py-8">

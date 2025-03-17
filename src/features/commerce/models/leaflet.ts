@@ -7,4 +7,5 @@ export interface Leaflet {
   imagem_01: string | null;
   banner: string | null;
   date_created: string;
+  pdf?: string;
 }
