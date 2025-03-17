@@ -4,15 +4,11 @@ import { ShowcaseItem } from "../models/showcase-item";
 import { ShowcaseCompany } from "../models/showcase-company";
 
 class VitrineService {
-  async getRecentVitrines(limit: number = 5): Promise<ShowcaseCompany[]> {
+  async getRecentVitrines(limit: number = 10): Promise<ShowcaseCompany[]> {
     try {
       // Primeiro buscamos as empresas com vitrines atualizadas recentemente
       const response = await api.get("/api/companies/latest/showcase");
       const showcaseCompanies = response.data.data
-        .filter(
-          (item: any) =>
-            item.status === "published" && item.empresa.status === "on"
-        )
         .map((item: any) => ({
           id: item.empresa.id,
           nome: item.empresa.nome,
