@@ -23,14 +23,14 @@ export function CommerceScreenContent() {
         showsVerticalScrollIndicator={false}
       >
         {/* Banner Promocional */}
-        {/* <View className="px-4 pt-4">
+        <View className="px-4 pt-4">
           <PromotionalBanner />
-        </View> */}
+        </View>
 
         {/* Categorias */}
-        {/* <Section className="my-6">
+        <Section className="my-6">
           <CategoryGrid categories={vm.categories} isLoading={vm.isLoading} />
-        </Section> */}
+        </Section>
 
         {/* Últimos Encartes */}
         <Section className="my-6 bg-secondary-50 py-10">
@@ -41,7 +41,7 @@ export function CommerceScreenContent() {
         </Section>
 
         {/* Vitrines Aprimoradas */}
-        {/* <EnhancedVitrineSection /> */}
+        <EnhancedVitrineSection />
       </ScrollView>
     </SafeAreaView>
   );
