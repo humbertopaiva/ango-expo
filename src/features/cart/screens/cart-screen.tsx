@@ -26,7 +26,14 @@ import {
   CreditCard,
 } from "lucide-react-native";
 import ScreenHeader from "@/components/ui/screen-header";
-import { Card, Button, VStack, HStack, Divider } from "@gluestack-ui/themed";
+import {
+  Card,
+  Button,
+  VStack,
+  HStack,
+  Divider,
+  useToast,
+} from "@gluestack-ui/themed";
 import { useCartViewModel } from "../view-models/use-cart-view-model";
 import { useOrderViewModel } from "@/src/features/orders/view-models/use-order-view-model";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -36,6 +43,7 @@ import { Package } from "lucide-react-native";
 import { getContrastColor } from "@/src/utils/color.utils";
 import { CartItem } from "../models/cart";
 import { useMultiCartStore } from "../stores/cart.store";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 /**
  * Item individual do carrinho
@@ -211,6 +219,8 @@ export function CartScreen() {
   const insets = useSafeAreaInsets();
   const { width } = Dimensions.get("window");
 
+  const toast = useToast();
+
   // Efeito para definir o carrinho ativo com base no slug da URL
   useEffect(() => {
     if (companySlug) {
@@ -280,6 +290,32 @@ export function CartScreen() {
       );
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleRemoveItemWithToast = (itemId: string) => {
+    // Encontrar o item para obter o nome antes de remover
+    const item = cart.items.find((item) => item.id === itemId);
+
+    // Remover do carrinho
+    cart.removeItem(itemId);
+
+    // Mostrar toast se o item foi encontrado
+    if (item) {
+      toastUtils.info(toast, `${item.name} removido do carrinho`);
+    }
+  };
+
+  const handleUpdateQuantityWithToast = (itemId: string, quantity: number) => {
+    // Encontrar o item para obter o nome
+    const item = cart.items.find((item) => item.id === itemId);
+
+    // Atualizar quantidade
+    cart.updateQuantity(itemId, quantity);
+
+    // Mostrar toast se o item foi encontrado
+    if (item) {
+      toastUtils.success(toast, `Agora você tem ${quantity}x ${item.name}`);
     }
   };
 
@@ -357,58 +393,13 @@ export function CartScreen() {
                 <CartItemComponent
                   key={item.id}
                   item={item}
-                  onRemove={cart.removeItem}
-                  onUpdateQuantity={cart.updateQuantity}
+                  onRemove={handleRemoveItemWithToast}
+                  onUpdateQuantity={handleUpdateQuantityWithToast}
                   onUpdateObservation={cart.updateObservation}
                   primaryColor={primaryColor}
                 />
               ))}
             </View>
-
-            {/* Área de cupom */}
-            <Card className="mb-4 overflow-hidden border border-gray-100">
-              <TouchableOpacity
-                onPress={() => setShowCouponInput(!showCouponInput)}
-                className="flex-row justify-between items-center p-4"
-              >
-                <HStack space="sm" alignItems="center">
-                  <Tag size={20} color={primaryColor} />
-                  <Text className="font-medium text-gray-800">
-                    {isCouponValid
-                      ? "Cupom aplicado"
-                      : "Adicionar cupom de desconto"}
-                  </Text>
-                </HStack>
-
-                <ChevronRight
-                  size={20}
-                  color="#9CA3AF"
-                  style={{
-                    transform: [{ rotate: showCouponInput ? "90deg" : "0deg" }],
-                  }}
-                />
-              </TouchableOpacity>
-
-              {showCouponInput && (
-                <View className="p-4 pt-0 border-t border-gray-100">
-                  <HStack space="sm">
-                    <TextInput
-                      value={couponCode}
-                      onChangeText={setCouponCode}
-                      placeholder="Código do cupom"
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-gray-700 bg-white"
-                    />
-                    <TouchableOpacity
-                      onPress={handleApplyCoupon}
-                      className="py-2 px-4 rounded-lg"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      <Text className="text-white font-medium">Aplicar</Text>
-                    </TouchableOpacity>
-                  </HStack>
-                </View>
-              )}
-            </Card>
 
             {/* Resumo do pedido */}
             <Card className="p-4 border border-gray-100 mb-4">
@@ -447,22 +438,6 @@ export function CartScreen() {
                   </Text>
                 </HStack>
               </VStack>
-            </Card>
-
-            {/* Forma de pagamento (mockado) */}
-            <Card className="p-4 border border-gray-100 mb-4">
-              <HStack className="justify-between items-center">
-                <HStack space="sm" alignItems="center">
-                  <CreditCard size={20} color={primaryColor} />
-                  <Text className="font-medium text-gray-800">
-                    Forma de pagamento
-                  </Text>
-                </HStack>
-
-                <TouchableOpacity>
-                  <Text style={{ color: primaryColor }}>Escolher</Text>
-                </TouchableOpacity>
-              </HStack>
             </Card>
           </ScrollView>
         )}

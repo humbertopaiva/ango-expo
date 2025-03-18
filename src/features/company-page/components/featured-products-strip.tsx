@@ -68,25 +68,14 @@ export function FeaturedProductsStrip() {
   const primaryColor = vm.primaryColor || "#F4511E";
 
   return (
-    <View className="">
+    <View style={{ backgroundColor: primaryColor }} className="mt-8">
       {/* Container com fundo colorido baseado na cor primária da empresa */}
-      <View className="pt-6 pb-8 overflow-hidden">
+      <View className="pt-8 pb-8 overflow-hidden">
         {/* Cabeçalho com textos */}
         <View className="px-4 mb-4">
-          <HStack className="items-center justify-between mb-3">
-            {/* Seção de título com ícone de destaque */}
-            <HStack className="items-center gap-2">
-              <View className="p-2 rounded-full bg-white/20">
-                <Sparkles size={18} color={primaryColor} />
-              </View>
-              <Text
-                className={`text-2xl font-semibold`}
-                style={{ color: primaryColor }}
-              >
-                Produtos em Destaque
-              </Text>
-            </HStack>
-          </HStack>
+          <Text className={`text-2xl font-semibold text-white`}>
+            Produtos em Destaque
+          </Text>
         </View>
 
         {/* Lista horizontal de produtos */}
@@ -97,10 +86,7 @@ export function FeaturedProductsStrip() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
               paddingHorizontal: 16,
-              paddingBottom: 12,
-              paddingTop: 8,
             }}
-            className="py-2"
             decelerationRate="fast"
             snapToInterval={getCardWidth() + 16} // Snap to each card
             snapToAlignment="center"

@@ -206,11 +206,11 @@ export function ProductsByCategory({
   const hasCategories = Object.keys(getFilteredProducts).length > 0;
 
   return (
-    <View className="mb-8">
+    <View className="mb-8 mt-8">
       {/* Header e barra de pesquisa */}
       <View className="px-4 mb-4">
         <HStack className="items-center justify-between mb-6">
-          <Text className="text-xl font-semibold text-gray-800">{title}</Text>
+          <Text className="text-2xl font-semibold text-gray-800">{title}</Text>
         </HStack>
 
         {/* Barra de pesquisa melhorada */}
