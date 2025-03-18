@@ -123,7 +123,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
       <View
         className="absolute top-4 right-4 px-3 py-1 rounded-full flex-row items-center"
         style={{
-          backgroundColor: `${statusColor}20`,
+          backgroundColor: `${statusColor}70`,
         }}
       >
         <View
@@ -157,7 +157,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
               </Text>
 
               {vm.profile.empresa?.categoria && (
-                <Text className="text-sm text-gray-600 mb-1">
+                <Text className="text-sm text-gray-600 mb-1 font-sans">
                   {vm.profile.empresa.categoria.nome}
                 </Text>
               )}
@@ -168,7 +168,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                     key={sub.subcategorias_empresas_id.id}
                     className="px-2 py-0.5 bg-gray-100 rounded-full"
                   >
-                    <Text className="text-xs text-gray-700">
+                    <Text className="text-xs text-gray-700 font-sans">
                       {sub.subcategorias_empresas_id.nome}
                     </Text>
                   </View>
@@ -193,7 +193,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
             {/* Mais informações */}
             <TouchableOpacity
               onPress={onMoreInfoPress}
-              className="flex-1 py-3 bg-gray-50 rounded-lg flex-row justify-center items-center"
+              className="flex-1 py-3 bg-gray-100 rounded-lg flex-row justify-center items-center"
             >
               <Info size={18} color={primaryColor} />
               <Text

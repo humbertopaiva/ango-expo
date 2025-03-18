@@ -100,7 +100,7 @@ export function CompanyPageContent() {
           )}
 
           {/* Produtos agrupados por categoria */}
-          <ProductsByCategory title={"Nossos Produtos"} />
+          <ProductsByCategory title={"Produtos"} />
         </View>
       </ScrollView>
 

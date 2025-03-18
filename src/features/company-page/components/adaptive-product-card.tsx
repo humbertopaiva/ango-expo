@@ -8,7 +8,7 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { Card, HStack } from "@gluestack-ui/themed";
+import { Card, HStack, useToast } from "@gluestack-ui/themed";
 import { Package, Star, ShoppingBag } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { CompanyProduct } from "../models/company-product";
@@ -17,6 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { getContrastColor } from "@/src/utils/color.utils";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 interface AdaptiveProductCardProps {
   product: CompanyProduct;
@@ -37,6 +38,8 @@ export function AdaptiveProductCard({
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
   const { width } = Dimensions.get("window");
   const isWeb = Platform.OS === "web";
+
+  const toast = useToast();
 
   // Formatação de moeda
   const formatCurrency = (value: string) => {
@@ -60,7 +63,8 @@ export function AdaptiveProductCard({
   // Navegar para a página de detalhes do produto
   const handleProductPress = () => {
     router.push({
-      pathname: `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}`,
+      pathname:
+        `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}` as any,
       params: { productId: product.id },
     });
   };
@@ -71,6 +75,8 @@ export function AdaptiveProductCard({
     if (!product || !vm.profile) return;
 
     cartVm.addProduct(product, vm.profile.empresa.slug, vm.profile.nome);
+    // Mostrar toast usando toastUtils
+    toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
   };
 
   const contrastTextColor = getContrastColor(vm.primaryColor || "#F4511E");

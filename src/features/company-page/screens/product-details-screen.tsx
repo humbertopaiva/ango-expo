@@ -27,7 +27,7 @@ import {
   MessageSquare,
   Heart,
 } from "lucide-react-native";
-import { HStack, VStack, Button } from "@gluestack-ui/themed";
+import { HStack, VStack, Button, useToast } from "@gluestack-ui/themed";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
@@ -37,6 +37,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getContrastColor } from "@/src/utils/color.utils";
 import { animationUtils } from "@/src/utils/animations.utils";
 import { LinearGradient } from "expo-linear-gradient";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -56,6 +57,8 @@ export function ProductDetailsScreen() {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const imageScaleAnim = useRef(new Animated.Value(0.9)).current;
   const buttonScaleAnim = useRef(new Animated.Value(0.95)).current;
+
+  const toast = useToast();
 
   // Carregar dados do produto
   useEffect(() => {
@@ -164,21 +167,8 @@ export function ProductDetailsScreen() {
       observation.trim()
     );
 
-    // Mostrar confirmação ao usuário
-    Alert.alert(
-      "Produto adicionado",
-      `${product.nome} adicionado ao seu carrinho!`,
-      [
-        {
-          text: "Continuar comprando",
-          style: "cancel",
-        },
-        {
-          text: "Ver carrinho",
-          onPress: () => router.push(`/(drawer)/empresa/${companySlug}/cart`),
-        },
-      ]
-    );
+    // Mostrar toast usando toastUtils
+    toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
   };
 
   // Voltar para a página da empresa

@@ -20,7 +20,7 @@ export function shouldUseDarkText(backgroundColor: string): boolean {
   // Fórmula: https://www.w3.org/TR/WCAG20-TECHS/G18.html
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
-  // Se luminosidade > 0.5, a cor é considerada clara e deve usar texto escuro
+  // Se luminosidade > 0.6, a cor é considerada clara e deve usar texto escuro
   return luminance > 0.6;
 }
 
