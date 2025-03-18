@@ -40,7 +40,7 @@ export function CompanyHeader({ company, onViewAll }: CompanyHeaderProps) {
       }}
     >
       <View className="flex-row items-center gap-3 flex-1">
-        <View className="h-14 w-14 rounded-xl bg-white/20 items-center justify-center overflow-hidden">
+        <View className="h-16 w-16 rounded-xl bg-white/20 items-center justify-center overflow-hidden">
           {company.logo ? (
             <ImagePreview
               uri={company.logo}
@@ -54,7 +54,7 @@ export function CompanyHeader({ company, onViewAll }: CompanyHeaderProps) {
         </View>
 
         <View className="flex-1">
-          <Text className={`font-semibold text-base ${textColorClass}`}>
+          <Text className={`font-semibold text-lg ${textColorClass}`}>
             {company.nome}
           </Text>
 
@@ -62,15 +62,18 @@ export function CompanyHeader({ company, onViewAll }: CompanyHeaderProps) {
             <View className="flex-row flex-wrap mt-1 gap-1">
               {company.vitrineItems[0].empresa.subcategorias
                 .slice(0, 2)
-                .map((sub: any) => (
+                .map((sub: any, index: number) => (
                   <View
-                    key={`subcategory-${sub.subcategorias_empresas_id.id}`}
+                    key={`subcategory-${sub.subcategorias_empresas_id.id}-${index}`}
                     className="mr-1"
                   >
-                    <StatusBadge
-                      status="disponivel"
-                      customLabel={sub.subcategorias_empresas_id.nome}
-                    />
+                    <Text
+                      className={`font-medium text-xs rounded-full px-2 py-0.5  ${
+                        isDarkBackground ? "bg-white/20" : "bg-black/10"
+                      } ${textColorClass}`}
+                    >
+                      {sub.subcategorias_empresas_id.nome}
+                    </Text>
                   </View>
                 ))}
 
