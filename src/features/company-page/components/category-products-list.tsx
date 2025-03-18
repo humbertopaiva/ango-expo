@@ -1,16 +1,11 @@
 // Path: src/features/company-page/components/category-products-list.tsx
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  Dimensions,
-} from "react-native";
+import { View, Text, TouchableOpacity, Platform } from "react-native";
 import { ChevronRight, Package } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { SafeMap } from "@/components/common/safe-map";
 import { AdaptiveProductCard } from "./adaptive-product-card";
+import { CatalogProductCard } from "./catalog-product-card";
 import { Card, HStack } from "@gluestack-ui/themed";
 import { CompanyProduct } from "../models/company-product";
 import { router } from "expo-router";
@@ -27,7 +22,6 @@ export function CategoryProductsList({
   viewAllPath,
 }: CategoryProductsListProps) {
   const vm = useCompanyPageContext();
-  const { width } = Dimensions.get("window");
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
 
@@ -37,16 +31,13 @@ export function CategoryProductsList({
     ? products
     : products.slice(0, MAX_CATALOG_PRODUCTS);
 
-  // Calcular número de colunas para layout grid
-  const numColumns = 2;
-
   // Cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
 
   // Handler para "Ver todos"
   const handleViewAll = () => {
     if (viewAllPath) {
-      router.push(`/(drawer)/empresa/${vm.profile?.empresa.slug}`);
+      router.push(viewAllPath);
     } else if (vm.profile?.empresa.slug) {
       // Construir URL com parâmetros para filtrar por categoria
       router.push({
@@ -114,27 +105,30 @@ export function CategoryProductsList({
           />
         </View>
       ) : (
-        /* Grid para catálogo */
+        /* Grid para catálogo - Solução sem FlatList */
         <View className="px-4">
-          <FlatList
-            data={limitedProducts}
-            keyExtractor={(item) => `${title}-${item.id}`}
-            numColumns={numColumns}
-            scrollEnabled={false}
-            renderItem={({ item, index }) => (
-              <View style={{ flex: 1 / numColumns, padding: 4 }}>
-                <AdaptiveProductCard product={item} />
+          <View className="flex-row flex-wrap -mx-1">
+            {limitedProducts.map((item, index) => (
+              <View
+                key={`${title}-${item.id}`}
+                style={{ width: "50%", padding: 4 }}
+              >
+                <CatalogProductCard
+                  product={item}
+                  showFeaturedBadge={index === 0}
+                />
               </View>
-            )}
-            ListEmptyComponent={
-              <Card className="p-4 items-center border border-gray-100">
-                <Package size={48} color="#9CA3AF" />
-                <Text className="text-gray-500 mt-2">
-                  Nenhum produto nesta categoria
-                </Text>
-              </Card>
-            }
-          />
+            ))}
+          </View>
+
+          {products.length === 0 && (
+            <Card className="p-4 items-center border border-gray-100">
+              <Package size={48} color="#9CA3AF" />
+              <Text className="text-gray-500 mt-2">
+                Nenhum produto nesta categoria
+              </Text>
+            </Card>
+          )}
 
           {/* Botão "Ver Todos" no final da grid para catálogo */}
           {products.length > MAX_CATALOG_PRODUCTS && (
