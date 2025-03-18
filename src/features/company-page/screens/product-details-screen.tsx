@@ -1,5 +1,5 @@
 // Path: src/features/company-page/screens/product-details-screen.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Alert,
+  Animated,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import {
@@ -23,6 +25,7 @@ import {
   Package,
   Edit3,
   MessageSquare,
+  Heart,
 } from "lucide-react-native";
 import { HStack, VStack, Button } from "@gluestack-ui/themed";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
@@ -32,6 +35,8 @@ import { useMultiCartStore } from "@/src/features/cart/stores/cart.store";
 import { CompanyProduct } from "../models/company-product";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getContrastColor } from "@/src/utils/color.utils";
+import { animationUtils } from "@/src/utils/animations.utils";
+import { LinearGradient } from "expo-linear-gradient";
 
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -41,25 +46,78 @@ export function ProductDetailsScreen() {
   const [quantity, setQuantity] = useState(1);
   const [observation, setObservation] = useState("");
   const [showObservationInput, setShowObservationInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
   const { width } = Dimensions.get("window");
   const insets = useSafeAreaInsets();
+
+  // Animações
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const imageScaleAnim = useRef(new Animated.Value(0.9)).current;
+  const buttonScaleAnim = useRef(new Animated.Value(0.95)).current;
 
   // Carregar dados do produto
   useEffect(() => {
     if (!productId || !vm.products) return;
 
-    const foundProduct = vm.products.find((p) => p.id === productId);
-    if (foundProduct) {
-      setProduct(foundProduct);
-    } else {
-      console.error("Produto não encontrado:", productId);
-    }
+    setIsLoading(true);
+
+    // Simular um pequeno atraso para a experiência de carregamento
+    setTimeout(() => {
+      const foundProduct = vm.products.find((p) => p.id === productId);
+      if (foundProduct) {
+        setProduct(foundProduct);
+
+        // Iniciar animações de entrada
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            friction: 8,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.spring(imageScaleAnim, {
+            toValue: 1,
+            friction: 8,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.spring(buttonScaleAnim, {
+            toValue: 1,
+            friction: 8,
+            tension: 40,
+            useNativeDriver: true,
+            delay: 200,
+          }),
+        ]).start();
+      } else {
+        console.error("Produto não encontrado:", productId);
+      }
+      setIsLoading(false);
+    }, 300);
   }, [productId, vm.products]);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#F4511E" />
+        <Text className="mt-4 text-gray-600">
+          Carregando detalhes do produto...
+        </Text>
+      </View>
+    );
+  }
 
   if (!product) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
-        <Text>Carregando produto...</Text>
+        <Text>Produto não encontrado</Text>
       </View>
     );
   }
@@ -84,9 +142,12 @@ export function ProductDetailsScreen() {
   const decreaseQuantity = () =>
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
-  // Adicionar ao carrinho
+  // Adicionar ao carrinho com animação de feedback
   const addToCart = () => {
     if (!product || !vm.profile) return;
+
+    // Animar o botão
+    animationUtils.createPulseAnimation(buttonScaleAnim)();
 
     const companySlug = vm.profile.empresa.slug;
     const companyName = vm.profile.nome;
@@ -104,16 +165,20 @@ export function ProductDetailsScreen() {
     );
 
     // Mostrar confirmação ao usuário
-    Alert.alert("Produto adicionado", "Produto adicionado ao seu carrinho!", [
-      {
-        text: "Continuar comprando",
-        style: "cancel",
-      },
-      {
-        text: "Ver carrinho",
-        onPress: () => router.push(`/(drawer)/empresa/${companySlug}/cart`),
-      },
-    ]);
+    Alert.alert(
+      "Produto adicionado",
+      `${product.nome} adicionado ao seu carrinho!`,
+      [
+        {
+          text: "Continuar comprando",
+          style: "cancel",
+        },
+        {
+          text: "Ver carrinho",
+          onPress: () => router.push(`/(drawer)/empresa/${companySlug}/cart`),
+        },
+      ]
+    );
   };
 
   // Voltar para a página da empresa
@@ -157,6 +222,11 @@ export function ProductDetailsScreen() {
     setShowObservationInput(!showObservationInput);
   };
 
+  // Alternar favorito
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+  };
+
   const discountPercent = calculateDiscount();
   const primaryColor = vm.primaryColor || "#F4511E";
   const contrastTextColor = getContrastColor(primaryColor);
@@ -167,10 +237,17 @@ export function ProductDetailsScreen() {
       style={{ flex: 1 }}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
+      <StatusBar barStyle="light-content" />
+
       <View className="flex-1 bg-gray-50">
         {/* Área da imagem em aspecto quadrado com botões sobrepostos */}
-        <View
-          style={{ width: width, height: width * 0.8 }}
+        <Animated.View
+          style={{
+            width: width,
+            height: width,
+            opacity: fadeAnim,
+            transform: [{ scale: imageScaleAnim }],
+          }}
           className="bg-white relative"
         >
           <ImagePreview
@@ -179,10 +256,20 @@ export function ProductDetailsScreen() {
             width="100%"
             height="100%"
             resizeMode="contain"
+            containerClassName="bg-gray-50"
           />
 
           {/* Overlay gradiente no topo para melhorar visibilidade dos botões */}
-          <View className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/50 to-transparent" />
+          <LinearGradient
+            colors={["rgba(0,0,0,0.5)", "transparent"]}
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: 0,
+              height: 100,
+            }}
+          />
 
           {/* Botões de navegação sobrepostos */}
           <View
@@ -192,31 +279,53 @@ export function ProductDetailsScreen() {
             <TouchableOpacity
               onPress={handleBack}
               className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
+              activeOpacity={0.8}
             >
               <ArrowLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={handleShare}
-              className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
-            >
-              <Share2 size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+            <View className="flex-row">
+              <TouchableOpacity
+                onPress={toggleFavorite}
+                className="w-10 h-10 rounded-full bg-black/30 items-center justify-center mr-2"
+                activeOpacity={0.8}
+              >
+                <Heart
+                  size={20}
+                  color="#FFFFFF"
+                  fill={isFavorite ? "#FFFFFF" : "transparent"}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleShare}
+                className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
+                activeOpacity={0.8}
+              >
+                <Share2 size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Badge de desconto (se houver) */}
           {discountPercent && (
-            <View className="absolute top-4 right-4 bg-red-500 px-3 py-1 rounded-full">
+            <View className="absolute top-20 right-4 bg-red-500 px-3 py-1 rounded-full">
               <Text className="text-white font-bold text-sm">
                 {discountPercent}% OFF
               </Text>
             </View>
           )}
-        </View>
+        </Animated.View>
 
-        <ScrollView className="flex-1">
+        <Animated.ScrollView
+          className="flex-1"
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+        >
           {/* Conteúdo do produto */}
-          <View className="p-4 bg-white">
+          <View className="p-5 bg-white">
             {/* Informações da categoria */}
             {product.categoria && (
               <Text className="text-sm text-gray-500 mb-1">
@@ -225,17 +334,17 @@ export function ProductDetailsScreen() {
             )}
 
             {/* Nome do produto */}
-            <Text className="text-2xl font-bold text-gray-800 mb-2">
+            <Text className="text-3xl font-bold text-gray-800 mb-2">
               {product.nome}
             </Text>
 
             {/* Preço do produto */}
-            <View className="mb-4">
-              <HStack className="items-center">
+            <View className="mb-5">
+              <HStack className="items-baseline">
                 {product.preco_promocional ? (
                   <>
                     <Text
-                      className="text-2xl font-bold text-primary-600"
+                      className="text-3xl font-bold"
                       style={{ color: primaryColor }}
                     >
                       {formatCurrency(product.preco_promocional)}
@@ -246,7 +355,7 @@ export function ProductDetailsScreen() {
                   </>
                 ) : (
                   <Text
-                    className="text-2xl font-bold text-primary-600"
+                    className="text-3xl font-bold"
                     style={{ color: primaryColor }}
                   >
                     {formatCurrency(product.preco)}
@@ -286,6 +395,7 @@ export function ProductDetailsScreen() {
               <TouchableOpacity
                 onPress={toggleObservationInput}
                 className="flex-row items-center mb-2"
+                activeOpacity={0.7}
               >
                 <MessageSquare size={20} color={primaryColor} />
                 <Text
@@ -328,26 +438,35 @@ export function ProductDetailsScreen() {
                   className="p-2"
                   disabled={quantity <= 1}
                   style={{ opacity: quantity <= 1 ? 0.5 : 1 }}
+                  activeOpacity={0.6}
                 >
                   <MinusCircle size={26} color={primaryColor} />
                 </TouchableOpacity>
 
-                <Text className="text-xl font-medium mx-4 min-w-8 text-center">
+                <Text className="text-2xl font-medium mx-4 min-w-8 text-center">
                   {quantity}
                 </Text>
 
-                <TouchableOpacity onPress={increaseQuantity} className="p-2">
+                <TouchableOpacity
+                  onPress={increaseQuantity}
+                  className="p-2"
+                  activeOpacity={0.6}
+                >
                   <PlusCircle size={26} color={primaryColor} />
                 </TouchableOpacity>
               </HStack>
             </View>
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
 
         {/* Barra inferior com botão de adicionar ao carrinho */}
-        <View
+        <Animated.View
           className="bg-white p-4 border-t border-gray-200"
-          style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+          style={{
+            paddingBottom: Math.max(insets.bottom, 16),
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
         >
           <HStack className="justify-between items-center">
             <VStack>
@@ -357,18 +476,34 @@ export function ProductDetailsScreen() {
               </Text>
             </VStack>
 
-            <Button
-              onPress={addToCart}
-              className="bg-primary-500 h-12 flex-row items-center px-6"
-              style={{ backgroundColor: primaryColor }}
+            <Animated.View
+              style={{
+                transform: [{ scale: buttonScaleAnim }],
+              }}
             >
-              <ShoppingBag size={20} color="white" />
-              <Text className="text-white font-bold ml-2 text-base">
-                Adicionar ao Carrinho
-              </Text>
-            </Button>
+              <TouchableOpacity
+                onPress={addToCart}
+                activeOpacity={0.8}
+                className="rounded-xl overflow-hidden"
+              >
+                <LinearGradient
+                  colors={[primaryColor, primaryColor]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  className="py-3 px-6 flex-row items-center"
+                >
+                  <ShoppingBag size={20} color={contrastTextColor} />
+                  <Text
+                    className="font-bold ml-2 text-base"
+                    style={{ color: contrastTextColor }}
+                  >
+                    Adicionar ao Carrinho
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
           </HStack>
-        </View>
+        </Animated.View>
       </View>
     </KeyboardAvoidingView>
   );
