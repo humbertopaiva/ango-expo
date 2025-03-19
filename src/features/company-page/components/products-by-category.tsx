@@ -8,8 +8,15 @@ import {
   FlatList,
   ScrollView,
   Dimensions,
+  Animated,
 } from "react-native";
-import { Search, Package, X, SlidersHorizontal } from "lucide-react-native";
+import {
+  Search,
+  Package,
+  X,
+  SlidersHorizontal,
+  Filter,
+} from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import {
   Input,
@@ -19,6 +26,7 @@ import {
   HStack,
   Card,
   Button,
+  VStack,
 } from "@gluestack-ui/themed";
 import { CategoryProductsList } from "./category-products-list";
 import { SafeMap } from "@/components/common/safe-map";
@@ -45,6 +53,10 @@ export function ProductsByCategory({
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
   const { width } = Dimensions.get("window");
 
+  // Animações
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
   // Estado para armazenar todas as categorias
   const [categories, setCategories] = useState<string[]>([]);
 
@@ -52,6 +64,22 @@ export function ProductsByCategory({
   const primaryColor = vm.primaryColor || "#F4511E";
   const filterBgColor = `${primaryColor}15`;
   const filterTextColor = primaryColor;
+
+  // Iniciar animações quando o componente montar
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   // Calcular todos os produtos e categorias quando os dados estiverem disponíveis
   useEffect(() => {
@@ -151,31 +179,8 @@ export function ProductsByCategory({
     );
   }, [getFilteredProducts]);
 
-  // Renderizar o item da categoria para o FlatList horizontal
-  const renderCategoryItem = ({ item }: { item: string }) => {
-    const isActive = selectedCategory === item;
-
-    return (
-      <TouchableOpacity
-        onPress={() => setSelectedCategory(item)}
-        className={`font-semibold text-md mr-3 px-4 py-2 rounded-full ${
-          isActive ? "bg-primary-500" : "bg-gray-100"
-        }`}
-        style={{
-          backgroundColor: isActive ? primaryColor : `${primaryColor}/80`,
-        }}
-      >
-        <Text
-          className={`text-md ${
-            isActive ? "text-white font-semibold" : "text-gray-800"
-          }`}
-          numberOfLines={1}
-        >
-          {item}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
+  // Verificar se há categorias para mostrar
+  const hasCategories = Object.keys(getFilteredProducts).length > 0;
 
   if (vm.isLoading) {
     // Skeleton loading state
@@ -201,9 +206,6 @@ export function ProductsByCategory({
       </View>
     );
   }
-
-  // Verificar se há categorias para mostrar
-  const hasCategories = Object.keys(getFilteredProducts).length > 0;
 
   return (
     <View className="mb-8 mt-8">
@@ -248,58 +250,88 @@ export function ProductsByCategory({
           </Input>
         </View>
 
-        {/* Filtros de ordenação */}
-        {showFilters && (
-          <View className="mb-3">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Ordenar por:
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="py-1 -mx-1 px-1"
+        {/* Cabeçalho de Categorias Melhorado */}
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+          className="mt-4"
+        >
+          <HStack className="items-center" space="sm">
+            <View
+              className="w-5 h-5 rounded-full items-center justify-center"
+              style={{ backgroundColor: `${primaryColor}20` }}
             >
-              {[
-                { id: "relevance", label: "Relevância" },
-                { id: "price_asc", label: "Menor preço" },
-                { id: "price_desc", label: "Maior preço" },
-                { id: "name_asc", label: "A-Z" },
-              ].map((option) => (
-                <TouchableOpacity
-                  key={option.id}
-                  className={`py-2 px-4 rounded-full mr-2`}
-                  style={{
-                    backgroundColor: primaryColor,
-                    opacity: 0.8,
-                  }}
-                >
-                  <Text className="text-sm text-white font-medium">
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+              <Filter size={12} color={primaryColor} />
+            </View>
+            <Text className="font-medium text-gray-700">
+              Filtre por categorias
+            </Text>
+          </HStack>
+        </Animated.View>
       </View>
 
-      {/* Lista horizontal de categorias */}
-      <View className="mb-6">
+      {/* Lista horizontal de categorias melhorada */}
+      <Animated.View
+        style={{
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+          marginBottom: 12,
+        }}
+      >
         {categories.length > 0 && (
           <FlatList
             data={categories}
-            renderItem={renderCategoryItem}
-            keyExtractor={(item) => `category-${item}`}
+            renderItem={({ item }) => {
+              const isActive = selectedCategory === item;
+
+              return (
+                <TouchableOpacity
+                  onPress={() => setSelectedCategory(item)}
+                  style={{
+                    backgroundColor: isActive
+                      ? primaryColor
+                      : Platform.OS === "ios"
+                      ? "rgba(243, 244, 246, 0.8)" // iOS slightly transparent gray
+                      : "#f3f4f6", // Gray-100 for Android and Web
+                    borderWidth: isActive ? 0 : 1,
+                    borderColor: "rgba(229, 231, 235, 0.8)",
+                    marginRight: 10,
+                    borderRadius: 20,
+                    paddingHorizontal: 14,
+                    paddingVertical: 8,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: isActive ? 3 : 1 },
+                    shadowOpacity: isActive ? 0.15 : 0.05,
+                    shadowRadius: isActive ? 4 : 2,
+                    elevation: isActive ? 3 : 1,
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={{
+                      color: isActive ? "#FFFFFF" : "#4B5563",
+                      fontWeight: isActive ? "600" : "500",
+                      fontSize: 14,
+                    }}
+                    numberOfLines={1}
+                    className="font-semibold"
+                  >
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
               paddingHorizontal: 16,
               paddingVertical: 8,
             }}
-            style={{ marginBottom: 8 }}
           />
         )}
-      </View>
+      </Animated.View>
 
       {/* Resultados da busca */}
       {searchText && (
@@ -328,10 +360,11 @@ export function ProductsByCategory({
             {searchText ? (
               <Button
                 onPress={() => setSearchText("")}
-                className="mt-2"
-                variant="outline"
+                className="mt-2 bg-secondary-500"
               >
-                <Button.Text>Limpar busca</Button.Text>
+                <Button.Text className="text-secondary-500 font-medium">
+                  Limpar busca
+                </Button.Text>
               </Button>
             ) : null}
           </Card>

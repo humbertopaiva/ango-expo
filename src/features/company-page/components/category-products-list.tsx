@@ -13,7 +13,7 @@ import { router } from "expo-router";
 interface CategoryProductsListProps {
   title: string;
   products: CompanyProduct[];
-  viewAllPath?: string;
+  viewAllPath?: any;
 }
 
 export function CategoryProductsList({
@@ -41,7 +41,8 @@ export function CategoryProductsList({
     } else if (vm.profile?.empresa.slug) {
       // Construir URL com parâmetros para filtrar por categoria
       router.push({
-        pathname: `/(drawer)/empresa/${vm.profile.empresa.slug}/products`,
+        pathname:
+          `/(drawer)/empresa/${vm.profile.empresa.slug}/products` as any,
         params: { category: encodeURIComponent(title) },
       });
     }
@@ -53,33 +54,18 @@ export function CategoryProductsList({
   }
 
   return (
-    <View className="mb-6">
+    <View className="my-6">
       {/* Cabeçalho da categoria com contagem e botão Ver Todos */}
       <View className="px-4 mb-3">
         <HStack className="items-center justify-between">
           <HStack className="items-center">
-            <Text className="text-lg font-bold text-gray-800">{title}</Text>
+            <Text className="text-xl font-medium text-gray-800">{title}</Text>
             <View className="px-2 py-0.5 rounded-full ml-2 bg-gray-100">
               <Text className="text-xs font-medium text-gray-600">
                 {products.length}
               </Text>
             </View>
           </HStack>
-
-          {products.length > MAX_CATALOG_PRODUCTS && !isDeliveryPlan && (
-            <TouchableOpacity
-              onPress={handleViewAll}
-              className="flex-row items-center"
-            >
-              <Text
-                style={{ color: primaryColor }}
-                className="mr-1 font-medium"
-              >
-                Ver todos
-              </Text>
-              <ChevronRight size={16} color={primaryColor} />
-            </TouchableOpacity>
-          )}
         </HStack>
       </View>
 
