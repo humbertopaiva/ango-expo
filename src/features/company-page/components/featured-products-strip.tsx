@@ -53,9 +53,9 @@ export function FeaturedProductsStrip() {
   // Calcula o tamanho apropriado para o card destacado
   const getCardWidth = () => {
     if (isWeb) {
-      return width > 768 ? 380 : width * 0.85;
+      return width > 768 ? 320 : width * 0.7; // Reduzido para proporcionar uma aparência mais quadrada
     }
-    return width * 0.85; // 85% da largura em dispositivos móveis
+    return width * 0.7; // 70% da largura em dispositivos móveis para uma aparência mais quadrada
   };
 
   // Cor primária da empresa ou cor padrão

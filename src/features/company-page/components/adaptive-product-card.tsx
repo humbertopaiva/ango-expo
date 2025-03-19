@@ -83,9 +83,9 @@ export function AdaptiveProductCard({
 
   // Se o card for destacado (usado em vitrines/destaques), usar o design mais visual
   if (isHighlighted) {
-    // Proporção 4:3
+    // Proporção mais quadrada (ajustada para 4:4.5 - quase quadrada)
     const cardWidth = isWeb ? (width > 768 ? 380 : width * 0.85) : width * 0.85;
-    const cardHeight = cardWidth * 0.75; // Proporção 4:3
+    const cardHeight = cardWidth * 0.9; // Proporção ajustada para ficar mais quadrada
 
     return (
       <TouchableOpacity
@@ -152,7 +152,7 @@ export function AdaptiveProductCard({
           <View className="flex-1 justify-end p-5">
             {/* Nome do produto (sem descrição para esse layout) */}
             <Text
-              className="text-white font-bold text-2xl mb-4"
+              className="text-white font-bold text-xl mb-3"
               numberOfLines={2}
             >
               {product.nome}
@@ -162,15 +162,13 @@ export function AdaptiveProductCard({
             <View className="flex-row items-center">
               <View className="flex-1">
                 {product.preco_promocional ? (
-                  <View className="flex-row items-center">
-                    <View>
-                      <Text className="text-white/80 text-md line-through">
-                        {formatCurrency(product.preco)}
-                      </Text>
-                      <Text className="text-white font-bold text-2xl">
-                        {formatCurrency(product.preco_promocional)}
-                      </Text>
-                    </View>
+                  <View>
+                    <Text className="text-white/80 text-sm line-through">
+                      {formatCurrency(product.preco)}
+                    </Text>
+                    <Text className="text-white font-bold text-xl">
+                      {formatCurrency(product.preco_promocional)}
+                    </Text>
                   </View>
                 ) : (
                   <Text className="text-white font-bold text-xl">

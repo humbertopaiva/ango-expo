@@ -48,8 +48,17 @@ export function CompanyShowcase({ products, isLoading }: CompanyShowcaseProps) {
         keyExtractor={(item) => item.id}
         numColumns={Platform.OS === "web" ? 2 : 1}
         scrollEnabled={false}
+        contentContainerStyle={{
+          paddingHorizontal: Platform.OS === "web" ? 0 : 8,
+        }}
         renderItem={({ item }) => (
-          <View className={Platform.OS === "web" ? "w-1/2 p-2" : "w-full p-2"}>
+          <View
+            className={Platform.OS === "web" ? "w-1/2 p-2" : "w-full p-2"}
+            style={{
+              aspectRatio: Platform.OS === "web" ? undefined : 1, // Força aspecto quadrado em mobile
+              maxHeight: Platform.OS === "web" ? undefined : 400, // Limita altura em mobile
+            }}
+          >
             {/* Usar o AdaptiveProductCard com isHighlighted como true */}
             <AdaptiveProductCard product={item} isHighlighted={true} />
           </View>

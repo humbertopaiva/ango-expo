@@ -25,8 +25,8 @@ export function FeaturedProducts() {
 
   // Calcular largura ideal do item com base na largura da tela
   const getItemWidth = () => {
-    if (width > 768) return 320; // Tablets e Desktop: layout mais amplo
-    return width * 0.8; // Celulares: 80% da largura da tela
+    if (width > 768) return 280; // Tablets e Desktop: menor para ficar mais quadrado
+    return width * 0.7; // Celulares: 70% da largura da tela para ficar mais quadrado
   };
 
   const handleScrollLeft = () => {
