@@ -26,8 +26,6 @@ export function FeaturedProductsStrip() {
   const scrollViewRef = useRef<ScrollView>(null);
   const { width } = Dimensions.get("window");
   const isWeb = Platform.OS === "web";
-  const isDeliveryPlan =
-    vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
 
   // Se não houver produtos em destaque, não renderiza nada
   if (!vm.showcaseProducts || vm.showcaseProducts.length === 0) {
@@ -48,20 +46,16 @@ export function FeaturedProductsStrip() {
     if (!vm.profile?.empresa.slug) return;
 
     router.push({
-      pathname: `/(drawer)/empresa/${vm.profile.empresa.slug}` as any,
+      pathname: `/(drawer)/empresa/${vm.profile.empresa.slug}`,
     });
   };
 
   // Calcula o tamanho apropriado para o card destacado
   const getCardWidth = () => {
-    if (isDeliveryPlan) {
-      if (isWeb) {
-        return width > 768 ? 380 : width * 0.85;
-      }
-      return width * 0.85; // 85% da largura em dispositivos móveis
+    if (isWeb) {
+      return width > 768 ? 380 : width * 0.85;
     }
-
-    return isWeb ? (width > 768 ? 280 : width * 0.65) : width * 0.65;
+    return width * 0.85; // 85% da largura em dispositivos móveis
   };
 
   // Cor primária da empresa ou cor padrão
@@ -100,12 +94,13 @@ export function FeaturedProductsStrip() {
                     width: getCardWidth(),
                     marginRight: 16,
                   }}
-                  className={isDeliveryPlan ? "" : "py-2"}
+                  className="py-2"
                 >
+                  {/* Sempre definir isHighlighted como true para produtos em destaque */}
                   <AdaptiveProductCard
                     product={product}
                     showFeaturedBadge={false}
-                    isHighlighted={isDeliveryPlan}
+                    isHighlighted={true} // Forçado como true para todos os produtos em destaque
                   />
                 </View>
               )}

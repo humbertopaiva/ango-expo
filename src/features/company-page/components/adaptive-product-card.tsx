@@ -81,8 +81,8 @@ export function AdaptiveProductCard({
 
   const contrastTextColor = getContrastColor(vm.primaryColor || "#F4511E");
 
-  // Destacar card para delivery
-  if (isDeliveryPlan && isHighlighted) {
+  // Se o card for destacado (usado em vitrines/destaques), usar o design mais visual
+  if (isHighlighted) {
     // Proporção 4:3
     const cardWidth = isWeb ? (width > 768 ? 380 : width * 0.85) : width * 0.85;
     const cardHeight = cardWidth * 0.75; // Proporção 4:3
@@ -122,7 +122,7 @@ export function AdaptiveProductCard({
             />
           </View>
 
-          {/* Botão de adicionar ao carrinho no canto superior direito */}
+          {/* Botão de adicionar ao carrinho no canto inferior direito */}
           <TouchableOpacity
             onPress={handleAddToCart}
             className="absolute bottom-4 right-4 rounded-full p-3 z-10"
@@ -131,30 +131,34 @@ export function AdaptiveProductCard({
             <ShoppingBag size={24} color={contrastTextColor} />
           </TouchableOpacity>
 
+          {/* Badge de destaque (se habilitado) */}
+          {showFeaturedBadge && (
+            <View className="absolute top-4 left-4 bg-amber-500 rounded-full p-1.5 shadow-sm z-10">
+              <Star size={14} color="#fff" />
+            </View>
+          )}
+
+          {/* Badge de desconto (se aplicável) */}
+          {product.preco_promocional && (
+            <View className="absolute top-4 right-4 bg-red-500 px-2 py-1 rounded-full shadow-sm z-10">
+              <Text className="text-white text-xs font-bold">
+                {calculateDiscount(product.preco, product.preco_promocional)}%
+                OFF
+              </Text>
+            </View>
+          )}
+
           {/* Conteúdo do card */}
           <View className="flex-1 justify-end p-5">
-            <HStack className="items-center mb-4 gap-2">
-              {/* Nome do produto (sem descrição) */}
-              <Text
-                className="text-white font-bold text-2xl "
-                numberOfLines={2}
-              >
-                {product.nome}
-              </Text>
-              {product.preco_promocional && (
-                <View className="">
-                  <Text className="text-white font-bold text-xs bg-red-600 px-2 py-1 rounded-full ml-2">
-                    {calculateDiscount(
-                      product.preco,
-                      product.preco_promocional
-                    )}
-                    % OFF
-                  </Text>
-                </View>
-              )}
-            </HStack>
+            {/* Nome do produto (sem descrição para esse layout) */}
+            <Text
+              className="text-white font-bold text-2xl mb-4"
+              numberOfLines={2}
+            >
+              {product.nome}
+            </Text>
 
-            {/* Preço e badge de desconto juntos */}
+            {/* Preço */}
             <View className="flex-row items-center">
               <View className="flex-1">
                 {product.preco_promocional ? (
@@ -271,6 +275,12 @@ export function AdaptiveProductCard({
 
           {/* Badges */}
           <View className="absolute top-0 left-0 right-0 p-2 flex-row justify-between">
+            {showFeaturedBadge && (
+              <View className="bg-amber-500 rounded-full p-1.5 shadow-sm">
+                <Star size={14} color="#fff" />
+              </View>
+            )}
+
             {product.preco_promocional && (
               <View className="bg-red-500 px-2 py-1 rounded-full shadow-sm">
                 <Text className="text-white text-xs font-bold">

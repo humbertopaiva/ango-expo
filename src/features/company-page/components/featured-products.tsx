@@ -10,11 +10,10 @@ import {
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { Card, HStack } from "@gluestack-ui/themed";
-import { ProductCard } from "@/components/showcase/product-card";
+import { AdaptiveProductCard } from "./adaptive-product-card";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { SafeMap } from "@/components/common/safe-map";
 import { CompanyProduct } from "../models/company-product";
-import { ShowcaseItem } from "../../commerce/models/showcase-item";
 
 /**
  * Componente para exibir produtos em destaque com um cabeçalho e controles de navegação
@@ -26,8 +25,8 @@ export function FeaturedProducts() {
 
   // Calcular largura ideal do item com base na largura da tela
   const getItemWidth = () => {
-    if (width > 768) return 240; // Tablets e Desktop
-    return width * 0.7; // Celulares: 70% da largura da tela
+    if (width > 768) return 320; // Tablets e Desktop: layout mais amplo
+    return width * 0.8; // Celulares: 80% da largura da tela
   };
 
   const handleScrollLeft = () => {
@@ -45,35 +44,7 @@ export function FeaturedProducts() {
   }
 
   // Cor primária da empresa ou cor padrão
-  const primaryColor = vm.primaryColor;
-
-  const convertToShowcaseItem = (product: CompanyProduct): ShowcaseItem => {
-    return {
-      id: product.id,
-      nome: product.nome,
-      imagem: product.imagem,
-      preco: product.preco,
-      descricao: product.descricao || "", // Converter null para string vazia
-      preco_promocional: product.preco_promocional,
-      date_created: new Date().toISOString(),
-      ordem_vitrine: undefined, // Campo opcional em ShowcaseItem
-      disponivel: true, // Valor padrão
-      parcelamento_cartao: product.parcelamento_cartao || false,
-      quantidade_parcelas: product.quantidade_parcelas
-        ? parseInt(product.quantidade_parcelas)
-        : null,
-      parcelas_sem_juros: product.parcelas_sem_juros || false,
-      preco_parcelado_tipo: product.preco_parcelado_tipo || "",
-      desconto_avista: product.desconto_avista
-        ? product.desconto_avista.toString()
-        : null,
-      empresa: {
-        nome: product.empresa.nome,
-        slug: product.empresa.slug,
-        cor_primaria: vm.primaryColor || "#F4511E",
-      },
-    };
-  };
+  const primaryColor = vm.primaryColor || THEME_COLORS.primary;
 
   return (
     <View className="mb-8">
@@ -112,9 +83,11 @@ export function FeaturedProducts() {
                 style={{ width: getItemWidth() }}
                 className="mr-4"
               >
-                <ProductCard
-                  product={convertToShowcaseItem(product)}
-                  onPress={() => {}}
+                {/* Sempre use isHighlighted como true para produtos em destaque */}
+                <AdaptiveProductCard
+                  product={product}
+                  showFeaturedBadge={false}
+                  isHighlighted={true} // Forçado como true para garantir uniformidade
                 />
               </View>
             )}
