@@ -173,7 +173,11 @@ export function ProductDetailsScreen() {
 
   // Voltar para a página da empresa
   const handleBack = () => {
-    router.back();
+    router.push(
+      vm.profile?.empresa.slug
+        ? `/empresa/${vm.profile.empresa.slug}`
+        : "/(drawer)/(tabs)/comercio-local"
+    );
   };
 
   // Compartilhar o produto
