@@ -48,7 +48,7 @@ export function FeaturedProductsStrip() {
     if (!vm.profile?.empresa.slug) return;
 
     router.push({
-      pathname: `/(drawer)/empresa/${vm.profile.empresa.slug}`,
+      pathname: `/(drawer)/empresa/${vm.profile.empresa.slug}` as any,
     });
   };
 
@@ -95,7 +95,7 @@ export function FeaturedProductsStrip() {
               data={vm.showcaseProducts}
               renderItem={(product, index) => (
                 <View
-                  key={`showcase-${product.id}`}
+                  key={`showcase-${product.id}-${index}`}
                   style={{
                     width: getCardWidth(),
                     marginRight: 16,
