@@ -95,7 +95,7 @@ export function FeaturedProductsStrip() {
               data={vm.showcaseProducts}
               renderItem={(product, index) => (
                 <View
-                  key={`showcase-${product.id}-${index}`}
+                  key={`showcase-${product.id}`}
                   style={{
                     width: getCardWidth(),
                     marginRight: 16,
