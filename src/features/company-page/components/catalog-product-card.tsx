@@ -164,7 +164,7 @@ export function CatalogProductCard({
               {product.preco_promocional ? (
                 <View className="flex-row items-baseline gap-2">
                   <Text
-                    className="text-base font-bold"
+                    className="text-base font-bold text-white"
                     style={{ color: primaryColor }}
                   >
                     {formatCurrency(product.preco_promocional)}
@@ -183,8 +183,43 @@ export function CatalogProductCard({
               )}
 
               {product.parcelamento_cartao && product.quantidade_parcelas && (
-                <Text className="text-xs text-gray-500 mt-1">
-                  ou {product.quantidade_parcelas}x
+                <Text className="text-xs text-white mt-1">
+                  {product.parcelas_sem_juros ? (
+                    <>
+                      ou {product.quantidade_parcelas}x de{" "}
+                      {formatCurrency(
+                        (
+                          parseFloat(
+                            product.preco_promocional || product.preco
+                          ) / parseInt(product.quantidade_parcelas)
+                        ).toString()
+                      )}{" "}
+                      sem juros
+                    </>
+                  ) : (
+                    <>
+                      ou {product.quantidade_parcelas}x de{" "}
+                      {formatCurrency(
+                        (
+                          parseFloat(
+                            product.preco_promocional || product.preco
+                          ) / parseInt(product.quantidade_parcelas)
+                        ).toString()
+                      )}
+                    </>
+                  )}
+                </Text>
+              )}
+
+              {product.desconto_avista && (
+                <Text className="text-xs text-green-600 font-medium mt-1">
+                  {formatCurrency(
+                    (
+                      parseFloat(product.preco_promocional || product.preco) *
+                      (1 - product.desconto_avista / 100)
+                    ).toFixed(2)
+                  )}{" "}
+                  à vista ({product.desconto_avista}% de desconto)
                 </Text>
               )}
             </View>

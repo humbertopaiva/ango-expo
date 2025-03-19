@@ -46,7 +46,7 @@ export function FeaturedProductsStrip() {
     if (!vm.profile?.empresa.slug) return;
 
     router.push({
-      pathname: `/(drawer)/empresa/${vm.profile.empresa.slug}`,
+      pathname: `/(drawer)/empresa/${vm.profile.empresa.slug}` as any,
     });
   };
 
