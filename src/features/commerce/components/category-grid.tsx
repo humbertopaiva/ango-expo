@@ -92,7 +92,7 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
               className="w-full aspect-square"
             >
               <View className="w-full h-full flex items-center justify-center">
-                <View className="w-full aspect-square bg-white border border-gray-100 rounded-2xl shadow-sm p-2 flex items-center justify-center">
+                <View className="w-full aspect-square bg-white border border-gray-100 rounded-2xl p-2 flex items-center justify-center">
                   <View className="w-12 h-12 rounded-xl bg-primary-50 items-center justify-center mb-2">
                     {item.imagem ? (
                       <ImagePreview

@@ -66,8 +66,16 @@ export function LatestCompaniesCarousel({
             onPress={() => router.push(`/(drawer)/empresa/${item.slug}`)}
           >
             <View
-              style={{ width: logoSize, height: logoSize }}
-              className="rounded-full  overflow-hidden bg-white shadow-sm mb-2"
+              style={{
+                width: logoSize,
+                height: logoSize,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 3,
+                elevation: 3,
+              }}
+              className="rounded-full  overflow-hidden bg-white  mb-2"
             >
               {item.logo ? (
                 <ImagePreview

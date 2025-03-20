@@ -78,7 +78,16 @@ export function ShowcaseProducts({
               className="w-full h-full"
               onPress={() => console.log("Clicou Produto")}
             >
-              <Card className="w-full h-full overflow-hidden border border-gray-200 rounded-xl shadow-sm">
+              <Card
+                className="w-full h-full overflow-hidden border border-gray-200 rounded-xl"
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 3,
+                  elevation: 3,
+                }}
+              >
                 <View className="aspect-square relative">
                   {item.imagem ? (
                     <ImagePreview
