@@ -23,9 +23,9 @@ export function CommerceScreenContent() {
         showsVerticalScrollIndicator={false}
       >
         {/* Banner Promocional */}
-        {/* <View className="px-4 pt-4">
+        <View className="px-4 pt-4">
           <PromotionalBanner />
-        </View> */}
+        </View>
 
         {/* Categorias */}
         <Section className="my-6">

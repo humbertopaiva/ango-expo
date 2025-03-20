@@ -8,6 +8,7 @@ import {
   Dimensions,
   Image,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useNavigation } from "expo-router";
@@ -94,6 +95,10 @@ export const PromotionalBanner: React.FC<PromotionalBannerProps> = ({
   const { width } = Dimensions.get("window");
   const navigation = useNavigation();
   const autoplayRef = useRef<NodeJS.Timeout | null>(null);
+  const isWeb = Platform.OS === "web";
+
+  // Determina a altura do banner com base na plataforma
+  const bannerHeight = isWeb && width >= 768 ? desktopHeight : mobileHeight;
 
   // Função para lidar com o clique no banner
   const handleBannerPress = (banner: BannerItem) => {
@@ -186,7 +191,11 @@ export const PromotionalBanner: React.FC<PromotionalBannerProps> = ({
   return (
     <View
       className="w-full relative mb-6 overflow-hidden"
-      style={[rounded && { borderRadius }, styles.container]}
+      style={[
+        rounded && { borderRadius },
+        styles.container,
+        { height: bannerHeight },
+      ]}
     >
       <ScrollView
         ref={scrollViewRef}
@@ -196,20 +205,22 @@ export const PromotionalBanner: React.FC<PromotionalBannerProps> = ({
         onMomentumScrollEnd={handleScroll}
         onScrollBeginDrag={pauseAutoplay}
         onScrollEndDrag={resumeAutoplay}
-        className="w-full"
+        className="w-full h-full"
       >
         {banners.map((banner, index) => (
           <TouchableOpacity
             key={banner.id}
-            style={{ width }}
-            className={`h-[${mobileHeight}px] md:h-[${desktopHeight}px]`}
+            style={{ width, height: bannerHeight }}
             activeOpacity={0.9}
             onPress={() => handleBannerPress(banner)}
           >
             <Image
               source={{ uri: banner.image }}
-              className="w-full h-full object-cover"
-              style={{ resizeMode: "cover" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                resizeMode: "cover",
+              }}
             />
           </TouchableOpacity>
         ))}

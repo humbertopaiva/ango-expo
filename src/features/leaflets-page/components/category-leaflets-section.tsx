@@ -35,16 +35,6 @@ export function CategoryLeafletsSection({
             {categoryName}
           </Text>
         </View>
-
-        <TouchableOpacity
-          onPress={() => router.push(`/(drawer)/categoria/${categorySlug}`)}
-          className="flex-row items-center"
-        >
-          <Text className="text-secondary-600 text-sm font-medium mr-1">
-            Ver todos
-          </Text>
-          <ArrowRight size={16} color={THEME_COLORS.secondary} />
-        </TouchableOpacity>
       </View>
 
       <ScrollView
