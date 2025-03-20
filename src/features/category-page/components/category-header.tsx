@@ -1,17 +1,21 @@
 // Path: src/features/category-page/components/enhanced-category-header.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  Image,
+  ImageBackground,
   StyleSheet,
   Platform,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react-native";
 import { router } from "expo-router";
-import { HStack } from "@gluestack-ui/themed";
+import { LinearGradient } from "expo-linear-gradient";
+import { getContrastText } from "@/src/utils/color.utils";
+import { THEME_COLORS } from "@/src/styles/colors";
+import { animationUtils } from "@/src/utils/animations.utils";
 
 interface CategoryHeaderProps {
   categoryName: string | null;
@@ -26,6 +30,36 @@ export function CategoryHeader({
   isLoading,
   onFilterPress,
 }: CategoryHeaderProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Animações
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const titleScaleAnim = React.useRef(new Animated.Value(0.9)).current;
+  const titleTranslateY = React.useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    if (!isLoading) {
+      // Animar entrada dos elementos
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(titleScaleAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(titleTranslateY, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isLoading, imageLoaded]);
+
   const handleGoBack = () => {
     router.back();
   };
@@ -33,64 +67,76 @@ export function CategoryHeader({
   // Formata o nome da categoria para exibição
   const formattedCategoryName = formatCategoryName(categoryName);
 
+  // Placeholder para o estado de carregamento
   if (isLoading) {
     return (
-      <View style={styles.container} className="bg-primary-500">
+      <View style={styles.loadingContainer}>
         <SafeAreaView edges={["top"]}>
-          <View className="h-6 w-32 bg-gray-200 animate-pulse rounded-md" />
+          <View
+            style={styles.gradientPlaceholder}
+            className="bg-gray-200 animate-pulse"
+          />
         </SafeAreaView>
       </View>
     );
   }
 
   return (
-    <View style={styles.container} className="bg-primary-500">
-      <SafeAreaView edges={["top"]}>
-        <HStack className="px-4 py-3 items-center justify-between">
-          <HStack>
-            <TouchableOpacity
-              onPress={handleGoBack}
-              className="p-1 rounded-fullmr-2"
-            >
-              <ArrowLeft size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            {/* Parte esquerda: Logo da App */}
-            <Image
-              source={require("@/assets/images/logo-white.png")}
-              style={{ height: 28, width: 90 }}
-              resizeMode="contain"
-            />
-          </HStack>
-
-          {/* Parte direita: Título "Categorias" */}
-          <Text className="text-white font-medium">Categorias</Text>
-        </HStack>
-
-        {/* Barra de navegação secundária com nome da categoria */}
-        <HStack className="px-4 py-3 bg-secondary-500 items-center justify-between">
-          <HStack space="md" className="items-center flex-1">
-            <HStack space="sm" className="items-center flex-1 ">
-              <Text
-                className="text-white font-semibold text-xl"
-                numberOfLines={1}
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      <ImageBackground
+        source={
+          categoryImage
+            ? { uri: categoryImage }
+            : require("@/assets/images/category-placeholder.svg")
+        }
+        style={styles.imageBackground}
+        resizeMode="cover"
+        onLoad={() => setImageLoaded(true)}
+      >
+        <LinearGradient
+          colors={["rgba(0,0,0,0.7)", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.1)"]}
+          style={styles.gradient}
+        >
+          <SafeAreaView edges={["top"]} style={styles.safeArea}>
+            {/* Botões de Ação */}
+            <View style={styles.actionsContainer}>
+              <TouchableOpacity
+                onPress={handleGoBack}
+                style={styles.backButton}
               >
+                <ArrowLeft size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              {onFilterPress && (
+                <TouchableOpacity
+                  onPress={onFilterPress}
+                  style={styles.filterButton}
+                >
+                  <SlidersHorizontal size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Título da Categoria */}
+            <Animated.View
+              style={[
+                styles.titleContainer,
+                {
+                  transform: [
+                    { scale: titleScaleAnim },
+                    { translateY: titleTranslateY },
+                  ],
+                },
+              ]}
+            >
+              <Text style={styles.categoryTitle} numberOfLines={2}>
                 {formattedCategoryName}
               </Text>
-            </HStack>
-          </HStack>
-
-          {/* Botão de filtro */}
-          {onFilterPress && (
-            <TouchableOpacity
-              onPress={onFilterPress}
-              className="p-2 bg-white/20 rounded-full"
-            >
-              <SlidersHorizontal size={20} color="white" />
-            </TouchableOpacity>
-          )}
-        </HStack>
-      </SafeAreaView>
-    </View>
+            </Animated.View>
+          </SafeAreaView>
+        </LinearGradient>
+      </ImageBackground>
+    </Animated.View>
   );
 }
 
@@ -98,7 +144,7 @@ export function CategoryHeader({
 function formatCategoryName(name: string | null): string {
   if (!name) return "Categoria";
 
-  // Lista de palavras que devem permanecer em minúsculo (conjunções, preposições, etc.)
+  // Lista de palavras que devem permanecer em minúsculo
   const lowercaseWords = [
     "e",
     "de",
@@ -129,19 +175,77 @@ function formatCategoryName(name: string | null): string {
 
 const styles = StyleSheet.create({
   container: {
+    width: "100%",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
       },
       android: {
-        elevation: 2,
+        elevation: 4,
       },
       web: {
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
       },
     }),
+  },
+  loadingContainer: {
+    width: "100%",
+    height: 180,
+    backgroundColor: "#f0f0f0",
+  },
+  gradientPlaceholder: {
+    width: "100%",
+    height: 180,
+  },
+  imageBackground: {
+    width: "100%",
+    height: 180,
+  },
+  gradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  safeArea: {
+    width: "100%",
+    height: "100%",
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filterButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  titleContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  categoryTitle: {
+    fontSize: 32,
+    fontFamily: "PlusJakartaSans_700Bold",
+    color: "#FFFFFF",
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });
