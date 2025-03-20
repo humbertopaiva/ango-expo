@@ -73,7 +73,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
 
             {/* Descrição com altura máxima fixa */}
             <Text
-              className="text-sm text-gray-600 mt-1"
+              className="text-sm text-gray-600 mt-1 font-sans"
               numberOfLines={2}
               ellipsizeMode="tail"
             >
@@ -82,24 +82,24 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           </View>
 
           {/* Seção de preço com posicionamento fixo na parte inferior */}
-          <View className="mt-auto">
+          <View className="mt-2">
             {product.preco_promocional ? (
               <>
-                <Text className="text-lg font-bold text-primary-600">
+                <Text className="text-xl font-bold text-primary-600">
                   {formatCurrency(product.preco_promocional)}
                 </Text>
-                <Text className="text-sm text-gray-500 line-through">
+                <Text className="text-sm text-gray-500 line-through font-medium">
                   {formatCurrency(product.preco)}
                 </Text>
               </>
             ) : (
-              <Text className="text-lg font-bold text-primary-600">
+              <Text className="text-xl font-bold text-primary-600">
                 {formatCurrency(product.preco)}
               </Text>
             )}
 
             {product.parcelamento_cartao && product.quantidade_parcelas && (
-              <Text className="text-xs text-gray-600">
+              <Text className="text-sm text-gray-600">
                 ou {product.quantidade_parcelas}x de{" "}
                 {formatCurrency(
                   (
