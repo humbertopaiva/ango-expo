@@ -10,6 +10,7 @@ interface CategoryTabsProps {
   onTabChange: (tab: "highlights" | "companies") => void;
   companyCount: number;
   highlightCount: number;
+  hasVitrines: boolean; // Nova propriedade para verificar se há vitrines disponíveis
 }
 
 export function CategoryTabs({
@@ -17,23 +18,37 @@ export function CategoryTabs({
   onTabChange,
   companyCount,
   highlightCount,
+  hasVitrines,
 }: CategoryTabsProps) {
-  const tabs = [
-    {
-      key: "highlights",
-      title: "Destaques",
-      badge: highlightCount > 0 ? highlightCount : undefined,
-    },
-    {
-      key: "companies",
-      title: "Empresas",
-      badge: companyCount > 0 ? companyCount : undefined,
-    },
-  ];
+  // Se não houver vitrines, criamos apenas a tab de empresas
+  const tabs = hasVitrines
+    ? [
+        {
+          key: "highlights",
+          title: "Destaques",
+        },
+        {
+          key: "companies",
+          title: "Empresas",
+          badge: companyCount > 0 ? companyCount : undefined,
+        },
+      ]
+    : [
+        {
+          key: "companies",
+          title: "Empresas",
+          badge: companyCount > 0 ? companyCount : undefined,
+        },
+      ];
 
   const handleTabChange = (tabKey: string) => {
     onTabChange(tabKey as "highlights" | "companies");
   };
+
+  // Se houver apenas uma tab, não há necessidade de exibir o componente de tabs
+  if (tabs.length === 1) {
+    return null;
+  }
 
   return (
     <View className="mb-6 border-b border-gray-200">

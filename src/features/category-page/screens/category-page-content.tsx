@@ -1,6 +1,6 @@
 // Path: src/features/category-page/screens/category-page-content.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TextInput } from "react-native";
 import { useCategoryPageContext } from "../contexts/use-category-page-context";
 import { SubcategoriesTabs } from "../components/subcategories-tabs";
@@ -12,6 +12,8 @@ import { ModalFilter } from "../components/modal-filter";
 import { CategoryBreadcrumb } from "../components/category-breadcrumb";
 import { CategoryTabs } from "../components/category-tabs";
 import { CategoryVitrinesSection } from "../components/category-vitrines-section";
+import { EmptyCategory } from "../components/empty-category";
+import { Box } from "@/components/ui/box";
 
 interface CategoryPageContentProps {
   showFilterModal: boolean;
@@ -34,6 +36,16 @@ export function CategoryPageContent({
     company.perfil.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Verificar se há vitrines disponíveis
+  const hasVitrines = vm.companiesWithVitrine.length > 0;
+
+  // Ajustar a aba ativa quando não houver vitrines
+  useEffect(() => {
+    if (!hasVitrines && vm.activeTab === "highlights") {
+      vm.setActiveTab("companies");
+    }
+  }, [hasVitrines, vm.activeTab]);
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["bottom"]}>
       <ScrollView
@@ -46,7 +58,7 @@ export function CategoryPageContent({
           <CategoryBreadcrumb categoryName={vm.categoryName} />
         </View>
 
-        <Section>
+        <Section paddingX={0}>
           {/* Barra de pesquisa simplificada */}
           <View className="rounded-xl flex-row items-center px-4 mt-4 mx-4 mb-6 bg-white">
             <Search size={20} color="#6B7280" className="ml-4" />
@@ -59,14 +71,16 @@ export function CategoryPageContent({
           </View>
 
           {/* Subcategorias */}
-          <SubcategoriesTabs
-            subcategories={vm.subcategories}
-            selectedSubcategory={vm.selectedSubcategory}
-            onSelectSubcategory={handleSelectSubcategory}
-            isLoading={vm.isLoading}
-          />
+          <Box className="px-4">
+            <SubcategoriesTabs
+              subcategories={vm.subcategories}
+              selectedSubcategory={vm.selectedSubcategory}
+              onSelectSubcategory={handleSelectSubcategory}
+              isLoading={vm.isLoading}
+            />
+          </Box>
 
-          {/* Tabs para alternar entre Destaques e Empresas */}
+          {/* Tabs para alternar entre Destaques e Empresas - só mostra se houver vitrines */}
           <View className="px-4 mt-6">
             <CategoryTabs
               activeTab={vm.activeTab}
@@ -76,11 +90,12 @@ export function CategoryPageContent({
                 (acc, company) => acc + company.vitrineItems.length,
                 0
               )}
+              hasVitrines={hasVitrines}
             />
           </View>
 
           {/* Conteúdo baseado na tab ativa */}
-          {vm.activeTab === "highlights" ? (
+          {vm.activeTab === "highlights" && hasVitrines ? (
             <CategoryVitrinesSection
               companiesWithVitrine={vm.companiesWithVitrine}
               isLoading={vm.isLoadingVitrine}
@@ -88,21 +103,29 @@ export function CategoryPageContent({
             />
           ) : (
             <View className="mt-2 px-4">
-              <View className="mb-4">
-                <Text className="text-lg font-semibold text-gray-800">
-                  {filteredCompanies.length}{" "}
-                  {filteredCompanies.length === 1
-                    ? "estabelecimento"
-                    : "estabelecimentos"}{" "}
-                  encontrados
-                </Text>
-              </View>
-              <CompanyList
-                companies={filteredCompanies}
-                isLoading={vm.isLoading}
-                searchTerm={searchTerm}
-                categoryName={vm.categoryName}
-              />
+              {!vm.isLoading && (
+                <View className="mb-4">
+                  <Text className="text-lg font-semibold text-gray-800">
+                    {filteredCompanies.length}{" "}
+                    {filteredCompanies.length === 1
+                      ? "estabelecimento"
+                      : "estabelecimentos"}{" "}
+                    encontrados
+                  </Text>
+                </View>
+              )}
+
+              {/* Se não houver empresas e não estiver carregando, mostra componente de categoria vazia */}
+              {filteredCompanies.length === 0 && !vm.isLoading ? (
+                <EmptyCategory categoryName={vm.categoryName} />
+              ) : (
+                <CompanyList
+                  companies={filteredCompanies}
+                  isLoading={vm.isLoading}
+                  searchTerm={searchTerm}
+                  categoryName={vm.categoryName}
+                />
+              )}
             </View>
           )}
         </Section>

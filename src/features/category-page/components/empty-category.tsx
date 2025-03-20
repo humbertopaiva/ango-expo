@@ -13,15 +13,31 @@ import { THEME_COLORS } from "@/src/styles/colors";
 
 interface EmptyCategoryProps {
   categoryName: string;
+  subcategoryName?: string; // Novo parâmetro opcional
 }
 
-export function EmptyCategory({ categoryName }: EmptyCategoryProps) {
+export function EmptyCategory({
+  categoryName,
+  subcategoryName,
+}: EmptyCategoryProps) {
   const handleWhatsAppPress = () => {
+    const message = subcategoryName
+      ? `Olá! Quero cadastrar minha empresa na subcategoria ${subcategoryName} (categoria ${categoryName})`
+      : `Olá! Quero cadastrar minha empresa na categoria ${categoryName}`;
+
     Linking.openURL(
-      "https://wa.me/5532988555409?text=Olá! Quero cadastrar minha empresa na categoria " +
-        categoryName
+      `https://wa.me/5532988555409?text=${encodeURIComponent(message)}`
     );
   };
+
+  // Texto adaptado com base na presença de subcategoria
+  const titleText = subcategoryName
+    ? "Seja o primeiro nesta subcategoria!"
+    : "Seja o primeiro!";
+
+  const descriptionText = subcategoryName
+    ? `Não encontramos estabelecimentos na subcategoria ${subcategoryName.toLowerCase()}. Que tal ser o primeiro a aparecer aqui?`
+    : `Não encontramos estabelecimentos na categoria ${categoryName.toLowerCase()}. Que tal ser o primeiro a aparecer aqui?`;
 
   return (
     <View className="bg-white rounded-xl shadow-md border border-gray-100 p-6 my-4">
@@ -31,12 +47,11 @@ export function EmptyCategory({ categoryName }: EmptyCategoryProps) {
         </View>
 
         <Text className="text-xl font-bold text-gray-800 text-center">
-          Seja o primeiro!
+          {titleText}
         </Text>
 
         <Text className="text-gray-600 text-center mt-2 mb-6">
-          Não encontramos estabelecimentos na categoria{" "}
-          {categoryName.toLowerCase()}. Que tal ser o primeiro a aparecer aqui?
+          {descriptionText}
         </Text>
 
         <View
