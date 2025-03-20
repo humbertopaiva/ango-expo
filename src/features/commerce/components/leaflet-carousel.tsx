@@ -23,6 +23,7 @@ import { IImageInfo } from "react-native-image-zoom-viewer/built/image-viewer.ty
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
 import { WebViewPdfViewer } from "@/components/pdf/webview-pdf-viewer";
+import { formatToBrazilianDate } from "@/src/utils/date.utils";
 
 interface LeafletCarouselProps {
   leaflets: Leaflet[];
@@ -299,7 +300,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
 
                     <View className="absolute top-3 right-3 bg-secondary-500 rounded-full px-3 py-1">
                       <Text className="text-white text-xs font-medium">
-                        Até {new Date(leaflet.validade).toLocaleDateString()}
+                        Até {formatToBrazilianDate(leaflet.validade)}
                       </Text>
                     </View>
                   </View>
@@ -309,8 +310,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
                     </Text>
                     <View className="flex-row items-center justify-between mt-2">
                       <Text className="text-sm text-gray-500">
-                        Válido até{" "}
-                        {new Date(leaflet.validade).toLocaleDateString()}
+                        Válido até {formatToBrazilianDate(leaflet.validade)}
                       </Text>
                       <ChevronRight size={16} color="#6B7280" />
                     </View>
@@ -353,12 +353,14 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
               </TouchableOpacity>
 
               <View className="flex-1 ml-4">
-                <Text className="text-white font-semibold" numberOfLines={1}>
+                <Text
+                  className="text-white font-semibold text-md"
+                  numberOfLines={1}
+                >
                   {selectedLeaflet.nome}
                 </Text>
-                <Text className="text-gray-300 text-xs">
-                  Válido até{" "}
-                  {new Date(selectedLeaflet.validade).toLocaleDateString()}
+                <Text className="text-gray-300 text-sm font-sans">
+                  Válido até {formatToBrazilianDate(selectedLeaflet.validade)}
                 </Text>
               </View>
 
