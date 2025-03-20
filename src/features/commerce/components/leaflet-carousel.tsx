@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   FlatList,
 } from "react-native";
-import { FileText, ChevronRight, X, Share2 } from "lucide-react-native";
+import { FileText, ChevronRight, X, Share2, Store } from "lucide-react-native";
 import { Card, HStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { Leaflet } from "../models/leaflet";
@@ -61,14 +61,14 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
     return () => subscription.remove();
   }, []);
 
-  // Calcular a largura do item baseado na tela
+  // Calcular a largura do item baseado na tela - TAMANHO REDUZIDO
   const calculateItemWidth = () => {
     if (screenWidth < 768) {
-      return screenWidth * 0.75;
+      return screenWidth * 0.65; // Reduzido de 0.75 para 0.65
     } else if (screenWidth < 1024) {
-      return 280;
+      return 240; // Reduzido de 280 para 240
     } else {
-      return 320;
+      return 280; // Reduzido de 320 para 280
     }
   };
 
@@ -308,11 +308,26 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
                     <Text className="font-medium text-lg mb-1">
                       {leaflet.nome}
                     </Text>
+
+                    {/* Empresa do Encarte - NOVO */}
+                    <View className="flex-row items-center mb-2">
+                      <Text className="text-sm text-gray-700 font-medium">
+                        {typeof leaflet.empresa === "string"
+                          ? leaflet.empresa
+                          : leaflet.empresa?.nome || ""}
+                      </Text>
+                    </View>
+
                     <View className="flex-row items-center justify-between mt-2">
-                      <Text className="text-sm text-gray-500">
+                      <Text className="text-xs text-gray-500">
                         Válido até {formatToBrazilianDate(leaflet.validade)}
                       </Text>
-                      <ChevronRight size={16} color="#6B7280" />
+                      <View className="bg-secondary-100 rounded-full p-1">
+                        <ChevronRight
+                          size={16}
+                          color={THEME_COLORS.secondary}
+                        />
+                      </View>
                     </View>
                   </View>
                 </Card>
@@ -359,7 +374,16 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
                 >
                   {selectedLeaflet.nome}
                 </Text>
-                <Text className="text-gray-300 text-sm font-sans">
+                <View className="flex-row items-center">
+                  <Store size={12} color="#DDD" />
+                  <Text className="text-gray-300 text-xs ml-1">
+                    {typeof selectedLeaflet.empresa === "string"
+                      ? selectedLeaflet.empresa
+                      : selectedLeaflet.empresa?.nome ||
+                        "Empresa não identificada"}
+                  </Text>
+                </View>
+                <Text className="text-gray-300 text-xs">
                   Válido até {formatToBrazilianDate(selectedLeaflet.validade)}
                 </Text>
               </View>
