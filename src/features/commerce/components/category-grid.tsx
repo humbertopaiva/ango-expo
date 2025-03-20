@@ -1,25 +1,37 @@
 // Path: src/features/commerce/components/category-grid.tsx
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Platform,
   useWindowDimensions,
-  ImageBackground,
 } from "react-native";
 import { Category } from "../models/category";
-import { Grid, Sparkles, Store } from "lucide-react-native";
+import { Sparkles, Store } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { router } from "expo-router";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { LinearGradient } from "expo-linear-gradient";
 
 interface CategoryGridProps {
   categories: Category[];
   isLoading: boolean;
 }
+
+// Lista de cores para usar nas categorias
+const CATEGORY_COLORS = [
+  "#F4511E", // primary
+  "#0891B2", // teal
+  "#3B82F6", // blue
+  "#8B5CF6", // violet
+  "#10B981", // emerald
+  "#EC4899", // pink
+  "#F59E0B", // amber
+  "#EF4444", // red
+  "#F97316", // orange
+  "#6366F1", // indigo
+];
 
 export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
   const { width } = useWindowDimensions();
@@ -28,6 +40,14 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
   // Usar exatamente 3 colunas, independentemente do tamanho da tela
   const numColumns = 3;
   const itemWidth = `${100 / numColumns}%`;
+
+  // Atribuir cores às categorias de forma consistente
+  const categoriesWithColors = useMemo(() => {
+    return categories.map((category, index) => ({
+      ...category,
+      color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+    }));
+  }, [categories]);
 
   if (isLoading) {
     return (
@@ -53,12 +73,8 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
         {/* Grid de categorias em loading state */}
         <View className="flex-row flex-wrap">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <View
-              key={i}
-              style={{ width: itemWidth }}
-              className="aspect-square p-2"
-            >
-              <View className="w-full h-full rounded-xl bg-gray-200 animate-pulse" />
+            <View key={i} style={{ width: itemWidth }} className="p-2">
+              <View className="w-full h-32 rounded-xl bg-gray-200 animate-pulse" />
             </View>
           ))}
         </View>
@@ -88,68 +104,70 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
         </VStack>
       </View>
 
-      {/* Novo estilo de grid de categorias com cards quadrados e overlay */}
+      {/* Grid de categorias com design ultra minimalista */}
       <View className="flex-row flex-wrap">
-        {categories.map((category) => (
+        {categoriesWithColors.map((category) => (
           <View key={category.id} style={{ width: itemWidth }} className="p-2">
             <TouchableOpacity
               onPress={() =>
                 router.push(`/(drawer)/categoria/${category.slug}`)
               }
-              activeOpacity={0.9}
-              className="w-full aspect-square rounded-xl overflow-hidden shadow-sm"
-              style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 3,
-                elevation: 3,
-              }}
+              activeOpacity={0.7}
+              className="w-full"
             >
-              {category.imagem ? (
-                <ImageBackground
-                  source={{ uri: category.imagem }}
-                  className="w-full h-full"
-                  resizeMode="cover"
+              <View
+                className="bg-white rounded-xl p-4 items-center"
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 2,
+                  elevation: 1,
+                  height: (width / numColumns) * 0.9, // Altura fixa para todos os cards
+                }}
+              >
+                {/* Imagem quadrada com borda colorida */}
+                <View
+                  className="mb-3 overflow-hidden"
+                  style={{
+                    width: (width / numColumns) * 0.4, // Quadrado de 40% da largura do card
+                    height: (width / numColumns) * 0.4,
+                    borderRadius: 12,
+                    borderWidth: 2,
+                    borderColor: category.color,
+                  }}
                 >
-                  <LinearGradient
-                    colors={[
-                      "rgba(0,0,0,0)",
-                      "rgba(0,0,0,0.2)",
-                      "rgba(0,0,0,0.7)",
-                    ]}
-                    className="absolute inset-0 justify-end p-3"
-                  >
-                    <Text
-                      className="text-white font-semibold text-center"
-                      numberOfLines={2}
+                  {category.imagem ? (
+                    <ImagePreview
+                      uri={category.imagem}
+                      width="100%"
+                      height="100%"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View
+                      className="w-full h-full items-center justify-center"
+                      style={{ backgroundColor: `${category.color}15` }}
                     >
-                      {category.nome}
-                    </Text>
-                  </LinearGradient>
-                </ImageBackground>
-              ) : (
-                <View className="w-full h-full bg-primary-50 justify-end items-center">
-                  <View className="absolute inset-0 flex items-center justify-center">
-                    <Store size={32} color={THEME_COLORS.primary} />
-                  </View>
-                  <LinearGradient
-                    colors={[
-                      `${THEME_COLORS.primary}00`,
-                      `${THEME_COLORS.primary}40`,
-                      `${THEME_COLORS.primary}90`,
-                    ]}
-                    className="absolute inset-0 justify-end p-3"
-                  >
-                    <Text
-                      className="text-white font-semibold text-center"
-                      numberOfLines={2}
-                    >
-                      {category.nome}
-                    </Text>
-                  </LinearGradient>
+                      <Store size={24} color={category.color} />
+                    </View>
+                  )}
                 </View>
-              )}
+
+                {/* Nome da categoria */}
+                <View className="flex-1 items-center justify-center">
+                  <Text
+                    className="text-center text-sm"
+                    style={{
+                      color: "#333333",
+                      fontFamily: "PlusJakartaSans_500Medium",
+                    }}
+                    numberOfLines={2}
+                  >
+                    {category.nome}
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
         ))}
