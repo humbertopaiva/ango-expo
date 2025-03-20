@@ -161,6 +161,12 @@ module.exports = {
         bold: ["PlusJakartaSans_700Bold"],
         gothic: ["DelaGothicOne_400Regular"],
       },
+      fontWeight: {
+        normal: "400",
+        medium: "500",
+        semibold: "600",
+        bold: "700",
+      },
     },
   },
   plugins: [gluestackPlugin],

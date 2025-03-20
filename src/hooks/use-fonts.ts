@@ -1,5 +1,5 @@
-// src/hooks/use-fonts.ts
-import { useCallback, useEffect } from "react";
+// Path: src/hooks/use-fonts.ts
+import { useCallback, useEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import {
   PlusJakartaSans_400Regular,
@@ -18,6 +18,9 @@ import {
 SplashScreen.preventAutoHideAsync();
 
 export function useFonts() {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
   const [jakartaSansLoaded, jakartaSansError] = useJakartaSans({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
@@ -29,19 +32,26 @@ export function useFonts() {
     DelaGothicOne_400Regular,
   });
 
-  const allFontsLoaded = jakartaSansLoaded && delaGothicLoaded;
-  const hasError = jakartaSansError || delaGothicError;
-
   useEffect(() => {
-    if (allFontsLoaded || hasError) {
-      // Ocultar a splash screen quando as fontes estiverem carregadas ou se houver erro
-      SplashScreen.hideAsync();
+    const allFontsLoaded = jakartaSansLoaded && delaGothicLoaded;
+    const anyError = jakartaSansError || delaGothicError;
+
+    if (anyError) {
+      console.error("Error loading fonts:", anyError);
+      setError(anyError || new Error("Failed to load fonts"));
     }
-  }, [allFontsLoaded, hasError]);
+
+    setFontsLoaded(allFontsLoaded);
+
+    if (allFontsLoaded || anyError) {
+      // Ocultar a splash screen quando as fontes estiverem carregadas ou se houver erro
+      SplashScreen.hideAsync().catch(console.error);
+    }
+  }, [jakartaSansLoaded, delaGothicLoaded, jakartaSansError, delaGothicError]);
 
   return {
-    isReady: allFontsLoaded,
-    error: hasError,
+    isReady: fontsLoaded,
+    error,
     jakartaSansLoaded,
     delaGothicLoaded,
   };
