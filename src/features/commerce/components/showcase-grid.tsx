@@ -77,7 +77,16 @@ export function ShowcaseGrid({ companies, isLoading }: ShowcaseGridProps) {
             key={item.id}
             onPress={() => router.push(`/(drawer)/empresa/${item.slug}`)}
           >
-            <Card className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+            <Card
+              className="overflow-hidden rounded-xl border border-gray-200 "
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 3,
+                elevation: 3,
+              }}
+            >
               <View className="relative h-32">
                 {item.banner ? (
                   <ImagePreview

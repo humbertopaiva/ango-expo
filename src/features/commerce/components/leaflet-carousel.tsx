@@ -258,7 +258,16 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
                 onPress={() => handleOpenEncarte(extendedLeaflet)}
                 activeOpacity={0.8}
               >
-                <Card className="w-full overflow-hidden border border-gray-200 shadow-sm rounded-xl">
+                <Card
+                  className="w-full overflow-hidden border border-gray-200 rounded-xl"
+                  style={{
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 3,
+                    elevation: 2,
+                  }}
+                >
                   <View
                     style={{
                       width: itemWidth,
