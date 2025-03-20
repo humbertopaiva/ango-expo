@@ -116,18 +116,12 @@ export function CustomTabBar(_props: BottomTabBarProps) {
         style={[
           styles.webContainer,
           {
-            backgroundColor: THEME_COLORS.primary,
             opacity: fadeAnim,
             transform: [{ translateY: translateY }],
           },
         ]}
       >
-        <LinearGradient
-          colors={[THEME_COLORS.primary, THEME_COLORS.secondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.webGradient}
-        >
+        <View style={[styles.webBackgroundPrimary]}>
           <View style={styles.webTabsContainer}>
             {tabs.map((tab) => {
               const active = isActive(tab.path);
@@ -145,18 +139,18 @@ export function CustomTabBar(_props: BottomTabBarProps) {
                     style={[styles.webTab, active && styles.webTabActive]}
                     onPress={() => handleNavigation(tab.path, tab.name)}
                   >
-                    {active ? (
-                      <LinearGradient
-                        colors={["#FFFFFF", "#F8F8F8"]}
-                        style={styles.webIconContainerActive}
-                      >
-                        <tab.icon size={22} color={THEME_COLORS.primary} />
-                      </LinearGradient>
-                    ) : (
-                      <View style={styles.webIconContainer}>
-                        <tab.icon size={22} color="#FFFFFF" />
-                      </View>
-                    )}
+                    <View
+                      style={
+                        active
+                          ? styles.webIconContainerActive
+                          : styles.webIconContainer
+                      }
+                    >
+                      <tab.icon
+                        size={22}
+                        color={active ? THEME_COLORS.primary : "#FFFFFF"}
+                      />
+                    </View>
                     <Text
                       style={[
                         styles.webTabText,
@@ -172,7 +166,7 @@ export function CustomTabBar(_props: BottomTabBarProps) {
               );
             })}
           </View>
-        </LinearGradient>
+        </View>
       </Animated.View>
     );
   }
@@ -194,12 +188,7 @@ export function CustomTabBar(_props: BottomTabBarProps) {
       ]}
     >
       <View style={styles.background}>
-        <LinearGradient
-          colors={[THEME_COLORS.primary, THEME_COLORS.secondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
-        >
+        <View style={styles.backgroundPrimary}>
           <View style={styles.tabsContainer}>
             {tabs.map((tab, index) => {
               const active = isActive(tab.path);
@@ -243,7 +232,7 @@ export function CustomTabBar(_props: BottomTabBarProps) {
               );
             })}
           </View>
-        </LinearGradient>
+        </View>
       </View>
     </Animated.View>
   );
@@ -257,7 +246,8 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 100,
   },
-  gradient: {
+  backgroundPrimary: {
+    backgroundColor: THEME_COLORS.primary,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingVertical: 12,
@@ -265,7 +255,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-
   background: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -274,7 +263,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 8,
-
     overflow: "hidden",
   },
   tabsContainer: {
@@ -325,7 +313,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "rgba(255, 255, 255, 0.1)",
     overflow: "hidden",
   },
-  webGradient: {
+  webBackgroundPrimary: {
+    backgroundColor: THEME_COLORS.primary,
     paddingVertical: 4,
   },
   webTabsContainer: {
@@ -359,6 +348,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },

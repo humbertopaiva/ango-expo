@@ -145,7 +145,9 @@ export function DeliveryScreenContent() {
         {/* Header e Banner */}
         <Section className="pt-4">
           <View className="">
-            <PromotionalBanner />
+            <View className="px-2">
+              <PromotionalBanner />
+            </View>
             {/* Badge estilizada igual ao comércio local */}
             <HStack className="items-center justify-center mb-4">
               <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2">
