@@ -16,6 +16,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { getContrastText } from "@/src/utils/color.utils";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { animationUtils } from "@/src/utils/animations.utils";
+import { HStack } from "@gluestack-ui/themed";
+import { Image } from "@/components/ui/image";
 
 interface CategoryHeaderProps {
   categoryName: string | null;
@@ -90,7 +92,7 @@ export function CategoryHeader({
             : require("@/assets/images/category-placeholder.svg")
         }
         style={styles.imageBackground}
-        resizeMode="cover"
+        imageStyle={{ resizeMode: "cover", alignSelf: "flex-start" }}
         onLoad={() => setImageLoaded(true)}
       >
         <LinearGradient
@@ -100,21 +102,30 @@ export function CategoryHeader({
           <SafeAreaView edges={["top"]} style={styles.safeArea}>
             {/* Botões de Ação */}
             <View style={styles.actionsContainer}>
-              <TouchableOpacity
-                onPress={handleGoBack}
-                style={styles.backButton}
-              >
-                <ArrowLeft size={22} color="#FFFFFF" />
-              </TouchableOpacity>
-
-              {onFilterPress && (
-                <TouchableOpacity
-                  onPress={onFilterPress}
-                  style={styles.filterButton}
-                >
-                  <SlidersHorizontal size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-              )}
+              <HStack className="items-center justify-between flex-1 w-full">
+                <HStack className="items-center gap-4">
+                  <TouchableOpacity
+                    onPress={handleGoBack}
+                    style={styles.backButton}
+                  >
+                    <ArrowLeft size={22} color="#FFFFFF" />
+                  </TouchableOpacity>
+                  <Image
+                    source={require("@/assets/images/logo-white.png")}
+                    style={{ width: 80, height: 28 }}
+                    resizeMode="contain"
+                    className="w-16"
+                  />
+                </HStack>
+                {onFilterPress && (
+                  <TouchableOpacity
+                    onPress={onFilterPress}
+                    style={styles.filterButton}
+                  >
+                    <SlidersHorizontal size={20} color="#FFFFFF" />
+                  </TouchableOpacity>
+                )}
+              </HStack>
             </View>
 
             {/* Título da Categoria */}
@@ -193,16 +204,20 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     width: "100%",
-    height: 180,
+    height: 160,
     backgroundColor: "#f0f0f0",
   },
   gradientPlaceholder: {
     width: "100%",
-    height: 180,
+    height: 160,
   },
   imageBackground: {
     width: "100%",
-    height: 180,
+    height: 160,
+
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "flex-start",
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,

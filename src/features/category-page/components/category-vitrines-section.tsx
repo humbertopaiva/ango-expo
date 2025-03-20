@@ -2,7 +2,7 @@
 
 import React from "react";
 import { View, Text, ScrollView } from "react-native";
-import { Sparkles } from "lucide-react-native";
+import { Sparkles, Store } from "lucide-react-native";
 import { HStack } from "@gluestack-ui/themed";
 import { CompanyWithVitrine } from "../hooks/use-category-vitrine";
 import { CompanyVitrineCard } from "@/components/showcase/company-showcase-card";
@@ -49,10 +49,20 @@ export function CategoryVitrinesSection({
 
   if (companiesWithVitrine.length === 0) {
     return (
-      <View className="py-8 items-center justify-center">
-        <Text className="text-gray-500 text-center">
-          Não encontramos produtos em destaque nesta categoria.
-        </Text>
+      <View className="py-8 px-4">
+        <View className="bg-white rounded-xl p-6 border border-gray-100 items-center">
+          <View className="bg-primary-50 w-20 h-20 rounded-full items-center justify-center mb-4">
+            <Store size={30} color={THEME_COLORS.primary} />
+          </View>
+
+          <Text className="text-xl font-semibold text-gray-800 text-center mb-2">
+            Sem produtos em destaque
+          </Text>
+
+          <Text className="text-gray-600 text-center">
+            Não encontramos produtos em destaque nesta categoria no momento.
+          </Text>
+        </View>
       </View>
     );
   }

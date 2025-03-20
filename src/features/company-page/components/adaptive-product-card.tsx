@@ -166,7 +166,7 @@ export function AdaptiveProductCard({
                     <Text className="text-white/80 text-sm line-through">
                       {formatCurrency(product.preco)}
                     </Text>
-                    <Text className="text-white font-semibold text-2xl">
+                    <Text className="text-white font-bold text-3xl">
                       {formatCurrency(product.preco_promocional)}
                     </Text>
                   </View>

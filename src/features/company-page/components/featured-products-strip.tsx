@@ -62,12 +62,12 @@ export function FeaturedProductsStrip() {
   const primaryColor = vm.primaryColor || "#F4511E";
 
   return (
-    <View style={{ backgroundColor: primaryColor }} className="mt-8">
+    <View className="">
       {/* Container com fundo colorido baseado na cor primária da empresa */}
       <View className="pt-8 pb-8 overflow-hidden">
         {/* Cabeçalho com textos */}
         <View className="px-4 mb-4">
-          <Text className={`text-2xl font-semibold text-white`}>
+          <Text className={`text-2xl font-semibold text-gray-800`}>
             Produtos em Destaque
           </Text>
         </View>
