@@ -1,20 +1,20 @@
 // Path: src/features/commerce/components/category-grid.tsx
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   Platform,
   useWindowDimensions,
+  ImageBackground,
 } from "react-native";
 import { Category } from "../models/category";
-import { Grid, Sparkles } from "lucide-react-native";
+import { Grid, Sparkles, Store } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { router } from "expo-router";
 import { HStack, VStack } from "@gluestack-ui/themed";
-import { Box } from "@/components/ui/box";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface CategoryGridProps {
   categories: Category[];
@@ -22,13 +22,12 @@ interface CategoryGridProps {
 }
 
 export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
-  // Cria uma chave única para o FlatList que irá mudar apenas quando o número de colunas mudar
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === "web";
-  const numColumns = isWeb ? 4 : 3;
 
-  // Criando um ID único baseado no número de colunas
-  const flatListKey = `category-grid-${numColumns}`;
+  // Usar exatamente 3 colunas, independentemente do tamanho da tela
+  const numColumns = 3;
+  const itemWidth = `${100 / numColumns}%`;
 
   if (isLoading) {
     return (
@@ -42,14 +41,25 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
           </HStack>
         </HStack>
 
-        <View className="flex-row flex-wrap gap-3">
+        <VStack className="items-center justify-center w-full gap-1 mb-6">
+          <Text className="text-3xl font-gothic text-secondary-500">
+            EXPLORE O
+          </Text>
+          <Text className="text-3xl font-gothic text-primary-500">
+            COMÉRCIO LOCAL
+          </Text>
+        </VStack>
+
+        {/* Grid de categorias em loading state */}
+        <View className="flex-row flex-wrap">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <View
               key={i}
-              className={`${
-                isWeb ? "w-1/4" : "w-1/3"
-              } aspect-square animate-pulse bg-gray-200 rounded-xl p-2`}
-            />
+              style={{ width: itemWidth }}
+              className="aspect-square p-2"
+            >
+              <View className="w-full h-full rounded-xl bg-gray-200 animate-pulse" />
+            </View>
           ))}
         </View>
       </View>
@@ -78,53 +88,72 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
         </VStack>
       </View>
 
-      {/* Renderização do grid com FlatList */}
-      <FlatList
-        key={flatListKey}
-        data={categories}
-        keyExtractor={(item) => item.id}
-        numColumns={numColumns}
-        scrollEnabled={false}
-        renderItem={({ item }) => (
-          <View className={`${isWeb ? "w-1/4" : "w-1/3"} p-2`}>
+      {/* Novo estilo de grid de categorias com cards quadrados e overlay */}
+      <View className="flex-row flex-wrap">
+        {categories.map((category) => (
+          <View key={category.id} style={{ width: itemWidth }} className="p-2">
             <TouchableOpacity
-              onPress={() => router.push(`/(drawer)/categoria/${item.slug}`)}
-              className="w-full aspect-square"
+              onPress={() =>
+                router.push(`/(drawer)/categoria/${category.slug}`)
+              }
+              activeOpacity={0.9}
+              className="w-full aspect-square rounded-xl overflow-hidden shadow-sm"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 3,
+                elevation: 3,
+              }}
             >
-              <View className="w-full h-full flex items-center justify-center">
-                <View className="w-full aspect-square bg-white border border-gray-100 rounded-2xl p-2 flex items-center justify-center">
-                  <View className="w-12 h-12 rounded-xl bg-primary-50 items-center justify-center mb-2">
-                    {item.imagem ? (
-                      <ImagePreview
-                        uri={item.imagem}
-                        width={28}
-                        height={28}
-                        resizeMode="contain"
-                        containerClassName="rounded-lg"
-                      />
-                    ) : (
-                      <Grid size={20} color="#F4511E" />
-                    )}
+              {category.imagem ? (
+                <ImageBackground
+                  source={{ uri: category.imagem }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                >
+                  <LinearGradient
+                    colors={[
+                      "rgba(0,0,0,0)",
+                      "rgba(0,0,0,0.2)",
+                      "rgba(0,0,0,0.7)",
+                    ]}
+                    className="absolute inset-0 justify-end p-3"
+                  >
+                    <Text
+                      className="text-white font-semibold text-center"
+                      numberOfLines={2}
+                    >
+                      {category.nome}
+                    </Text>
+                  </LinearGradient>
+                </ImageBackground>
+              ) : (
+                <View className="w-full h-full bg-primary-50 justify-end items-center">
+                  <View className="absolute inset-0 flex items-center justify-center">
+                    <Store size={32} color={THEME_COLORS.primary} />
                   </View>
-                  <Text className="text-center text-xs font-medium text-gray-800 line-clamp-2 px-1">
-                    {item.nome}
-                  </Text>
+                  <LinearGradient
+                    colors={[
+                      `${THEME_COLORS.primary}00`,
+                      `${THEME_COLORS.primary}40`,
+                      `${THEME_COLORS.primary}90`,
+                    ]}
+                    className="absolute inset-0 justify-end p-3"
+                  >
+                    <Text
+                      className="text-white font-semibold text-center"
+                      numberOfLines={2}
+                    >
+                      {category.nome}
+                    </Text>
+                  </LinearGradient>
                 </View>
-              </View>
+              )}
             </TouchableOpacity>
           </View>
-        )}
-        contentContainerStyle={{
-          flexGrow: 0,
-        }}
-        ListEmptyComponent={
-          <View className="flex-1 items-center justify-center p-8">
-            <Text className="text-gray-500 text-center">
-              Nenhuma categoria encontrada
-            </Text>
-          </View>
-        }
-      />
+        ))}
+      </View>
     </View>
   );
 }
