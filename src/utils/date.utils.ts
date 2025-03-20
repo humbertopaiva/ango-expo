@@ -27,3 +27,29 @@ export const formatDateToTimeString = (timeString: string): string => {
     return timeString;
   }
 };
+
+/**
+ * Formata uma data no padrão brasileiro (DD/MM/YYYY)
+ * @param dateString String representando uma data válida
+ * @returns Data formatada no padrão brasileiro
+ */
+export const formatToBrazilianDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+
+    // Verifica se a data é válida
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+
+    // Formato brasileiro: dia/mês/ano
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+  } catch (error) {
+    console.error("Erro ao formatar data:", error);
+    return dateString; // Retorna a string original em caso de erro
+  }
+};
