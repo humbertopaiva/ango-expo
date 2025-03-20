@@ -55,7 +55,7 @@ export function CategoryFilterChips({
       {/* Botão "Todas" */}
       <TouchableOpacity
         onPress={selectAll}
-        className={`flex-row items-center h-10 px-4 mx-1 rounded-full ${
+        className={`flex-row items-center h-12 px-4 mx-1 rounded-full ${
           allCategoriesSelected
             ? "bg-secondary-500"
             : "bg-gray-100 border border-gray-200"
@@ -86,10 +86,10 @@ export function CategoryFilterChips({
           <TouchableOpacity
             key={category.id}
             onPress={() => toggleCategory(category.id)}
-            className={`px-4 py-2 h-10 rounded-full mx-1 ${
+            className={`px-4 h-12 rounded-full mx-1 flex items-center justify-center ${
               isSelected
                 ? "bg-secondary-500"
-                : "bg-gray-100 border border-gray-200"
+                : "bg-white border border-gray-200"
             }`}
           >
             <Text

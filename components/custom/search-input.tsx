@@ -29,6 +29,7 @@ export function SearchInput({
           placeholder={placeholder}
           value={value}
           onChangeText={onChangeText}
+          className="placeholder:font-medium"
         />
       </Input>
     </View>
