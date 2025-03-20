@@ -1,16 +1,17 @@
 // Path: src/features/category-page/screens/category-page-content.tsx
+
 import React, { useState } from "react";
-import { View, Text, ScrollView, TextInput, Pressable } from "react-native";
+import { View, Text, ScrollView, TextInput } from "react-native";
 import { useCategoryPageContext } from "../contexts/use-category-page-context";
 import { SubcategoriesTabs } from "../components/subcategories-tabs";
 import { CompanyList } from "../components/company-list";
-
 import { Section } from "@/components/custom/section";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Search } from "lucide-react-native";
-import { HStack } from "@gluestack-ui/themed";
 import { ModalFilter } from "../components/modal-filter";
 import { CategoryBreadcrumb } from "../components/category-breadcrumb";
+import { CategoryTabs } from "../components/category-tabs";
+import { CategoryVitrinesSection } from "../components/category-vitrines-section";
 
 interface CategoryPageContentProps {
   showFilterModal: boolean;
@@ -46,8 +47,8 @@ export function CategoryPageContent({
         </View>
 
         <Section>
-          {/* Barra de pesquisa simplificada - sem botão de filtro */}
-          <View className=" rounded-xl flex-row items-center px-4  mt-4 mx-4 mb-6 bg-white">
+          {/* Barra de pesquisa simplificada */}
+          <View className="rounded-xl flex-row items-center px-4 mt-4 mx-4 mb-6 bg-white">
             <Search size={20} color="#6B7280" className="ml-4" />
             <TextInput
               className="flex-1 py-3 px-2 text-gray-800 fonts-sans placeholder:font-sans"
@@ -65,24 +66,45 @@ export function CategoryPageContent({
             isLoading={vm.isLoading}
           />
 
-          {/* Lista de Empresas */}
-          <View className="mt-6 px-4">
-            <View className="mb-4">
-              <Text className="text-lg font-semibold text-gray-800">
-                {filteredCompanies.length}{" "}
-                {filteredCompanies.length === 1
-                  ? "estabelecimento"
-                  : "estabelecimentos"}{" "}
-                encontrados
-              </Text>
-            </View>
-            <CompanyList
-              companies={filteredCompanies}
-              isLoading={vm.isLoading}
-              searchTerm={searchTerm}
-              categoryName={vm.categoryName}
+          {/* Tabs para alternar entre Destaques e Empresas */}
+          <View className="px-4 mt-6">
+            <CategoryTabs
+              activeTab={vm.activeTab}
+              onTabChange={vm.setActiveTab}
+              companyCount={filteredCompanies.length}
+              highlightCount={vm.companiesWithVitrine.reduce(
+                (acc, company) => acc + company.vitrineItems.length,
+                0
+              )}
             />
           </View>
+
+          {/* Conteúdo baseado na tab ativa */}
+          {vm.activeTab === "highlights" ? (
+            <CategoryVitrinesSection
+              companiesWithVitrine={vm.companiesWithVitrine}
+              isLoading={vm.isLoadingVitrine}
+              categoryName={vm.categoryName}
+            />
+          ) : (
+            <View className="mt-2 px-4">
+              <View className="mb-4">
+                <Text className="text-lg font-semibold text-gray-800">
+                  {filteredCompanies.length}{" "}
+                  {filteredCompanies.length === 1
+                    ? "estabelecimento"
+                    : "estabelecimentos"}{" "}
+                  encontrados
+                </Text>
+              </View>
+              <CompanyList
+                companies={filteredCompanies}
+                isLoading={vm.isLoading}
+                searchTerm={searchTerm}
+                categoryName={vm.categoryName}
+              />
+            </View>
+          )}
         </Section>
       </ScrollView>
 

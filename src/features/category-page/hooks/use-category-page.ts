@@ -8,6 +8,10 @@ export function useCategoryPage(categorySlug: string) {
     null
   );
 
+  const [activeTab, setActiveTab] = useState<"highlights" | "companies">(
+    "highlights"
+  );
+
   // Busca subcategorias usando a rota correta
   const { data: subcategories = [], isLoading: isLoadingSubcategories } =
     useQuery({
@@ -69,5 +73,7 @@ export function useCategoryPage(categorySlug: string) {
     setSelectedSubcategory,
     isLoading:
       isLoadingSubcategories || isLoadingCompanies || isLoadingShowcase,
+    activeTab,
+    setActiveTab,
   };
 }
