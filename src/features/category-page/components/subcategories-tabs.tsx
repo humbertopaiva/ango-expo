@@ -110,7 +110,7 @@ export function SubcategoriesTabs({
                             containerClassName="rounded-lg"
                           />
                         ) : (
-                          <Grid size={20} color="#F4511E" />
+                          <Grid size={28} color="#F4511E" />
                         )}
                       </View>
                       <Text

@@ -1,8 +1,14 @@
 // Path: src/features/category-page/components/category-breadcrumb.tsx
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+} from "react-native";
 import { HStack } from "@gluestack-ui/themed";
-import { ChevronRight, Home } from "lucide-react-native";
+import { ChevronRight, Home, Grid } from "lucide-react-native";
 import { router } from "expo-router";
 import { THEME_COLORS } from "@/src/styles/colors";
 
@@ -19,24 +25,35 @@ export function CategoryBreadcrumb({ categoryName }: CategoryBreadcrumbProps) {
   const formattedCategoryName = formatCategoryName(categoryName);
 
   return (
-    <HStack className="px-4 py-2 items-center flex-wrap">
-      <TouchableOpacity onPress={goToHome} className="flex-row items-center">
-        <Home size={14} color={THEME_COLORS.primary} />
-        <Text className="ml-1 text-xs text-primary-600">Início</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <HStack space="sm" style={styles.breadcrumbContent}>
+        <TouchableOpacity
+          onPress={goToHome}
+          style={styles.breadcrumbItem}
+          activeOpacity={0.7}
+        >
+          <Home size={14} color={THEME_COLORS.primary} />
+          <Text style={styles.breadcrumbItemHome}>Início</Text>
+        </TouchableOpacity>
 
-      <ChevronRight size={14} color="#9CA3AF" className="mx-1" />
+        <ChevronRight size={14} color="#9CA3AF" />
 
-      <TouchableOpacity onPress={goToHome} className="flex-row items-center">
-        <Text className="text-xs text-gray-500">Categorias</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={goToHome}
+          style={styles.breadcrumbItem}
+          activeOpacity={0.7}
+        >
+          <Grid size={14} color="#6B7280" />
+          <Text style={styles.breadcrumbItemText}>Categorias</Text>
+        </TouchableOpacity>
 
-      <ChevronRight size={14} color="#9CA3AF" className="mx-1" />
+        <ChevronRight size={14} color="#9CA3AF" />
 
-      <Text className="text-xs font-medium text-gray-800" numberOfLines={1}>
-        {formattedCategoryName}
-      </Text>
-    </HStack>
+        <Text style={styles.currentItem} numberOfLines={1}>
+          {formattedCategoryName}
+        </Text>
+      </HStack>
+    </View>
   );
 }
 
@@ -72,3 +89,51 @@ function formatCategoryName(name: string | null): string {
     })
     .join(" ");
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "white",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 1,
+      },
+      android: {
+        elevation: 1,
+      },
+      web: {
+        boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+      },
+    }),
+  },
+  breadcrumbContent: {
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+  breadcrumbItem: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  breadcrumbItemHome: {
+    marginLeft: 4,
+    fontSize: 13,
+    color: THEME_COLORS.primary,
+    fontFamily: "PlusJakartaSans_500Medium",
+  },
+  breadcrumbItemText: {
+    marginLeft: 4,
+    fontSize: 13,
+    color: "#6B7280",
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  currentItem: {
+    fontSize: 13,
+    color: "#111827",
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    maxWidth: 150,
+  },
+});

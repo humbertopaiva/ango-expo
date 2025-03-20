@@ -50,7 +50,7 @@ export function CategoryPageContent({
           <View className=" rounded-xl flex-row items-center px-4  mt-4 mx-4 mb-6 bg-white">
             <Search size={20} color="#6B7280" className="ml-4" />
             <TextInput
-              className="flex-1 py-3 px-2 text-gray-800 fonts-sans"
+              className="flex-1 py-3 px-2 text-gray-800 fonts-sans placeholder:font-sans"
               placeholder="Buscar estabelecimentos..."
               value={searchTerm}
               onChangeText={setSearchTerm}
