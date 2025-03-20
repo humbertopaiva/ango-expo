@@ -152,7 +152,7 @@ export function AdaptiveProductCard({
           <View className="flex-1 justify-end p-5">
             {/* Nome do produto (sem descrição para esse layout) */}
             <Text
-              className="text-white font-bold text-xl mb-3"
+              className="text-white font-sans text-2xl mb-3"
               numberOfLines={2}
             >
               {product.nome}
@@ -166,13 +166,56 @@ export function AdaptiveProductCard({
                     <Text className="text-white/80 text-sm line-through">
                       {formatCurrency(product.preco)}
                     </Text>
-                    <Text className="text-white font-bold text-xl">
+                    <Text className="text-white font-semibold text-2xl">
                       {formatCurrency(product.preco_promocional)}
                     </Text>
                   </View>
                 ) : (
-                  <Text className="text-white font-bold text-xl">
+                  <Text className="text-white font-semibold text-xl">
                     {formatCurrency(product.preco)}
+                  </Text>
+                )}
+
+                {/* Informações de parcelamento */}
+                {product.parcelamento_cartao && product.quantidade_parcelas && (
+                  <Text className="text-white text-sm mt-1">
+                    {product.parcelas_sem_juros ? (
+                      <>
+                        ou {product.quantidade_parcelas}x de{" "}
+                        {formatCurrency(
+                          (
+                            parseFloat(
+                              product.preco_promocional || product.preco
+                            ) / parseInt(product.quantidade_parcelas)
+                          ).toString()
+                        )}{" "}
+                        sem juros
+                      </>
+                    ) : (
+                      <>
+                        ou {product.quantidade_parcelas}x de{" "}
+                        {formatCurrency(
+                          (
+                            parseFloat(
+                              product.preco_promocional || product.preco
+                            ) / parseInt(product.quantidade_parcelas)
+                          ).toString()
+                        )}
+                      </>
+                    )}
+                  </Text>
+                )}
+
+                {/* Preço à vista */}
+                {product.desconto_avista && (
+                  <Text className="text-green-300 text-sm font-medium mt-1">
+                    {formatCurrency(
+                      (
+                        parseFloat(product.preco_promocional || product.preco) *
+                        (1 - product.desconto_avista / 100)
+                      ).toFixed(2)
+                    )}{" "}
+                    à vista ({product.desconto_avista}% off)
                   </Text>
                 )}
               </View>
@@ -340,15 +383,41 @@ export function AdaptiveProductCard({
             )}
 
             {product.parcelamento_cartao && product.quantidade_parcelas && (
-              <Text className="text-xs text-gray-500 mt-1">
-                ou {product.quantidade_parcelas}x de{" "}
+              <Text className="text-xs text-white mt-1">
+                {product.parcelas_sem_juros ? (
+                  <>
+                    ou {product.quantidade_parcelas}x de{" "}
+                    {formatCurrency(
+                      (
+                        parseFloat(product.preco_promocional || product.preco) /
+                        parseInt(product.quantidade_parcelas)
+                      ).toString()
+                    )}{" "}
+                    sem juros
+                  </>
+                ) : (
+                  <>
+                    ou {product.quantidade_parcelas}x de{" "}
+                    {formatCurrency(
+                      (
+                        parseFloat(product.preco_promocional || product.preco) /
+                        parseInt(product.quantidade_parcelas)
+                      ).toString()
+                    )}
+                  </>
+                )}
+              </Text>
+            )}
+
+            {product.desconto_avista && (
+              <Text className="text-xs text-green-600 font-medium mt-1">
                 {formatCurrency(
                   (
-                    parseFloat(product.preco_promocional || product.preco) /
-                    parseInt(product.quantidade_parcelas)
-                  ).toString()
-                )}
-                {product.parcelas_sem_juros ? " sem juros" : ""}
+                    parseFloat(product.preco_promocional || product.preco) *
+                    (1 - product.desconto_avista / 100)
+                  ).toFixed(2)
+                )}{" "}
+                à vista ({product.desconto_avista}% de desconto)
               </Text>
             )}
           </View>

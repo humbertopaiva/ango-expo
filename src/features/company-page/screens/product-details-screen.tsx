@@ -26,6 +26,8 @@ import {
   Edit3,
   MessageSquare,
   Heart,
+  CreditCard,
+  DollarSign,
 } from "lucide-react-native";
 import { HStack, VStack, Button, useToast } from "@gluestack-ui/themed";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
@@ -357,18 +359,73 @@ export function ProductDetailsScreen() {
                 )}
               </HStack>
 
-              {/* Informação de parcelamento */}
+              {/* Informações de parcelamento melhoradas */}
               {product.parcelamento_cartao && product.quantidade_parcelas && (
-                <Text className="text-sm text-gray-600 mt-1">
-                  ou {product.quantidade_parcelas}x de{" "}
-                  {formatCurrency(
-                    (
-                      parseFloat(product.preco_promocional || product.preco) /
-                      parseInt(product.quantidade_parcelas)
-                    ).toString()
-                  )}
-                  {product.parcelas_sem_juros ? " sem juros" : ""}
-                </Text>
+                <View className="mt-2 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  <HStack space="sm" alignItems="center">
+                    <CreditCard size={16} color={primaryColor} />
+                    <Text className="text-gray-800 font-medium">
+                      {product.parcelas_sem_juros ? (
+                        <>
+                          {product.quantidade_parcelas}x de{" "}
+                          {formatCurrency(
+                            (
+                              parseFloat(
+                                product.preco_promocional || product.preco
+                              ) / parseInt(product.quantidade_parcelas)
+                            ).toString()
+                          )}{" "}
+                          sem juros
+                        </>
+                      ) : (
+                        <>
+                          {product.quantidade_parcelas}x de{" "}
+                          {formatCurrency(
+                            (
+                              parseFloat(
+                                product.preco_promocional || product.preco
+                              ) / parseInt(product.quantidade_parcelas)
+                            ).toString()
+                          )}
+                        </>
+                      )}
+                    </Text>
+                  </HStack>
+                </View>
+              )}
+
+              {/* Preço à vista com desconto */}
+              {product.desconto_avista && (
+                <View className="mt-2 bg-green-50 rounded-lg p-3 border border-green-100">
+                  <HStack space="sm" alignItems="center">
+                    <DollarSign size={16} color="#16A34A" />
+                    <View>
+                      <Text className="text-gray-800 font-medium">
+                        {formatCurrency(
+                          (
+                            parseFloat(
+                              product.preco_promocional || product.preco
+                            ) *
+                            (1 - product.desconto_avista / 100)
+                          ).toFixed(2)
+                        )}{" "}
+                        à vista
+                      </Text>
+                      <Text className="text-green-600 text-xs">
+                        Economize{" "}
+                        {formatCurrency(
+                          (
+                            parseFloat(
+                              product.preco_promocional || product.preco
+                            ) *
+                            (product.desconto_avista / 100)
+                          ).toFixed(2)
+                        )}{" "}
+                        ({product.desconto_avista}% de desconto)
+                      </Text>
+                    </View>
+                  </HStack>
+                </View>
               )}
             </View>
 
