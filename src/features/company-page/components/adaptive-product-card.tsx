@@ -33,6 +33,7 @@ export function AdaptiveProductCard({
   isHighlighted = false,
 }: AdaptiveProductCardProps) {
   const vm = useCompanyPageContext();
+  const isCartEnabled = vm.config?.app?.habilitar_carrinho !== false;
   const cartVm = useCartViewModel();
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
@@ -123,13 +124,15 @@ export function AdaptiveProductCard({
           </View>
 
           {/* Botão de adicionar ao carrinho no canto inferior direito */}
-          <TouchableOpacity
-            onPress={handleAddToCart}
-            className="absolute bottom-4 right-4 rounded-full p-3 z-10"
-            style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
-          >
-            <ShoppingBag size={24} color={contrastTextColor} />
-          </TouchableOpacity>
+          {isCartEnabled && (
+            <TouchableOpacity
+              onPress={handleAddToCart}
+              className="absolute bottom-4 right-4 rounded-full p-3 z-10"
+              style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
+            >
+              <ShoppingBag size={24} color={contrastTextColor} />
+            </TouchableOpacity>
+          )}
 
           {/* Badge de destaque (se habilitado) */}
           {showFeaturedBadge && (
@@ -281,13 +284,17 @@ export function AdaptiveProductCard({
                 )}
               </View>
 
-              <TouchableOpacity
-                onPress={handleAddToCart}
-                className="rounded-full p-2"
-                style={{ backgroundColor: `${vm.primaryColor || "#F4511E"}20` }}
-              >
-                <ShoppingBag size={20} color={vm.primaryColor || "#F4511E"} />
-              </TouchableOpacity>
+              {isCartEnabled && (
+                <TouchableOpacity
+                  onPress={handleAddToCart}
+                  className="rounded-full p-2"
+                  style={{
+                    backgroundColor: `${vm.primaryColor || "#F4511E"}20`,
+                  }}
+                >
+                  <ShoppingBag size={20} color={vm.primaryColor || "#F4511E"} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </Card>
@@ -333,13 +340,15 @@ export function AdaptiveProductCard({
           </View>
 
           {/* Quick-add button */}
-          <TouchableOpacity
-            onPress={handleAddToCart}
-            className="absolute bottom-3 right-3 bg-white rounded-full p-2 shadow-md"
-            style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
-          >
-            <ShoppingBag size={16} color="#FFFFFF" />
-          </TouchableOpacity>
+          {isCartEnabled && (
+            <TouchableOpacity
+              onPress={handleAddToCart}
+              className="absolute bottom-3 right-3 bg-white rounded-full p-2 shadow-md"
+              style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
+            >
+              <ShoppingBag size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Informações do produto */}

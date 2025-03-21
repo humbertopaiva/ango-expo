@@ -43,14 +43,12 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
 
   // Verificar se deve mostrar informações de delivery
   const shouldShowDeliveryInfo = () => {
-    // return (
-    //   vm.hasDelivery() &&
-    //   vm.config?.delivery &&
-    //   (vm.config?.app?.mostrar_info_delivery === true ||
-    //     vm.config?.app?.mostrar_info_delivery === null)
-    // );
-
-    return true;
+    return (
+      vm.hasDelivery() &&
+      vm.config?.delivery &&
+      (vm.config?.app?.mostrar_info_delivery === true ||
+        vm.config?.app?.mostrar_info_delivery === null)
+    );
   };
 
   // Formatar valores monetários
