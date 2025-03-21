@@ -229,9 +229,6 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
               <Text className="font-semibold text-slate-800">
                 {company?.nome || "Minha Empresa"}
               </Text>
-              <Text className="text-xs text-slate-500">
-                {profile?.plan || "Conta comercial"}
-              </Text>
             </VStack>
           </HStack>
         </View>
