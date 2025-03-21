@@ -1,16 +1,13 @@
 // Path: src/features/commerce/components/promotional-banner.tsx
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import {
   View,
-  Text,
-  ScrollView,
   TouchableOpacity,
-  Dimensions,
   Image,
   StyleSheet,
   Platform,
+  Dimensions,
 } from "react-native";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useNavigation } from "expo-router";
 
 export interface BannerItem {
@@ -22,17 +19,12 @@ export interface BannerItem {
 
 interface PromotionalBannerProps {
   /**
-   * Array de banners para exibir no carrossel
+   * Banner para exibir (opcional - usa o padrão se não fornecido)
    */
-  banners?: BannerItem[];
+  banner?: BannerItem;
 
   /**
-   * Duração de cada slide em ms (padrão: 5000ms)
-   */
-  autoplayInterval?: number;
-
-  /**
-   * Se o carrossel deve ter bordas arredondadas
+   * Se o banner deve ter bordas arredondadas
    */
   rounded?: boolean;
 
@@ -52,56 +44,37 @@ interface PromotionalBannerProps {
   desktopHeight?: number;
 
   /**
-   * Se o carrossel deve avançar automaticamente
-   */
-  autoplay?: boolean;
-
-  /**
-   * Função chamada quando um banner é clicado
+   * Função chamada quando o banner é clicado
    */
   onBannerPress?: (banner: BannerItem) => void;
 }
 
-// Banners padrão caso não sejam fornecidos via props
-const DEFAULT_BANNERS: BannerItem[] = [
-  {
-    id: 1,
-    image:
-      "https://ywxeaxheqzpogiztqvzk.supabase.co/storage/v1/object/public/images/mktplace-web/banners/home/banner-site-1.jpg",
-    link: "/promo1",
-    title: "Ofertas Especiais",
-  },
-  {
-    id: 2,
-    image:
-      "https://ywxeaxheqzpogiztqvzk.supabase.co/storage/v1/object/public/images/mktplace-web/banners/home/banner-site-2.jpg",
-    link: "/promo2",
-    title: "Novidades da Semana",
-  },
-];
+// Banner padrão caso não seja fornecido via props
+const DEFAULT_BANNER: BannerItem = {
+  id: 1,
+  image:
+    "https://ywxeaxheqzpogiztqvzk.supabase.co/storage/v1/object/public/images/mktplace-web/banners/home/banner-site-1.jpg",
+  link: "/promo1",
+  title: "Ofertas Especiais",
+};
 
 export const PromotionalBanner: React.FC<PromotionalBannerProps> = ({
-  banners = DEFAULT_BANNERS,
-  autoplayInterval = 5000,
+  banner = DEFAULT_BANNER,
   rounded = true,
   borderRadius = 8,
   mobileHeight = 160,
   desktopHeight = 280,
-  autoplay = true,
   onBannerPress,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollViewRef = useRef<ScrollView>(null);
   const { width } = Dimensions.get("window");
   const navigation = useNavigation();
-  const autoplayRef = useRef<NodeJS.Timeout | null>(null);
   const isWeb = Platform.OS === "web";
 
   // Determina a altura do banner com base na plataforma
   const bannerHeight = isWeb && width >= 768 ? desktopHeight : mobileHeight;
 
   // Função para lidar com o clique no banner
-  const handleBannerPress = (banner: BannerItem) => {
+  const handleBannerPress = () => {
     if (onBannerPress) {
       onBannerPress(banner);
     } else if (banner.link) {
@@ -114,80 +87,6 @@ export const PromotionalBanner: React.FC<PromotionalBannerProps> = ({
     }
   };
 
-  // Configurar e limpar o intervalo do autoplay
-  useEffect(() => {
-    if (autoplay && banners.length > 1) {
-      startAutoplay();
-    }
-
-    return () => {
-      if (autoplayRef.current) {
-        clearInterval(autoplayRef.current);
-      }
-    };
-  }, [autoplay, banners.length, currentIndex, width]);
-
-  const startAutoplay = () => {
-    if (autoplayRef.current) {
-      clearInterval(autoplayRef.current);
-    }
-
-    autoplayRef.current = setInterval(() => {
-      const nextIndex = (currentIndex + 1) % banners.length;
-      setCurrentIndex(nextIndex);
-      scrollViewRef.current?.scrollTo({ x: nextIndex * width, animated: true });
-    }, autoplayInterval);
-  };
-
-  // Pause autoplay quando o usuário interagir
-  const pauseAutoplay = () => {
-    if (autoplayRef.current) {
-      clearInterval(autoplayRef.current);
-      autoplayRef.current = null;
-    }
-  };
-
-  // Retoma o autoplay após interação do usuário
-  const resumeAutoplay = () => {
-    if (autoplay && !autoplayRef.current) {
-      startAutoplay();
-    }
-  };
-
-  const handlePrevious = () => {
-    pauseAutoplay();
-    const newIndex = (currentIndex - 1 + banners.length) % banners.length;
-    setCurrentIndex(newIndex);
-    scrollViewRef.current?.scrollTo({ x: newIndex * width, animated: true });
-    resumeAutoplay();
-  };
-
-  const handleNext = () => {
-    pauseAutoplay();
-    const newIndex = (currentIndex + 1) % banners.length;
-    setCurrentIndex(newIndex);
-    scrollViewRef.current?.scrollTo({ x: newIndex * width, animated: true });
-    resumeAutoplay();
-  };
-
-  const handleScroll = (event: any) => {
-    pauseAutoplay();
-    const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-    if (
-      newIndex !== currentIndex &&
-      newIndex >= 0 &&
-      newIndex < banners.length
-    ) {
-      setCurrentIndex(newIndex);
-    }
-    resumeAutoplay();
-  };
-
-  // Se não houver banners, não renderiza nada
-  if (!banners || banners.length === 0) {
-    return null;
-  }
-
   return (
     <View
       className="w-full relative mb-6 overflow-hidden"
@@ -197,72 +96,20 @@ export const PromotionalBanner: React.FC<PromotionalBannerProps> = ({
         { height: bannerHeight },
       ]}
     >
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
-        onScrollBeginDrag={pauseAutoplay}
-        onScrollEndDrag={resumeAutoplay}
-        className="w-full h-full"
+      <TouchableOpacity
+        style={{ width, height: bannerHeight }}
+        activeOpacity={0.9}
+        onPress={handleBannerPress}
       >
-        {banners.map((banner, index) => (
-          <TouchableOpacity
-            key={banner.id}
-            style={{ width, height: bannerHeight }}
-            activeOpacity={0.9}
-            onPress={() => handleBannerPress(banner)}
-          >
-            <Image
-              source={{ uri: banner.image }}
-              style={{
-                width: "100%",
-                height: "100%",
-                resizeMode: "cover",
-              }}
-            />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Indicadores de slide */}
-      <View className="absolute bottom-4 inset-x-0 flex flex-row justify-center items-center space-x-1.5">
-        {banners.map((_, index) => (
-          <View
-            key={index}
-            className={`h-1.5 rounded-full transition-all ${
-              index === currentIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
-            }`}
-          />
-        ))}
-      </View>
-
-      {/* Contador de slides */}
-      <View className="absolute bottom-4 right-4">
-        <Text className="text-white text-xs bg-black/40 px-2 py-1 rounded-full">
-          {currentIndex + 1}/{banners.length}
-        </Text>
-      </View>
-
-      {/* Botões de navegação (visíveis apenas em desktop) */}
-      {banners.length > 1 && (
-        <>
-          <TouchableOpacity
-            onPress={handlePrevious}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/20 rounded-full p-2 hidden md:flex"
-          >
-            <ChevronLeft size={20} color="#fff" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/20 rounded-full p-2 hidden md:flex"
-          >
-            <ChevronRight size={20} color="#fff" />
-          </TouchableOpacity>
-        </>
-      )}
+        <Image
+          source={{ uri: banner.image }}
+          style={{
+            width: "100%",
+            height: "100%",
+            resizeMode: "cover",
+          }}
+        />
+      </TouchableOpacity>
     </View>
   );
 };

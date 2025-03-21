@@ -85,7 +85,7 @@ export function LeafletCard({ leaflet, onPress }: LeafletCardProps) {
           </View>
 
           <View className="flex-row items-center justify-between mt-1">
-            <Text className="text-xs text-gray-500">
+            <Text className="text-sm text-gray-500">
               Válido até {formattedDate}
             </Text>
             <View className="bg-secondary-50 rounded-full px-2 py-1">

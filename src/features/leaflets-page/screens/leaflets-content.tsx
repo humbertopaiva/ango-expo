@@ -191,9 +191,9 @@ export function LeafletsContent() {
         showsVerticalScrollIndicator={false}
       >
         {/* Banner Promocional */}
-        {/* <View className="px-4 pt-4">
+        <View className="px-4 pt-4">
           <PromotionalBanner />
-        </View> */}
+        </View>
 
         {/* Cabeçalho */}
         <View className="items-center mb-6 pt-6 px-4">
@@ -303,7 +303,6 @@ export function LeafletsContent() {
                   {selectedLeaflet.nome}
                 </Text>
                 <View className="flex-row items-center">
-                  <Store size={12} color="#DDD" />
                   <Text className="text-gray-300 text-xs ml-1">
                     {typeof selectedLeaflet.empresa === "string"
                       ? selectedLeaflet.empresa
