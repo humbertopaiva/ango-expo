@@ -8,12 +8,6 @@ import { View } from "react-native";
 export function CommerceScreen() {
   return (
     <View className="flex-1 bg-background">
-      {/* <ScreenHeader
-        title="Comércio Local"
-        subtitle="Explore empresas e produtos da sua região"
-        showBackButton={false}
-        variant="primary"
-      /> */}
       <CommerceProvider>
         <CommerceScreenContent />
       </CommerceProvider>

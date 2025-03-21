@@ -1,5 +1,5 @@
 // Path: src/features/leaflets-page/components/leaflet-viewer.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -11,26 +11,29 @@ import {
   StatusBar,
   ActivityIndicator,
   FlatList,
+  BackHandler,
 } from "react-native";
-import {
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Download,
-  Share2,
-  Store,
-} from "lucide-react-native";
+import { X, Share2, Store, FileText } from "lucide-react-native";
 import { Leaflet } from "../models/leaflet";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ImageViewer from "react-native-image-zoom-viewer";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { formatToBrazilianDate } from "@/src/utils/date.utils";
+import { WebViewPdfViewer } from "@/components/pdf/webview-pdf-viewer";
+import { IImageInfo } from "react-native-image-zoom-viewer/built/image-viewer.type";
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system";
 
 interface LeafletViewerProps {
   leaflet: Leaflet;
   visible: boolean;
   onClose: () => void;
+}
+
+// Interface estendida similar ao que foi usado no LeafletCarousel
+interface ExtendedLeaflet extends Leaflet {
+  pdf?: string; // URL para o PDF do encarte
 }
 
 export function LeafletViewer({
@@ -40,62 +43,121 @@ export function LeafletViewer({
 }: LeafletViewerProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [isSharing, setIsSharing] = useState(false);
+  const [leafletImages, setLeafletImages] = useState<IImageInfo[]>([]);
+  const isMounted = useRef(true);
 
-  // Coleta todas as imagens não nulas do encarte
-  const images = [
-    leaflet.imagem_01,
-    leaflet.imagem_02,
-    leaflet.imagem_03,
-    leaflet.imagem_04,
-    leaflet.imagem_05,
-    leaflet.imagem_06,
-    leaflet.imagem_07,
-    leaflet.imagem_08,
-  ].filter((img): img is string => !!img);
+  // Preparar as imagens quando o leaflet muda
+  useEffect(() => {
+    isMounted.current = true;
 
-  // Formatar imagens para o ImageViewer
-  const leafletImages = images.map((url) => ({ url }));
+    if (leaflet) {
+      // Preparar as imagens do encarte
+      const images = prepareLeafletImages(leaflet as ExtendedLeaflet);
+      setLeafletImages(images);
+      setCurrentPage(0);
+    }
 
+    // Adicionar handler para o botão voltar no Android
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (visible) {
+          onClose();
+          return true;
+        }
+        return false;
+      }
+    );
+
+    return () => {
+      isMounted.current = false;
+      backHandler.remove();
+    };
+  }, [leaflet.id, visible]);
+
+  // Função para preparar as imagens do encarte - copiada da implementação funcional
+  const prepareLeafletImages = (leaflet: ExtendedLeaflet) => {
+    const imageFields = [
+      "imagem_01",
+      "imagem_02",
+      "imagem_03",
+      "imagem_04",
+      "imagem_05",
+      "imagem_06",
+      "imagem_07",
+      "imagem_08",
+      "imagem_09",
+      "imagem_10",
+    ];
+
+    const images = imageFields
+      .map((field) => {
+        const imageUrl = leaflet[field as keyof Leaflet];
+        if (typeof imageUrl === "string" && imageUrl) {
+          return { url: imageUrl };
+        }
+        return null;
+      })
+      .filter((image): image is IImageInfo => image !== null);
+
+    return images;
+  };
+
+  // Função para compartilhar - similar à do LeafletCarousel
   const handleShare = async () => {
-    if (images.length === 0) return;
+    if (!visible) return;
 
     try {
       setIsSharing(true);
-      const imageUrl = images[currentPage];
+      const extendedLeaflet = leaflet as ExtendedLeaflet;
 
-      const result = await Share.share({
-        title: leaflet.nome,
-        message: `Confira o encarte "${leaflet.nome}" de ${leaflet.empresa.nome}`,
-        url: imageUrl,
-      });
+      if (extendedLeaflet.pdf) {
+        const fileName = `encarte_${extendedLeaflet.id}.pdf`;
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+        await FileSystem.downloadAsync(extendedLeaflet.pdf, fileUri);
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "application/pdf",
+            dialogTitle: `Encarte: ${extendedLeaflet.nome}`,
+          });
+        }
+      } else if (leafletImages.length > 0) {
+        const currentImage = leafletImages[currentPage].url;
+        const fileName = `encarte_${extendedLeaflet.id}_${currentPage}.jpg`;
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+        await FileSystem.downloadAsync(currentImage, fileUri);
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "image/jpeg",
+            dialogTitle: `Encarte: ${extendedLeaflet.nome}`,
+          });
+        }
+      }
     } catch (error) {
-      Alert.alert(
-        "Erro ao compartilhar",
-        "Não foi possível compartilhar este encarte."
-      );
-      console.error("Erro ao compartilhar:", error);
+      if (isMounted.current) {
+        Alert.alert(
+          "Erro ao compartilhar",
+          "Não foi possível compartilhar este encarte."
+        );
+        console.error("Erro ao compartilhar:", error);
+      }
     } finally {
-      setIsSharing(false);
+      if (isMounted.current) {
+        setIsSharing(false);
+      }
     }
   };
 
-  const handleDownload = () => {
-    if (images.length === 0) return;
+  // Detectar se é um PDF
+  const extendedLeaflet = leaflet as ExtendedLeaflet;
+  const isPdf = !!extendedLeaflet.pdf;
 
-    if (Platform.OS === "web") {
-      const link = document.createElement("a");
-      link.href = images[currentPage];
-      link.download = `${leaflet.nome}-pagina-${currentPage + 1}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      Alert.alert(
-        "Download não disponível",
-        "O download de imagens está disponível apenas na versão web."
-      );
-    }
-  };
+  // Retorna null se não estiver visível para desmontar completamente
+  if (!visible) return null;
 
   return (
     <Modal
@@ -149,14 +211,22 @@ export function LeafletViewer({
           </TouchableOpacity>
         </View>
 
-        {/* Visualizador de imagens */}
+        {/* Conteúdo do visualizador */}
         <View className="flex-1">
-          {images.length > 0 ? (
+          {isPdf ? (
+            // Visualizador de PDF
+            <WebViewPdfViewer pdfUrl={extendedLeaflet.pdf || ""} />
+          ) : leafletImages.length > 0 ? (
+            // Visualizador de imagens
             <>
               <ImageViewer
                 imageUrls={leafletImages}
                 index={currentPage}
-                onChange={(index) => setCurrentPage(index)}
+                onChange={(index) => {
+                  if (index !== undefined && isMounted.current) {
+                    setCurrentPage(index);
+                  }
+                }}
                 backgroundColor="#000"
                 renderIndicator={(currentIndex, allSize) => (
                   <View className="absolute top-4 right-4 px-2 py-1 bg-black bg-opacity-70 rounded-full">
@@ -175,10 +245,11 @@ export function LeafletViewer({
                 onSwipeDown={onClose}
                 saveToLocalByLongPress={false}
                 pageAnimateTime={200}
+                menus={() => <></>} // Desativar o menu de contexto de longo press
               />
 
               {/* Miniaturas para navegação entre imagens */}
-              {images.length > 1 && (
+              {leafletImages.length > 1 && (
                 <View className="h-20 bg-black">
                   <FlatList
                     data={leafletImages}
@@ -217,6 +288,7 @@ export function LeafletViewer({
               )}
             </>
           ) : (
+            // Fallback quando não há imagens
             <View className="flex-1 items-center justify-center">
               <Text className="text-white text-center">
                 Não há imagens disponíveis para este encarte.

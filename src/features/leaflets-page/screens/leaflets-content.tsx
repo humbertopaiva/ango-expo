@@ -1,12 +1,30 @@
 // Path: src/features/leaflets-page/screens/leaflets-content.tsx
-// Substitua o trecho que manipula a abertura e fechamento do visualizador de encartes
-
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  RefreshControl,
+  TouchableOpacity,
+  Modal,
+  StatusBar,
+  FlatList,
+  ActivityIndicator,
+  BackHandler,
+  Alert,
+  Share,
+} from "react-native";
 import { useLeafletsContext } from "../contexts/use-leaflets-context";
-import { LeafletViewer } from "../components/leaflet-viewer";
 import { SearchInput } from "@/components/custom/search-input";
-import { ShoppingBag, FileText, Sparkles } from "lucide-react-native";
+import {
+  ShoppingBag,
+  FileText,
+  Sparkles,
+  X,
+  Share2,
+  Store,
+  ChevronRight,
+} from "lucide-react-native";
 import { Leaflet } from "../models/leaflet";
 import { useQueryClient } from "@tanstack/react-query";
 import { CategoryFilterChips } from "../components/category-filter-chips";
@@ -15,34 +33,146 @@ import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PromotionalBanner } from "../../commerce/components/promotional-banner";
+import { ImagePreview } from "@/components/custom/image-preview";
+import { formatToBrazilianDate } from "@/src/utils/date.utils";
+import { WebViewPdfViewer } from "@/components/pdf/webview-pdf-viewer";
+import ImageViewer from "react-native-image-zoom-viewer";
+import { IImageInfo } from "react-native-image-zoom-viewer/built/image-viewer.type";
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system";
+
+// Interface estendida para suportar PDFs
+interface ExtendedLeaflet extends Leaflet {
+  pdf?: string;
+}
 
 export function LeafletsContent() {
   const vm = useLeafletsContext();
   const queryClient = useQueryClient();
-
   const [refreshing, setRefreshing] = useState(false);
 
-  const [selectedLeaflet, setSelectedLeaflet] = useState<Leaflet | null>(null);
+  // Estados para o visualizador
+  const [selectedLeaflet, setSelectedLeaflet] =
+    useState<ExtendedLeaflet | null>(null);
   const [viewerVisible, setViewerVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [leafletImages, setLeafletImages] = useState<IImageInfo[]>([]);
+  const [isSharing, setIsSharing] = useState(false);
 
+  const isMounted = useRef(true);
+
+  // Limpeza na desmontagem do componente
+  useEffect(() => {
+    isMounted.current = true;
+
+    // Adicionar handler para o botão voltar no Android
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (viewerVisible) {
+          handleCloseViewer();
+          return true;
+        }
+        return false;
+      }
+    );
+
+    return () => {
+      isMounted.current = false;
+      backHandler.remove();
+    };
+  }, []);
+
+  // Função para preparar as imagens do encarte
+  const prepareLeafletImages = (leaflet: ExtendedLeaflet) => {
+    const imageFields = [
+      "imagem_01",
+      "imagem_02",
+      "imagem_03",
+      "imagem_04",
+      "imagem_05",
+      "imagem_06",
+      "imagem_07",
+      "imagem_08",
+      "imagem_09",
+      "imagem_10",
+    ];
+
+    const images = imageFields
+      .map((field) => {
+        const imageUrl = leaflet[field as keyof Leaflet];
+        if (typeof imageUrl === "string" && imageUrl) {
+          return { url: imageUrl };
+        }
+        return null;
+      })
+      .filter((image): image is IImageInfo => image !== null);
+
+    return images;
+  };
+
+  // Manipulador para abrir o visualizador de encartes
   const handleOpenLeaflet = (leaflet: Leaflet) => {
-    setSelectedLeaflet(leaflet);
+    const extendedLeaflet = leaflet as ExtendedLeaflet;
+
+    if (extendedLeaflet.pdf) {
+      // Se for PDF, não precisamos preparar imagens
+      setLeafletImages([]);
+    } else {
+      // Prepara as imagens para o visualizador
+      const images = prepareLeafletImages(extendedLeaflet);
+      setLeafletImages(images);
+    }
+
+    setSelectedLeaflet(extendedLeaflet);
+    setCurrentPage(0);
     setViewerVisible(true);
   };
 
+  // Manipulador para fechar o visualizador
   const handleCloseViewer = () => {
     setViewerVisible(false);
   };
 
-  // Adicione um ref para rastrear se o componente está montado
-  const isMounted = useRef(true);
+  // Função para compartilhar
+  const handleShare = async () => {
+    if (!selectedLeaflet) return;
 
-  // Desmontagem do componente
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+    try {
+      setIsSharing(true);
+
+      if (selectedLeaflet.pdf) {
+        const fileName = `encarte_${selectedLeaflet.id}.pdf`;
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+        await FileSystem.downloadAsync(selectedLeaflet.pdf, fileUri);
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "application/pdf",
+            dialogTitle: `Encarte: ${selectedLeaflet.nome}`,
+          });
+        }
+      } else if (leafletImages.length > 0) {
+        const currentImage = leafletImages[currentPage].url;
+        const fileName = `encarte_${selectedLeaflet.id}_${currentPage}.jpg`;
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+        await FileSystem.downloadAsync(currentImage, fileUri);
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: "image/jpeg",
+            dialogTitle: `Encarte: ${selectedLeaflet.nome}`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao compartilhar encarte:", error);
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -61,9 +191,9 @@ export function LeafletsContent() {
         showsVerticalScrollIndicator={false}
       >
         {/* Banner Promocional */}
-        <View className="px-4 pt-4">
+        {/* <View className="px-4 pt-4">
           <PromotionalBanner />
-        </View>
+        </View> */}
 
         {/* Cabeçalho */}
         <View className="items-center mb-6 pt-6 px-4">
@@ -143,16 +273,142 @@ export function LeafletsContent() {
             </View>
           )}
         </View>
-
-        {/* Viewer de Encartes */}
-        {selectedLeaflet && (
-          <LeafletViewer
-            leaflet={selectedLeaflet}
-            visible={viewerVisible}
-            onClose={handleCloseViewer}
-          />
-        )}
       </ScrollView>
+
+      {/* Visualizador Modal - EXATAMENTE IGUAL AO LEAFLET CAROUSEL */}
+      {selectedLeaflet && viewerVisible && (
+        <Modal
+          visible={viewerVisible}
+          transparent={false}
+          animationType="fade"
+          statusBarTranslucent
+          onRequestClose={handleCloseViewer}
+        >
+          <StatusBar backgroundColor="black" barStyle="light-content" />
+          <SafeAreaView className="flex-1 bg-black">
+            {/* Header */}
+            <View className="flex-row items-center justify-between p-4 bg-black bg-opacity-80">
+              <TouchableOpacity
+                onPress={handleCloseViewer}
+                className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
+              >
+                <X size={20} color="#FFF" />
+              </TouchableOpacity>
+
+              <View className="flex-1 ml-4">
+                <Text
+                  className="text-white font-semibold text-md"
+                  numberOfLines={1}
+                >
+                  {selectedLeaflet.nome}
+                </Text>
+                <View className="flex-row items-center">
+                  <Store size={12} color="#DDD" />
+                  <Text className="text-gray-300 text-xs ml-1">
+                    {typeof selectedLeaflet.empresa === "string"
+                      ? selectedLeaflet.empresa
+                      : selectedLeaflet.empresa?.nome ||
+                        "Empresa não identificada"}
+                  </Text>
+                </View>
+                <Text className="text-gray-300 text-xs">
+                  Válido até {formatToBrazilianDate(selectedLeaflet.validade)}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={handleShare}
+                className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
+                disabled={isSharing}
+              >
+                {isSharing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Share2 size={20} color="#FFF" />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Conteúdo do Visualizador */}
+            <View className="flex-1">
+              {selectedLeaflet.pdf ? (
+                // Visualizador de PDF usando WebView
+                <WebViewPdfViewer pdfUrl={selectedLeaflet.pdf} />
+              ) : (
+                // Visualizador de imagens
+                <>
+                  <ImageViewer
+                    imageUrls={leafletImages}
+                    index={currentPage}
+                    onChange={(index?: number) => {
+                      if (index !== undefined) {
+                        setCurrentPage(index);
+                      }
+                    }}
+                    backgroundColor="#000"
+                    renderIndicator={(currentIndex: any, allSize) => (
+                      <View className="absolute top-4 right-4 px-2 py-1 bg-black bg-opacity-70 rounded-full">
+                        <Text className="text-white text-xs">
+                          {currentIndex + 1}/{allSize}
+                        </Text>
+                      </View>
+                    )}
+                    loadingRender={() => (
+                      <ActivityIndicator
+                        size="large"
+                        color={THEME_COLORS.secondary}
+                      />
+                    )}
+                    enableSwipeDown
+                    onSwipeDown={handleCloseViewer}
+                    saveToLocalByLongPress={false}
+                    pageAnimateTime={200}
+                  />
+
+                  {/* Miniaturas para navegação entre imagens */}
+                  {leafletImages.length > 1 && (
+                    <View className="h-20 bg-black">
+                      <FlatList
+                        data={leafletImages}
+                        keyExtractor={(_, index) => `thumb_${index}`}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{
+                          paddingHorizontal: 10,
+                          paddingVertical: 8,
+                        }}
+                        renderItem={({ item, index }) => (
+                          <TouchableOpacity
+                            className={`mx-1 rounded-md overflow-hidden border-2 ${
+                              currentPage === index
+                                ? "border-secondary-500"
+                                : "border-transparent"
+                            }`}
+                            style={{ width: 60, height: 60 }}
+                            onPress={() => setCurrentPage(index)}
+                          >
+                            <ImagePreview
+                              uri={item.url}
+                              width="100%"
+                              height="100%"
+                              resizeMode="cover"
+                            />
+                            <View className="absolute bottom-0 right-0 bg-black bg-opacity-60 px-1">
+                              <Text className="text-white text-xs">
+                                {index + 1}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        )}
+                      />
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+          </SafeAreaView>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
