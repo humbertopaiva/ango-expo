@@ -11,8 +11,12 @@ export interface ICompanyPageViewModel {
   isLoading: boolean;
   primaryColor: string;
   secondaryColor: string;
+
   getFormattedAddress: () => string;
   getFormattedWorkingHours: () => string;
   getWhatsAppLink: () => string;
   hasDelivery: () => boolean;
+
+  shouldShowDeliveryInfo: () => boolean;
+  isCartEnabled: () => boolean;
 }

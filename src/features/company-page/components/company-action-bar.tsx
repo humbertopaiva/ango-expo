@@ -6,8 +6,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Linking,
 } from "react-native";
-import { ShoppingCart, Clock } from "lucide-react-native";
+import { ShoppingCart, Clock, MessageCircle } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
@@ -15,14 +16,14 @@ import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-
 import { HStack } from "@gluestack-ui/themed";
 import { getContrastColor } from "@/src/utils/color.utils";
 
-/**
- * Barra de ações fixa no rodapé da página da empresa
- * Contém botões para acessar o carrinho e pedidos relacionados à empresa
- */
 export function CompanyActionBar() {
   const insets = useSafeAreaInsets();
   const vm = useCompanyPageContext();
   const cartVm = useCartViewModel();
+
+  // Verificar se o carrinho está habilitado
+  // const isCartEnabled = vm.config?.app?.habilitar_carrinho !== false;
+  const isCartEnabled = true;
 
   // Obtém o slug da empresa para navegação
   const companySlug = vm.profile?.empresa.slug || "";
@@ -45,7 +46,23 @@ export function CompanyActionBar() {
     router.push(`/(drawer)/empresa/${companySlug}/orders`);
   };
 
-  // Calcula o padding bottom baseado na área segura (para dispositivos com notch)
+  // Função para abrir o WhatsApp
+  const handleWhatsAppContact = async () => {
+    // Garantir que a empresa tem WhatsApp
+    if (!vm.profile?.whatsapp) return;
+
+    const whatsappLink = vm.getWhatsAppLink();
+    if (whatsappLink) {
+      await Linking.openURL(whatsappLink);
+    }
+  };
+
+  // Se a empresa não tem whatsapp e o carrinho está desabilitado, não mostra nada
+  if (!isCartEnabled && !vm.profile?.whatsapp) {
+    return null;
+  }
+
+  // Calcular padding bottom baseado na área segura (para dispositivos com notch)
   const safeBottomPadding = Platform.OS === "ios" ? insets.bottom : 0;
 
   return (
@@ -57,43 +74,70 @@ export function CompanyActionBar() {
       ]}
     >
       <HStack space="md" className="px-4 py-2">
-        {/* Botão de carrinho */}
-        <TouchableOpacity
-          onPress={handleCartPress}
-          style={[styles.button, { backgroundColor: primaryColor }]}
-          className="flex-1 rounded-xl"
-        >
-          <View style={styles.iconContainer}>
-            <ShoppingCart size={20} color={contrastTextColor} />
-            {itemCount > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{itemCount}</Text>
+        {isCartEnabled ? (
+          <>
+            {/* Botão de carrinho */}
+            <TouchableOpacity
+              onPress={handleCartPress}
+              style={[styles.button, { backgroundColor: primaryColor }]}
+              className="flex-1 rounded-xl"
+            >
+              <View style={styles.iconContainer}>
+                <ShoppingCart size={20} color={contrastTextColor} />
+                {itemCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{itemCount}</Text>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-          <Text style={[styles.buttonText, { color: contrastTextColor }]}>
-            Carrinho
-          </Text>
-        </TouchableOpacity>
+              <Text
+                style={[styles.buttonText, { color: contrastTextColor }]}
+                className="font-semibold text-lg"
+              >
+                Carrinho
+              </Text>
+            </TouchableOpacity>
 
-        {/* Botão de pedidos */}
-        <TouchableOpacity
-          onPress={handleOrdersPress}
-          style={[
-            styles.button,
-            {
-              backgroundColor: "white",
-              borderColor: primaryColor,
-              borderWidth: 1,
-            },
-          ]}
-          className="flex-1 rounded-xl"
-        >
-          <Clock size={20} color={primaryColor} />
-          <Text style={[styles.buttonText, { color: primaryColor }]}>
-            Meus Pedidos
-          </Text>
-        </TouchableOpacity>
+            {/* Botão de pedidos */}
+            <TouchableOpacity
+              onPress={handleOrdersPress}
+              style={[
+                styles.button,
+                {
+                  backgroundColor: "white",
+                  borderColor: primaryColor,
+                  borderWidth: 1,
+                },
+              ]}
+              className="flex-1 rounded-xl"
+            >
+              <Clock size={20} color={primaryColor} />
+              <Text
+                style={[styles.buttonText, { color: primaryColor }]}
+                className="font-semibold text-lg"
+              >
+                Meus Pedidos
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          // Se o carrinho não estiver habilitado, mostra o botão de WhatsApp em largura total
+          vm.profile?.whatsapp && (
+            <TouchableOpacity
+              onPress={handleWhatsAppContact}
+              style={[styles.button, { backgroundColor: "#25D366" }]} // Cor padrão do WhatsApp
+              className="flex-1 rounded-xl"
+            >
+              <MessageCircle size={20} color="white" />
+              <Text
+                style={[styles.buttonText, { color: "white" }]}
+                className="font-semibold text-xl"
+              >
+                Entrar em Contato
+              </Text>
+            </TouchableOpacity>
+          )
+        )}
       </HStack>
     </View>
   );
@@ -127,7 +171,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     marginLeft: 8,
-    fontWeight: "600",
     color: "white",
   },
   iconContainer: {

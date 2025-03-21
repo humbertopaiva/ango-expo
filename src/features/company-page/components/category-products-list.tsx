@@ -59,7 +59,7 @@ export function CategoryProductsList({
       <View className="px-4 mb-3">
         <HStack className="items-center justify-between">
           <HStack className="items-center">
-            <Text className="text-xl font-medium text-gray-800">{title}</Text>
+            <Text className="text-xl font-semibold text-gray-800">{title}</Text>
             <View className="px-2 py-0.5 rounded-full ml-2 bg-gray-100">
               <Text className="text-xs font-medium text-gray-600">
                 {products.length}

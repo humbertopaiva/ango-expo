@@ -32,6 +32,25 @@ export function CompanyPageContent() {
     setInfoModalVisible(false);
   };
 
+  // Verificar se deve mostrar informações de delivery separadamente
+  const shouldShowDeliveryInfo = () => {
+    return (
+      vm.hasDelivery() &&
+      vm.config?.delivery &&
+      // Se app.mostrar_info_delivery for false, não mostrar
+      // Se app não existir ou mostrar_info_delivery for null, mostrar (comportamento padrão)
+      !(
+        vm.config?.app?.mostrar_info_delivery === true ||
+        vm.config?.app?.mostrar_info_delivery === null
+      )
+    );
+  };
+
+  // Verificar se o carrinho está habilitado
+  const isCartEnabled = () => {
+    return vm.config?.app?.habilitar_carrinho !== false; // Por padrão, se não estiver definido, considera como true
+  };
+
   // Configurar informações do header quando o perfil estiver disponível
   useEffect(() => {
     if (vm.profile) {
@@ -89,11 +108,6 @@ export function CompanyPageContent() {
           {/* Cabeçalho da empresa */}
           <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
 
-          {/* Informações de entrega (se a empresa oferecer) */}
-          {vm.hasDelivery() && (
-            <CompanyDeliveryInfo onMoreInfoPress={handleOpenInfoModal} />
-          )}
-
           {/* Produtos em destaque (da vitrine) */}
           {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
             <FeaturedProductsStrip />
@@ -104,8 +118,8 @@ export function CompanyPageContent() {
         </View>
       </ScrollView>
 
-      {/* Barra de ações fixa no rodapé */}
-      <CompanyActionBar />
+      {/* Barra de ações fixa no rodapé (apenas se o carrinho estiver habilitado) */}
+      {isCartEnabled() && <CompanyActionBar />}
 
       {/* Modal com informações detalhadas da empresa */}
       <CompanyInfoModal
