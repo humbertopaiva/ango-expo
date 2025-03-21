@@ -14,6 +14,7 @@ import {
   Alert,
   Animated,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import {
@@ -28,6 +29,7 @@ import {
   Heart,
   CreditCard,
   DollarSign,
+  MessageCircle,
 } from "lucide-react-native";
 import { HStack, VStack, Button, useToast } from "@gluestack-ui/themed";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
@@ -44,15 +46,18 @@ import { toastUtils } from "@/src/utils/toast.utils";
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const vm = useCompanyPageContext();
+  const isCartEnabled = vm.config?.app?.habilitar_carrinho !== false;
   const cartVm = useCartViewModel();
   const [product, setProduct] = useState<CompanyProduct | null>(null);
-  const [quantity, setQuantity] = useState(1);
-  const [observation, setObservation] = useState("");
-  const [showObservationInput, setShowObservationInput] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const { width } = Dimensions.get("window");
   const insets = useSafeAreaInsets();
+
+  const [quantity, setQuantity] = useState(isCartEnabled ? 1 : 0);
+  const [observation, setObservation] = useState("");
+  const [showObservationInput, setShowObservationInput] = useState(false);
 
   // Animações
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -73,6 +78,16 @@ export function ProductDetailsScreen() {
       const foundProduct = vm.products.find((p) => p.id === productId);
       if (foundProduct) {
         setProduct(foundProduct);
+
+        // Verificar se o carrinho está habilitado
+        const isCartEnabled = vm.config?.app?.habilitar_carrinho !== false;
+
+        // Apenas inicializar estados relacionados ao carrinho se ele estiver habilitado
+        if (isCartEnabled) {
+          setQuantity(1); // Resetar quantidade
+          setObservation(""); // Limpar observação
+          setShowObservationInput(false); // Fechar campo de observação
+        }
 
         // Iniciar animações de entrada
         Animated.parallel([
@@ -143,9 +158,13 @@ export function ProductDetailsScreen() {
   };
 
   // Adicionar ou remover quantidade
-  const increaseQuantity = () => setQuantity((prev) => prev + 1);
-  const decreaseQuantity = () =>
-    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  const increaseQuantity = isCartEnabled
+    ? () => setQuantity((prev) => prev + 1)
+    : () => {};
+
+  const decreaseQuantity = isCartEnabled
+    ? () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1))
+    : () => {};
 
   // Adicionar ao carrinho com animação de feedback
   const addToCart = () => {
@@ -214,9 +233,9 @@ export function ProductDetailsScreen() {
   };
 
   // Manipular a entrada de observação
-  const toggleObservationInput = () => {
-    setShowObservationInput(!showObservationInput);
-  };
+  const toggleObservationInput = isCartEnabled
+    ? () => setShowObservationInput(!showObservationInput)
+    : () => {};
 
   // Alternar favorito
   const toggleFavorite = () => {
@@ -227,6 +246,18 @@ export function ProductDetailsScreen() {
   const primaryColor = vm.primaryColor || "#F4511E";
   const contrastTextColor = getContrastColor(primaryColor);
 
+  const handleWhatsAppContact = async () => {
+    if (!vm.profile?.whatsapp) return;
+
+    const whatsappLink = vm.getWhatsAppLink();
+    if (whatsappLink) {
+      // Criar mensagem personalizada mencionando o produto
+      const message = `Olá! Estou interessado no produto "${product?.nome}" e gostaria de mais informações.`;
+      const encodedMessage = encodeURIComponent(message);
+      await Linking.openURL(`${whatsappLink}&text=${encodedMessage}`);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -235,7 +266,7 @@ export function ProductDetailsScreen() {
     >
       <StatusBar barStyle="light-content" />
 
-      <View className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-white">
         {/* Área da imagem em aspecto quadrado com botões sobrepostos */}
         <Animated.View
           style={{
@@ -431,7 +462,7 @@ export function ProductDetailsScreen() {
 
             {/* Descrição do produto */}
             {product.descricao && (
-              <View className="mb-6 pb-4 border-b border-gray-100">
+              <View className="mb-6 pb-4">
                 <Text className="text-base font-semibold text-gray-800 mb-2">
                   Descrição
                 </Text>
@@ -440,73 +471,6 @@ export function ProductDetailsScreen() {
                 </Text>
               </View>
             )}
-
-            {/* Observação do cliente */}
-            <View className="mb-4 pb-4 border-b border-gray-100">
-              <TouchableOpacity
-                onPress={toggleObservationInput}
-                className="flex-row items-center mb-2"
-                activeOpacity={0.7}
-              >
-                <MessageSquare size={20} color={primaryColor} />
-                <Text
-                  className="ml-2 font-semibold text-base"
-                  style={{ color: primaryColor }}
-                >
-                  {showObservationInput
-                    ? "Ocultar observação"
-                    : "Adicionar observação"}
-                </Text>
-              </TouchableOpacity>
-
-              {showObservationInput && (
-                <View className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <TextInput
-                    value={observation}
-                    onChangeText={setObservation}
-                    placeholder="Alguma observação? Ex: Sem cebola, sem alface, etc."
-                    multiline
-                    numberOfLines={3}
-                    className="text-gray-700 min-h-20"
-                    style={{ textAlignVertical: "top" }}
-                  />
-                  <Text className="text-gray-500 text-xs mt-2">
-                    Conte ao estabelecimento se você precisa de algo especial ou
-                    tem alguma preferência.
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Seletor de quantidade */}
-            <View className="mb-6">
-              <Text className="text-base font-semibold text-gray-800 mb-2">
-                Quantidade
-              </Text>
-              <HStack className="items-center bg-gray-50 self-start px-2 py-1 rounded-lg">
-                <TouchableOpacity
-                  onPress={decreaseQuantity}
-                  className="p-2"
-                  disabled={quantity <= 1}
-                  style={{ opacity: quantity <= 1 ? 0.5 : 1 }}
-                  activeOpacity={0.6}
-                >
-                  <MinusCircle size={26} color={primaryColor} />
-                </TouchableOpacity>
-
-                <Text className="text-2xl font-medium mx-4 min-w-8 text-center">
-                  {quantity}
-                </Text>
-
-                <TouchableOpacity
-                  onPress={increaseQuantity}
-                  className="p-2"
-                  activeOpacity={0.6}
-                >
-                  <PlusCircle size={26} color={primaryColor} />
-                </TouchableOpacity>
-              </HStack>
-            </View>
           </View>
         </Animated.ScrollView>
 
@@ -519,41 +483,154 @@ export function ProductDetailsScreen() {
             transform: [{ translateY: slideAnim }],
           }}
         >
-          <HStack className="justify-between items-center">
-            <VStack>
-              <Text className="text-sm text-gray-500">Total</Text>
-              <Text className="text-xl font-bold text-gray-800">
-                {calculateTotal()}
-              </Text>
-            </VStack>
-
-            <Animated.View
-              style={{
-                transform: [{ scale: buttonScaleAnim }],
-              }}
-            >
-              <TouchableOpacity
-                onPress={addToCart}
-                activeOpacity={0.8}
-                className="rounded-xl overflow-hidden"
-              >
-                <LinearGradient
-                  colors={[primaryColor, primaryColor]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  className="py-3 px-6 flex-row items-center"
-                >
-                  <ShoppingBag size={20} color={contrastTextColor} />
-                  <Text
-                    className="font-bold ml-2 text-base"
-                    style={{ color: contrastTextColor }}
+          {isCartEnabled ? (
+            // Se o carrinho estiver habilitado, mostra controles de quantidade e botão de adicionar
+            <>
+              {/* Seletor de quantidade */}
+              <HStack className="mb-4 justify-between items-center">
+                <Text className="text-base font-semibold text-gray-800 mb-2">
+                  Quantidade
+                </Text>
+                <HStack className="items-center bg-gray-50 self-start px-2 py-1 rounded-lg">
+                  <TouchableOpacity
+                    onPress={decreaseQuantity}
+                    className="p-2"
+                    disabled={quantity <= 1}
+                    style={{ opacity: quantity <= 1 ? 0.5 : 1 }}
+                    activeOpacity={0.6}
                   >
-                    Adicionar ao Carrinho
+                    <MinusCircle size={26} color={primaryColor} />
+                  </TouchableOpacity>
+
+                  <Text className="text-2xl font-medium mx-4 min-w-8 text-center">
+                    {quantity}
                   </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </Animated.View>
-          </HStack>
+
+                  <TouchableOpacity
+                    onPress={increaseQuantity}
+                    className="p-2"
+                    activeOpacity={0.6}
+                  >
+                    <PlusCircle size={26} color={primaryColor} />
+                  </TouchableOpacity>
+                </HStack>
+              </HStack>
+
+              {/* Observação do cliente */}
+              <View className="mb-4">
+                <TouchableOpacity
+                  onPress={toggleObservationInput}
+                  className="flex-row items-center mb-2"
+                  activeOpacity={0.7}
+                >
+                  <MessageSquare size={20} color={primaryColor} />
+                  <Text
+                    className="ml-2 font-semibold text-base"
+                    style={{ color: primaryColor }}
+                  >
+                    {showObservationInput
+                      ? "Ocultar observação"
+                      : "Adicionar observação"}
+                  </Text>
+                </TouchableOpacity>
+
+                {showObservationInput && (
+                  <View className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <TextInput
+                      value={observation}
+                      onChangeText={setObservation}
+                      placeholder="Alguma observação? Ex: Sem cebola, sem alface, etc."
+                      multiline
+                      numberOfLines={3}
+                      className="text-gray-700 min-h-20"
+                      style={{ textAlignVertical: "top" }}
+                    />
+                    <Text className="text-gray-500 text-xs mt-2">
+                      Conte ao estabelecimento se você precisa de algo especial
+                      ou tem alguma preferência.
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Botão de adicionar ao carrinho com total */}
+              <HStack className="justify-between items-center mt-6">
+                <VStack>
+                  <Text className="text-sm text-gray-500">Total</Text>
+                  <Text className="text-2xl font-bold text-gray-800">
+                    {calculateTotal()}
+                  </Text>
+                </VStack>
+
+                <Animated.View
+                  style={{
+                    transform: [{ scale: buttonScaleAnim }],
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={addToCart}
+                    activeOpacity={0.8}
+                    className="rounded-xl overflow-hidden"
+                  >
+                    <LinearGradient
+                      colors={[primaryColor, primaryColor]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      className="py-3 px-6 flex-row items-center"
+                    >
+                      <ShoppingBag size={20} color={contrastTextColor} />
+                      <Text
+                        className="font-semibold ml-2 text-lg"
+                        style={{ color: contrastTextColor }}
+                      >
+                        Adicionar ao Carrinho
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Animated.View>
+              </HStack>
+            </>
+          ) : (
+            // Se o carrinho estiver desabilitado, mostra botão para entrar em contato
+            <View>
+              {vm.profile?.whatsapp ? (
+                // Se tiver WhatsApp, mostra botão para contato
+                <TouchableOpacity
+                  onPress={handleWhatsAppContact}
+                  activeOpacity={0.8}
+                  className="rounded-xl overflow-hidden"
+                >
+                  <LinearGradient
+                    colors={["#25D366", "#25D366"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="py-4 flex-row items-center justify-center"
+                  >
+                    <MessageCircle size={20} color="#FFFFFF" />
+                    <Text className="font-bold ml-2 text-base text-white">
+                      Entrar em Contato
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              ) : (
+                // Se não tiver WhatsApp, mostra mensagem e botão para voltar
+                <View className="items-center">
+                  <Text className="text-gray-600 text-center mb-4">
+                    Para mais informações sobre este produto, entre em contato
+                    diretamente com a loja.
+                  </Text>
+                  <TouchableOpacity
+                    onPress={handleBack}
+                    className="rounded-xl px-6 py-3 bg-gray-100"
+                  >
+                    <Text className="font-medium text-gray-700">
+                      Voltar à loja
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
         </Animated.View>
       </View>
     </KeyboardAvoidingView>
