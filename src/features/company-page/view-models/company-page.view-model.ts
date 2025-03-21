@@ -34,6 +34,20 @@ export function useCompanyPageViewModel(
       enabled: !!companySlug,
     });
 
+  // Verificar se deve mostrar informações de delivery
+  const shouldShowDeliveryInfo = () => {
+    return (
+      hasDelivery() &&
+      (config?.app?.mostrar_info_delivery === true ||
+        config?.app?.mostrar_info_delivery === null)
+    );
+  };
+
+  // Verificar se o carrinho está habilitado
+  const isCartEnabled = () => {
+    return config?.app?.habilitar_carrinho !== false; // Por padrão, se não estiver definido, considera como true
+  };
+
   // Formatação de endereço
   const getFormattedAddress = () => {
     if (!profile) return "";
@@ -114,5 +128,7 @@ export function useCompanyPageViewModel(
     getFormattedWorkingHours,
     getWhatsAppLink,
     hasDelivery,
+    shouldShowDeliveryInfo,
+    isCartEnabled,
   };
 }

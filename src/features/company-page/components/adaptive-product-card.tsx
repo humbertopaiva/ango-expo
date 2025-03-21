@@ -250,7 +250,7 @@ export function AdaptiveProductCard({
           <View className="flex-1 p-3 justify-between">
             <View>
               <Text
-                className="font-bold text-gray-800 line-clamp-1 text-lg"
+                className="font-semibold text-gray-800 line-clamp-1 text-lg"
                 numberOfLines={1}
               >
                 {product.nome}

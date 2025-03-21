@@ -1,12 +1,21 @@
 // Path: src/features/company-page/components/company-header.tsx
 import React from "react";
 import { View, Text, TouchableOpacity, Linking, Platform } from "react-native";
-import { Info, Store, MessageCircle } from "lucide-react-native";
+import {
+  Info,
+  Store,
+  MessageCircle,
+  Clock,
+  Truck,
+  DollarSign,
+} from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { Card, HStack, VStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { OpenStatusIndicator } from "@/components/custom/open-status-indicator";
+import { isBusinessOpen } from "@/src/utils/business-hours.utils";
 
 interface CompanyHeaderProps {
   onMoreInfoPress?: () => void;
@@ -27,71 +36,34 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
   };
 
   // Verificar se o estabelecimento está aberto
-  const isOpen = () => {
-    if (!vm.profile?.dias_funcionamento) return false;
-
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Domingo, 6 = Sábado
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const currentTimeInMinutes = currentHour * 60 + currentMinute;
-
-    // Mapear o dia da semana em JavaScript para o formato usado na API
-    const dayMapping = [
-      "domingo",
-      "segunda",
-      "terca",
-      "quarta",
-      "quinta",
-      "sexta",
-      "sabado",
-    ];
-    const dayKey = dayMapping[currentDay];
-
-    // Verificar se o dia atual está na lista de dias de funcionamento
-    if (!vm.profile.dias_funcionamento.includes(dayKey)) {
-      return false;
-    }
-
-    // Obter o horário de abertura e fechamento para o dia atual
-    const openTimeKey = `abertura_${dayKey}`;
-    const closeTimeKey = `fechamento_${dayKey}`;
-
-    const openTimeString = vm.profile[
-      openTimeKey as keyof typeof vm.profile
-    ] as string | undefined;
-    const closeTimeString = vm.profile[
-      closeTimeKey as keyof typeof vm.profile
-    ] as string | undefined;
-
-    if (!openTimeString || !closeTimeString) {
-      return false;
-    }
-
-    // Converter os horários para minutos a partir de meia-noite
-    function timeStringToMinutes(timeString: string): number {
-      // Exemplo: "09:00:00" -> 540 minutos (9 horas * 60)
-      const parts = timeString.split(":");
-      const hours = parseInt(parts[0], 10);
-      const minutes = parseInt(parts[1], 10);
-      return hours * 60 + minutes;
-    }
-
-    const openTimeMinutes = timeStringToMinutes(openTimeString);
-    const closeTimeMinutes = timeStringToMinutes(closeTimeString);
-
-    // Verificar se o horário atual está dentro do horário de funcionamento
-    return (
-      currentTimeInMinutes >= openTimeMinutes &&
-      currentTimeInMinutes <= closeTimeMinutes
-    );
-  };
+  const open = isBusinessOpen(vm.profile);
 
   // Definir estilos baseados na cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
-  const open = isOpen();
-  const statusColor = open ? "#22C55E" : "#EF4444"; // Verde se aberto, vermelho se fechado
-  const statusText = open ? "Aberto agora" : "Fechado";
+
+  // Verificar se deve mostrar informações de delivery
+  const shouldShowDeliveryInfo = () => {
+    // return (
+    //   vm.hasDelivery() &&
+    //   vm.config?.delivery &&
+    //   (vm.config?.app?.mostrar_info_delivery === true ||
+    //     vm.config?.app?.mostrar_info_delivery === null)
+    // );
+
+    return true;
+  };
+
+  // Formatar valores monetários
+  const formatCurrency = (value: string) => {
+    if (!value) return "Grátis";
+    const numValue = parseFloat(value) / 100;
+    return numValue === 0
+      ? "Grátis"
+      : numValue.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+  };
 
   return (
     <View className="relative mb-4">
@@ -120,19 +92,8 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
       </View>
 
       {/* Indicador de aberto/fechado */}
-      <View
-        className="absolute top-4 right-4 px-3 py-1 rounded-full flex-row items-center"
-        style={{
-          backgroundColor: `${statusColor}70`,
-        }}
-      >
-        <View
-          className="w-2 h-2 rounded-full mr-1"
-          style={{ backgroundColor: statusColor }}
-        />
-        <Text style={{ color: statusColor }} className="font-medium">
-          {statusText}
-        </Text>
+      <View className="absolute top-4 right-4">
+        <OpenStatusIndicator isOpen={open} />
       </View>
 
       {/* Conteúdo principal */}
@@ -176,6 +137,81 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
               </View>
             </VStack>
           </HStack>
+
+          {/* INÍCIO: Seção de Informações de Delivery */}
+          {shouldShowDeliveryInfo() && vm.config?.delivery && (
+            <View className="mt-4 pt-4 border-t border-gray-100">
+              <HStack className="items-center justify-between mb-3">
+                <HStack space="sm" alignItems="center">
+                  <Truck size={18} color={primaryColor} />
+                  <Text className="font-medium text-gray-800">Delivery</Text>
+                </HStack>
+
+                {/* Botão para ver mais detalhes */}
+                <TouchableOpacity onPress={onMoreInfoPress}>
+                  <HStack space="xs" alignItems="center">
+                    <Text
+                      className="text-sm text-primary-500"
+                      style={{ color: primaryColor }}
+                    >
+                      Ver detalhes
+                    </Text>
+                    <Info size={14} color={primaryColor} />
+                  </HStack>
+                </TouchableOpacity>
+              </HStack>
+
+              {/* Informações do Delivery */}
+              <View className="flex-row justify-between items-center">
+                {/* Tempo estimado */}
+                {vm.config.delivery.tempo_estimado_entrega && (
+                  <View className="flex-1 items-center border-r border-gray-100 pr-2">
+                    <View
+                      className="w-8 h-8 rounded-full items-center justify-center mb-1"
+                      style={{ backgroundColor: `${primaryColor}10` }}
+                    >
+                      <Clock size={16} color={primaryColor} />
+                    </View>
+                    <Text className="text-xs text-gray-500">Tempo</Text>
+                    <Text className="text-sm font-medium text-gray-800">
+                      {vm.config.delivery.tempo_estimado_entrega} min
+                    </Text>
+                  </View>
+                )}
+
+                {/* Taxa de entrega */}
+                <View className="flex-1 items-center px-2">
+                  <View
+                    className="w-8 h-8 rounded-full items-center justify-center mb-1"
+                    style={{ backgroundColor: `${primaryColor}10` }}
+                  >
+                    <DollarSign size={16} color={primaryColor} />
+                  </View>
+                  <Text className="text-xs text-gray-500">Taxa</Text>
+                  <Text className="text-sm font-medium text-gray-800">
+                    {formatCurrency(vm.config.delivery.taxa_entrega || "0")}
+                  </Text>
+                </View>
+
+                {/* Pedido mínimo, se existir */}
+                {vm.config.delivery.pedido_minimo && (
+                  <View className="flex-1 items-center border-l border-gray-100 pl-2">
+                    <View
+                      className="w-8 h-8 rounded-full items-center justify-center mb-1"
+                      style={{ backgroundColor: `${primaryColor}10` }}
+                    >
+                      <DollarSign size={16} color={primaryColor} />
+                    </View>
+                    <Text className="text-xs text-gray-500">Mínimo</Text>
+                    <Text className="text-sm font-medium text-gray-800">
+                      {formatCurrency(vm.config.delivery.pedido_minimo)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+          {/* FIM: Seção de Informações de Delivery */}
 
           {/* Botões de ação */}
           <View className="flex-row mt-4 gap-2">
