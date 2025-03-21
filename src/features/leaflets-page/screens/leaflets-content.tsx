@@ -1,5 +1,7 @@
 // Path: src/features/leaflets-page/screens/leaflets-content.tsx
-import React, { useState } from "react";
+// Substitua o trecho que manipula a abertura e fechamento do visualizador de encartes
+
+import React, { useState, useRef, useEffect } from "react";
 import { View, Text, ScrollView, RefreshControl } from "react-native";
 import { useLeafletsContext } from "../contexts/use-leaflets-context";
 import { LeafletViewer } from "../components/leaflet-viewer";
@@ -17,9 +19,11 @@ import { PromotionalBanner } from "../../commerce/components/promotional-banner"
 export function LeafletsContent() {
   const vm = useLeafletsContext();
   const queryClient = useQueryClient();
+
+  const [refreshing, setRefreshing] = useState(false);
+
   const [selectedLeaflet, setSelectedLeaflet] = useState<Leaflet | null>(null);
   const [viewerVisible, setViewerVisible] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
 
   const handleOpenLeaflet = (leaflet: Leaflet) => {
     setSelectedLeaflet(leaflet);
@@ -30,24 +34,21 @@ export function LeafletsContent() {
     setViewerVisible(false);
   };
 
+  // Adicione um ref para rastrear se o componente está montado
+  const isMounted = useRef(true);
+
+  // Desmontagem do componente
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const onRefresh = async () => {
     setRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ["leaflets"] });
     setRefreshing(false);
   };
-
-  // Calcular o total de encartes
-  const totalLeaflets = vm.categorizedLeaflets.reduce(
-    (total, category) => total + category.leaflets.length,
-    0
-  );
-
-  // Calcular o total de encartes com PDF
-  const totalPdfLeaflets = vm.categorizedLeaflets.reduce(
-    (total, category) =>
-      total + category.leaflets.filter((leaflet) => leaflet.pdf).length,
-    0
-  );
 
   return (
     <SafeAreaView className="flex-1 bg-background-50" edges={["bottom"]}>
@@ -69,16 +70,8 @@ export function LeafletsContent() {
           <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
             <Sparkles size={18} color={THEME_COLORS.primary} />
             <Text className="text-sm font-medium text-primary-500">
-              {totalLeaflets} Encartes Disponíveis
+              Promoções e Ofertas
             </Text>
-
-            {totalPdfLeaflets > 0 && (
-              <View className="bg-red-100 rounded-full px-2 py-0.5 ml-1">
-                <Text className="text-xs text-red-500">
-                  {totalPdfLeaflets} PDF{totalPdfLeaflets > 1 ? "s" : ""}
-                </Text>
-              </View>
-            )}
           </HStack>
 
           <VStack alignItems="center" space="xs">
