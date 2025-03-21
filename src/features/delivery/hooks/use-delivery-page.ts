@@ -71,6 +71,7 @@ export function useDeliveryPage() {
     data: subcategories = [],
     isLoading: isLoadingSubcategories,
     error: subcategoriesError,
+    refetch: refetchSubcategories,
   } = useQuery({
     queryKey: ["delivery", "subcategories"],
     queryFn: deliveryService.getSubcategories,
@@ -78,6 +79,8 @@ export function useDeliveryPage() {
     gcTime: 30 * 60 * 1000, // 30 minutos para garbage collection
     retry: 2, // Limite de 2 tentativas em caso de falha
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Backoff exponencial
+    // ⚠️ Importante: Evitar lazy fetch
+    enabled: true,
   });
 
   // Buscar perfis com staleTime maior e retry melhorado
@@ -93,9 +96,9 @@ export function useDeliveryPage() {
     gcTime: 30 * 60 * 1000, // 30 minutos para garbage collection
     retry: 2, // Limite de 2 tentativas em caso de falha
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Backoff exponencial
-    // Não refetcha automaticamente quando a tab ganha foco novamente
+    // ⚠️ Importante: Evitar lazy fetch
+    enabled: true,
     refetchOnWindowFocus: false,
-    // Não refetcha automaticamente quando reconecta à internet
     refetchOnReconnect: false,
   });
 
@@ -153,7 +156,7 @@ export function useDeliveryPage() {
 
           return matchesSearch && matchesSubcategories;
         } catch (error) {
-          console.error("Error filtering profile:", error, profile);
+          console.error("Error filtering profile:", error);
           return false;
         }
       })
@@ -212,23 +215,30 @@ export function useDeliveryPage() {
     queryClient.invalidateQueries({ queryKey: ["delivery", "profiles"] });
     queryClient.invalidateQueries({ queryKey: ["delivery", "subcategories"] });
 
-    // Executar o refetch
-    return refetchProfiles();
-  }, [queryClient, refetchProfiles]);
+    // Executar o refetch de todas as queries
+    await Promise.all([refetchProfiles(), refetchSubcategories()]);
+
+    return;
+  }, [queryClient, refetchProfiles, refetchSubcategories]);
 
   // Inicializar uma vez quando o componente monta
   useEffect(() => {
     if (!initialized.current) {
-      console.log("Inicializando hook useDeliveryPage");
+      console.log(
+        "Inicializando hook useDeliveryPage e executando refetch inicial"
+      );
+      // Forçar um refetch inicial para garantir que os dados estejam disponíveis
+      optimizedRefetch();
       initialized.current = true;
     }
 
+    // Cleanup function
     return () => {
       console.log("Desmontando hook useDeliveryPage");
       // Limpar o cache ao desmontar para evitar problemas de memória
       filteredProfilesCache.current = null;
     };
-  }, []);
+  }, [optimizedRefetch]);
 
   return {
     searchQuery,

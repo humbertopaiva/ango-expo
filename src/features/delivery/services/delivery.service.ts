@@ -11,7 +11,7 @@ const DELIVERY_SUBCATEGORIES_CACHE_KEY = "delivery_subcategories";
 // Tempo de expiração do cache (30 minutos)
 const CACHE_EXPIRATION = 30 * 60 * 1000;
 
-class DeliveryService {
+class DeliveryServiceClass {
   // Cache em memória para os perfis e subcategorias
   private profilesCache: DeliveryProfile[] | null = null;
   private subcategoriesCache: Subcategory[] | null = null;
@@ -36,7 +36,7 @@ class DeliveryService {
         CACHE_EXPIRATION
       );
 
-      if (cachedData) {
+      if (cachedData && cachedData.length > 0) {
         console.log("Usando cache persistente para perfis de delivery");
         this.profilesCache = cachedData;
         this.lastProfilesFetch = now;
@@ -46,7 +46,7 @@ class DeliveryService {
       // Se não encontrou em cache, buscar da API
       console.log("Buscando perfis de delivery da API");
       const response = await api.get("/api/delivery/profiles");
-      const profiles = response.data.data;
+      const profiles = response.data.data || [];
 
       // Atualizar caches
       this.profilesCache = profiles;
@@ -58,7 +58,7 @@ class DeliveryService {
       console.error("Erro ao buscar perfis de delivery:", error);
 
       // Em caso de erro, tentar usar o cache como fallback mesmo que expirado
-      if (this.profilesCache) {
+      if (this.profilesCache && this.profilesCache.length > 0) {
         console.log("Usando cache em memória como fallback após erro");
         return this.profilesCache;
       }
@@ -66,7 +66,7 @@ class DeliveryService {
       const cachedData = await cacheService.get<DeliveryProfile[]>(
         DELIVERY_PROFILES_CACHE_KEY
       );
-      if (cachedData) {
+      if (cachedData && cachedData.length > 0) {
         console.log("Usando cache persistente como fallback após erro");
         return cachedData;
       }
@@ -81,6 +81,7 @@ class DeliveryService {
       const now = Date.now();
       if (
         this.subcategoriesCache &&
+        this.subcategoriesCache.length > 0 &&
         now - this.lastSubcategoriesFetch < CACHE_EXPIRATION
       ) {
         console.log("Usando cache em memória para subcategorias de delivery");
@@ -93,7 +94,7 @@ class DeliveryService {
         CACHE_EXPIRATION
       );
 
-      if (cachedData) {
+      if (cachedData && cachedData.length > 0) {
         console.log("Usando cache persistente para subcategorias de delivery");
         this.subcategoriesCache = cachedData;
         this.lastSubcategoriesFetch = now;
@@ -138,7 +139,7 @@ class DeliveryService {
       console.error("Erro ao buscar subcategorias de delivery:", error);
 
       // Em caso de erro, tentar usar o cache como fallback mesmo que expirado
-      if (this.subcategoriesCache) {
+      if (this.subcategoriesCache && this.subcategoriesCache.length > 0) {
         console.log("Usando cache em memória como fallback após erro");
         return this.subcategoriesCache;
       }
@@ -146,7 +147,7 @@ class DeliveryService {
       const cachedData = await cacheService.get<Subcategory[]>(
         DELIVERY_SUBCATEGORIES_CACHE_KEY
       );
-      if (cachedData) {
+      if (cachedData && cachedData.length > 0) {
         console.log("Usando cache persistente como fallback após erro");
         return cachedData;
       }
@@ -169,4 +170,5 @@ class DeliveryService {
   }
 }
 
-export const deliveryService = new DeliveryService();
+// Exportando como singleton para manter o cache consistente
+export const deliveryService = new DeliveryServiceClass();
