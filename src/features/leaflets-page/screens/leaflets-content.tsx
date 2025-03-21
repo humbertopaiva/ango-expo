@@ -36,6 +36,19 @@ export function LeafletsContent() {
     setRefreshing(false);
   };
 
+  // Calcular o total de encartes
+  const totalLeaflets = vm.categorizedLeaflets.reduce(
+    (total, category) => total + category.leaflets.length,
+    0
+  );
+
+  // Calcular o total de encartes com PDF
+  const totalPdfLeaflets = vm.categorizedLeaflets.reduce(
+    (total, category) =>
+      total + category.leaflets.filter((leaflet) => leaflet.pdf).length,
+    0
+  );
+
   return (
     <SafeAreaView className="flex-1 bg-background-50" edges={["bottom"]}>
       <ScrollView
@@ -56,8 +69,16 @@ export function LeafletsContent() {
           <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
             <Sparkles size={18} color={THEME_COLORS.primary} />
             <Text className="text-sm font-medium text-primary-500">
-              Promoções e Ofertas
+              {totalLeaflets} Encartes Disponíveis
             </Text>
+
+            {totalPdfLeaflets > 0 && (
+              <View className="bg-red-100 rounded-full px-2 py-0.5 ml-1">
+                <Text className="text-xs text-red-500">
+                  {totalPdfLeaflets} PDF{totalPdfLeaflets > 1 ? "s" : ""}
+                </Text>
+              </View>
+            )}
           </HStack>
 
           <VStack alignItems="center" space="xs">
