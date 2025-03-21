@@ -1,11 +1,18 @@
 // Path: src/features/leaflets-page/components/category-leaflets-section.tsx
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-import { FileText, ArrowRight } from "lucide-react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  useWindowDimensions,
+} from "react-native";
+import { FileText, FileUp, ArrowRight } from "lucide-react-native";
 import { Leaflet } from "../models/leaflet";
 import { LeafletCard } from "./leaflet-card";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { router } from "expo-router";
+import { HStack } from "@gluestack-ui/themed";
 
 interface CategoryLeafletsSectionProps {
   categoryName: string;
@@ -20,32 +27,78 @@ export function CategoryLeafletsSection({
   leaflets,
   onLeafletPress,
 }: CategoryLeafletsSectionProps) {
+  const { width } = useWindowDimensions();
+
   if (leaflets.length === 0) return null;
 
-  // Calcula as dimensões apropriadas para os cards
-  const itemWidth = 280;
-  const itemHeight = itemWidth * (4 / 3);
+  // Calcula as dimensões apropriadas para os cards com base na tela
+  const getPerfectItemSize = () => {
+    // Para telas pequenas, mostramos cards maiores
+    if (width < 768) {
+      return {
+        width: width * 0.7,
+        height: width * 0.7 * 1.33, // Proporção 4:3
+      };
+    }
+
+    // Para telas médias, tamanho intermediário
+    if (width < 1024) {
+      return {
+        width: 240,
+        height: 320,
+      };
+    }
+
+    // Para telas grandes, cards maiores
+    return {
+      width: 280,
+      height: 373,
+    };
+  };
+
+  const { width: itemWidth, height: itemHeight } = getPerfectItemSize();
+
+  // Verifica quantos PDFs existem na categoria
+  const pdfCount = leaflets.filter((leaflet) => leaflet.pdf).length;
+  const hasPdfs = pdfCount > 0;
 
   return (
     <View className="mb-10">
+      {/* Cabeçalho da seção */}
       <View className="flex-row justify-between items-center mb-4 px-4">
-        <View className="flex-row items-center">
+        <HStack space="sm" alignItems="center">
           <FileText size={20} color={THEME_COLORS.secondary} />
-          <Text className="text-xl font-semibold ml-2 text-gray-800">
+          <Text className="text-xl font-semibold text-gray-800">
             {categoryName}
           </Text>
-        </View>
+
+          {/* Indicador de PDF disponível */}
+          {hasPdfs && (
+            <View className="bg-red-100 rounded-full px-2 py-1 ml-2 flex-row items-center">
+              <FileUp size={12} color="#EF4444" />
+              <Text className="text-xs text-red-500 ml-1">
+                {pdfCount} PDF{pdfCount > 1 ? "s" : ""}
+              </Text>
+            </View>
+          )}
+        </HStack>
       </View>
 
+      {/* Lista horizontal de encartes */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
+        className="pb-4"
       >
         {leaflets.map((leaflet) => (
           <View
             key={leaflet.id}
-            style={{ width: itemWidth, height: itemHeight, marginRight: 16 }}
+            style={{
+              width: itemWidth,
+              height: itemHeight,
+              marginRight: 16,
+            }}
           >
             <LeafletCard
               leaflet={leaflet}

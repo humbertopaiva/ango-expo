@@ -1,4 +1,4 @@
-// src/features/leaflets/models/leaflet.ts
+// Path: src/features/leaflets-page/models/leaflet.ts
 export interface Leaflet {
   id: string;
   status: "ativo" | "inativo";
@@ -15,6 +15,7 @@ export interface Leaflet {
   imagem_06: string | null;
   imagem_07: string | null;
   imagem_08: string | null;
+  pdf?: string | null;
   empresa: {
     nome: string;
     slug: string;
