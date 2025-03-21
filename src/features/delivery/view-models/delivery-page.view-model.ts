@@ -1,4 +1,4 @@
-// Path: src/features/delivery/view-models/delivery.view-model.ts
+// Path: src/features/delivery/view-models/delivery-page.view-model.ts
 import { useEffect } from "react";
 import { useDeliveryPage } from "../hooks/use-delivery-page";
 import { IDeliveryViewModel } from "./delivery-page.view-model.interface";
@@ -27,6 +27,11 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
 
   useEffect(() => {
     console.log("DeliveryViewModel initialized");
+
+    // Força um refetch inicial para garantir que os dados estejam disponíveis
+    if (profiles.length === 0 || subcategories.length === 0) {
+      refetchProfiles();
+    }
 
     return () => {
       console.log("DeliveryViewModel unmounted");

@@ -6,7 +6,7 @@ import { cacheService } from "@/src/services/cache-service";
 // Tempo de expiração do cache (30 minutos)
 const CACHE_EXPIRATION = 30 * 60 * 1000;
 
-class DeliveryShowcaseService {
+class DeliveryShowcaseServiceClass {
   // Cache em memória para as vitrines
   private showcasesCache: Record<
     string,
@@ -20,6 +20,11 @@ class DeliveryShowcaseService {
     companySlug: string
   ): Promise<DeliveryShowcaseItem[]> {
     try {
+      if (!companySlug) {
+        console.error("Slug da empresa não fornecido");
+        return [];
+      }
+
       // Verificar cache em memória primeiro (mais rápido)
       const now = Date.now();
       const cacheKey = `showcase_${companySlug}`;
@@ -38,7 +43,7 @@ class DeliveryShowcaseService {
         CACHE_EXPIRATION
       );
 
-      if (cachedData) {
+      if (cachedData && cachedData.length > 0) {
         console.log(`Usando cache persistente para vitrine de ${companySlug}`);
         this.showcasesCache[companySlug] = {
           data: cachedData,
@@ -64,7 +69,10 @@ class DeliveryShowcaseService {
       console.error(`Erro ao buscar vitrine da empresa ${companySlug}:`, error);
 
       // Em caso de erro, tentar usar o cache como fallback mesmo que expirado
-      if (this.showcasesCache[companySlug]) {
+      if (
+        this.showcasesCache[companySlug] &&
+        this.showcasesCache[companySlug].data.length > 0
+      ) {
         console.log(
           `Usando cache em memória como fallback para ${companySlug}`
         );
@@ -75,7 +83,7 @@ class DeliveryShowcaseService {
       const cachedData = await cacheService.get<DeliveryShowcaseItem[]>(
         cacheKey
       );
-      if (cachedData) {
+      if (cachedData && cachedData.length > 0) {
         console.log(
           `Usando cache persistente como fallback para ${companySlug}`
         );
@@ -95,9 +103,18 @@ class DeliveryShowcaseService {
         return {};
       }
 
+      // Filtra apenas os slugs válidos
+      const validSlugs = companySlugs.filter(
+        (slug) => typeof slug === "string" && slug.trim() !== ""
+      );
+
+      if (validSlugs.length === 0) {
+        return {};
+      }
+
       // Filtra apenas os slugs que não estão no cache ou estão expirados
       const now = Date.now();
-      const slugsToFetch = companySlugs.filter((slug) => {
+      const slugsToFetch = validSlugs.filter((slug) => {
         return (
           !this.showcasesCache[slug] ||
           now - this.showcasesCache[slug].timestamp >= CACHE_EXPIRATION
@@ -105,7 +122,7 @@ class DeliveryShowcaseService {
       });
 
       console.log(
-        `Total de slugs: ${companySlugs.length}, Slugs a buscar: ${slugsToFetch.length}`
+        `Total de slugs: ${validSlugs.length}, Slugs a buscar: ${slugsToFetch.length}`
       );
 
       // Busca apenas os dados que não estão em cache
@@ -127,7 +144,7 @@ class DeliveryShowcaseService {
       }
 
       // Combina os resultados do cache
-      return companySlugs.reduce((acc, slug) => {
+      return validSlugs.reduce((acc, slug) => {
         acc[slug] = this.showcasesCache[slug]?.data || [];
         return acc;
       }, {} as Record<string, DeliveryShowcaseItem[]>);
@@ -135,7 +152,16 @@ class DeliveryShowcaseService {
       console.error("Erro ao buscar múltiplas vitrines:", error);
 
       // Em caso de erro, retornar o que temos em cache
-      return companySlugs.reduce((acc, slug) => {
+      if (!companySlugs || companySlugs.length === 0) {
+        return {};
+      }
+
+      const validSlugs = companySlugs.filter(
+        (slug) => typeof slug === "string" && slug.trim() !== ""
+      );
+
+      // Retorna o que temos em cache para os slugs válidos
+      return validSlugs.reduce((acc, slug) => {
         acc[slug] = this.showcasesCache[slug]?.data || [];
         return acc;
       }, {} as Record<string, DeliveryShowcaseItem[]>);
@@ -153,4 +179,5 @@ class DeliveryShowcaseService {
   }
 }
 
-export const deliveryShowcaseService = new DeliveryShowcaseService();
+// Exportando como singleton para manter o cache consistente
+export const deliveryShowcaseService = new DeliveryShowcaseServiceClass();
