@@ -71,16 +71,6 @@ export function CategoryLeafletsSection({
           <Text className="text-xl font-semibold text-gray-800">
             {categoryName}
           </Text>
-
-          {/* Indicador de PDF disponível */}
-          {hasPdfs && (
-            <View className="bg-red-100 rounded-full px-2 py-1 ml-2 flex-row items-center">
-              <FileUp size={12} color="#EF4444" />
-              <Text className="text-xs text-red-500 ml-1">
-                {pdfCount} PDF{pdfCount > 1 ? "s" : ""}
-              </Text>
-            </View>
-          )}
         </HStack>
       </View>
 
