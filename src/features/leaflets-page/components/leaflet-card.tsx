@@ -2,11 +2,12 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Leaflet } from "../models/leaflet";
-import { Calendar, FileText, ChevronRight } from "lucide-react-native";
+import { Calendar, FileText, ChevronRight, Store } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { format, isAfter } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { ResilientImage } from "@/components/common/resilient-image";
 
 interface LeafletCardProps {
   leaflet: Leaflet;
@@ -50,8 +51,16 @@ export function LeafletCard({ leaflet, onPress }: LeafletCardProps) {
         {/* Conteúdo */}
         <View className="p-4 flex-1">
           <Text className="font-medium text-lg mb-1">{leaflet.nome}</Text>
-          <View className="flex-row items-center justify-between mt-2">
-            <Text className="text-sm text-gray-500">
+
+          {/* Nome da empresa */}
+          <View className="flex-row items-center mb-2">
+            <Text className="text-sm text-primary-500 font-medium">
+              {leaflet.empresa.nome}
+            </Text>
+          </View>
+
+          <View className="flex-row items-center justify-between mt-1">
+            <Text className="text-xs text-gray-500">
               Válido até {formattedDate}
             </Text>
             <View className="bg-secondary-50 rounded-full px-2 py-1">
