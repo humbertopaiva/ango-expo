@@ -46,7 +46,7 @@ import { toastUtils } from "@/src/utils/toast.utils";
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const vm = useCompanyPageContext();
-  const isCartEnabled = vm.config?.app?.habilitar_carrinho !== false;
+  const isCartEnabled = vm.config?.delivery?.habilitar_carrinho !== false;
   const cartVm = useCartViewModel();
   const [product, setProduct] = useState<CompanyProduct | null>(null);
 
@@ -80,7 +80,7 @@ export function ProductDetailsScreen() {
         setProduct(foundProduct);
 
         // Verificar se o carrinho está habilitado
-        const isCartEnabled = vm.config?.app?.habilitar_carrinho !== false;
+        const isCartEnabled = vm.config?.delivery?.habilitar_carrinho !== false;
 
         // Apenas inicializar estados relacionados ao carrinho se ele estiver habilitado
         if (isCartEnabled) {

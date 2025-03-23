@@ -1,4 +1,4 @@
-// src/features/delivery-config/services/delivery-config.service.ts
+// Path: src/features/delivery-config/services/delivery-config.service.ts
 import { api } from "@/src/services/api";
 import useAuthStore from "@/src/stores/auth";
 import {
@@ -17,10 +17,17 @@ class DeliveryConfigService {
       `/api/config/company?company=${companyId}`,
       {
         params: {
-          _t: Date.now(),
+          _t: Date.now(), // Cache busting
         },
       }
     );
+
+    // Verificar se a resposta da API está no formato esperado
+    if (!response.data?.data?.delivery) {
+      console.error("Formato de resposta inesperado:", response.data);
+      throw new Error("Formato de resposta da API inválido");
+    }
+
     return response.data.data.delivery;
   }
 
@@ -37,6 +44,13 @@ class DeliveryConfigService {
         empresa: companyId,
       }
     );
+
+    // Verificar se a resposta da API está no formato esperado
+    if (!response.data?.data?.delivery) {
+      console.error("Formato de resposta inesperado:", response.data);
+      throw new Error("Formato de resposta da API inválido");
+    }
+
     return response.data.data.delivery;
   }
 }

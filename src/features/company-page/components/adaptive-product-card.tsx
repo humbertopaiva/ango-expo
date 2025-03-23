@@ -33,7 +33,7 @@ export function AdaptiveProductCard({
   isHighlighted = false,
 }: AdaptiveProductCardProps) {
   const vm = useCompanyPageContext();
-  const isCartEnabled = vm.config?.app?.habilitar_carrinho !== false;
+  const isCartEnabled = vm.config?.delivery?.habilitar_carrinho !== false;
   const cartVm = useCartViewModel();
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";

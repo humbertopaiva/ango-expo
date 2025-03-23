@@ -40,15 +40,15 @@ export function CompanyPageContent() {
       // Se app.mostrar_info_delivery for false, não mostrar
       // Se app não existir ou mostrar_info_delivery for null, mostrar (comportamento padrão)
       !(
-        vm.config?.app?.mostrar_info_delivery === true ||
-        vm.config?.app?.mostrar_info_delivery === null
+        vm.config?.delivery?.mostrar_info_delivery === true ||
+        vm.config?.delivery?.mostrar_info_delivery === null
       )
     );
   };
 
   // Verificar se o carrinho está habilitado
   const isCartEnabled = () => {
-    return vm.config?.app?.habilitar_carrinho !== false; // Por padrão, se não estiver definido, considera como true
+    return vm.config?.delivery?.habilitar_carrinho !== false; // Por padrão, se não estiver definido, considera como true
   };
 
   // Configurar informações do header quando o perfil estiver disponível

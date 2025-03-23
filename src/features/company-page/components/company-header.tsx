@@ -46,8 +46,8 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
     return (
       vm.hasDelivery() &&
       vm.config?.delivery &&
-      (vm.config?.app?.mostrar_info_delivery === true ||
-        vm.config?.app?.mostrar_info_delivery === null)
+      (vm.config?.delivery?.mostrar_info_delivery === true ||
+        vm.config?.delivery?.mostrar_info_delivery === null)
     );
   };
 
