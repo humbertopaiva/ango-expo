@@ -220,7 +220,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                 className="flex-1 py-3 bg-green-500 rounded-lg flex-row justify-center items-center"
               >
                 <MessageCircle size={18} color="white" />
-                <Text className="ml-2 font-medium text-white">WhatsApp</Text>
+                <Text className="ml-2 font-semibold text-white">WhatsApp</Text>
               </TouchableOpacity>
             )}
 
@@ -231,7 +231,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
             >
               <Info size={18} color={primaryColor} />
               <Text
-                className="ml-2 font-medium"
+                className="ml-2 font-semibold"
                 style={{ color: primaryColor }}
               >
                 Informações
