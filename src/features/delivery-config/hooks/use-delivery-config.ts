@@ -15,14 +15,24 @@ export function useDeliveryConfig() {
     queryKey,
     queryFn: deliveryConfigService.getCompanyConfig,
     enabled: !!companyId,
-    retry: 1, // Limitar tentativas de retry para evitar muitas chamadas em caso de erro
-    // Adicionar uma função onError para log de debugging
+    retry: 1,
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateDeliveryConfigDTO }) =>
-      deliveryConfigService.updateConfig(id, data),
-    onSuccess: () => {
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateDeliveryConfigDTO;
+    }) => {
+      // Log de debug para verificar os dados
+      console.log("Mutation - enviando dados para o servidor:", data);
+      return deliveryConfigService.updateConfig(id, data);
+    },
+    onSuccess: (data) => {
+      console.log("Mutation - atualização bem-sucedida:", data);
+      // Invalida a query para recarregar os dados
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: any) => {

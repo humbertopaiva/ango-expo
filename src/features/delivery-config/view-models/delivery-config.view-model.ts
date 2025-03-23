@@ -1,6 +1,6 @@
 // Path: src/features/delivery-config/view-models/delivery-config.view-model.ts
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useDeliveryConfig } from "../hooks/use-delivery-config";
 import { IDeliveryConfigViewModel } from "./delivery-config.view-model.interface";
 import { UpdateDeliveryConfigDTO } from "../models/delivery-config";
@@ -17,6 +17,11 @@ export function useDeliveryConfigViewModel(): IDeliveryConfigViewModel {
   const [isSaved, setIsSaved] = useState(false);
   const formRef = useRef(null);
 
+  // Reset status quando o componente é desmontado ou quando os dados mudam
+  useEffect(() => {
+    setIsSaved(false);
+  }, [config]);
+
   // Handle form submission
   const handleSubmit = async (data: DeliveryConfigFormData) => {
     try {
@@ -25,7 +30,7 @@ export function useDeliveryConfigViewModel(): IDeliveryConfigViewModel {
         return;
       }
 
-      // Prepara os dados para atualização
+      // Preparar os dados para atualização
       const updateData: UpdateDeliveryConfigDTO = {
         tempo_estimado_entrega: data.tempo_estimado_entrega,
         especificar_bairros_atendidos: data.especificar_bairros_atendidos,
@@ -33,16 +38,19 @@ export function useDeliveryConfigViewModel(): IDeliveryConfigViewModel {
         observacoes: data.observacoes || "",
         taxa_entrega: data.taxa_entrega,
         pedido_minimo: data.pedido_minimo,
+        // Garantir que esses campos sejam sempre passados na atualização
         mostrar_info_delivery: data.mostrar_info_delivery,
         habilitar_carrinho: data.habilitar_carrinho,
       };
+
+      console.log("Dados enviados para atualização:", updateData);
 
       await updateConfig({
         id: config.id,
         data: updateData,
       });
 
-      // Mostra o toast de sucesso mas não navega para trás
+      // Mostra o toast de sucesso
       setIsSaved(true);
 
       showSuccessToast(
