@@ -22,7 +22,7 @@ export function CompanyActionBar() {
   const cartVm = useCartViewModel();
 
   // Verificar se o carrinho está habilitado
-  // const isCartEnabled = vm.config?.app?.habilitar_carrinho !== false;
+  // const isCartEnabled = vm.config?.delivery?.habilitar_carrinho !== false;
   const isCartEnabled = true;
 
   // Obtém o slug da empresa para navegação

@@ -1,4 +1,4 @@
-// src/features/delivery-config/schemas/delivery-config.schema.ts
+// Path: src/features/delivery-config/schemas/delivery-config.schema.ts
 import * as z from "zod";
 
 export const deliveryConfigSchema = z.object({
@@ -8,6 +8,8 @@ export const deliveryConfigSchema = z.object({
   observacoes: z.string().default(""),
   taxa_entrega: z.string().min(1, "Taxa de entrega é obrigatória"),
   pedido_minimo: z.string().min(1, "Pedido mínimo é obrigatório"),
+  mostrar_info_delivery: z.boolean().default(true),
+  habilitar_carrinho: z.boolean().default(true),
 });
 
 export type DeliveryConfigFormData = z.infer<typeof deliveryConfigSchema>;

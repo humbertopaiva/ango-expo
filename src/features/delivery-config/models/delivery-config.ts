@@ -32,9 +32,10 @@ export interface DeliveryConfig {
   observacoes: string;
   taxa_entrega: string;
   pedido_minimo: string;
+  mostrar_info_delivery: boolean;
+  habilitar_carrinho: boolean;
   empresa: Company;
 }
-
 export interface DeliveryConfigResponse {
   status: string;
   data: {

@@ -1,10 +1,10 @@
-// src/features/delivery-config/view-models/delivery-config.view-model.ts
+// Path: src/features/delivery-config/view-models/delivery-config.view-model.ts
 
 import { useState, useRef } from "react";
 import { useDeliveryConfig } from "../hooks/use-delivery-config";
 import { IDeliveryConfigViewModel } from "./delivery-config.view-model.interface";
 import { UpdateDeliveryConfigDTO } from "../models/delivery-config";
-import { useToast } from "@gluestack-ui/themed"; // Importação direta do Gluestack
+import { useToast } from "@gluestack-ui/themed";
 import { DeliveryConfigFormData } from "../schemas/delivery-config.schema";
 import {
   showErrorToast,
@@ -13,15 +13,14 @@ import {
 
 export function useDeliveryConfigViewModel(): IDeliveryConfigViewModel {
   const { config, isLoading, updateConfig, isUpdating } = useDeliveryConfig();
-  const toast = useToast(); // Usa o hook do Gluestack diretamente
+  const toast = useToast();
   const [isSaved, setIsSaved] = useState(false);
-  const formRef = useRef(null); // Referência para o formulário
+  const formRef = useRef(null);
 
   // Handle form submission
   const handleSubmit = async (data: DeliveryConfigFormData) => {
     try {
       if (!config?.id) {
-        // Usa o toast simplificado
         showErrorToast(toast, "Configuração não encontrada");
         return;
       }
@@ -34,6 +33,8 @@ export function useDeliveryConfigViewModel(): IDeliveryConfigViewModel {
         observacoes: data.observacoes || "",
         taxa_entrega: data.taxa_entrega,
         pedido_minimo: data.pedido_minimo,
+        mostrar_info_delivery: data.mostrar_info_delivery,
+        habilitar_carrinho: data.habilitar_carrinho,
       };
 
       await updateConfig({
@@ -44,7 +45,6 @@ export function useDeliveryConfigViewModel(): IDeliveryConfigViewModel {
       // Mostra o toast de sucesso mas não navega para trás
       setIsSaved(true);
 
-      // Usa o toast simplificado
       showSuccessToast(
         toast,
         "Configurações de entrega atualizadas com sucesso"
@@ -57,7 +57,6 @@ export function useDeliveryConfigViewModel(): IDeliveryConfigViewModel {
     } catch (error) {
       console.error("Erro ao atualizar configuração:", error);
 
-      // Usa o toast simplificado
       showErrorToast(
         toast,
         "Não foi possível atualizar as configurações de entrega"

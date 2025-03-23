@@ -20,7 +20,17 @@ import { Input, InputField } from "@/components/ui/input";
 
 import { Switch } from "@/components/ui/switch";
 import { SectionCard } from "@/components/custom/section-card";
-import { Truck, DollarSign, MapPin, Save, X, Plus } from "lucide-react-native";
+import {
+  Truck,
+  DollarSign,
+  MapPin,
+  Save,
+  X,
+  Plus,
+  Settings,
+  ShoppingCart,
+  Cog,
+} from "lucide-react-native";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import {
   deliveryConfigSchema,
@@ -29,6 +39,7 @@ import {
 import { DeliveryConfig } from "../models/delivery-config";
 import { ScrollView } from "react-native";
 import { Textarea, TextareaInput } from "@gluestack-ui/themed";
+import { Alert } from "@/components/ui/alert";
 
 interface DeliveryConfigFormProps {
   config?: DeliveryConfig | null;
@@ -65,6 +76,14 @@ export const DeliveryConfigForm = forwardRef(
         observacoes: config?.observacoes || "",
         taxa_entrega: config?.taxa_entrega || "",
         pedido_minimo: config?.pedido_minimo || "",
+        mostrar_info_delivery:
+          config?.mostrar_info_delivery !== undefined
+            ? config.mostrar_info_delivery
+            : true,
+        habilitar_carrinho:
+          config?.habilitar_carrinho !== undefined
+            ? config.habilitar_carrinho
+            : true,
       },
     });
 
@@ -84,9 +103,10 @@ export const DeliveryConfigForm = forwardRef(
       getValues,
     } = form;
 
-    // Observe o valor do campo de especificar bairros
+    // Observe o valor dos campos
     const especificarBairros = watch("especificar_bairros_atendidos");
     const bairrosAtendidos = watch("bairros_atendidos");
+    const mostrarInfoDelivery = watch("mostrar_info_delivery");
 
     // Função para adicionar um novo bairro
     const handleAddNeighborhood = () => {
@@ -110,6 +130,85 @@ export const DeliveryConfigForm = forwardRef(
     return (
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="flex-1 pb-24">
+          {/* Configurações gerais */}
+          <SectionCard
+            title="Configurações Gerais"
+            icon={<Cog size={22} color="#0891B2" />}
+          >
+            <View className="gap-4 flex flex-col py-4">
+              <FormControl>
+                <FormControlLabel>
+                  <FormControlLabelText className="text-sm font-medium text-gray-700">
+                    Mostrar Informações de Delivery
+                  </FormControlLabelText>
+                </FormControlLabel>
+                <Controller
+                  control={control}
+                  name="mostrar_info_delivery"
+                  render={({ field: { onChange, value } }) => (
+                    <View className="flex-row items-center space-x-2">
+                      <Switch value={value} onValueChange={onChange} />
+                      <Text className="text-sm text-gray-600">
+                        {value
+                          ? "Ativar informações de delivery"
+                          : "Ocultar informações de delivery"}
+                      </Text>
+                    </View>
+                  )}
+                />
+                <Text className="text-xs text-gray-500 mt-1">
+                  Quando desativado, as informações de delivery não serão
+                  exibidas para os clientes
+                </Text>
+              </FormControl>
+
+              <FormControl>
+                <FormControlLabel>
+                  <FormControlLabelText className="text-sm font-medium text-gray-700">
+                    Habilitar Carrinho
+                  </FormControlLabelText>
+                </FormControlLabel>
+                <Controller
+                  control={control}
+                  name="habilitar_carrinho"
+                  render={({ field: { onChange, value } }) => (
+                    <View className="flex-row items-center space-x-2">
+                      <Switch value={value} onValueChange={onChange} />
+                      <Text className="text-sm text-gray-600">
+                        {value
+                          ? "Carrinho de compras ativado"
+                          : "Carrinho de compras desativado"}
+                      </Text>
+                    </View>
+                  )}
+                />
+                <Text className="text-xs text-gray-500 mt-1">
+                  Quando habilitado, os clientes podem adicionar produtos ao
+                  carrinho
+                </Text>
+              </FormControl>
+            </View>
+          </SectionCard>
+
+          {/* Aviso importante */}
+          {!mostrarInfoDelivery && (
+            <View className="my-4">
+              <Alert className="bg-blue-50 border-blue-200">
+                <View className="p-2">
+                  <Text className="text-blue-800 font-medium mb-1">
+                    Informações de delivery desativadas
+                  </Text>
+                  <Text className="text-blue-600 text-sm">
+                    Como você optou por ocultar as informações de delivery, os
+                    campos abaixo não serão exibidos para os clientes. No
+                    entanto, você ainda pode configurá-los caso decida ativá-los
+                    posteriormente.
+                  </Text>
+                </View>
+              </Alert>
+            </View>
+          )}
+
           {/* Tempo Estimado de Entrega */}
           <SectionCard
             title="Tempo de Entrega"

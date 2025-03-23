@@ -38,14 +38,14 @@ export function useCompanyPageViewModel(
   const shouldShowDeliveryInfo = () => {
     return (
       hasDelivery() &&
-      (config?.app?.mostrar_info_delivery === true ||
-        config?.app?.mostrar_info_delivery === null)
+      (config?.delivery?.mostrar_info_delivery === true ||
+        config?.delivery?.mostrar_info_delivery === null)
     );
   };
 
   // Verificar se o carrinho está habilitado
   const isCartEnabled = () => {
-    return config?.app?.habilitar_carrinho !== false; // Por padrão, se não estiver definido, considera como true
+    return config?.delivery?.habilitar_carrinho !== false; // Por padrão, se não estiver definido, considera como true
   };
 
   // Formatação de endereço

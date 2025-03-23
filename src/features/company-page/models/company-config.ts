@@ -7,8 +7,6 @@ export interface CompanyConfig {
     observacoes: string;
     taxa_entrega: string;
     pedido_minimo: string;
-  };
-  app?: {
     mostrar_info_delivery: boolean | null;
     habilitar_carrinho: boolean | null;
   };

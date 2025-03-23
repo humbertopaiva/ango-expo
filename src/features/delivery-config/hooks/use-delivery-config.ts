@@ -1,4 +1,4 @@
-// src/features/delivery-config/hooks/use-delivery-config.ts
+// Path: src/features/delivery-config/hooks/use-delivery-config.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { deliveryConfigService } from "../services/delivery-config.service";
 import { UpdateDeliveryConfigDTO } from "../models/delivery-config";
@@ -15,6 +15,8 @@ export function useDeliveryConfig() {
     queryKey,
     queryFn: deliveryConfigService.getCompanyConfig,
     enabled: !!companyId,
+    retry: 1, // Limitar tentativas de retry para evitar muitas chamadas em caso de erro
+    // Adicionar uma função onError para log de debugging
   });
 
   const updateMutation = useMutation({
