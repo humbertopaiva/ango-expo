@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   categoryTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: "PlusJakartaSans_700Bold",
     color: "#FFFFFF",
     textAlign: "center",
