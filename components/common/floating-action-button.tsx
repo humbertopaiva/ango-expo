@@ -51,6 +51,7 @@ export function FloatingActionButton({
         style,
       ]}
       disabled={disabled}
+      className="bg-gray-50"
     >
       <LinearGradient
         colors={
