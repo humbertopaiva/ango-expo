@@ -1,4 +1,4 @@
-// src/features/leaflets/schemas/leaflet.schema.ts
+// Path: src/features/leaflets/schemas/leaflet.schema.ts
 
 import * as z from "zod";
 
@@ -15,6 +15,7 @@ export const leafletFormSchema = z.object({
   imagem_06: z.string().nullable(),
   imagem_07: z.string().nullable(),
   imagem_08: z.string().nullable(),
+  pdf: z.string().nullable(),
 });
 
 export type LeafletFormData = z.infer<typeof leafletFormSchema>;

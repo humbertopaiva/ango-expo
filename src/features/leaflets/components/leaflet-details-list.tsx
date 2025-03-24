@@ -1,4 +1,5 @@
 // Path: src/features/leaflets/components/leaflet-details-list.tsx
+
 import React from "react";
 import { Leaflet } from "../models/leaflet";
 import { SwipeableDataList } from "@/components/custom/swipeable-data-list";
@@ -44,6 +45,16 @@ export function LeafletDetailsList({
     ].filter(Boolean).length;
   };
 
+  // Verifica se o encarte tem PDF
+  const hasPdf = (leaflet: Leaflet) => {
+    return !!leaflet.pdf;
+  };
+
+  // Define o ícone baseado no tipo de encarte (PDF ou imagens)
+  const getLeafletIcon = (leaflet: Leaflet) => {
+    return FileText;
+  };
+
   return (
     <SwipeableDataList
       data={leaflets}
@@ -55,19 +66,10 @@ export function LeafletDetailsList({
       getTitle={(leaflet) => leaflet.nome}
       getSubtitle={(leaflet) => `Válido até: ${formatDate(leaflet.validade)}`}
       getImageUri={(leaflet) => leaflet.banner}
-      getImageIcon={() => FileText}
       getStatus={(leaflet) => leaflet.status}
       getStatusLabel={(leaflet) =>
         leaflet.status === "ativo" ? "Ativo" : "Inativo"
       }
-      getBadges={(leaflet) => [
-        {
-          label: `${countPages(leaflet)} ${
-            countPages(leaflet) === 1 ? "página" : "páginas"
-          }`,
-          variant: "outline",
-        },
-      ]}
       onEdit={onEdit}
       onDelete={onDelete}
       onItemPress={onView}

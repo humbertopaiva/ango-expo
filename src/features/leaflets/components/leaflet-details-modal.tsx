@@ -1,4 +1,4 @@
-// src/features/leaflets/components/leaflet-details-modal.tsx
+// Path: src/features/leaflets/components/leaflet-details-modal.tsx
 
 import React from "react";
 import {
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-  Image as RNImage,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Leaflet } from "../models/leaflet";
@@ -17,6 +17,7 @@ import { ptBR } from "date-fns/locale";
 import { Button, ButtonText } from "@/components/ui/button";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { StatusBadge } from "@/components/custom/status-badge";
+import { WebViewPdfViewer } from "@/components/pdf/webview-pdf-viewer";
 
 interface LeafletDetailsModalProps {
   leaflet: Leaflet | null;
@@ -49,6 +50,9 @@ export function LeafletDetailsModal({
     leaflet.imagem_07,
     leaflet.imagem_08,
   ].filter(Boolean) as string[];
+
+  const hasPdf = !!leaflet.pdf;
+  const hasImages = images.length > 0;
 
   return (
     <Modal
@@ -92,12 +96,19 @@ export function LeafletDetailsModal({
                       leaflet.status === "ativo" ? "Ativo" : "Inativo"
                     }
                   />
-                  <View className="px-2 py-1 rounded-full bg-gray-100">
-                    <Text className="text-gray-800">
-                      {images.length}{" "}
-                      {images.length === 1 ? "página" : "páginas"}
-                    </Text>
-                  </View>
+
+                  {hasPdf ? (
+                    <View className="px-2 py-1 rounded-full bg-blue-100">
+                      <Text className="text-blue-800 text-xs">PDF</Text>
+                    </View>
+                  ) : (
+                    <View className="px-2 py-1 rounded-full bg-gray-100">
+                      <Text className="text-gray-800 text-xs">
+                        {images.length}{" "}
+                        {images.length === 1 ? "página" : "páginas"}
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 <View className="flex-row items-center mt-2">
@@ -109,8 +120,35 @@ export function LeafletDetailsModal({
               </View>
             </View>
 
-            {/* Grade de Imagens */}
-            {images.length > 0 && (
+            {/* Conteúdo do encarte (PDF ou Imagens) */}
+            {hasPdf ? (
+              <View className="p-4 border-t border-gray-100">
+                <View className="flex-row items-center mb-4">
+                  {/* Icone de pdf */}
+                  <FileText size={18} color="#6B7280" />
+                  <Text className="text-lg font-semibold ml-2">
+                    Encarte em PDF
+                  </Text>
+                </View>
+
+                <View className="w-full aspect-[3/4] rounded-lg overflow-hidden border border-gray-200">
+                  {Platform.OS === "web" ? (
+                    <iframe
+                      src={leaflet.pdf as string}
+                      className="w-full h-full"
+                      style={{ border: "none" }}
+                    />
+                  ) : (
+                    <WebViewPdfViewer
+                      pdfUrl={leaflet.pdf as string}
+                      onError={(error) =>
+                        console.error("Error loading PDF", error)
+                      }
+                    />
+                  )}
+                </View>
+              </View>
+            ) : hasImages ? (
               <View className="p-4 border-t border-gray-100">
                 <Text className="text-lg font-semibold mb-4">
                   Páginas do Encarte
@@ -136,6 +174,13 @@ export function LeafletDetailsModal({
                     </View>
                   ))}
                 </View>
+              </View>
+            ) : (
+              <View className="p-4 border-t border-gray-100 items-center">
+                <FileText size={32} color="#D1D5DB" className="mb-2" />
+                <Text className="text-gray-500 text-center">
+                  Este encarte não possui páginas ou PDF.
+                </Text>
               </View>
             )}
 
