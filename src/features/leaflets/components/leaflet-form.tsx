@@ -1,5 +1,6 @@
-// src/features/leaflets/components/leaflet-form.tsx
+// Path: src/features/leaflets/components/leaflet-form.tsx
 
+// Atualizando o componente para adicionar a nova aba de PDF
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -22,15 +23,18 @@ import {
   useToast,
   Switch,
   HStack,
+  Divider,
 } from "@gluestack-ui/themed";
 import { AlertCircle, FileText, Check, X } from "lucide-react-native";
 import { leafletFormSchema, LeafletFormData } from "../schemas/leaflet.schema";
 import { ImageUpload } from "@/components/common/image-upload";
+
 import { DatePicker } from "@/components/common/date-picker";
 import { useLeafletsContext } from "../contexts/use-leaflets-context";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { PdfUpload } from "./pdf-upload";
 
 interface LeafletFormScreenProps {
   leafletId?: string;
@@ -55,10 +59,12 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
   const isLoading = isCreating || isUpdating;
   const primaryColor = THEME_COLORS.primary;
 
-  // Gerenciamento de abas simples
+  // Gerenciamento de abas
   const [activeTab, setActiveTab] = useState("info");
   // Estado local para rastrear o status atual
   const [statusValue, setStatusValue] = useState("ativo");
+  // Estado para alternar entre upload de imagens individuais ou PDF
+  const [uploadMode, setUploadMode] = useState<"images" | "pdf">("images");
 
   const form = useForm<LeafletFormData>({
     resolver: zodResolver(leafletFormSchema),
@@ -75,6 +81,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
       imagem_06: null,
       imagem_07: null,
       imagem_08: null,
+      pdf: null,
     },
   });
 
@@ -85,7 +92,33 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
     reset,
     getValues,
     setValue,
+    watch,
   } = form;
+
+  // Monitorar o valor do PDF para atualizar o modo de upload
+  const pdfValue = watch("pdf");
+
+  useEffect(() => {
+    if (pdfValue) {
+      setUploadMode("pdf");
+    } else {
+      // Verificar se há imagens
+      const hasImages = [
+        getValues("imagem_01"),
+        getValues("imagem_02"),
+        getValues("imagem_03"),
+        getValues("imagem_04"),
+        getValues("imagem_05"),
+        getValues("imagem_06"),
+        getValues("imagem_07"),
+        getValues("imagem_08"),
+      ].some(Boolean);
+
+      if (!hasImages) {
+        setUploadMode("images");
+      }
+    }
+  }, [pdfValue]);
 
   useEffect(() => {
     if (leaflet) {
@@ -102,8 +135,16 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
         imagem_06: leaflet.imagem_06,
         imagem_07: leaflet.imagem_07,
         imagem_08: leaflet.imagem_08,
+        pdf: leaflet.pdf,
       });
-      setStatusValue(leaflet.status); // Atualiza o estado local
+      setStatusValue(leaflet.status);
+
+      // Definir modo de upload com base nos dados existentes
+      if (leaflet.pdf) {
+        setUploadMode("pdf");
+      } else {
+        setUploadMode("images");
+      }
     }
   }, [leaflet, reset]);
 
@@ -120,6 +161,23 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
 
   const onSubmit = async (data: LeafletFormData) => {
     try {
+      // Se está no modo PDF, limpar os campos de imagens
+      if (uploadMode === "pdf" && data.pdf) {
+        data.imagem_01 = null;
+        data.imagem_02 = null;
+        data.imagem_03 = null;
+        data.imagem_04 = null;
+        data.imagem_05 = null;
+        data.imagem_06 = null;
+        data.imagem_07 = null;
+        data.imagem_08 = null;
+      }
+
+      // Se está no modo de imagens, limpar o campo de PDF
+      if (uploadMode === "images") {
+        data.pdf = null;
+      }
+
       if (isEditing && id) {
         await handleUpdateLeaflet(id, data);
         toastUtils.success(toast, "Encarte atualizado com sucesso!");
@@ -151,6 +209,35 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
     ].filter(Boolean).length;
   };
 
+  // Função para alternar o modo de upload
+  const toggleUploadMode = (mode: "images" | "pdf") => {
+    if (mode === uploadMode) return;
+
+    // Confirme com o usuário se houver dados que serão perdidos
+    if (mode === "pdf" && countImages() > 0) {
+      if (
+        !confirm(
+          "Ao mudar para o modo PDF, todas as imagens individuais serão removidas. Deseja continuar?"
+        )
+      ) {
+        return;
+      }
+    }
+
+    if (mode === "images" && pdfValue) {
+      if (
+        !confirm(
+          "Ao mudar para o modo de imagens, o PDF será removido. Deseja continuar?"
+        )
+      ) {
+        return;
+      }
+      setValue("pdf", null);
+    }
+
+    setUploadMode(mode);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       {/* Tabs Nav */}
@@ -172,19 +259,19 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => setActiveTab("images")}
+          onPress={() => setActiveTab("content")}
           className={`flex-1 py-6 ${
-            activeTab === "images" ? `border-b-2 border-primary-500` : ""
+            activeTab === "content" ? `border-b-2 border-primary-500` : ""
           }`}
         >
           <Text
             className={`text-center ${
-              activeTab === "images"
+              activeTab === "content"
                 ? "text-primary-600 font-medium"
                 : "text-gray-600"
             }`}
           >
-            Imagens ({countImages()}/8)
+            Conteúdo
           </Text>
         </TouchableOpacity>
       </View>
@@ -355,70 +442,158 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
       ) : (
         <ScrollView className="flex-1 px-4 bg-white">
           <VStack space="lg" className="py-6">
-            <Alert className="mb-4 bg-blue-50 border border-blue-200">
-              <AlertIcon as={AlertCircle} color="#3B82F6" />
-              <AlertText className="ml-3 text-blue-700">
-                Recomendamos utilizar imagens no formato vertical (3:4) para
-                melhor visualização
-              </AlertText>
-            </Alert>
-
-            {/* Imagens das páginas */}
-            {Array.from({ length: 8 }).map((_, index) => (
-              <FormControl
-                key={`imagem_${String(index + 1).padStart(2, "0")}`}
-                isInvalid={
-                  !!errors[
-                    `imagem_${String(index + 1).padStart(
-                      2,
-                      "0"
-                    )}` as keyof LeafletFormData
-                  ]
-                }
-                className="mb-6"
-              >
-                <FormControl.Label>
-                  <Text className="text-sm font-medium text-gray-700">
-                    Página {index + 1}
+            {/* Seletor de modo de upload */}
+            <View className="mb-4">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                Formato do Encarte
+              </Text>
+              <View className="flex-row border border-gray-200 rounded-lg">
+                <TouchableOpacity
+                  onPress={() => toggleUploadMode("images")}
+                  className={`flex-1 py-3 px-4 rounded-l-lg ${
+                    uploadMode === "images" ? "bg-primary-500" : "bg-gray-50"
+                  }`}
+                >
+                  <Text
+                    className={`text-center font-medium ${
+                      uploadMode === "images" ? "text-white" : "text-gray-600"
+                    }`}
+                  >
+                    Imagens Individuais
                   </Text>
-                </FormControl.Label>
-                <Controller
-                  control={control}
-                  name={
-                    `imagem_${String(index + 1).padStart(
-                      2,
-                      "0"
-                    )}` as keyof LeafletFormData
-                  }
-                  render={({ field: { onChange, value } }) => (
-                    <ImageUpload
-                      value={value || ""}
-                      onChange={onChange}
-                      disabled={isLoading}
-                    />
-                  )}
-                />
-                {errors[
-                  `imagem_${String(index + 1).padStart(
-                    2,
-                    "0"
-                  )}` as keyof LeafletFormData
-                ] && (
-                  <FormControl.Error>
-                    <Text className="text-sm text-red-500">
-                      {
-                        errors[
-                          `imagem_${String(index + 1).padStart(
-                            2,
-                            "0"
-                          )}` as keyof LeafletFormData
-                        ]?.message
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => toggleUploadMode("pdf")}
+                  className={`flex-1 py-3 px-4 rounded-r-lg ${
+                    uploadMode === "pdf" ? "bg-primary-500" : "bg-gray-50"
+                  }`}
+                >
+                  <Text
+                    className={`text-center font-medium ${
+                      uploadMode === "pdf" ? "text-white" : "text-gray-600"
+                    }`}
+                  >
+                    Arquivo PDF
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <Text className="text-xs text-gray-500 mt-2">
+                {uploadMode === "images"
+                  ? "Carregue até 8 imagens individuais para seu encarte."
+                  : "Carregue um único arquivo PDF contendo todas as páginas do encarte."}
+              </Text>
+            </View>
+
+            {uploadMode === "images" ? (
+              // Imagens individuais
+              <>
+                <Alert className="mb-4 bg-blue-50 border border-blue-200">
+                  <AlertIcon as={AlertCircle} color="#3B82F6" />
+                  <AlertText className="ml-3 text-blue-700">
+                    Recomendamos utilizar imagens no formato vertical (3:4) para
+                    melhor visualização
+                  </AlertText>
+                </Alert>
+
+                {/* Imagens das páginas */}
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <FormControl
+                    key={`imagem_${String(index + 1).padStart(2, "0")}`}
+                    isInvalid={
+                      !!errors[
+                        `imagem_${String(index + 1).padStart(
+                          2,
+                          "0"
+                        )}` as keyof LeafletFormData
+                      ]
+                    }
+                    className="mb-6"
+                  >
+                    <FormControl.Label>
+                      <Text className="text-sm font-medium text-gray-700">
+                        Página {index + 1}
+                      </Text>
+                    </FormControl.Label>
+                    <Controller
+                      control={control}
+                      name={
+                        `imagem_${String(index + 1).padStart(
+                          2,
+                          "0"
+                        )}` as keyof LeafletFormData
                       }
+                      render={({ field: { onChange, value } }) => (
+                        <ImageUpload
+                          value={value || ""}
+                          onChange={onChange}
+                          disabled={isLoading}
+                        />
+                      )}
+                    />
+                    {errors[
+                      `imagem_${String(index + 1).padStart(
+                        2,
+                        "0"
+                      )}` as keyof LeafletFormData
+                    ] && (
+                      <FormControl.Error>
+                        <Text className="text-sm text-red-500">
+                          {
+                            errors[
+                              `imagem_${String(index + 1).padStart(
+                                2,
+                                "0"
+                              )}` as keyof LeafletFormData
+                            ]?.message
+                          }
+                        </Text>
+                      </FormControl.Error>
+                    )}
+                  </FormControl>
+                ))}
+              </>
+            ) : (
+              // Upload de PDF
+              <>
+                <Alert className="mb-4 bg-blue-50 border border-blue-200">
+                  <AlertIcon as={AlertCircle} color="#3B82F6" />
+                  <AlertText className="ml-3 text-blue-700">
+                    O PDF deve estar no formato ideal para visualização em
+                    dispositivos móveis. Recomendamos um tamanho máximo de 10MB.
+                  </AlertText>
+                </Alert>
+
+                <FormControl isInvalid={!!errors.pdf} className="mb-6">
+                  <FormControl.Label>
+                    <Text className="text-sm font-medium text-gray-700">
+                      Arquivo PDF do Encarte
                     </Text>
-                  </FormControl.Error>
-                )}
-              </FormControl>
-            ))}
+                  </FormControl.Label>
+                  <Controller
+                    control={control}
+                    name="pdf"
+                    render={({ field: { onChange, value } }) => (
+                      <PdfUpload
+                        value={value || ""}
+                        onChange={(newValue) => {
+                          console.log("PDF URL sendo salva:", newValue); // Para debug
+                          onChange(newValue);
+                        }}
+                        disabled={isLoading}
+                      />
+                    )}
+                  />
+                  {errors.pdf && (
+                    <FormControl.Error>
+                      <Text className="text-sm text-red-500">
+                        {errors.pdf.message}
+                      </Text>
+                    </FormControl.Error>
+                  )}
+                </FormControl>
+              </>
+            )}
           </VStack>
         </ScrollView>
       )}

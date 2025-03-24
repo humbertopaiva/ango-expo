@@ -20,6 +20,7 @@ export interface Leaflet {
   imagem_07: string | null;
   imagem_08: string | null;
   banner: string | null;
+  pdf?: string | null;
 }
 
 export interface CreateLeafletDTO {
@@ -37,6 +38,7 @@ export interface CreateLeafletDTO {
   imagem_08?: string | null;
   banner?: string | null;
   sort?: number | null;
+  pdf?: string | null;
 }
 
 export type UpdateLeafletDTO = Partial<CreateLeafletDTO>;

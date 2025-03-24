@@ -91,6 +91,7 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
           imagem_06: data.imagem_06,
           imagem_07: data.imagem_07,
           imagem_08: data.imagem_08,
+          pdf: data.pdf, // Incluindo o campo PDF
         });
 
         showSuccessToast(toast, "Encarte criado com sucesso!");
@@ -125,6 +126,7 @@ export function useLeafletsViewModel(): ILeafletsViewModel {
             imagem_06: data.imagem_06,
             imagem_07: data.imagem_07,
             imagem_08: data.imagem_08,
+            pdf: data.pdf, // Incluindo o campo PDF
           },
         });
 
