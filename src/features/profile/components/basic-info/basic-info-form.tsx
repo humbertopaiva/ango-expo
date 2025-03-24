@@ -33,6 +33,7 @@ import { Heading } from "@/components/ui/heading";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon, CloseIcon } from "@/components/ui/icon";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -139,7 +140,7 @@ export function BasicInfoForm({
             {/* Seção de informações gerais */}
             <SectionCard
               title="Informações Gerais"
-              icon={<Building2 size={22} color="#0891B2" />}
+              icon={<Building2 size={22} color={THEME_COLORS.primary} />}
             >
               <View className="gap-4 flex flex-col py-4">
                 <FormField
@@ -191,7 +192,7 @@ export function BasicInfoForm({
             {/* Seção de imagens */}
             <SectionCard
               title="Imagens da Marca"
-              icon={<FileText size={22} color="#0891B2" />}
+              icon={<FileText size={22} color={THEME_COLORS.primary} />}
             >
               <View className="gap-6">
                 {/* Logo */}
@@ -227,7 +228,11 @@ export function BasicInfoForm({
                   </FormControl>
 
                   <View className="flex-row items-start mt-2 gap-2">
-                    <Info size={16} color="#0891B2" className="mr-2 mt-0.5" />
+                    <Info
+                      size={16}
+                      color={THEME_COLORS.primary}
+                      className="mr-2 mt-0.5"
+                    />
                     <Text className="text-gray-600 text-sm flex-1">
                       A logo deve ter fundo transparente e boa resolução.
                       Tamanho
@@ -270,7 +275,11 @@ export function BasicInfoForm({
                   </FormControl>
 
                   <View className="flex-row items-start mt-2">
-                    <Info size={16} color="#0891B2" className="mr-2 mt-0.5" />
+                    <Info
+                      size={16}
+                      color={THEME_COLORS.primary}
+                      className="mr-2 mt-0.5"
+                    />
                     <Text className="text-gray-600 text-sm flex-1">
                       O banner deve ter proporção 4:1 para melhor visualização.
                       Tamanho recomendado: 1200x300 pixels.

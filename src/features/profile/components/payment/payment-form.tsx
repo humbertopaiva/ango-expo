@@ -28,6 +28,7 @@ import { Heading } from "@/components/ui/heading";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon, CloseIcon } from "@/components/ui/icon";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const PAYMENT_OPTIONS = [
   { id: "dinheiro", label: "Dinheiro", icon: Wallet, color: "#65A30D" },
@@ -159,7 +160,7 @@ export function PaymentForm({
           >
             <SectionCard
               title="Formas de Pagamento"
-              icon={<CreditCard size={22} color="#0891B2" />}
+              icon={<CreditCard size={22} color={THEME_COLORS.primary} />}
             >
               <View className="flex-col py-4 gap-4">
                 {PAYMENT_OPTIONS.map((option, index) => (

@@ -31,6 +31,7 @@ import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon, CloseIcon } from "@/components/ui/icon";
 import ColorInput from "@/components/common/color-input";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const formSchema = z.object({
   cor_primaria: z
@@ -155,7 +156,7 @@ export function VisualForm({
             {/* Cores da Marca */}
             <SectionCard
               title="Cores da Marca"
-              icon={<Palette size={22} color="#0891B2" />}
+              icon={<Palette size={22} color={THEME_COLORS.primary} />}
             >
               <View className="gap-4 flex flex-col py-4">
                 <FormControl isInvalid={!!form.formState.errors.cor_primaria}>
@@ -183,7 +184,7 @@ export function VisualForm({
             {/* Galeria de Imagens */}
             <SectionCard
               title="Galeria de Imagens"
-              icon={<ImageIcon size={22} color="#0891B2" />}
+              icon={<ImageIcon size={22} color={THEME_COLORS.primary} />}
             >
               <View className="gap-4 flex flex-col py-4">
                 <Text className="text-sm text-gray-600">

@@ -46,9 +46,11 @@ export function PaymentSection() {
     <View>
       <Section
         title="Opções de Pagamento"
-        icon={<CreditCard size={22} color={THEME_COLORS.secondary} />}
+        icon={<CreditCard size={22} color={THEME_COLORS.primary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsPaymentOpen(true)}
+        paddingX={16}
+        className="my-6 flex-1 pb-20"
       >
         <View className="gap-3">
           {PAYMENT_OPTIONS.map((option) => {

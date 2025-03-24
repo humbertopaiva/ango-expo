@@ -46,7 +46,8 @@ export function BasicInfoSection() {
         actionLabel="Editar"
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsBasicInfoOpen(true)}
-        className="mb-2 flex-1"
+        className="my-6 flex-1 pb-20"
+        paddingX={16}
       >
         {/* Informações Gerais - Nome e Descrição */}
         <View className="">
@@ -126,8 +127,8 @@ export function BasicInfoSection() {
             onPress={() => vm.setIsBasicInfoOpen(true)}
             className="mt-2 py-3 flex-row items-center justify-center bg-primary-50 rounded-lg"
           >
-            <Edit3 size={16} color="#0891B2" className="mr-2" />
-            <Text className="text-primary-700 font-medium">
+            <Edit3 size={16} color={THEME_COLORS.primary} className="mr-2" />
+            <Text className="text-primary-500 font-medium">
               Complete as informações básicas
             </Text>
           </TouchableOpacity>
