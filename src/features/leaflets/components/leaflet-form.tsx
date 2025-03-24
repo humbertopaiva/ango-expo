@@ -576,7 +576,10 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                     render={({ field: { onChange, value } }) => (
                       <PdfUpload
                         value={value || ""}
-                        onChange={onChange}
+                        onChange={(newValue) => {
+                          console.log("PDF URL sendo salva:", newValue); // Para debug
+                          onChange(newValue);
+                        }}
                         disabled={isLoading}
                       />
                     )}

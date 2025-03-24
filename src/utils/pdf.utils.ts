@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabase";
 export const pdfUtils = {
   async uploadPdf(
     uri: string,
-    bucketName: string = "images", // Usar o mesmo bucket das imagens
+    bucketName: string = "images",
     companyId?: string
   ): Promise<{ url: string; path: string; error: Error | null }> {
     try {
@@ -54,41 +54,22 @@ export const pdfUtils = {
 
       if (uploadError) throw uploadError;
 
-      // Pega a URL pública
+      // Pega a URL pública para leitura
       const {
         data: { publicUrl },
       } = supabase.storage.from(bucketName).getPublicUrl(filePath);
 
+      // Adiciona timestamp para evitar cache
+      const urlWithTimestamp = this.addTimestamp(publicUrl);
+
       return {
-        url: this.addTimestamp(publicUrl),
+        url: urlWithTimestamp,
         path: filePath,
         error: null,
       };
     } catch (error) {
       console.error("Error uploading PDF:", error);
       return { url: "", path: "", error: error as Error };
-    }
-  },
-
-  async deletePdf(
-    path: string,
-    bucketName: string = "images"
-  ): Promise<{ error: Error | null }> {
-    try {
-      if (!path) return { error: null };
-
-      // Remove timestamp e query params do path se existirem
-      const cleanPath = path.split("?")[0];
-
-      const { error } = await supabase.storage
-        .from(bucketName)
-        .remove([cleanPath]);
-
-      if (error) throw error;
-      return { error: null };
-    } catch (error) {
-      console.error("Error deleting PDF:", error);
-      return { error: error as Error };
     }
   },
 

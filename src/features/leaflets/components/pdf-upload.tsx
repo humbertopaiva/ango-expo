@@ -10,11 +10,10 @@ import {
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { FileText, Upload, X, File } from "lucide-react-native";
-import { fileUtils } from "@/src/utils/file.utils";
+import { pdfUtils } from "@/src/utils/pdf.utils";
 import { WebViewPdfViewer } from "@/components/pdf/webview-pdf-viewer";
 import { THEME_COLORS } from "@/src/styles/colors";
 import useAuthStore from "@/src/stores/auth";
-import { pdfUtils } from "@/src/utils/pdf.utils";
 
 interface PdfUploadProps {
   value: string;
@@ -58,12 +57,13 @@ export function PdfUpload({
     setError(null);
 
     try {
-      // Obter ID da empresa do store
+      // Obter ID da empresa
       const companyId = useAuthStore.getState().getCompanyId();
       if (!companyId) {
         throw new Error("ID da empresa não encontrado");
       }
 
+      // Upload do PDF e obtenção da URL pública
       const result = await pdfUtils.uploadPdf(uri, "images", companyId);
 
       if (result.error) {
@@ -71,7 +71,11 @@ export function PdfUpload({
       }
 
       if (result.url) {
+        // Passar a URL pública para o onChange
+        console.log("PDF URL:", result.url); // Para debug
         onChange(result.url);
+      } else {
+        throw new Error("URL do PDF não gerada");
       }
     } catch (err) {
       console.error("Erro ao fazer upload do PDF:", err);

@@ -124,8 +124,7 @@ export function LeafletDetailsModal({
             {hasPdf ? (
               <View className="p-4 border-t border-gray-100">
                 <View className="flex-row items-center mb-4">
-                  {/* Icone de pdf */}
-                  <FileText size={18} color="#6B7280" />
+                  <FileText size={20} color="#3B82F6" />
                   <Text className="text-lg font-semibold ml-2">
                     Encarte em PDF
                   </Text>
