@@ -86,11 +86,9 @@ export function CategoryPageContent({
               activeTab={vm.activeTab}
               onTabChange={vm.setActiveTab}
               companyCount={filteredCompanies.length}
-              highlightCount={vm.companiesWithVitrine.reduce(
-                (acc, company) => acc + company.vitrineItems.length,
-                0
-              )}
+              highlightCount={vm.showcaseProducts.length}
               hasVitrines={hasVitrines}
+              vitrinesCount={vm.companiesWithVitrine.length} // Adicionando a contagem de empresas com vitrine
             />
           </View>
 

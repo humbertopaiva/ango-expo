@@ -1,5 +1,4 @@
 // Path: src/features/category-page/components/category-tabs.tsx
-
 import React from "react";
 import { View } from "react-native";
 import { SimpleTabs } from "./simple-tabs";
@@ -10,7 +9,8 @@ interface CategoryTabsProps {
   onTabChange: (tab: "highlights" | "companies") => void;
   companyCount: number;
   highlightCount: number;
-  hasVitrines: boolean; // Nova propriedade para verificar se há vitrines disponíveis
+  hasVitrines: boolean; // Propriedade existente
+  vitrinesCount: number; // Nova propriedade para contar empresas com vitrine
 }
 
 export function CategoryTabs({
@@ -19,6 +19,7 @@ export function CategoryTabs({
   companyCount,
   highlightCount,
   hasVitrines,
+  vitrinesCount, // Nova propriedade
 }: CategoryTabsProps) {
   // Se não houver vitrines, criamos apenas a tab de empresas
   const tabs = hasVitrines
@@ -26,6 +27,7 @@ export function CategoryTabs({
         {
           key: "highlights",
           title: "Destaques",
+          badge: vitrinesCount > 0 ? vitrinesCount : undefined, // Usando vitrinesCount em vez de highlightCount
         },
         {
           key: "companies",
