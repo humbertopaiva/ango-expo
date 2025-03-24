@@ -22,8 +22,17 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
     showcases,
     isLoading: isLoadingShowcases,
     companiesWithShowcases,
-    companiesWithShowcaseMapped,
+    companiesWithShowcaseMapped, // Nome corrigido
   } = useDeliveryShowcases(filteredProfiles);
+
+  // Cálculo do total de itens em destaque
+  const totalShowcaseItems = Object.values(showcases).reduce(
+    (acc, items) => acc + items.length,
+    0
+  );
+
+  // Contagem de vitrines (empresas com destaque)
+  const vitrinesCount = companiesWithShowcases.length;
 
   useEffect(() => {
     console.log("DeliveryViewModel initialized");
@@ -52,6 +61,8 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
     showcases,
     isLoadingShowcases,
     companiesWithShowcases,
-    companiesWithShowcasesMapped: companiesWithShowcaseMapped,
+    companiesWithShowcaseMapped,
+    totalShowcaseItems,
+    vitrinesCount,
   };
 }
