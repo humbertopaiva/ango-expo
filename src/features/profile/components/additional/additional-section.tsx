@@ -18,7 +18,7 @@ export function AdditionalSection() {
     <View>
       <Section
         title="Informações Adicionais"
-        icon={<Info size={22} color={THEME_COLORS.secondary} />}
+        icon={<Info size={22} color={THEME_COLORS.primary} />}
         actionIcon={<Edit3 size={16} color="#374151" />}
         onAction={() => vm.setIsAdditionalOpen(true)}
       >

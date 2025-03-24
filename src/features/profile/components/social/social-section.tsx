@@ -78,9 +78,11 @@ export function SocialSection() {
     <View>
       <Section
         title="Redes Sociais"
-        icon={<Share2 size={22} color={THEME_COLORS.secondary} />}
+        icon={<Share2 size={22} color={THEME_COLORS.primary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsSocialLinksOpen(true)}
+        paddingX={16}
+        className="my-6 flex-1 pb-20"
       >
         <View className="gap-3">
           {socialNetworks.map((network) => (

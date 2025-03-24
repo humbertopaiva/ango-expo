@@ -75,9 +75,11 @@ export function HoursSection() {
     <View>
       <Section
         title="Horários de Funcionamento"
-        icon={<Clock size={22} color={THEME_COLORS.secondary} />}
+        icon={<Clock size={22} color={THEME_COLORS.primary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsHoursOpen(true)}
+        paddingX={16}
+        className="my-6 flex-1 pb-20"
       >
         <View className="gap-3">
           {weekDays.map((day) => (

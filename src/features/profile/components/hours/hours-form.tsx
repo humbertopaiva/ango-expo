@@ -31,6 +31,7 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Icon, CloseIcon } from "@/components/ui/icon";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const timePattern = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
@@ -204,7 +205,7 @@ export function HoursForm({
               <SectionCard
                 key={day.key}
                 title={day.label}
-                icon={<Clock size={22} color="#0891B2" />}
+                icon={<Clock size={22} color={THEME_COLORS.primary} />}
               >
                 <View className="gap-4 flex flex-col py-4">
                   <FormControl>

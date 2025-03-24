@@ -23,6 +23,7 @@ import { Heading } from "@/components/ui/heading";
 import { Button, ButtonText } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { Icon, CloseIcon } from "@/components/ui/icon";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const formSchema = z.object({
   endereco: z.string().min(1, "Endereço é obrigatório"),
@@ -126,7 +127,7 @@ export function ContactForm({
             {/* Seção de Endereço */}
             <SectionCard
               title="Endereço"
-              icon={<MapPin size={22} color="#0891B2" />}
+              icon={<MapPin size={22} color={THEME_COLORS.primary} />}
             >
               <View className="gap-4 flex flex-col py-4">
                 <FormField
@@ -142,7 +143,7 @@ export function ContactForm({
             {/* Seção de Telefones */}
             <SectionCard
               title="Telefones"
-              icon={<Phone size={22} color="#0891B2" />}
+              icon={<Phone size={22} color={THEME_COLORS.primary} />}
             >
               <View className="gap-4 flex flex-col py-4">
                 <FormField
@@ -168,7 +169,7 @@ export function ContactForm({
             {/* Seção de Email */}
             <SectionCard
               title="Email"
-              icon={<Mail size={22} color="#0891B2" />}
+              icon={<Mail size={22} color={THEME_COLORS.primary} />}
             >
               <View className="gap-4 flex flex-col py-4">
                 <FormField

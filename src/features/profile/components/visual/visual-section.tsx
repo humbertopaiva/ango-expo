@@ -33,6 +33,8 @@ export function VisualSection() {
         icon={<Palette size={22} color={THEME_COLORS.secondary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsVisualOpen(true)}
+        paddingX={16}
+        className="my-6 flex-1 pb-20"
       >
         <View className="gap-4">
           {/* Cores da Marca */}

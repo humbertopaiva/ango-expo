@@ -72,9 +72,11 @@ export function ContactSection() {
     <View>
       <Section
         title="Informações de Contato"
-        icon={<Phone size={22} color={THEME_COLORS.secondary} />}
+        icon={<Phone size={22} color={THEME_COLORS.primary} />}
         actionIcon={<Edit3 size={18} color="#FFFFFF" />}
         onAction={() => vm.setIsContactInfoOpen(true)}
+        paddingX={16}
+        className="my-6 flex-1 pb-20"
       >
         <View className="gap-3">
           {contactItems.map((item) => (
