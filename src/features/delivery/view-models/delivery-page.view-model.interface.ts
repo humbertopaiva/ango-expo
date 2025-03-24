@@ -1,4 +1,4 @@
-// Path: src/features/delivery/view-models/delivery.view-model.interface.ts
+// Path: src/features/delivery/view-models/delivery-page.view-model.interface.ts
 import { CompanyWithShowcase } from "../models/company-with-showcase";
 import { DeliveryProfile } from "../models/delivery-profile";
 import { DeliveryShowcaseItem } from "../models/delivery-showcase-item";
@@ -18,5 +18,7 @@ export interface IDeliveryViewModel {
   showcases: Record<string, DeliveryShowcaseItem[]>;
   isLoadingShowcases: boolean;
   companiesWithShowcases: DeliveryProfile[];
-  companiesWithShowcasesMapped: CompanyWithShowcase[];
+  companiesWithShowcaseMapped: CompanyWithShowcase[];
+  totalShowcaseItems: number;
+  vitrinesCount: number;
 }

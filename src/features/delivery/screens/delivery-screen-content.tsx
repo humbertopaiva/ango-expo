@@ -16,11 +16,10 @@ import { DeliveryGrid } from "../components/delivery-grid";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { useDeliveryContext } from "../contexts/use-delivery-page-context";
 import { CategoryFilterGrid } from "../components/category-filter-grid";
-import { useDeliveryShowcases } from "../hooks/use-delivery-showcases";
 import { EnhancedDeliveryShowcaseSection } from "../components/enhanced-delivery-showcase-section";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { PromotionalBanner } from "../../commerce/components/promotional-banner";
-import { SimpleTabs } from "@/components/custom/simple-tabs";
+import { DeliveryTabs } from "../components/delivery-tabs";
 
 // Define the tab keys for easier reference
 const TABS = {
@@ -78,6 +77,11 @@ export function DeliveryScreenContent() {
     filteredProfiles = [],
     isLoading = false,
     refetchProfiles = () => {},
+    showcases = {},
+    isLoadingShowcases = false,
+    companiesWithShowcases = [],
+    companiesWithShowcaseMapped = [], // Nome corrigido
+    totalShowcaseItems = 0,
   } = contextData || {};
 
   // Função para refresh pull-to-refresh
@@ -116,21 +120,14 @@ export function DeliveryScreenContent() {
     );
   }
 
-  const {
-    showcases,
-    isLoading: isLoadingShowcases,
-    companiesWithShowcases,
-  } = useDeliveryShowcases(filteredProfiles);
-
-  // Configuração das tabs
-  const tabs = [
-    { key: TABS.FEATURED, title: "Destaques" },
-    {
-      key: TABS.COMPANIES,
-      title: "Empresas",
-      badge: filteredProfiles.length,
-    },
-  ];
+  // Efeito para definir a aba padrão se não houver destaques
+  useEffect(() => {
+    // Se não houver destaques, muda para a aba de empresas
+    const hasShowcases = companiesWithShowcases.length > 0;
+    if (!hasShowcases && activeTab === TABS.FEATURED) {
+      setActiveTab(TABS.COMPANIES);
+    }
+  }, [companiesWithShowcases, activeTab]);
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -190,6 +187,8 @@ export function DeliveryScreenContent() {
                 onSelectSubcategory={(slug) => {
                   if (setSelectedSubcategory) setSelectedSubcategory(slug);
                 }}
+                title="Escolha uma categoria"
+                description="Selecione uma categoria para filtrar os estabelecimentos"
               />
             )}
 
@@ -238,15 +237,15 @@ export function DeliveryScreenContent() {
           </View>
         </Section>
 
-        {/* Nova seção de tabs com estilo elegante */}
-        <View className="bg-white pt-1">
-          <View className="border-b border-gray-100">
-            <SimpleTabs
-              tabs={tabs}
+        {/* Usar o componente de tabs padronizado */}
+        <View className="bg-white py-1 w-full">
+          <View className="bg-white py-1 px-4">
+            <DeliveryTabs
               activeTab={activeTab}
               onTabChange={setActiveTab}
-              primaryColor={THEME_COLORS.primary}
-              centered={true}
+              companyCount={filteredProfiles.length}
+              showcaseCount={totalShowcaseItems}
+              vitrinesCount={companiesWithShowcases.length} // Passamos a quantidade de empresas com vitrine
             />
           </View>
         </View>

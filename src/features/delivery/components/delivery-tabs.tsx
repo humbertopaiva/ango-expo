@@ -1,33 +1,33 @@
-// Path: src/features/category-page/components/category-tabs.tsx
+// Path: src/features/delivery/components/delivery-tabs.tsx
 import React from "react";
 import { View } from "react-native";
-import { SimpleTabs } from "./simple-tabs";
+import { SimpleTabs } from "@/components/custom/simple-tabs";
 import { THEME_COLORS } from "@/src/styles/colors";
 
-interface CategoryTabsProps {
-  activeTab: "highlights" | "companies";
-  onTabChange: (tab: "highlights" | "companies") => void;
+interface DeliveryTabsProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
   companyCount: number;
-  highlightCount: number;
-  hasVitrines: boolean; // Propriedade existente
-  vitrinesCount: number; // Nova propriedade para contar empresas com vitrine
+  showcaseCount: number;
+  vitrinesCount: number; // Nova prop para quantidade de vitrines
 }
 
-export function CategoryTabs({
+export function DeliveryTabs({
   activeTab,
   onTabChange,
   companyCount,
-  highlightCount,
-  hasVitrines,
-  vitrinesCount, // Nova propriedade
-}: CategoryTabsProps) {
+  showcaseCount,
+  vitrinesCount, // Recebemos a contagem de vitrines
+}: DeliveryTabsProps) {
   // Se não houver vitrines, criamos apenas a tab de empresas
-  const tabs = hasVitrines
+  const hasShowcases = vitrinesCount > 0;
+
+  const tabs = hasShowcases
     ? [
         {
-          key: "highlights",
+          key: "featured",
           title: "Destaques",
-          badge: vitrinesCount > 0 ? vitrinesCount : undefined, // Usando vitrinesCount em vez de highlightCount
+          badge: vitrinesCount > 0 ? vitrinesCount : undefined, // Usamos a quantidade de vitrines
         },
         {
           key: "companies",
@@ -44,7 +44,7 @@ export function CategoryTabs({
       ];
 
   const handleTabChange = (tabKey: string) => {
-    onTabChange(tabKey as "highlights" | "companies");
+    onTabChange(tabKey);
   };
 
   // Se houver apenas uma tab, não há necessidade de exibir o componente de tabs
@@ -59,7 +59,7 @@ export function CategoryTabs({
         activeTab={activeTab}
         onTabChange={handleTabChange}
         primaryColor={THEME_COLORS.primary}
-        centered={false}
+        centered={true} // Mantém as tabs centralizadas
       />
     </View>
   );

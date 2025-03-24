@@ -73,7 +73,9 @@ export function CategoryVitrinesSection({
         <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
           <Sparkles size={16} color={THEME_COLORS.primary} />
           <Text className="text-sm font-medium text-primary-600">
-            Produtos em Destaque
+            {companiesWithVitrine.length}{" "}
+            {companiesWithVitrine.length === 1 ? "Vitrine" : "Vitrines"} em
+            Destaque
           </Text>
         </HStack>
 
