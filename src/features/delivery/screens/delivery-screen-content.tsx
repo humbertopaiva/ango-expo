@@ -146,7 +146,7 @@ export function DeliveryScreenContent() {
         <Section className="pt-4">
           <View className="">
             <View className="px-2">
-              <PromotionalBanner />
+              <PromotionalBanner imageUrl="https://ywxeaxheqzpogiztqvzk.supabase.co/storage/v1/object/public/images/admin-panel/banner-telas/delivery.jpg" />
             </View>
             {/* Badge estilizada igual ao comércio local */}
             <HStack className="items-center justify-center mb-4">

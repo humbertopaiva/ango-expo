@@ -192,7 +192,7 @@ export function LeafletsContent() {
       >
         {/* Banner Promocional */}
         <View className="px-4 pt-4">
-          <PromotionalBanner />
+          <PromotionalBanner imageUrl="https://ywxeaxheqzpogiztqvzk.supabase.co/storage/v1/object/public/images/admin-panel/banner-telas/varejo.jpg" />
         </View>
 
         {/* Cabeçalho */}
