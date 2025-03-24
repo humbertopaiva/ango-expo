@@ -1,16 +1,9 @@
 // Path: src/features/orders/stores/order.store.ts
+
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storage } from "@/src/lib/storage";
-import {
-  Order,
-  OrderStatus,
-  createOrderFromCart,
-  createOrderFromExisting,
-  PaymentMethod,
-  PaymentStatus,
-  OrderPaymentInfo,
-} from "../models/order";
+import { Order, PaymentMethod, createOrderFromCart } from "../models/order";
 import { CartItem } from "@/src/features/cart/models/cart";
 
 interface OrderState {
@@ -22,18 +15,17 @@ interface OrderState {
     cartItems: CartItem[],
     companyId: string,
     companySlug: string,
-    companyName: string
+    companyName: string,
+    companyPhone?: string
   ) => Order;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
-  cancelOrder: (orderId: string) => void;
   deleteOrder: (orderId: string) => void;
-  repeatOrder: (orderId: string) => Order | null;
+  clearAllOrders: () => void;
+  clearCompanyOrders: (companySlug: string) => void;
 
   // Getters
-  getOrdersByCompany: (companySlug: string) => Order[];
+  getOrdersByCompany: (companySlug: string, limit?: number) => Order[];
   getOrderById: (orderId: string) => Order | undefined;
-  getOrdersByStatus: (status: OrderStatus) => Order[];
-  getAllOrders: () => Order[];
+  getAllOrders: (limit?: number) => Order[];
 }
 
 const ensureDateObjects = (orders: Order[]): Order[] => {
@@ -45,9 +37,8 @@ const ensureDateObjects = (orders: Order[]): Order[] => {
 
       try {
         // Garantir que payment nunca será undefined
-        const paymentInfo: OrderPaymentInfo = order.payment || {
-          method: PaymentMethod.CREDIT_CARD, // Valor padrão
-          status: PaymentStatus.PENDING, // Valor padrão
+        const paymentInfo = order.payment || {
+          method: PaymentMethod.CREDIT_CARD,
         };
 
         // Tratar a data de pagamento
@@ -75,12 +66,14 @@ const ensureDateObjects = (orders: Order[]): Order[] => {
         };
       } catch (error) {
         console.error("Error processing order dates:", error);
-        // Em caso de erro, retornar o objeto original garantindo o tipo correto
         return order;
       }
     })
-    .filter((order): order is Order => Boolean(order)); // Type guard para garantir que é Order
+    .filter((order): order is Order => Boolean(order));
 };
+
+// Número máximo de pedidos a manter
+const MAX_ORDERS = 10;
 
 // Cria o store de pedidos com persistência
 export const useOrderStore = create<OrderState>()(
@@ -88,47 +81,35 @@ export const useOrderStore = create<OrderState>()(
     (set, get) => ({
       orders: [],
 
-      createOrder: (cartItems, companyId, companySlug, companyName) => {
+      createOrder: (
+        cartItems,
+        companyId,
+        companySlug,
+        companyName,
+        companyPhone
+      ) => {
         const newOrder = createOrderFromCart(
           cartItems,
           companyId,
           companySlug,
-          companyName
+          companyName,
+          companyPhone
         );
 
-        set((state) => ({
-          orders: [newOrder, ...state.orders],
-        }));
+        set((state) => {
+          // Ordenar por data (mais recentes primeiro)
+          const sortedOrders = [newOrder, ...state.orders].sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+
+          // Limitar ao número máximo de pedidos
+          const limitedOrders = sortedOrders.slice(0, MAX_ORDERS);
+
+          return { orders: limitedOrders };
+        });
 
         return newOrder;
-      },
-
-      updateOrderStatus: (orderId, status) => {
-        set((state) => ({
-          orders: state.orders.map((order) =>
-            order.id === orderId
-              ? {
-                  ...order,
-                  status,
-                  updatedAt: new Date(),
-                }
-              : order
-          ),
-        }));
-      },
-
-      cancelOrder: (orderId) => {
-        set((state) => ({
-          orders: state.orders.map((order) =>
-            order.id === orderId
-              ? {
-                  ...order,
-                  status: OrderStatus.CANCELED,
-                  updatedAt: new Date(),
-                }
-              : order
-          ),
-        }));
       },
 
       deleteOrder: (orderId) => {
@@ -137,23 +118,30 @@ export const useOrderStore = create<OrderState>()(
         }));
       },
 
-      repeatOrder: (orderId) => {
-        const existingOrder = get().getOrderById(orderId);
-        if (!existingOrder) return null;
-
-        const newOrder = createOrderFromExisting(existingOrder);
-
-        set((state) => ({
-          orders: [newOrder, ...state.orders],
-        }));
-
-        return newOrder;
+      clearAllOrders: () => {
+        set({ orders: [] });
       },
 
-      getOrdersByCompany: (companySlug) => {
-        return ensureDateObjects(
+      clearCompanyOrders: (companySlug) => {
+        set((state) => ({
+          orders: state.orders.filter(
+            (order) => order.companySlug !== companySlug
+          ),
+        }));
+      },
+
+      getOrdersByCompany: (companySlug, limit = MAX_ORDERS) => {
+        const filteredOrders = ensureDateObjects(
           get().orders.filter((order) => order.companySlug === companySlug)
         );
+
+        // Ordenar por data (mais recentes primeiro) e limitar
+        return filteredOrders
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          .slice(0, limit);
       },
 
       getOrderById: (orderId) => {
@@ -161,14 +149,14 @@ export const useOrderStore = create<OrderState>()(
         return order ? ensureDateObjects([order])[0] : undefined;
       },
 
-      getOrdersByStatus: (status) => {
-        return ensureDateObjects(
-          get().orders.filter((order) => order.status === status)
-        );
-      },
-
-      getAllOrders: () => {
-        return ensureDateObjects(get().orders);
+      getAllOrders: (limit = MAX_ORDERS) => {
+        // Ordenar por data (mais recentes primeiro) e limitar
+        return ensureDateObjects(get().orders)
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          .slice(0, limit);
       },
     }),
     {

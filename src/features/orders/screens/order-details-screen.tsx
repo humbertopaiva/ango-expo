@@ -1,30 +1,38 @@
 // Path: src/features/orders/screens/order-details-screen.tsx
+
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Share,
+} from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
 import { Card, VStack, HStack, Divider } from "@gluestack-ui/themed";
 import {
   Clock,
-  CheckCircle,
-  Truck,
-  XCircle,
-  AlertCircle,
-  Package,
   MapPin,
   CreditCard,
   MessageSquare,
   Phone,
   RefreshCw,
+  ShoppingBag,
+  Share2,
+  Trash2,
 } from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
-import { THEME_COLORS } from "@/src/styles/colors";
-import { Order, OrderStatus, PaymentMethod } from "../models/order";
+import { Order, PaymentMethod } from "../models/order";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { THEME_COLORS } from "@/src/styles/colors";
 import { ImagePreview } from "@/components/custom/image-preview";
-import { useMultiCartStore } from "../../cart/stores/cart.store";
+import { Package } from "lucide-react-native";
+import { useMultiCartStore } from "@/src/features/cart/stores/cart.store";
 import { toastUtils } from "@/src/utils/toast.utils";
+import { useToast } from "@gluestack-ui/themed";
 
 export function OrderDetailsScreen() {
   const { orderId, companySlug } = useLocalSearchParams<{
@@ -36,6 +44,7 @@ export function OrderDetailsScreen() {
   const [order, setOrder] = useState<Order | null>(null);
 
   const multiCartStore = useMultiCartStore();
+  const toast = useToast();
 
   const primaryColor = THEME_COLORS.primary;
 
@@ -59,6 +68,46 @@ export function OrderDetailsScreen() {
     );
   }
 
+  const handleContactCompany = async () => {
+    if (order && order.companyPhone) {
+      const success = await orderViewModel.contactCompany(
+        order.companyPhone,
+        order.id
+      );
+
+      if (!success) {
+        Alert.alert(
+          "Erro ao abrir WhatsApp",
+          "Não foi possível abrir o WhatsApp. Verifique se o aplicativo está instalado."
+        );
+      }
+    } else {
+      Alert.alert(
+        "Informação não disponível",
+        "Não foi possível encontrar o contato da empresa."
+      );
+    }
+  };
+
+  const handleDeleteOrder = () => {
+    Alert.alert(
+      "Deletar Pedido",
+      "Tem certeza que deseja remover este pedido do histórico?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Deletar",
+          style: "destructive",
+          onPress: () => {
+            orderViewModel.deleteOrder(order.id);
+            toastUtils.success(toast, "Pedido removido com sucesso");
+            router.back();
+          },
+        },
+      ]
+    );
+  };
+
   const handleRepeatOrder = () => {
     // Adicionar itens ao carrinho
     multiCartStore.clearCart(companySlug);
@@ -68,66 +117,40 @@ export function OrderDetailsScreen() {
 
     // Navegar para o carrinho
     router.push(`/(drawer)/empresa/${companySlug}/cart`);
+    toastUtils.success(toast, "Itens adicionados ao carrinho!");
   };
 
-  const getStatusInfo = (status: OrderStatus) => {
-    switch (status) {
-      case OrderStatus.PENDING:
-        return {
-          label: "Pendente",
-          icon: AlertCircle,
-          color: "#F59E0B", // Amber
-          bgColor: "#FEF3C7",
-        };
-      case OrderStatus.CONFIRMED:
-        return {
-          label: "Confirmado",
-          icon: CheckCircle,
-          color: "#10B981", // Green
-          bgColor: "#D1FAE5",
-        };
-      case OrderStatus.PREPARING:
-        return {
-          label: "Em preparação",
-          icon: Clock,
-          color: "#3B82F6", // Blue
-          bgColor: "#DBEAFE",
-        };
-      case OrderStatus.READY_FOR_DELIVERY:
-        return {
-          label: "Pronto para entrega",
-          icon: Package,
-          color: "#8B5CF6", // Purple
-          bgColor: "#EDE9FE",
-        };
-      case OrderStatus.IN_TRANSIT:
-        return {
-          label: "Em trânsito",
-          icon: Truck,
-          color: "#6366F1", // Indigo
-          bgColor: "#E0E7FF",
-        };
-      case OrderStatus.DELIVERED:
-        return {
-          label: "Entregue",
-          icon: CheckCircle,
-          color: "#10B981", // Green
-          bgColor: "#D1FAE5",
-        };
-      case OrderStatus.CANCELED:
-        return {
-          label: "Cancelado",
-          icon: XCircle,
-          color: "#EF4444", // Red
-          bgColor: "#FEE2E2",
-        };
-      default:
-        return {
-          label: "Desconhecido",
-          icon: AlertCircle,
-          color: "#6B7280", // Gray
-          bgColor: "#F3F4F6",
-        };
+  const handleShareOrder = async () => {
+    try {
+      const orderCode = order.id.replace("order_", "").substring(0, 6);
+      const formattedDate = format(
+        new Date(order.createdAt),
+        "dd/MM/yyyy 'às' HH:mm",
+        { locale: ptBR }
+      );
+      const totalItems = order.items.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+
+      const message = `
+Pedido #${orderCode} - ${order.companyName}
+Data: ${formattedDate}
+Itens: ${totalItems} ${totalItems === 1 ? "item" : "itens"}
+Total: ${formatCurrency(order.total)}
+
+Detalhes do pedido:
+${order.items
+  .map((item) => `- ${item.quantity}x ${item.name} (${item.priceFormatted})`)
+  .join("\n")}
+`;
+
+      await Share.share({
+        message,
+        title: `Pedido #${orderCode} - ${order.companyName}`,
+      });
+    } catch (error) {
+      console.error("Erro ao compartilhar pedido:", error);
     }
   };
 
@@ -155,8 +178,8 @@ export function OrderDetailsScreen() {
         };
       default:
         return {
-          label: "Método desconhecido",
-          icon: AlertCircle,
+          label: "Método de pagamento",
+          icon: CreditCard,
         };
     }
   };
@@ -172,8 +195,6 @@ export function OrderDetailsScreen() {
     return format(date, "dd 'de' MMMM, yyyy 'às' HH:mm", { locale: ptBR });
   };
 
-  const statusInfo = getStatusInfo(order.status);
-  const StatusIcon = statusInfo.icon;
   const paymentInfo = getPaymentMethodInfo(order.payment.method);
   const PaymentIcon = paymentInfo.icon;
 
@@ -181,9 +202,13 @@ export function OrderDetailsScreen() {
     <View className="flex-1 bg-gray-50">
       <ScreenHeader
         title={`Pedido #${order.id.replace("order_", "").substring(0, 6)}`}
-        subtitle={statusInfo.label}
         showBackButton={true}
         onBackPress={() => router.back()}
+        rightContent={
+          <TouchableOpacity onPress={handleShareOrder} className="p-2">
+            <Share2 size={20} color="white" />
+          </TouchableOpacity>
+        }
       />
 
       <ScrollView
@@ -191,42 +216,19 @@ export function OrderDetailsScreen() {
         contentContainerStyle={{ padding: 16 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Status do Pedido */}
+        {/* Informações Gerais do Pedido */}
         <Card className="mb-4 border border-gray-100">
-          <View
-            className="py-4 px-4 rounded-t-lg"
-            style={{ backgroundColor: statusInfo.bgColor }}
-          >
-            <HStack className="items-center">
-              <View className="w-12 h-12 rounded-full items-center justify-center bg-white">
-                <StatusIcon size={24} color={statusInfo.color} />
-              </View>
-
-              <VStack className="ml-3">
-                <Text
-                  className="font-bold text-base"
-                  style={{ color: statusInfo.color }}
-                >
-                  {statusInfo.label}
-                </Text>
-                <Text className="text-sm" style={{ color: statusInfo.color }}>
-                  {order.status === OrderStatus.PENDING &&
-                    "Aguardando confirmação"}
-                  {order.status === OrderStatus.CONFIRMED &&
-                    "Pedido confirmado"}
-                  {order.status === OrderStatus.PREPARING && "Sendo preparado"}
-                  {order.status === OrderStatus.READY_FOR_DELIVERY &&
-                    "Pronto para entrega"}
-                  {order.status === OrderStatus.IN_TRANSIT && "A caminho"}
-                  {order.status === OrderStatus.DELIVERED &&
-                    "Entregue com sucesso"}
-                  {order.status === OrderStatus.CANCELED && "Pedido cancelado"}
-                </Text>
-              </VStack>
-            </HStack>
-          </View>
-
           <View className="p-4">
+            <HStack className="items-center mb-3">
+              <ShoppingBag size={16} color={primaryColor} className="mr-2" />
+              <Text
+                className="text-base font-semibold"
+                style={{ color: primaryColor }}
+              >
+                Informações do Pedido
+              </Text>
+            </HStack>
+
             <HStack className="items-center mb-3">
               <Clock size={16} color="#6B7280" />
               <Text className="ml-2 text-gray-700">
@@ -236,13 +238,26 @@ export function OrderDetailsScreen() {
 
             {order.estimatedDeliveryTime && (
               <HStack className="items-center">
-                <Truck size={16} color="#6B7280" />
+                <Clock size={16} color="#6B7280" />
                 <Text className="ml-2 text-gray-700">
                   Previsão de entrega: {order.estimatedDeliveryTime} minutos
                 </Text>
               </HStack>
             )}
           </View>
+          // Path: src/features/orders/screens/order-details-screen.tsx
+          (continuação)
+          {/* Botão de ação rápida */}
+          <TouchableOpacity
+            onPress={handleContactCompany}
+            className="mt-1 mb-2 p-3 border-t border-gray-100 flex-row items-center justify-center"
+            style={{ backgroundColor: `${primaryColor}10` }}
+          >
+            <MessageSquare size={18} color={primaryColor} className="mr-2" />
+            <Text className="font-medium" style={{ color: primaryColor }}>
+              Falar com a Empresa
+            </Text>
+          </TouchableOpacity>
         </Card>
 
         {/* Itens do Pedido */}
@@ -308,13 +323,13 @@ export function OrderDetailsScreen() {
         </Card>
 
         {/* Informações de Entrega */}
-        <Card className="mb-4 border border-gray-100">
-          <View className="p-4">
-            <Text className="font-semibold text-gray-800 text-base mb-3">
-              Informações de Entrega
-            </Text>
+        {order.delivery && (
+          <Card className="mb-4 border border-gray-100">
+            <View className="p-4">
+              <Text className="font-semibold text-gray-800 text-base mb-3">
+                Informações de Entrega
+              </Text>
 
-            {order.delivery ? (
               <VStack space="sm">
                 <HStack className="items-start">
                   <MapPin size={16} color="#6B7280" className="mt-0.5" />
@@ -349,13 +364,9 @@ export function OrderDetailsScreen() {
                   </View>
                 )}
               </VStack>
-            ) : (
-              <Text className="text-gray-500">
-                Informações de entrega não disponíveis.
-              </Text>
-            )}
-          </View>
-        </Card>
+            </View>
+          </Card>
+        )}
 
         {/* Pagamento */}
         <Card className="mb-4 border border-gray-100">
@@ -415,60 +426,40 @@ export function OrderDetailsScreen() {
         </Card>
 
         {/* Botões de ação */}
-        <View className="mb-8">
-          {order.status === OrderStatus.PENDING && (
-            <TouchableOpacity
-              className="py-3 rounded-lg border border-red-500 mb-3"
-              onPress={() => {
-                Alert.alert(
-                  "Cancelar Pedido",
-                  "Tem certeza que deseja cancelar este pedido?",
-                  [
-                    { text: "Não", style: "cancel" },
-                    {
-                      text: "Sim, cancelar",
-                      style: "destructive",
-                      onPress: () => {
-                        orderViewModel.cancelOrder(order.id);
-                        setOrder({
-                          ...order,
-                          status: OrderStatus.CANCELED,
-                          updatedAt: new Date(),
-                        });
-                      },
-                    },
-                  ]
-                );
-              }}
-            >
-              <Text className="text-center font-medium text-red-500">
-                Cancelar Pedido
+        <View className="mb-8 space-y-3">
+          <TouchableOpacity
+            className="py-3 rounded-lg border border-primary-500"
+            onPress={handleRepeatOrder}
+          >
+            <HStack space="sm" className="items-center justify-center">
+              <RefreshCw size={18} color={primaryColor} />
+              <Text className="font-medium" style={{ color: primaryColor }}>
+                Repetir Pedido
               </Text>
-            </TouchableOpacity>
-          )}
-
-          {(order.status === OrderStatus.DELIVERED ||
-            order.status === OrderStatus.CANCELED) && (
-            <TouchableOpacity
-              className="py-3 rounded-lg border border-primary-500 mb-3"
-              onPress={handleRepeatOrder}
-            >
-              <HStack space="sm" className="items-center justify-center">
-                <RefreshCw size={18} color={primaryColor} />
-                <Text className="font-medium" style={{ color: primaryColor }}>
-                  Repetir Pedido
-                </Text>
-              </HStack>
-            </TouchableOpacity>
-          )}
+            </HStack>
+          </TouchableOpacity>
 
           <TouchableOpacity
             className="py-3 rounded-lg"
             style={{ backgroundColor: primaryColor }}
+            onPress={handleContactCompany}
           >
-            <Text className="text-center font-medium text-white">
-              Falar com o Estabelecimento
-            </Text>
+            <HStack space="sm" className="items-center justify-center">
+              <MessageSquare size={18} color="white" />
+              <Text className="text-center font-medium text-white">
+                Falar com a Empresa
+              </Text>
+            </HStack>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="py-3 rounded-lg border border-red-500"
+            onPress={handleDeleteOrder}
+          >
+            <HStack space="sm" className="items-center justify-center">
+              <Trash2 size={18} color="#EF4444" />
+              <Text className="font-medium text-red-500">Remover Pedido</Text>
+            </HStack>
           </TouchableOpacity>
         </View>
       </ScrollView>

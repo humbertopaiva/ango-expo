@@ -1,126 +1,130 @@
 // Path: src/features/orders/screens/all-orders-screen.tsx
-import React, { useEffect, useState, useCallback, useRef } from "react";
+
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
-import { Card, HStack, VStack } from "@gluestack-ui/themed";
-import { ChevronRight, Package, Store } from "lucide-react-native";
+import { Card, VStack, HStack, useToast } from "@gluestack-ui/themed";
+import {
+  ChevronRight,
+  Package,
+  Store,
+  Calendar,
+  ShoppingBag,
+  Trash2,
+  MessageSquare,
+} from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
-import { Order, OrderStatus } from "../models/order";
+import { Order } from "../models/order";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { CompanyFilterDropdown } from "../components/company-filter-dropdown";
+import { SwipeableCard } from "@/components/common/swipeable-card";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 export function AllOrdersScreen() {
-  // Estados iniciais vazios
-  const [displayData, setDisplayData] = useState<{
-    groupedOrders: Record<string, Order[]>;
-    companies: Array<{ id: string; slug: string; name: string }>;
-  }>({
-    groupedOrders: {},
-    companies: [],
-  });
-  const [selectedCompany, setSelectedCompany] = useState<{
-    id: string;
-    slug: string;
-    name: string;
-  } | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const initialRenderDone = useRef(false);
+  const toast = useToast();
 
-  // ViewModel para obter os dados
-  const { orders } = useOrderViewModel();
   const primaryColor = THEME_COLORS.primary;
 
-  // Processar dados uma única vez na montagem inicial
+  // ViewModel para obter os dados
+  const orderViewModel = useOrderViewModel();
+
   useEffect(() => {
-    if (!initialRenderDone.current) {
-      processOrderData(orders, selectedCompany);
-      initialRenderDone.current = true;
-    }
+    loadOrders();
   }, []);
 
-  // Função para processar os dados dos pedidos
-  const processOrderData = useCallback(
-    (ordersList: Order[], companyFilter: typeof selectedCompany) => {
-      // Criar grupos de pedidos por empresa
-      const grouped: Record<string, Order[]> = {};
-      const companyList: Array<{ id: string; slug: string; name: string }> = [];
-      const companyMap: Record<string, boolean> = {};
+  const loadOrders = () => {
+    // Buscar apenas os últimos 10 pedidos
+    const allOrders = orderViewModel.getAllOrders(10);
+    setOrders(allOrders);
+  };
 
-      // Agrupar pedidos por empresa
-      ordersList.forEach((order) => {
-        const slug = order.companySlug;
-
-        if (!grouped[slug]) {
-          grouped[slug] = [];
-
-          // Adicionar empresa à lista apenas se ainda não estiver lá
-          if (!companyMap[slug]) {
-            companyList.push({
-              id: order.companyId,
-              slug,
-              name: order.companyName,
-            });
-            companyMap[slug] = true;
-          }
-        }
-
-        grouped[slug].push({ ...order });
-      });
-
-      // Ordenar pedidos em cada grupo
-      Object.keys(grouped).forEach((slug) => {
-        grouped[slug].sort((a, b) => {
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        });
-      });
-
-      // Filtrar para empresa selecionada, se houver
-      const filteredGrouped = companyFilter
-        ? { [companyFilter.slug]: grouped[companyFilter.slug] || [] }
-        : grouped;
-
-      // Atualizar estado em uma única chamada
-      setDisplayData({
-        groupedOrders: filteredGrouped,
-        companies: companyList,
-      });
-    },
-    []
-  );
-
-  // Manipuladores de eventos
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     setRefreshing(true);
-    processOrderData(orders, selectedCompany);
+    loadOrders();
     setRefreshing(false);
-  }, [orders, selectedCompany, processOrderData]);
+  };
 
-  const handleSelectCompany = useCallback(
-    (company: typeof selectedCompany) => {
-      setSelectedCompany(company);
-      // Reprocessar dados com o novo filtro
-      processOrderData(orders, company);
-    },
-    [orders, processOrderData]
-  );
+  const handleOrderPress = (order: Order) => {
+    router.push(`/(drawer)/empresa/${order.companySlug}/orders/${order.id}`);
+  };
 
-  // Formatadores
-  const formatDate = (date: Date) => {
-    try {
-      return format(new Date(date), "dd 'de' MMMM", { locale: ptBR });
-    } catch (e) {
-      return "Data inválida";
+  const handleDeleteOrder = (orderId: string) => {
+    Alert.alert(
+      "Deletar Pedido",
+      "Tem certeza que deseja remover este pedido do histórico?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Deletar",
+          style: "destructive",
+          onPress: () => {
+            orderViewModel.deleteOrder(orderId);
+            loadOrders();
+            toastUtils.success(toast, "Pedido removido com sucesso");
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearAllOrders = () => {
+    if (orders.length === 0) return;
+
+    Alert.alert(
+      "Limpar Histórico",
+      "Tem certeza que deseja limpar todo o histórico de pedidos?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Limpar",
+          style: "destructive",
+          onPress: () => {
+            orderViewModel.clearAllOrders();
+            setOrders([]);
+            toastUtils.success(toast, "Histórico de pedidos limpo");
+          },
+        },
+      ]
+    );
+  };
+
+  const handleContactCompany = async (orderId: string) => {
+    const order = orderViewModel.getOrderById(orderId);
+
+    if (order && order.companyPhone) {
+      const success = await orderViewModel.contactCompany(
+        order.companyPhone,
+        orderId
+      );
+
+      if (!success) {
+        Alert.alert(
+          "Erro ao abrir WhatsApp",
+          "Não foi possível abrir o WhatsApp. Verifique se o aplicativo está instalado."
+        );
+      }
+    } else {
+      Alert.alert(
+        "Informação não disponível",
+        "Não foi possível encontrar o contato da empresa."
+      );
     }
   };
 
@@ -131,163 +135,111 @@ export function AllOrdersScreen() {
     });
   };
 
-  // Renderizador de seção de empresa
-  const renderCompanySection = ({ item }: { item: [string, Order[]] }) => {
-    const [companySlug, companyOrders] = item;
-
-    if (!companyOrders || companyOrders.length === 0) {
-      return null;
-    }
-
-    const company = companyOrders[0]?.companyName || "";
-
-    return (
-      <Card className="mb-4 border border-gray-100 overflow-hidden">
-        <TouchableOpacity
-          onPress={() => router.push(`/(drawer)/empresa/${companySlug}/orders`)}
-          className="p-4 border-b border-gray-100"
-        >
-          <HStack className="justify-between items-center">
-            <HStack space="sm">
-              <Store size={20} color={primaryColor} />
-              <Text className="font-semibold text-gray-800">{company}</Text>
-            </HStack>
-
-            <HStack space="sm" alignItems="center">
-              <Text className="text-sm text-gray-500">
-                {companyOrders.length}{" "}
-                {companyOrders.length === 1 ? "pedido" : "pedidos"}
-              </Text>
-              <ChevronRight size={16} color="#9CA3AF" />
-            </HStack>
-          </HStack>
-        </TouchableOpacity>
-
-        <View>
-          {companyOrders.slice(0, 3).map((order, index) => {
-            const isDelivered = order.status === OrderStatus.DELIVERED;
-            const isCanceled = order.status === OrderStatus.CANCELED;
-            const statusColor = isDelivered
-              ? "#059669"
-              : isCanceled
-              ? "#DC2626"
-              : "#3B82F6";
-
-            return (
-              <TouchableOpacity
-                key={order.id}
-                onPress={() =>
-                  router.push(
-                    `/(drawer)/empresa/${companySlug}/orders/${order.id}`
-                  )
-                }
-                className={`p-4 ${
-                  index < companyOrders.slice(0, 3).length - 1
-                    ? "border-b border-gray-100"
-                    : ""
-                }`}
-              >
-                <HStack className="justify-between items-center">
-                  <VStack>
-                    <Text className="text-gray-700">
-                      Pedido #{order.id.replace("order_", "").substring(0, 6)}
-                    </Text>
-                    <Text className="text-xs text-gray-500">
-                      {formatDate(order.createdAt)}
-                    </Text>
-                  </VStack>
-
-                  <HStack space="sm" alignItems="center">
-                    <View
-                      className="px-2 py-1 rounded-full"
-                      style={{
-                        backgroundColor: isDelivered
-                          ? "#D1FAE5"
-                          : isCanceled
-                          ? "#FEE2E2"
-                          : "#DBEAFE",
-                      }}
-                    >
-                      <Text
-                        className="text-xs font-medium"
-                        style={{ color: statusColor }}
-                      >
-                        {isDelivered
-                          ? "Entregue"
-                          : isCanceled
-                          ? "Cancelado"
-                          : "Em andamento"}
-                      </Text>
-                    </View>
-
-                    <Text className="font-bold text-gray-800">
-                      {formatCurrency(order.total)}
-                    </Text>
-                  </HStack>
-                </HStack>
-              </TouchableOpacity>
-            );
-          })}
-
-          {companyOrders.length > 3 && (
-            <TouchableOpacity
-              onPress={() =>
-                router.push(`/(drawer)/empresa/${companySlug}/orders`)
-              }
-              className="p-4 bg-gray-50"
-            >
-              <Text
-                className="text-center font-medium"
-                style={{ color: primaryColor }}
-              >
-                Ver mais {companyOrders.length - 3}{" "}
-                {companyOrders.length - 3 === 1 ? "pedido" : "pedidos"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </Card>
-    );
+  const formatDate = (date: Date) => {
+    return format(new Date(date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
-  // Componente de lista vazia
-  const EmptyComponent = () => (
-    <Card className="p-6 items-center justify-center border border-gray-100">
-      <Package size={48} color="#9CA3AF" className="mb-3" />
-      <Text className="text-gray-800 font-semibold text-lg mb-2 text-center">
-        Nenhum pedido encontrado
-      </Text>
-      <Text className="text-gray-500 text-center">
-        Você ainda não fez nenhum pedido.
-      </Text>
-    </Card>
-  );
+  const renderOrderItem = ({ item }: { item: Order }) => {
+    return (
+      <SwipeableCard
+        onEdit={() => handleOrderPress(item)}
+        onDelete={() => handleDeleteOrder(item.id)}
+      >
+        <View className="p-4 border-l-4 border-primary-500">
+          <HStack className="items-center justify-between mb-2">
+            <HStack className="items-center space-x-2">
+              <View className="bg-primary-50 p-2 rounded-full">
+                <Store size={18} color={primaryColor} />
+              </View>
+              <VStack>
+                <Text className="font-semibold text-gray-800">
+                  {item.companyName}
+                </Text>
+                <HStack className="items-center mt-1">
+                  <Calendar size={12} color="#6B7280" />
+                  <Text className="text-xs text-gray-500 ml-1">
+                    {formatDate(item.createdAt)}
+                  </Text>
+                </HStack>
+              </VStack>
+            </HStack>
+            <Text className="font-bold text-gray-800">
+              {formatCurrency(item.total)}
+            </Text>
+          </HStack>
+
+          <Text className="text-gray-600 text-sm mt-2">
+            <Text className="font-medium">
+              Pedido #{item.id.replace("order_", "").substring(0, 6)}
+            </Text>{" "}
+            •{item.items.length} {item.items.length === 1 ? "item" : "itens"}
+          </Text>
+
+          <HStack className="justify-end space-x-4 mt-3">
+            <TouchableOpacity
+              onPress={() => handleContactCompany(item.id)}
+              className="flex-row items-center"
+            >
+              <MessageSquare size={16} color={primaryColor} />
+              <Text className="ml-1 text-sm" style={{ color: primaryColor }}>
+                Falar
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleOrderPress(item)}
+              className="flex-row items-center"
+            >
+              <ChevronRight size={16} color="#9CA3AF" />
+              <Text className="ml-1 text-sm text-gray-600">Detalhes</Text>
+            </TouchableOpacity>
+          </HStack>
+        </View>
+      </SwipeableCard>
+    );
+  };
 
   return (
     <View className="flex-1 bg-gray-50">
       <ScreenHeader
         title="Todos os Pedidos"
-        subtitle="Histórico completo"
+        subtitle={`${
+          orders.length > 0
+            ? `${orders.length} últimos pedidos`
+            : "Histórico de pedidos"
+        }`}
         showBackButton={true}
         onBackPress={() => router.back()}
-      />
-
-      <CompanyFilterDropdown
-        companies={displayData.companies}
-        selectedCompany={selectedCompany}
-        onSelectCompany={handleSelectCompany}
+        rightContent={
+          orders.length > 0 ? (
+            <TouchableOpacity onPress={handleClearAllOrders} className="p-2">
+              <Trash2 size={20} color="#EF4444" />
+            </TouchableOpacity>
+          ) : undefined
+        }
       />
 
       <FlatList
-        data={Object.entries(displayData.groupedOrders)}
-        keyExtractor={([companySlug]) => companySlug}
-        renderItem={renderCompanySection}
+        data={orders}
+        keyExtractor={(item) => item.id}
+        renderItem={renderOrderItem}
         contentContainerStyle={{ padding: 16 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
-        ListEmptyComponent={EmptyComponent}
+        ItemSeparatorComponent={() => <View className="h-3" />}
+        ListEmptyComponent={
+          <Card className="p-6 items-center justify-center border border-gray-100">
+            <Package size={48} color="#9CA3AF" className="mb-3" />
+            <Text className="text-gray-800 font-semibold text-lg mb-2 text-center">
+              Nenhum pedido encontrado
+            </Text>
+            <Text className="text-gray-500 text-center">
+              Você ainda não fez nenhum pedido.
+            </Text>
+          </Card>
+        }
       />
     </View>
   );

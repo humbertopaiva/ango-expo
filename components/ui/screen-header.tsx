@@ -1,4 +1,4 @@
-// Path: components/ui/enhanced-screen-header.tsx
+// Path: components/ui/screen-header.tsx
 import React from "react";
 import { View, Text, TouchableOpacity, Platform } from "react-native";
 import {
@@ -18,6 +18,7 @@ interface ScreenHeaderProps {
   backTo?: string;
   variant?: "primary" | "white";
   onBackPress?: () => void;
+  rightContent?: React.ReactNode; // Adicionando propriedade para conteúdo à direita
 }
 
 export default function ScreenHeader({
@@ -27,6 +28,7 @@ export default function ScreenHeader({
   backTo = "/admin/dashboard",
   variant = "primary",
   onBackPress,
+  rightContent, // Incluindo na lista de props
 }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
@@ -67,7 +69,7 @@ export default function ScreenHeader({
         {/* Layout para mobile */}
         {!isWeb && (
           <View>
-            {/* Header com botão voltar e título em uma única linha */}
+            {/* Header com botão voltar, título e conteúdo à direita em uma única linha */}
             <View className="flex-row items-center mb-2">
               {showBackButton && (
                 <TouchableOpacity
@@ -97,6 +99,9 @@ export default function ScreenHeader({
                   </Text>
                 )}
               </View>
+
+              {/* Conteúdo à direita */}
+              {rightContent && <View className="ml-2">{rightContent}</View>}
             </View>
           </View>
         )}
@@ -104,34 +109,41 @@ export default function ScreenHeader({
         {/* Layout para web */}
         {isWeb && (
           <View className="w-full container md:px-4 mx-auto">
-            <HStack className="items-center gap-3">
-              {showBackButton && (
-                <TouchableOpacity
-                  onPress={handleBack}
-                  className="flex-row items-center p-1 rounded-full hover:bg-white/20"
-                >
-                  <ChevronLeft size={24} color={iconColor} />
-                </TouchableOpacity>
-              )}
-
-              <VStack className="w-full">
-                <Text
-                  className={`text-lg font-bold ${
-                    variant === "primary" ? "text-white" : "text-gray-900"
-                  }`}
-                >
-                  {title}
-                </Text>
-                {subtitle && (
-                  <Text
-                    className={`text-sm ${
-                      variant === "primary" ? "text-white/80" : "text-gray-500"
-                    } w-full`}
+            <HStack className="items-center justify-between">
+              <HStack className="items-center gap-3 flex-1">
+                {showBackButton && (
+                  <TouchableOpacity
+                    onPress={handleBack}
+                    className="flex-row items-center p-1 rounded-full hover:bg-white/20"
                   >
-                    {subtitle}
-                  </Text>
+                    <ChevronLeft size={24} color={iconColor} />
+                  </TouchableOpacity>
                 )}
-              </VStack>
+
+                <VStack className="flex-1">
+                  <Text
+                    className={`text-lg font-bold ${
+                      variant === "primary" ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    {title}
+                  </Text>
+                  {subtitle && (
+                    <Text
+                      className={`text-sm ${
+                        variant === "primary"
+                          ? "text-white/80"
+                          : "text-gray-500"
+                      } w-full`}
+                    >
+                      {subtitle}
+                    </Text>
+                  )}
+                </VStack>
+              </HStack>
+
+              {/* Conteúdo à direita para web */}
+              {rightContent && <View>{rightContent}</View>}
             </HStack>
           </View>
         )}
