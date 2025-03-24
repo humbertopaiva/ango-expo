@@ -128,7 +128,7 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
               >
                 {/* Imagem quadrada com borda colorida */}
                 <View
-                  className="mb-3 overflow-hidden"
+                  className="mb-1 overflow-hidden"
                   style={{
                     width: (width / numColumns) * 0.4, // Quadrado de 40% da largura do card
                     height: (width / numColumns) * 0.4,

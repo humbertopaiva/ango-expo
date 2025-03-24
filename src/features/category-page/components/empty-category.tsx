@@ -46,11 +46,11 @@ export function EmptyCategory({
           <Store size={32} color={THEME_COLORS.primary} />
         </View>
 
-        <Text className="text-xl font-bold text-gray-800 text-center">
+        <Text className="text-xl font-semibold text-gray-800 text-center">
           {titleText}
         </Text>
 
-        <Text className="text-gray-600 text-center mt-2 mb-6">
+        <Text className="text-gray-600 text-center mt-2 mb-6 font-sans">
           {descriptionText}
         </Text>
 
@@ -58,28 +58,30 @@ export function EmptyCategory({
           style={styles.patternBackground}
           className="w-full bg-primary-50 rounded-xl p-4 mb-6"
         >
-          <Text className="text-primary-700 font-medium text-center mb-2">
+          <Text className="text-primary-500 font-medium text-center mb-2">
             Vantagens para seu negócio
           </Text>
 
           <View className="pl-4">
             <View className="flex-row items-center mb-2">
               <View className="w-2 h-2 rounded-full bg-primary-500 mr-2" />
-              <Text className="text-sm text-gray-700">
+              <Text className="text-sm text-gray-700 font-sans">
                 Mais visibilidade local
               </Text>
             </View>
 
             <View className="flex-row items-center mb-2">
               <View className="w-2 h-2 rounded-full bg-primary-500 mr-2" />
-              <Text className="text-sm text-gray-700">
+              <Text className="text-sm text-gray-700 font-sans">
                 Novos clientes para seu negócio
               </Text>
             </View>
 
             <View className="flex-row items-center">
               <View className="w-2 h-2 rounded-full bg-primary-500 mr-2" />
-              <Text className="text-sm text-gray-700">Aumente suas vendas</Text>
+              <Text className="text-sm text-gray-700 font-sans">
+                Aumente suas vendas
+              </Text>
             </View>
           </View>
         </View>
