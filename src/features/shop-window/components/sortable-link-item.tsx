@@ -4,8 +4,6 @@ import { View, Text, Pressable, Animated, Linking } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import {
   ExternalLink,
-  ArrowUp,
-  ArrowDown,
   Trash,
   Edit,
   Link as LinkIcon,
@@ -164,7 +162,7 @@ export function SortableLinkItem({
   };
 
   return (
-    <View className="overflow-hidden relative">
+    <View className="overflow-hidden relative mb-3">
       {/* Botões de ação que aparecem ao deslizar */}
       <View
         className="absolute right-0 top-0 bottom-0 flex-row items-center justify-center h-full"
@@ -200,19 +198,19 @@ export function SortableLinkItem({
             </View>
           )}
 
-          <View className="p-2 flex-row">
+          <View className="p-3 flex-row items-center">
             {/* Área de reordenação ou ícone do tipo de link */}
-            <View className="pr-2">
-              {isReordering ? (
+            {isReordering ? (
+              <View className="mr-3">
                 <ReorderButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
-              ) : (
-                <View
-                  className={`h-12 w-12 rounded-lg items-center justify-center ${getLinkBgColor()}`}
-                >
-                  {getLinkIcon()}
-                </View>
-              )}
-            </View>
+              </View>
+            ) : (
+              <View
+                className={`h-14 w-14 rounded-lg items-center justify-center mr-3 ${getLinkBgColor()}`}
+              >
+                {getLinkIcon()}
+              </View>
+            )}
 
             {/* Informações do link */}
             <View className="flex-1">

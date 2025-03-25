@@ -2,14 +2,7 @@
 import React, { useRef, useState } from "react";
 import { View, Text, Pressable, Animated } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import {
-  Package,
-  ArrowUp,
-  ArrowDown,
-  Trash,
-  DollarSign,
-  MoreVertical,
-} from "lucide-react-native";
+import { Package, Trash, DollarSign, MoreVertical } from "lucide-react-native";
 import { VitrineProduto } from "../models";
 import { ResilientImage } from "@/components/common/resilient-image";
 import { ReorderButtons } from "@/components/common/reorder-buttons";
@@ -62,7 +55,7 @@ export function SortableProdutoItem({
   };
 
   return (
-    <View className="overflow-hidden relative">
+    <View className="overflow-hidden relative mb-3">
       {/* Botões de ação que aparecem ao deslizar - apenas delete neste caso */}
       <View
         className="absolute right-0 top-0 bottom-0 flex-row items-center justify-center h-full"
@@ -83,8 +76,9 @@ export function SortableProdutoItem({
         }}
       >
         <Card
-          className={`bg-white shadow-sm border border-gray-100 overflow-hidden 
-            ${!produto.disponivel ? "opacity-70" : ""}`}
+          className={`bg-white shadow-sm border border-gray-100 overflow-hidden ${
+            !produto.disponivel ? "opacity-70" : ""
+          }`}
         >
           {/* Posição do item como "tag" no canto superior direito */}
           {!isReordering && position && (
@@ -95,27 +89,27 @@ export function SortableProdutoItem({
             </View>
           )}
 
-          <View className="p-2 flex-row">
+          <View className="p-3 flex-row items-center">
             {/* Área de reordenação ou imagem */}
-            <View className="pr-2">
-              {isReordering ? (
+            {isReordering ? (
+              <View className="mr-3">
                 <ReorderButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
-              ) : (
-                <View className="h-12 w-12 bg-gray-100 rounded-lg overflow-hidden">
-                  {produto.produto.imagem ? (
-                    <ResilientImage
-                      source={produto.produto.imagem}
-                      style={{ height: "100%", width: "100%" }}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View className="h-full w-full items-center justify-center">
-                      <Package size={20} color="#6B7280" />
-                    </View>
-                  )}
-                </View>
-              )}
-            </View>
+              </View>
+            ) : (
+              <View className="h-14 w-14 bg-gray-100 rounded-lg overflow-hidden mr-3">
+                {produto.produto.imagem ? (
+                  <ResilientImage
+                    source={produto.produto.imagem}
+                    style={{ height: "100%", width: "100%" }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="h-full w-full items-center justify-center">
+                    <Package size={20} color="#6B7280" />
+                  </View>
+                )}
+              </View>
+            )}
 
             {/* Informações do produto */}
             <View className="flex-1">
