@@ -1,4 +1,4 @@
-// app/_layout.tsx
+// Path: app/_layout.tsx
 import { View } from "react-native";
 import "@/global.css";
 import { GluestackUIProvider } from "@gluestack-ui/themed";
@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DrawerProvider } from "@/src/providers/drawer-provider";
 import { LoadingProvider } from "@/src/providers/loading-provider";
+import { NavigationProvider } from "@/src/providers/navigation-provider"; // Importando o novo provedor
 import { Loader } from "@/components/common/loader";
 import { useFonts } from "@/src/hooks/use-fonts";
 
@@ -27,12 +28,14 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <LoadingProvider>
           <GluestackUIProvider config={config}>
-            <DrawerProvider>
-              <Loader />
-              <View className="flex-1 bg-background">
-                <Slot />
-              </View>
-            </DrawerProvider>
+            <NavigationProvider>
+              <DrawerProvider>
+                <Loader />
+                <View className="flex-1 bg-background">
+                  <Slot />
+                </View>
+              </DrawerProvider>
+            </NavigationProvider>
           </GluestackUIProvider>
         </LoadingProvider>
       </QueryClientProvider>
