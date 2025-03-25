@@ -25,6 +25,7 @@ import { z } from "zod";
 import { userPersistenceService } from "@/src/services/user-persistence.service";
 import { useOrderStore } from "@/src/features/orders/stores/order.store";
 import { PaymentMethod } from "@/src/features/orders/models/order";
+import { api } from "@/src/services/api";
 
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -206,6 +207,20 @@ export function useCheckoutViewModel() {
     setIsProcessing(true);
 
     try {
+      // Buscar o telefone da empresa, se disponível
+      let companyPhone = undefined;
+
+      try {
+        // Implementação depende de como você acessa os dados da empresa
+        // Pode ser via context, API, ou outro mecanismo
+        const companyData = await api.get(
+          `/api/companies/${checkout.companyId}`
+        );
+        companyPhone = companyData?.data?.data?.whatsapp || undefined;
+      } catch (error) {
+        console.log("Não foi possível obter o telefone da empresa:", error);
+      }
+
       // Criar pedido no OrderStore
       const orderItems = checkout.items.map((item) => ({
         ...item,
@@ -217,18 +232,19 @@ export function useCheckoutViewModel() {
         orderItems,
         checkout.companyId,
         checkout.companySlug,
-        checkout.companyName
+        checkout.companyName,
+        companyPhone
       );
 
       // Construir mensagem para WhatsApp
       const message = formatWhatsAppMessage(checkout);
 
       // Número da empresa (idealmente seria obtido do perfil da empresa)
-      // Por enquanto, usamos um número de exemplo
-      const companyPhone = "5532999999999"; // Substitua pelo número real
+      // Por enquanto, usamos um número de exemplo ou o que foi obtido acima
+      const companyWhatsapp = companyPhone || "5532999999999";
 
       // Enviar mensagem para o WhatsApp
-      await sendWhatsAppMessage(message, companyPhone);
+      await sendWhatsAppMessage(message, companyWhatsapp);
 
       // Limpar carrinho e checkout
       cartViewModel.clearCart();

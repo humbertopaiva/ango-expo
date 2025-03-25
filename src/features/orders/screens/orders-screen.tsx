@@ -1,4 +1,5 @@
 // Path: src/features/orders/screens/orders-screen.tsx
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -7,29 +8,28 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  Share,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
-import { Card, VStack, HStack, Divider } from "@gluestack-ui/themed";
+import { Card, VStack, HStack, Divider, useToast } from "@gluestack-ui/themed";
 import {
   Clock,
-  CheckCircle,
-  Truck,
-  XCircle,
-  AlertCircle,
+  ShoppingBag,
   ChevronRight,
   Calendar,
   Package,
   RefreshCw,
+  Trash2,
+  MessageSquare,
 } from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
-import { Order, OrderStatus } from "../models/order";
+import { Order } from "../models/order";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { SwipeableCard } from "@/components/common/swipeable-card";
 import { useMultiCartStore } from "@/src/features/cart/stores/cart.store";
-import { useToast } from "@gluestack-ui/themed";
 import { toastUtils } from "@/src/utils/toast.utils";
 
 export function OrdersScreen() {
@@ -41,7 +41,7 @@ export function OrdersScreen() {
 
   const primaryColor = THEME_COLORS.primary;
 
-  // Usar o ViewModel atualizado com as novas funcionalidades
+  // Usar o ViewModel
   const orderViewModel = useOrderViewModel();
 
   useEffect(() => {
@@ -51,11 +51,7 @@ export function OrdersScreen() {
   const loadOrders = () => {
     if (companySlug) {
       const companyOrders = orderViewModel.getOrdersByCompany(companySlug);
-      setOrders(
-        companyOrders.sort(
-          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-        )
-      );
+      setOrders(companyOrders);
     }
   };
 
@@ -92,14 +88,39 @@ export function OrdersScreen() {
     );
   };
 
+  // Handler para limpar todos os pedidos da empresa
+  const handleClearAllOrders = () => {
+    if (orders.length === 0) return;
+
+    Alert.alert(
+      "Limpar Histórico",
+      "Tem certeza que deseja limpar todo o histórico de pedidos desta empresa?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Limpar",
+          style: "destructive",
+          onPress: () => {
+            orderViewModel.clearCompanyOrders(companySlug);
+            setOrders([]);
+            toastUtils.success(toast, "Histórico de pedidos limpo");
+          },
+        },
+      ]
+    );
+  };
+
   // Handler para repetir um pedido
   const handleRepeatOrder = (orderId: string) => {
-    const newOrder = orderViewModel.repeatOrder(orderId);
+    const order = orderViewModel.getOrderById(orderId);
 
-    if (newOrder) {
+    if (order) {
       // Adicionar os itens ao carrinho
       multiCartStore.clearCart(companySlug);
-      newOrder.items.forEach((item) => {
+      order.items.forEach((item) => {
         multiCartStore.addItem(companySlug, item);
       });
 
@@ -111,65 +132,27 @@ export function OrdersScreen() {
     }
   };
 
-  // Função para obter informações de status
-  const getStatusInfo = (status: OrderStatus) => {
-    switch (status) {
-      case OrderStatus.PENDING:
-        return {
-          label: "Pendente",
-          icon: AlertCircle,
-          color: "#F59E0B", // Amber
-          bgColor: "#FEF3C7",
-        };
-      case OrderStatus.CONFIRMED:
-        return {
-          label: "Confirmado",
-          icon: CheckCircle,
-          color: "#10B981", // Green
-          bgColor: "#D1FAE5",
-        };
-      case OrderStatus.PREPARING:
-        return {
-          label: "Em preparação",
-          icon: Clock,
-          color: "#3B82F6", // Blue
-          bgColor: "#DBEAFE",
-        };
-      case OrderStatus.READY_FOR_DELIVERY:
-        return {
-          label: "Pronto para entrega",
-          icon: Package,
-          color: "#8B5CF6", // Purple
-          bgColor: "#EDE9FE",
-        };
-      case OrderStatus.IN_TRANSIT:
-        return {
-          label: "Em trânsito",
-          icon: Truck,
-          color: "#6366F1", // Indigo
-          bgColor: "#E0E7FF",
-        };
-      case OrderStatus.DELIVERED:
-        return {
-          label: "Entregue",
-          icon: CheckCircle,
-          color: "#10B981", // Green
-          bgColor: "#D1FAE5",
-        };
-      case OrderStatus.CANCELED:
-        return {
-          label: "Cancelado",
-          icon: XCircle,
-          color: "#EF4444", // Red
-          bgColor: "#FEE2E2",
-        };
-      default:
-        return {
-          label: "Desconhecido",
-          icon: AlertCircle,
-          color: "#6B7280", // Gray
-          bgColor: "#F3F4F6",
-        };
+  // Contatar a empresa via WhatsApp
+  const handleContactCompany = async (orderId: string) => {
+    const order = orderViewModel.getOrderById(orderId);
+
+    if (order && order.companyPhone) {
+      const success = await orderViewModel.contactCompany(
+        order.companyPhone,
+        orderId
+      );
+
+      if (!success) {
+        Alert.alert(
+          "Erro ao abrir WhatsApp",
+          "Não foi possível abrir o WhatsApp. Verifique se o aplicativo está instalado."
+        );
+      }
+    } else {
+      Alert.alert(
+        "Informação não disponível",
+        "Não foi possível encontrar o contato da empresa."
+      );
     }
   };
 
@@ -181,14 +164,10 @@ export function OrdersScreen() {
   };
 
   const formatDate = (date: Date) => {
-    return format(date, "dd 'de' MMMM', às 'HH:mm", { locale: ptBR });
+    return format(date, "dd 'de' MMMM, yyyy 'às' HH:mm", { locale: ptBR });
   };
 
   const renderOrderItem = ({ item }: { item: Order }) => {
-    const status = getStatusInfo(item.status);
-    // Garantir que todos os componentes existam e sejam funções com as propriedades corretas
-    const StatusIcon = status ? status.icon : AlertCircle;
-
     return (
       <SwipeableCard
         onEdit={() => handleOrderPress(item.id)}
@@ -196,29 +175,20 @@ export function OrdersScreen() {
       >
         <View
           className="border-l-4 pl-3 py-3 pr-4"
-          style={{ borderLeftColor: status ? status.color : "#6B7280" }}
+          style={{ borderLeftColor: primaryColor }}
         >
           <HStack className="justify-between items-center mb-2">
             <HStack space="sm" alignItems="center">
-              <View
-                className="p-1 rounded-full"
-                style={{ backgroundColor: status ? status.bgColor : "#F3F4F6" }}
-              >
-                <StatusIcon
-                  size={16}
-                  color={status ? status.color : "#6B7280"}
-                />
+              <View className="p-1 rounded-full bg-primary-50">
+                <ShoppingBag size={16} color={primaryColor} />
               </View>
               <Text className="font-semibold text-gray-800">
                 Pedido #{item.id.replace("order_", "").substring(0, 6)}
               </Text>
             </HStack>
 
-            <Text
-              className="text-sm font-medium"
-              style={{ color: status ? status.color : "#6B7280" }}
-            >
-              {status ? status.label : "Desconhecido"}
+            <Text className="text-sm font-medium text-primary-500">
+              {formatCurrency(item.total)}
             </Text>
           </HStack>
 
@@ -233,11 +203,6 @@ export function OrdersScreen() {
             <Text className="text-gray-500 text-sm">
               {item.items.length} {item.items.length === 1 ? "item" : "itens"}
             </Text>
-            <HStack space="sm" alignItems="center">
-              <Text className="font-bold text-gray-800">
-                {formatCurrency(item.total)}
-              </Text>
-            </HStack>
           </HStack>
 
           <Divider className="my-2" />
@@ -250,6 +215,16 @@ export function OrdersScreen() {
               <RefreshCw size={16} color={primaryColor} />
               <Text className="ml-1 text-sm" style={{ color: primaryColor }}>
                 Repetir pedido
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleContactCompany(item.id)}
+              className="flex-row items-center"
+            >
+              <MessageSquare size={16} color={primaryColor} />
+              <Text className="ml-1 text-sm" style={{ color: primaryColor }}>
+                Falar com a loja
               </Text>
             </TouchableOpacity>
 
@@ -270,9 +245,18 @@ export function OrdersScreen() {
     <View className="flex-1 bg-gray-50">
       <ScreenHeader
         title="Meus Pedidos"
-        subtitle={companySlug ? `Acompanhe seus pedidos` : undefined}
+        subtitle={
+          companySlug ? `${orders.length} pedidos realizados` : undefined
+        }
         showBackButton={true}
         onBackPress={() => router.back()}
+        rightContent={
+          orders.length > 0 ? (
+            <TouchableOpacity onPress={handleClearAllOrders} className="p-2">
+              <Trash2 size={20} color="#EF4444" />
+            </TouchableOpacity>
+          ) : undefined
+        }
       />
 
       <FlatList
