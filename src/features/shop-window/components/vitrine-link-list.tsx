@@ -1,14 +1,14 @@
 // Path: src/features/shop-window/components/vitrine-link-list.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { Card } from "@gluestack-ui/themed";
 import {
-  Link2,
-  PanelRight,
-  Check,
-  ChevronsUpDown,
-  AlertCircle,
-} from "lucide-react-native";
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { Card } from "@gluestack-ui/themed";
+import { Link2, Check, ChevronsUpDown, X } from "lucide-react-native";
 import { VitrineLink } from "../models";
 import { SortableLinkItem } from "./sortable-link-item";
 
@@ -19,6 +19,7 @@ interface VitrineLinkListProps {
   onEdit: (link: VitrineLink) => void;
   onDelete: (link: VitrineLink) => void;
   onReorder: (links: VitrineLink[]) => void;
+  onOrderingStateChange?: (isOrdering: boolean) => void; // Prop para notificar mudanças no estado de ordenação
 }
 
 export function VitrineLinkList({
@@ -28,6 +29,7 @@ export function VitrineLinkList({
   onDelete,
   onReorder,
   isReordering,
+  onOrderingStateChange,
 }: VitrineLinkListProps) {
   const [isEditingOrder, setIsEditingOrder] = useState(false);
   const [orderedLinks, setOrderedLinks] = useState<VitrineLink[]>(links);
@@ -36,6 +38,13 @@ export function VitrineLinkList({
   useEffect(() => {
     setOrderedLinks(links);
   }, [links]);
+
+  // Notificar o componente pai sobre mudanças no estado de ordenação
+  useEffect(() => {
+    if (onOrderingStateChange) {
+      onOrderingStateChange(isEditingOrder);
+    }
+  }, [isEditingOrder, onOrderingStateChange]);
 
   const moveItem = (index: number, direction: "up" | "down") => {
     const newOrderedLinks = [...orderedLinks];
@@ -68,6 +77,12 @@ export function VitrineLinkList({
     setIsEditingOrder(false);
   };
 
+  const handleCancelOrdering = () => {
+    // Restaura a ordem original e sai do modo de edição
+    setOrderedLinks(links);
+    setIsEditingOrder(false);
+  };
+
   if (isLoading || isReordering) {
     return (
       <View className="gap-4">
@@ -93,36 +108,62 @@ export function VitrineLinkList({
 
   return (
     <View className="flex-1">
-      {/* Controles de Ordenação - Estilo padronizado com o da tab produtos */}
-      <View className="flex-row justify-between items-center mb-3">
-        <Text className="text-sm text-gray-500">
+      {/* Controles de Ordenação */}
+      <View className="flex-row justify-between items-center mb-4">
+        <Text className="text-sm text-gray-600 font-medium">
           {links.length} {links.length === 1 ? "link" : "links"} na vitrine
         </Text>
 
         {!isEditingOrder ? (
-          <View
+          <TouchableOpacity
             style={styles.orderButton}
-            onTouchEnd={() => setIsEditingOrder(true)}
+            onPress={() => setIsEditingOrder(true)}
+            activeOpacity={0.8}
           >
-            <ChevronsUpDown size={16} color="#F4511E" />
-            <Text className="text-primary-500 ml-1 font-medium">Ordenar</Text>
-          </View>
+            <ChevronsUpDown size={18} color="#F4511E" />
+            <Text className="text-primary-600 ml-2 font-semibold">
+              Ordenar Itens
+            </Text>
+          </TouchableOpacity>
         ) : (
-          <View style={styles.saveOrderButton} onTouchEnd={handleSaveOrder}>
-            <Check size={16} color="white" />
-            <Text className="text-white ml-1 font-medium">Salvar Ordem</Text>
+          <View className="flex-row">
+            <TouchableOpacity
+              style={styles.cancelOrderButton}
+              onPress={handleCancelOrdering}
+              activeOpacity={0.7}
+              className="mr-3"
+            >
+              <X size={18} color="#64748B" />
+              <Text className="text-slate-600 ml-2 font-medium">Cancelar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.saveOrderButton}
+              onPress={handleSaveOrder}
+              activeOpacity={0.8}
+            >
+              <Check size={18} color="white" />
+              <Text className="text-white ml-2 font-semibold">Salvar</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
 
       {/* Banner de instrução para ordenação */}
       {isEditingOrder && (
-        <View className="mb-3 bg-primary-50 p-3 rounded-lg border border-primary-100 flex-row items-center">
-          <PanelRight size={20} color="#F4511E" />
-          <Text className="ml-2 text-primary-700 flex-1">
-            Arraste os itens para cima ou para baixo para reorganizar a ordem em
-            que aparecerão na vitrine.
-          </Text>
+        <View className="mb-4 bg-primary-50 p-4 rounded-xl border border-primary-100 flex-row items-center">
+          <View className="bg-primary-100 rounded-full p-2 mr-3">
+            <ChevronsUpDown size={18} color="#F4511E" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-primary-800 font-semibold mb-1">
+              Modo de ordenação ativo
+            </Text>
+            <Text className="text-primary-700">
+              Use os botões de seta para mover os itens para cima ou para baixo,
+              definindo a ordem de exibição na vitrine.
+            </Text>
+          </View>
         </View>
       )}
 
@@ -156,19 +197,39 @@ const styles = StyleSheet.create({
   orderButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     backgroundColor: "white",
     borderColor: "#F4511E",
-    borderWidth: 1,
-    borderRadius: 4,
+    borderWidth: 1.5,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 2,
   },
   saveOrderButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     backgroundColor: "#F4511E",
-    borderRadius: 4,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  cancelOrderButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "#F8FAFC",
+    borderColor: "#CBD5E1",
+    borderWidth: 1,
+    borderRadius: 8,
   },
 });

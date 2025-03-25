@@ -101,6 +101,7 @@ export function VitrinePageContent() {
               onEdit={vm.handleProductEdit}
               onDelete={vm.handleProductDelete}
               onReorder={vm.handleProductReorder}
+              onOrderingStateChange={vm.setIsEditingProductsOrder}
             />
           </View>
         );
@@ -121,11 +122,23 @@ export function VitrinePageContent() {
               onEdit={vm.handleLinkEdit}
               onDelete={vm.handleLinkDelete}
               onReorder={vm.handleLinkReorder}
+              onOrderingStateChange={vm.setIsEditingLinksOrder}
             />
           </View>
         );
       default:
         return null;
+    }
+  };
+
+  // Determinar se o botão de adicionar deve ser desabilitado
+  const shouldDisableAddButton = () => {
+    if (index === 0) {
+      // Tab de produtos
+      return vm.isEditingProductsOrder || vm.isReorderingProdutos;
+    } else {
+      // Tab de links
+      return vm.isEditingLinksOrder || vm.isReorderingLinks;
     }
   };
 
@@ -145,18 +158,20 @@ export function VitrinePageContent() {
         style={{ flex: 1 }}
       />
 
-      {/* Primary Action Button */}
-      <PrimaryActionButton
-        onPress={() =>
-          index === 0
-            ? vm.setIsCreateProductOpen(true)
-            : vm.setIsCreateLinkOpen(true)
-        }
-        label={index === 0 ? "Adicionar Produto" : "Adicionar Link"}
-        icon={<Plus size={20} color="white" />}
-        position="bottom"
-        style={{ bottom: Platform.OS === "ios" ? 20 : 16 }}
-      />
+      {/* Primary Action Button - agora com condição para desabilitar durante reordenação */}
+      {!shouldDisableAddButton() && (
+        <PrimaryActionButton
+          onPress={() =>
+            index === 0
+              ? vm.setIsCreateProductOpen(true)
+              : vm.setIsCreateLinkOpen(true)
+          }
+          label={index === 0 ? "Adicionar Produto" : "Adicionar Link"}
+          icon={<Plus size={20} color="white" />}
+          position="bottom"
+          style={{ bottom: Platform.OS === "ios" ? 20 : 16 }}
+        />
+      )}
 
       {/* Forms */}
       <VitrineProdutoForm
