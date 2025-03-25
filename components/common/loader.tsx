@@ -1,57 +1,30 @@
-// Path: src/components/common/loader.tsx
-import React from "react";
-import {
-  View,
-  StyleSheet,
-  ActivityIndicator,
-  Modal,
-  Dimensions,
-} from "react-native";
+// Path: components/common/loader.tsx
+import React, { memo, useEffect, useState } from "react";
 import { useLoading } from "@/src/providers/loading-provider";
-import { THEME_COLORS } from "@/src/styles/colors";
+import { SimpleFullscreenLoader } from "./simple-fullscreen-loader";
 
-const { width, height } = Dimensions.get("window");
-
-export function Loader() {
+// Usando React.memo para evitar re-renderizações desnecessárias
+export const Loader = memo(function Loader() {
   const { isLoading } = useLoading();
+  const [shouldRender, setShouldRender] = useState(false);
 
-  if (!isLoading) return null;
+  useEffect(() => {
+    // Se estiver carregando, mostra imediatamente
+    if (isLoading) {
+      setShouldRender(true);
+    }
+    // Se não estiver carregando, espera um pouco antes de esconder
+    else {
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+      }, 200);
 
-  return (
-    <Modal transparent visible={isLoading} animationType="fade">
-      <View style={styles.container}>
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={THEME_COLORS.primary} />
-        </View>
-      </View>
-    </Modal>
-  );
-}
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
-const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: width,
-    height: height,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    zIndex: 9999,
-  },
-  loaderContainer: {
-    width: 80,
-    height: 80,
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  // Só renderiza o loader se deveria mostrar ou está em processo de ocultar
+  if (!shouldRender && !isLoading) return null;
+
+  return <SimpleFullscreenLoader isVisible={isLoading} />;
 });
