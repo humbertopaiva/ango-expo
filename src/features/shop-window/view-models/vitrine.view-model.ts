@@ -47,6 +47,8 @@ export function useVitrineViewModel(): IVitrineViewModel {
     isDeleteOpen: false,
     isEditProductOpen: false,
     isEditLinkOpen: false,
+    isEditingProductsOrder: false, // Novo estado para rastrear edição de ordem de produtos
+    isEditingLinksOrder: false, // Novo estado para rastrear edição de ordem de links
     selectedProduct: null as VitrineProduto | null,
     selectedLink: null as VitrineLink | null,
     selectedItem: null as VitrineProduto | VitrineLink | null,
@@ -113,6 +115,15 @@ export function useVitrineViewModel(): IVitrineViewModel {
     },
     [closeModals]
   );
+
+  // Novo: Setters para estados de ordenação
+  const setIsEditingProductsOrder = useCallback((isEditing: boolean) => {
+    setState((prev) => ({ ...prev, isEditingProductsOrder: isEditing }));
+  }, []);
+
+  const setIsEditingLinksOrder = useCallback((isEditing: boolean) => {
+    setState((prev) => ({ ...prev, isEditingLinksOrder: isEditing }));
+  }, []);
 
   // Form handlers
   const handleProductSubmit = useCallback(
@@ -251,7 +262,7 @@ export function useVitrineViewModel(): IVitrineViewModel {
     }
   }, [state.selectedItem, deleteVitrineProduto, deleteVitrineLink, toast]);
 
-  // Reorder handlers
+  // Reorder handlers - atualizados para gerenciar estado local
   const handleProductReorder = useCallback(
     async (produtos: VitrineProduto[]) => {
       try {
@@ -264,11 +275,13 @@ export function useVitrineViewModel(): IVitrineViewModel {
 
         await reorderVitrineProdutos(updatedProducts);
         showSuccessToast(toast, "Ordem dos produtos atualizada!");
+        // Desabilitar modo de edição de ordem
+        setIsEditingProductsOrder(false);
       } catch (error) {
         showErrorToast(toast, "Erro ao reordenar produtos");
       }
     },
-    [reorderVitrineProdutos, toast]
+    [reorderVitrineProdutos, toast, setIsEditingProductsOrder]
   );
 
   const handleLinkReorder = useCallback(
@@ -282,11 +295,13 @@ export function useVitrineViewModel(): IVitrineViewModel {
 
         await reorderVitrineLinks(updatedLinks);
         showSuccessToast(toast, "Ordem dos links atualizada!");
+        // Desabilitar modo de edição de ordem
+        setIsEditingLinksOrder(false);
       } catch (error) {
         showErrorToast(toast, "Erro ao reordenar links");
       }
     },
-    [reorderVitrineLinks, toast]
+    [reorderVitrineLinks, toast, setIsEditingLinksOrder]
   );
 
   return {
@@ -306,12 +321,16 @@ export function useVitrineViewModel(): IVitrineViewModel {
     isDeleteOpen: state.isDeleteOpen,
     isEditProductOpen: state.isEditProductOpen,
     isEditLinkOpen: state.isEditLinkOpen,
+    isEditingProductsOrder: state.isEditingProductsOrder, // Novo estado exportado
+    isEditingLinksOrder: state.isEditingLinksOrder, // Novo estado exportado
 
     setIsCreateProductOpen,
     setIsCreateLinkOpen,
     setIsDeleteOpen,
     setIsEditProductOpen,
     setIsEditLinkOpen,
+    setIsEditingProductsOrder, // Novo setter exportado
+    setIsEditingLinksOrder, // Novo setter exportado
 
     handleProductSubmit,
     handleLinkSubmit,

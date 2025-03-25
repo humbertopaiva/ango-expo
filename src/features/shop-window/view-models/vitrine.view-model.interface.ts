@@ -1,4 +1,4 @@
-// Path: src/features/vitrine/view-models/vitrine.view-model.interface.ts
+// Path: src/features/shop-window/view-models/vitrine.view-model.interface.ts
 import {
   VitrineProduto,
   VitrineLink,
@@ -19,6 +19,10 @@ export interface IVitrineViewModel {
   isReorderingProdutos: boolean;
   isReorderingLinks: boolean;
 
+  // Novo: estados adicionais para controle de reordenação local
+  isEditingProductsOrder: boolean;
+  isEditingLinksOrder: boolean;
+
   // Estados de modais
   isCreateProductOpen: boolean;
   isCreateLinkOpen: boolean;
@@ -32,6 +36,10 @@ export interface IVitrineViewModel {
   setIsDeleteOpen: (isOpen: boolean) => void;
   setIsEditProductOpen: (isOpen: boolean) => void;
   setIsEditLinkOpen: (isOpen: boolean) => void;
+
+  // Novo: setters para controle de reordenação
+  setIsEditingProductsOrder: (isEditing: boolean) => void;
+  setIsEditingLinksOrder: (isEditing: boolean) => void;
 
   // Handlers
   handleProductSubmit: (data: VitrineProdutoFormData) => void;
