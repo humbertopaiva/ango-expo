@@ -1,4 +1,5 @@
 // Path: src/features/company-page/screens/product-details-screen.tsx
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -11,10 +12,10 @@ import {
   Platform,
   TextInput,
   KeyboardAvoidingView,
-  Alert,
   Animated,
   ActivityIndicator,
   Linking,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import {
@@ -24,14 +25,15 @@ import {
   PlusCircle,
   ArrowLeft,
   Package,
-  Edit3,
   MessageSquare,
   Heart,
   CreditCard,
   DollarSign,
   MessageCircle,
+  Maximize,
+  X,
 } from "lucide-react-native";
-import { HStack, VStack, Button, useToast } from "@gluestack-ui/themed";
+import { HStack, VStack, useToast } from "@gluestack-ui/themed";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
@@ -42,6 +44,7 @@ import { getContrastColor } from "@/src/utils/color.utils";
 import { animationUtils } from "@/src/utils/animations.utils";
 import { LinearGradient } from "expo-linear-gradient";
 import { toastUtils } from "@/src/utils/toast.utils";
+import { ProductImageViewer } from "../components/product-image-viewer";
 
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -58,6 +61,9 @@ export function ProductDetailsScreen() {
   const [quantity, setQuantity] = useState(isCartEnabled ? 1 : 0);
   const [observation, setObservation] = useState("");
   const [showObservationInput, setShowObservationInput] = useState(false);
+
+  // Estado para controlar a visualização da imagem em tamanho completo
+  const [isImageViewerVisible, setImageViewerVisible] = useState(false);
 
   // Animações
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -202,21 +208,43 @@ export function ProductDetailsScreen() {
   };
 
   // Compartilhar o produto
-  const handleShare = async () => {
+  const handleShareProduct = async () => {
     if (!product || !vm.profile) return;
 
     const productName = product.nome;
     const companyName = vm.profile.nome;
-    const message = `Confira ${productName} em ${companyName}`;
+
+    let shareUrl = "";
+    const shareMessage = `Confira ${productName} em ${companyName}`;
+
+    // Em ambiente web, tentar obter a URL atual para compartilhar
+    if (Platform.OS === "web") {
+      try {
+        shareUrl = window.location.href;
+      } catch (error) {
+        console.log("Não foi possível obter URL para compartilhamento", error);
+      }
+    }
 
     try {
       await Share.share({
-        message,
+        message: shareUrl ? `${shareMessage}\n${shareUrl}` : shareMessage,
         title: `${productName} - ${companyName}`,
+        url: shareUrl || undefined, // Só inclui URL se estiver disponível
       });
     } catch (error) {
       console.error("Erro ao compartilhar:", error);
     }
+  };
+
+  // Abrir visualizador de imagem
+  const handleOpenImageViewer = () => {
+    setImageViewerVisible(true);
+  };
+
+  // Fechar visualizador de imagem
+  const handleCloseImageViewer = () => {
+    setImageViewerVisible(false);
   };
 
   // Calcular desconto percentual (se houver)
@@ -258,6 +286,9 @@ export function ProductDetailsScreen() {
     }
   };
 
+  // Altura da imagem na tela principal
+  const imageHeight = width * 0.75; // 75% da largura da tela
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -267,24 +298,43 @@ export function ProductDetailsScreen() {
       <StatusBar barStyle="light-content" />
 
       <View className="flex-1 bg-white">
-        {/* Área da imagem em aspecto quadrado com botões sobrepostos */}
+        {/* Visualizador de imagem em tamanho completo */}
+        <ProductImageViewer
+          isVisible={isImageViewerVisible}
+          imageUrl={product.imagem}
+          onClose={handleCloseImageViewer}
+          productName={product.nome}
+          productDescription={product.descricao}
+          onShare={handleShareProduct}
+          companyName={vm.profile?.nome}
+        />
+
+        {/* Área da imagem com altura fixa e preenchimento cover */}
         <Animated.View
           style={{
-            width: width,
-            height: width,
+            height: imageHeight,
             opacity: fadeAnim,
             transform: [{ scale: imageScaleAnim }],
           }}
-          className="bg-white relative"
+          className="relative"
         >
           <ImagePreview
             uri={product.imagem}
             fallbackIcon={Package}
             width="100%"
             height="100%"
-            resizeMode="contain"
+            resizeMode="cover"
             containerClassName="bg-gray-50"
           />
+
+          {/* Botão para expandir imagem */}
+          <TouchableOpacity
+            onPress={handleOpenImageViewer}
+            className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-black/50 items-center justify-center"
+            activeOpacity={0.8}
+          >
+            <Maximize size={22} color="#FFFFFF" />
+          </TouchableOpacity>
 
           {/* Overlay gradiente no topo para melhorar visibilidade dos botões */}
           <LinearGradient
@@ -298,7 +348,7 @@ export function ProductDetailsScreen() {
             }}
           />
 
-          {/* Botões de navegação sobrepostos */}
+          {/* Botões de navegação sobrepostos (removido o botão de coração/like) */}
           <View
             className="absolute top-0 left-0 right-0 flex-row items-center justify-between px-4"
             style={{ paddingTop: insets.top || 16 }}
@@ -311,27 +361,14 @@ export function ProductDetailsScreen() {
               <ArrowLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
 
-            <View className="flex-row">
-              <TouchableOpacity
-                onPress={toggleFavorite}
-                className="w-10 h-10 rounded-full bg-black/30 items-center justify-center mr-2"
-                activeOpacity={0.8}
-              >
-                <Heart
-                  size={20}
-                  color="#FFFFFF"
-                  fill={isFavorite ? "#FFFFFF" : "transparent"}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleShare}
-                className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
-                activeOpacity={0.8}
-              >
-                <Share2 size={20} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
+            {/* Apenas botão de compartilhar (removido o botão de favorito/coração) */}
+            <TouchableOpacity
+              onPress={handleShareProduct}
+              className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
+              activeOpacity={0.8}
+            >
+              <Share2 size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
 
           {/* Badge de desconto (se houver) */}
