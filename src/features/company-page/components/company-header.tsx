@@ -139,26 +139,6 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
           {/* INÍCIO: Seção de Informações de Delivery */}
           {shouldShowDeliveryInfo() && vm.config?.delivery && (
             <View className="mt-4 pt-4 border-t border-gray-100">
-              <HStack className="items-center justify-between mb-3">
-                <HStack space="sm" alignItems="center">
-                  <Truck size={18} color={primaryColor} />
-                  <Text className="font-medium text-gray-800">Delivery</Text>
-                </HStack>
-
-                {/* Botão para ver mais detalhes */}
-                <TouchableOpacity onPress={onMoreInfoPress}>
-                  <HStack space="xs" alignItems="center">
-                    <Text
-                      className="text-sm text-primary-500"
-                      style={{ color: primaryColor }}
-                    >
-                      Ver detalhes
-                    </Text>
-                    <Info size={14} color={primaryColor} />
-                  </HStack>
-                </TouchableOpacity>
-              </HStack>
-
               {/* Informações do Delivery */}
               <View className="flex-row justify-between items-center">
                 {/* Tempo estimado */}
@@ -170,7 +150,9 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                     >
                       <Clock size={16} color={primaryColor} />
                     </View>
-                    <Text className="text-xs text-gray-500">Tempo</Text>
+                    <Text className="text-xs text-gray-500">
+                      Tempo Estimado
+                    </Text>
                     <Text className="text-sm font-medium text-gray-800">
                       {vm.config.delivery.tempo_estimado_entrega} min
                     </Text>
@@ -185,7 +167,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                   >
                     <DollarSign size={16} color={primaryColor} />
                   </View>
-                  <Text className="text-xs text-gray-500">Taxa</Text>
+                  <Text className="text-xs text-gray-500">Taxa de Entrega</Text>
                   <Text className="text-sm font-medium text-gray-800">
                     {formatCurrency(vm.config.delivery.taxa_entrega || "0")}
                   </Text>
@@ -200,7 +182,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                     >
                       <DollarSign size={16} color={primaryColor} />
                     </View>
-                    <Text className="text-xs text-gray-500">Mínimo</Text>
+                    <Text className="text-xs text-gray-500">Pedido Mínimo</Text>
                     <Text className="text-sm font-medium text-gray-800">
                       {formatCurrency(vm.config.delivery.pedido_minimo)}
                     </Text>
