@@ -40,6 +40,8 @@ import { formatSocialUrl } from "@/src/utils/social.utils";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatDateToTimeString } from "@/src/utils/date.utils";
 import { SafeMap } from "@/components/common/safe-map";
+import { getPaymentMethod } from "@/src/utils/payment-methods.utils";
+import { PaymentMethodsDisplay } from "./payment-methods-display";
 
 interface CompanyInfoModalProps {
   isVisible: boolean;
@@ -188,7 +190,6 @@ export function CompanyInfoModal({
                 </Text>
               </Box>
             )}
-
             {/* Seção de Localização */}
             {profile.endereco && (
               <VStack space="md" className="mb-6">
@@ -210,7 +211,6 @@ export function CompanyInfoModal({
                 </TouchableOpacity>
               </VStack>
             )}
-
             {/* Seção de Horário de Funcionamento */}
             <VStack space="md" className="mb-6">
               <SectionHeader
@@ -265,7 +265,6 @@ export function CompanyInfoModal({
                 })}
               </Box>
             </VStack>
-
             {/* Seção de Informações de Entrega */}
             {config?.delivery && vm.hasDelivery() && (
               <VStack space="md" className="mb-6">
@@ -362,7 +361,6 @@ export function CompanyInfoModal({
                 </Box>
               </VStack>
             )}
-
             {/* Seção de Contato */}
             {(profile.telefone || profile.whatsapp || profile.email) && (
               <VStack space="md" className="mb-6">
@@ -423,7 +421,6 @@ export function CompanyInfoModal({
                 </Box>
               </VStack>
             )}
-
             {/* Seção de Redes Sociais */}
             {hasSocialNetworks && (
               <VStack space="md" className="mb-6">
@@ -475,40 +472,30 @@ export function CompanyInfoModal({
                 </HStack>
               </VStack>
             )}
-
-            {/* Formas de Pagamento, se disponível */}
+            {/*  Formas de Pagamento, se disponível  */}
             {profile.opcoes_pagamento &&
               profile.opcoes_pagamento.filter((op) => op.ativo).length > 0 && (
                 <VStack space="md" className="mb-6">
-                  <SectionHeader
-                    icon={CreditCard}
-                    title="Formas de Pagamento"
-                    color={primaryColor}
-                  />
+                  <View className="flex-row flex-wrap gap-3 bg-yellow-400">
+                    {profile.opcoes_pagamento &&
+                      profile.opcoes_pagamento.filter((op) => op.ativo).length >
+                        0 && (
+                        <VStack space="md" className="mb-6">
+                          <SectionHeader
+                            icon={CreditCard}
+                            title="Formas de Pagamento"
+                            color={primaryColor}
+                          />
 
-                  <View className="flex-row flex-wrap gap-2">
-                    {profile.opcoes_pagamento
-                      .filter((op) => op.ativo)
-                      .map((option, index) => (
-                        <View
-                          key={index}
-                          className="px-3 py-1.5 rounded-full"
-                          style={{
-                            backgroundColor: `${primaryColor}15`,
-                          }}
-                        >
-                          <Text
-                            style={{ color: primaryColor }}
-                            className="font-medium"
-                          >
-                            {option.tipo}
-                          </Text>
-                        </View>
-                      ))}
+                          <PaymentMethodsDisplay
+                            paymentOptions={profile.opcoes_pagamento}
+                            primaryColor={primaryColor}
+                          />
+                        </VStack>
+                      )}
                   </View>
                 </VStack>
               )}
-
             {/* Diferenciais/Adicionais, se houver */}
             {profile.adicionais && profile.adicionais.length > 0 && (
               <VStack space="md" className="mb-6">

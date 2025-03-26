@@ -11,6 +11,7 @@ import { CompanyInfoModal } from "../components/company-info-modal";
 import { ScrollView } from "react-native-gesture-handler";
 import { CompanySpecificHeader } from "../components/company-specific-header";
 import { router } from "expo-router";
+import { CompanyGallery } from "../components/company-gallery";
 
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
@@ -107,6 +108,9 @@ export function CompanyPageContent() {
         <View>
           {/* Cabeçalho da empresa */}
           <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
+
+          {/* Galeria de imagens da empresa */}
+          <CompanyGallery />
 
           {/* Produtos em destaque (da vitrine) */}
           {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (

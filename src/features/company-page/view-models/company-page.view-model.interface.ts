@@ -19,4 +19,6 @@ export interface ICompanyPageViewModel {
 
   shouldShowDeliveryInfo: () => boolean;
   isCartEnabled: () => boolean;
+
+  getGalleryImages: () => string[];
 }

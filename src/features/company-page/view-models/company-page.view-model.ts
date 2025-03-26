@@ -112,6 +112,24 @@ export function useCompanyPageViewModel(
     );
   };
 
+  const getGalleryImages = () => {
+    if (!profile) return [];
+
+    const images: string[] = [];
+
+    // Adicionar imagens 01-06 se existirem
+    for (let i = 1; i <= 6; i++) {
+      const key = `imagem_0${i}` as keyof typeof profile;
+      const imageUrl = profile[key] as string | null;
+
+      if (imageUrl) {
+        images.push(imageUrl);
+      }
+    }
+
+    return images;
+  };
+
   return {
     profile,
     products,
@@ -130,5 +148,6 @@ export function useCompanyPageViewModel(
     hasDelivery,
     shouldShowDeliveryInfo,
     isCartEnabled,
+    getGalleryImages,
   };
 }
