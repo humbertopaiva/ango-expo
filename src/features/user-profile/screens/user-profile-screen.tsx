@@ -147,7 +147,7 @@ export function UserProfileScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input>
                     <InputField
-                      placeholder="(XX) X XXXX-XXXX"
+                      placeholder="Ex.: (32) 9 9999-9999"
                       value={maskPhoneNumber(value)}
                       onChangeText={(text) => {
                         // Permitir apenas números
