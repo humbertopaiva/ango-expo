@@ -12,6 +12,7 @@ interface ImagePreviewProps {
   containerClassName?: string;
   resizeMode?: "cover" | "contain" | "stretch" | "center";
   style?: StyleProp<ViewStyle>;
+  rounded?: boolean;
 }
 
 export function ImagePreview({
@@ -23,15 +24,20 @@ export function ImagePreview({
   containerClassName = "",
   resizeMode = "cover",
   style,
+  rounded = true,
 }: ImagePreviewProps) {
   const Icon = fallbackIcon;
 
   if (!uri) {
     return (
       <View
-        className={`rounded-lg border bg-gray-100 items-center justify-center ${containerClassName}`}
+        className={`border bg-gray-100 items-center justify-center ${containerClassName}`}
         style={[
-          { width: width as DimensionValue, height: height as DimensionValue },
+          {
+            width: width as DimensionValue,
+            height: height as DimensionValue,
+            borderRadius: rounded ? 8 : 0,
+          },
           style,
         ]}
       >
@@ -42,9 +48,13 @@ export function ImagePreview({
 
   return (
     <View
-      className={`rounded-lg overflow-hidden ${containerClassName}`}
+      className={`overflow-hidden ${containerClassName}`}
       style={[
-        { width: width as DimensionValue, height: height as DimensionValue },
+        {
+          width: width as DimensionValue,
+          height: height as DimensionValue,
+          borderRadius: rounded ? 8 : 0,
+        },
         style,
       ]}
     >

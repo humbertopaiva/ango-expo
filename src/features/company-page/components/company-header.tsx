@@ -74,6 +74,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
           height="100%"
           resizeMode="cover"
           containerClassName={vm.profile.banner ? "" : "bg-gray-100"}
+          rounded={false}
         />
 
         {/* Gradiente para melhorar legibilidade do conteúdo */}
