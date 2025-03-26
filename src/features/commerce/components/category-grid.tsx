@@ -110,7 +110,7 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
           <View key={category.id} style={{ width: itemWidth }} className="p-2">
             <TouchableOpacity
               onPress={() =>
-                router.push(`/(drawer)/categoria/${category.slug}`)
+                router.push(`/(drawer)/(tabs)/categoria/${category.slug}`)
               }
               activeOpacity={0.7}
               className="w-full"
