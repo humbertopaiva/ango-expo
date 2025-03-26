@@ -339,11 +339,11 @@ export function AdaptiveProductCard({
             )}
           </View>
 
-          {/* Quick-add button */}
+          {/* Quick-add button - Agora será mostrado sempre que isCartEnabled for true, independente do tipo de plano */}
           {isCartEnabled && (
             <TouchableOpacity
               onPress={handleAddToCart}
-              className="absolute bottom-3 right-3 bg-white rounded-full p-2 shadow-md"
+              className="absolute bottom-3 right-3 rounded-full p-2 shadow-md"
               style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
             >
               <ShoppingBag size={16} color="#FFFFFF" />
@@ -392,7 +392,7 @@ export function AdaptiveProductCard({
             )}
 
             {product.parcelamento_cartao && product.quantidade_parcelas && (
-              <Text className="text-xs text-white mt-1">
+              <Text className="text-xs text-gray-600 mt-1">
                 {product.parcelas_sem_juros ? (
                   <>
                     ou {product.quantidade_parcelas}x de{" "}

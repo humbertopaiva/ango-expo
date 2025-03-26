@@ -18,6 +18,9 @@ import { router } from "expo-router";
 import { HStack } from "@gluestack-ui/themed";
 import { Eye } from "lucide-react-native";
 import { animationUtils } from "@/src/utils/animations.utils";
+import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
+import { useToast } from "@gluestack-ui/themed";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 interface CatalogProductCardProps {
   product: CompanyProduct;
@@ -32,11 +35,11 @@ export function CatalogProductCard({
 }: CatalogProductCardProps) {
   const vm = useCompanyPageContext();
   const { width } = Dimensions.get("window");
+  const cartVm = useCartViewModel();
+  const toast = useToast();
 
-  // Calculando as dimensões ideais para o card
-  const cardWidth = Platform.OS === "web" ? "auto" : width / 2 - 16; // Considerando padding
-  const imageHeight = Platform.OS === "web" ? 160 : width / 2 - 16;
-  const cardHeight = Platform.OS === "web" ? "auto" : imageHeight + 120; // Altura da imagem + conteúdo
+  // Verificar se o carrinho está habilitado
+  const isCartEnabled = vm.config?.delivery?.habilitar_carrinho !== false;
 
   // Animações
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -89,6 +92,21 @@ export function CatalogProductCard({
     }, 150);
   };
 
+  // Adicionar ao carrinho
+  const handleAddToCart = (e: any) => {
+    e.stopPropagation();
+    if (!product || !vm.profile) return;
+
+    // Animação de pulse no botão
+    pulseAnimation();
+
+    // Adiciona o produto ao carrinho
+    cartVm.addProduct(product, vm.profile.empresa.slug, vm.profile.nome);
+
+    // Mostra um toast de confirmação
+    toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
+  };
+
   // Cor primária da empresa ou valor default
   const primaryColor = vm.primaryColor || "#F4511E";
 
@@ -98,8 +116,6 @@ export function CatalogProductCard({
         {
           transform: [{ scale: scaleAnim }],
           opacity: fadeAnim,
-          height: cardHeight,
-          width: cardWidth,
         },
         styles.container,
       ]}
@@ -123,12 +139,6 @@ export function CatalogProductCard({
 
             {/* Badges */}
             <View className="absolute top-0 left-0 right-0 p-2 flex-row justify-between">
-              {showFeaturedBadge && (
-                <View className="bg-amber-500 rounded-full p-1.5 shadow-sm">
-                  <Star size={14} color="#fff" />
-                </View>
-              )}
-
               {product.preco_promocional && (
                 <View className="bg-red-500 px-2 py-1 rounded-full shadow-sm">
                   <Text className="text-white text-xs font-bold">
@@ -141,6 +151,17 @@ export function CatalogProductCard({
                 </View>
               )}
             </View>
+
+            {/* Botão Adicionar ao Carrinho */}
+            {isCartEnabled && (
+              <TouchableOpacity
+                onPress={handleAddToCart}
+                className="absolute bottom-3 right-3 rounded-full p-2 shadow-md"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <ShoppingBag size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Informações do produto */}
@@ -183,7 +204,7 @@ export function CatalogProductCard({
               )}
 
               {product.parcelamento_cartao && product.quantidade_parcelas && (
-                <Text className="text-xs text-white mt-1">
+                <Text className="text-xs text-gray-600 mt-1">
                   {product.parcelas_sem_juros ? (
                     <>
                       ou {product.quantidade_parcelas}x de{" "}
