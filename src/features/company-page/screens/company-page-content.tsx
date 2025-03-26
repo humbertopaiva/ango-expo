@@ -93,12 +93,12 @@ export function CompanyPageContent() {
   return (
     <View className="flex-1 bg-gray-50 relative">
       {/* Header específico da empresa */}
-      <CompanySpecificHeader
+      {/* <CompanySpecificHeader
         title={companyTitle}
         subtitle={companySubtitle}
         primaryColor={primaryColor}
         onBackPress={handleBackPress}
-      />
+      /> */}
 
       <ScrollView
         className="flex-1 bg-gray-50"
