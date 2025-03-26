@@ -9,7 +9,7 @@ import {
   Text,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Menu, ArrowLeft } from "lucide-react-native";
+import { Menu, ArrowLeft, User } from "lucide-react-native";
 import { router, useNavigation, usePathname } from "expo-router";
 import { DrawerActions } from "@react-navigation/native";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -40,8 +40,6 @@ export function AppBar({
 }: AppBarProps) {
   const navigation = useNavigation();
 
-  const [userInitials, setUserInitials] = useState("");
-
   const handleBackPress = () => {
     if (onBackButtonPress) {
       onBackButtonPress();
@@ -61,23 +59,6 @@ export function AppBar({
       );
     }
   };
-
-  useEffect(() => {
-    const loadUserData = async () => {
-      const userData = await userPersistenceService.getUserPersonalInfo();
-      if (userData && userData.fullName) {
-        // Obter iniciais do nome
-        const names = userData.fullName.split(" ");
-        const initials =
-          names.length > 1
-            ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase()
-            : names[0].substring(0, 2).toUpperCase();
-        setUserInitials(initials);
-      }
-    };
-
-    loadUserData();
-  }, []);
 
   return (
     <View>
@@ -132,14 +113,12 @@ export function AppBar({
           </HStack>
 
           {/* Conteúdo do lado direito (opcional) */}
-          {!rightContent && userInitials && (
+          {!rightContent && (
             <TouchableOpacity
               onPress={() => router.push("/(drawer)/profile")}
-              className="w-8 h-8 rounded-full bg-white/20 items-center justify-center"
+              className="p-2 rounded-full bg-white/20 active:bg-white/30 ml-2"
             >
-              <Text className="text-white font-medium text-xs">
-                {userInitials}
-              </Text>
+              <User size={24} color="white" />
             </TouchableOpacity>
           )}
         </HStack>
