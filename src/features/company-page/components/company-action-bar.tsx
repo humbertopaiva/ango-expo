@@ -92,7 +92,7 @@ export function CompanyActionBar() {
               </View>
               <Text
                 style={[styles.buttonText, { color: contrastTextColor }]}
-                className="font-semibold text-lg"
+                className="font-semibold text-md"
               >
                 Carrinho
               </Text>
@@ -114,7 +114,7 @@ export function CompanyActionBar() {
               <Clock size={20} color={primaryColor} />
               <Text
                 style={[styles.buttonText, { color: primaryColor }]}
-                className="font-semibold text-lg"
+                className="font-semibold text-md"
               >
                 Meus Pedidos
               </Text>

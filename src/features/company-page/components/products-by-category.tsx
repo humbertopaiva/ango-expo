@@ -208,7 +208,7 @@ export function ProductsByCategory({
   }
 
   return (
-    <View className="mb-8 mt-8">
+    <View className="mb-8 ">
       {/* Header e barra de pesquisa */}
       <View className="px-4 mb-4">
         <HStack className="items-center justify-between mb-6">
@@ -219,12 +219,8 @@ export function ProductsByCategory({
         <View className="mb-4">
           <Input
             size="md"
-            className="bg-white border-gray-200 shadow-sm rounded-xl"
+            className="bg-white border-gray-300 shadow-sm rounded-xl"
             style={{
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.06,
-              shadowRadius: 2,
               elevation: 2,
             }}
           >
@@ -290,11 +286,8 @@ export function ProductsByCategory({
                 <TouchableOpacity
                   onPress={() => setSelectedCategory(item)}
                   style={{
-                    backgroundColor: isActive
-                      ? primaryColor
-                      : Platform.OS === "ios"
-                      ? "rgba(243, 244, 246, 0.8)" // iOS slightly transparent gray
-                      : "#f3f4f6", // Gray-100 for Android and Web
+                    backgroundColor: isActive ? primaryColor : "#FFFFFF",
+
                     borderWidth: isActive ? 0 : 1,
                     borderColor: "rgba(229, 231, 235, 0.8)",
                     marginRight: 10,
