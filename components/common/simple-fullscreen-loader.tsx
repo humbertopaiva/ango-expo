@@ -63,8 +63,9 @@ export function SimpleFullscreenLoader({
         {/* Logo */}
         <Image
           source={require("@/assets/images/logo-white.png")}
-          style={[styles.logo, { width: logoSize * 2, height: logoSize }]}
+          style={[styles.logo]}
           resizeMode="contain"
+          className="w-32"
         />
 
         {/* Spinner abaixo da logo */}
