@@ -580,7 +580,7 @@ export function ProductDetailsScreen() {
                     >
                       <ShoppingBag size={20} color={contrastTextColor} />
                       <Text
-                        className="font-semibold ml-2 text-lg"
+                        className="font-semibold ml-2 text-md"
                         style={{ color: contrastTextColor }}
                       >
                         Adicionar ao Carrinho

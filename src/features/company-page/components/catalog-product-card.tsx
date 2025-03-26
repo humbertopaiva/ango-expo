@@ -86,7 +86,8 @@ export function CatalogProductCard({
     // Aplique um pequeno atraso para que a animação seja visível antes da navegação
     setTimeout(() => {
       router.push({
-        pathname: `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}`,
+        pathname:
+          `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}` as any,
         params: { productId: product.id },
       });
     }, 150);
