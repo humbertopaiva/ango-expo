@@ -1,5 +1,6 @@
 // Path: components/navigation/custom-drawer-content.tsx
-import React from "react";
+
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -33,12 +34,16 @@ import {
   BarChart2,
   ShoppingBag,
   User,
+  LayoutPanelLeft,
+  User2,
+  SquareMenu,
 } from "lucide-react-native";
 import { DrawerActions } from "@react-navigation/native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { Box, Divider, HStack, VStack } from "@gluestack-ui/themed";
 import { useCompanyData } from "@/src/hooks/use-company-data";
 import { ResilientImage } from "../common/resilient-image";
+import { cacheService } from "@/src/services/cache-service";
 
 export function CustomDrawerContent(props: DrawerContentComponentProps) {
   const insets = useSafeAreaInsets();
@@ -47,9 +52,30 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
   const profile = useAuthStore((state) => state.profile);
   const clearAuth = useAuthStore((state) => state.clearAuth);
-  const { company } = useCompanyData();
+  const { company, loading, clearCompanyData } = useCompanyData();
+  const prevAuthState = useRef(isAuthenticated);
+  const prevCompanyId = useRef(profile?.company_id);
 
   const primaryColor = THEME_COLORS.primary;
+
+  // Verificar mudanças de autenticação ou ID da empresa
+  useEffect(() => {
+    const authChanged = prevAuthState.current !== isAuthenticated;
+    const companyIdChanged = prevCompanyId.current !== profile?.company_id;
+
+    prevAuthState.current = isAuthenticated;
+    prevCompanyId.current = profile?.company_id;
+
+    // Não fazer nada se não houve mudança
+    if (!authChanged && !companyIdChanged) {
+      return;
+    }
+
+    // Limpar dados da empresa se o usuário fez logout
+    if (authChanged && !isAuthenticated) {
+      clearCompanyData();
+    }
+  }, [isAuthenticated, profile, clearCompanyData]);
 
   // Handler para navegação
   const handleNavigation = (path: string) => {
@@ -71,10 +97,23 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
     return pathname.startsWith(path);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Primeiro fechar o drawer
+    try {
+      navigation.dispatch(DrawerActions.closeDrawer());
+    } catch (error) {
+      console.log("Erro ao fechar drawer:", error);
+    }
+
+    // Limpar o cache para a empresa atual
+    if (profile?.company_id) {
+      await cacheService.remove(`company_${profile.company_id}`);
+      clearCompanyData(); // Limpar dados em memória também
+    }
+
+    // Limpar autenticação e redirecionar
     clearAuth();
     router.replace("/(drawer)/(tabs)/comercio-local");
-    navigation.dispatch(DrawerActions.closeDrawer());
   };
 
   const handleLogin = () => {
@@ -132,8 +171,8 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
   // Itens do menu para área administrativa
   const adminMenuItems = [
     {
-      label: "Dashboard",
-      icon: BarChart2,
+      label: "Painel Inicial",
+      icon: SquareMenu,
       path: "/(drawer)/admin/dashboard",
     },
     {
@@ -157,9 +196,14 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
       path: "/(drawer)/admin/leaflets",
     },
     {
-      label: "Configurações",
-      icon: Settings,
+      label: "Config. do Perfil",
+      icon: User2,
       path: "/(drawer)/admin/profile",
+    },
+    {
+      label: "Config. do App",
+      icon: LayoutPanelLeft,
+      path: "/(drawer)/admin/delivery-config",
     },
   ];
 
@@ -210,7 +254,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
       </HStack>
 
       {/* Perfil (se autenticado) */}
-      {isAuthenticated && (
+      {isAuthenticated && company && (
         <View className="px-4 py-4 border-b border-slate-100">
           <HStack space="md" alignItems="center">
             <View className="bg-primary-50 w-12 h-12 rounded-full items-center justify-center overflow-hidden">
@@ -238,7 +282,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
         {...props}
         contentContainerStyle={{ paddingTop: 0 }}
       >
-        {/* Seção de navegação pública */}
+        // Path: components/navigation/custom-drawer-content.tsx (continuação)
         <View className="px-2 pt-2">
           <Text className="text-xs font-medium text-slate-400 px-4 py-2 uppercase">
             Navegação
@@ -246,7 +290,6 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 
           {publicMenuItems.map(renderMenuItem)}
         </View>
-
         {/* Seção de administração (se autenticado) */}
         {isAuthenticated && (
           <View className="mt-4 px-2">

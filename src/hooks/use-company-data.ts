@@ -1,4 +1,5 @@
 // Path: src/hooks/use-company-data.ts
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/src/services/api";
 import useAuthStore from "@/src/stores/auth";
@@ -26,13 +27,29 @@ export function useCompanyData() {
   const toast = useToast();
   const initialized = useRef(false);
   const fetchingRef = useRef(false);
+  const lastCompanyId = useRef<string | null>(null);
 
   const companyId = useAuthStore((state) => state.getCompanyId());
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+
+  // Função para limpar os dados da empresa
+  const clearCompanyData = useCallback(() => {
+    setCompany(null);
+    initialized.current = false;
+    lastCompanyId.current = null;
+  }, []);
 
   const fetchCompanyData = useCallback(
     async (forceRefresh = false) => {
-      if (!companyId) {
-        console.log("CompanyId não encontrado");
+      // Verificar se existe um ID de empresa e se está autenticado
+      if (!companyId || !isAuthenticated) {
+        console.log("CompanyId não encontrado ou usuário não autenticado");
+        clearCompanyData();
+        return;
+      }
+
+      // Evitar buscar dados para o mesmo ID repetidamente
+      if (lastCompanyId.current === companyId && !forceRefresh) {
         return;
       }
 
@@ -53,6 +70,7 @@ export function useCompanyData() {
           );
           if (cachedData) {
             setCompany(cachedData);
+            lastCompanyId.current = companyId;
             return;
           }
         } catch (error) {
@@ -75,6 +93,7 @@ export function useCompanyData() {
         await cacheService.set(cacheKey, companyData);
 
         setCompany(companyData);
+        lastCompanyId.current = companyId;
         setError(null);
       } catch (err) {
         console.error("Erro ao buscar dados da empresa:", err);
@@ -82,8 +101,9 @@ export function useCompanyData() {
         // Tentar usar dados em cache como fallback mesmo se forcedRefresh
         try {
           const cachedData = await cacheService.get<Company>(cacheKey);
-          if (cachedData && !company) {
+          if (cachedData) {
             setCompany(cachedData);
+            lastCompanyId.current = companyId;
             console.log("Usando cache como fallback após erro na API");
           } else {
             const errorMessage =
@@ -94,9 +114,7 @@ export function useCompanyData() {
             setError(new Error(errorMessage));
 
             // Exibir toast apenas se não temos dados
-            if (!company) {
-              toastUtils.error(toast, "Falha ao carregar dados da empresa");
-            }
+            toastUtils.error(toast, "Falha ao carregar dados da empresa");
           }
         } catch (cacheError) {
           console.error(
@@ -109,7 +127,7 @@ export function useCompanyData() {
         fetchingRef.current = false;
       }
     },
-    [companyId, company, toast]
+    [companyId, isAuthenticated, clearCompanyData, toast]
   );
 
   // Função para atualizar apenas certos campos da empresa
@@ -131,13 +149,29 @@ export function useCompanyData() {
     [companyId, company]
   );
 
+  // Efeito para lidar com mudanças de autenticação
   useEffect(() => {
-    // Evitar múltiplas chamadas durante a montagem do componente
-    if (!initialized.current && companyId) {
+    if (!isAuthenticated) {
+      clearCompanyData();
+    }
+  }, [isAuthenticated, clearCompanyData]);
+
+  // Efeito para carregar dados iniciais e lidar com mudanças de ID
+  useEffect(() => {
+    // Se não estiver autenticado, não fazer nada
+    if (!isAuthenticated) {
+      return;
+    }
+
+    // Se o ID da empresa mudou ou ainda não inicializamos e temos um ID
+    if (
+      companyId &&
+      (lastCompanyId.current !== companyId || !initialized.current)
+    ) {
       fetchCompanyData();
       initialized.current = true;
     }
-  }, [fetchCompanyData, companyId]);
+  }, [fetchCompanyData, companyId, isAuthenticated]);
 
   return {
     company,
@@ -145,5 +179,6 @@ export function useCompanyData() {
     error,
     refresh: () => fetchCompanyData(true),
     updateCompanyFields,
+    clearCompanyData,
   };
 }
