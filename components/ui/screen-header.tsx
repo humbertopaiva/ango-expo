@@ -101,7 +101,7 @@ export default function ScreenHeader({
               {/* Título e Subtítulo */}
               <View className="flex-1">
                 <Text
-                  className={`text-2xl font-bold ${
+                  className={`text-2xl font-semibold ${
                     variant === "primary" ? "text-white" : "text-gray-900"
                   }`}
                 >
@@ -109,7 +109,7 @@ export default function ScreenHeader({
                 </Text>
                 {subtitle && (
                   <Text
-                    className={`text-sm ${
+                    className={`text-sm font-medium ${
                       variant === "primary" ? "text-white/80" : "text-gray-500"
                     }`}
                   >
