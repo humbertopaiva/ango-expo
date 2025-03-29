@@ -34,6 +34,12 @@ export default function PublicLayout() {
             title: "Encartes",
           }}
         />
+        <Tabs.Screen
+          name="categoria"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Tabs>
     </View>
   );

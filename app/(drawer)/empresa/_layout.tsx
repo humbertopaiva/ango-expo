@@ -38,30 +38,8 @@ export default function CompanyLayout() {
       >
         <Stack.Screen
           name="[companySlug]/index"
-          options={({ route }: { route: { params?: { from?: string } } }) => {
-            const { from } = route.params || {};
-
-            return {
-              title: "Perfil da Empresa",
-              headerLeft: () => (
-                <TouchableOpacity
-                  onPress={() => {
-                    if (from === "category") {
-                      // Voltar para a página de categoria
-                      router.back();
-                      // Ou voltar para um caminho específico
-                      // router.push(`/(drawer)/categoria/${categorySlug}`);
-                    } else {
-                      // Comportamento padrão
-                      router.back();
-                    }
-                  }}
-                  style={{ marginLeft: 16 }}
-                >
-                  <ArrowLeft size={24} color="#F4511E" />
-                </TouchableOpacity>
-              ),
-            };
+          options={{
+            headerShown: false,
           }}
         />
         <Stack.Screen
