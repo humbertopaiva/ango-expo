@@ -53,7 +53,6 @@ export function ImagePreview({
         {
           width: width as DimensionValue,
           height: height as DimensionValue,
-          borderRadius: rounded ? 8 : 0,
         },
         style,
       ]}
