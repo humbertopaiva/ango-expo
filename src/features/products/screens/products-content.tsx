@@ -59,18 +59,8 @@ export function ProductsContent() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-gray-100">
       <View className="flex-1 w-full container px-4 mx-auto">
-        {/* Search */}
-        <View className="mt-3">
-          <SearchInput
-            value={vm.searchTerm}
-            onChangeText={vm.setSearchTerm}
-            placeholder="Buscar produtos..."
-            disabled={vm.isLoading}
-          />
-        </View>
-
         {/* Tutorial de swipe (exibido apenas na primeira vez) */}
         {showSwipeTutorial && (
           <SwipeTutorial
@@ -87,6 +77,15 @@ export function ProductsContent() {
             onSelectCategory={vm.setSelectedCategory}
           />
         )}
+
+        {/* Search */}
+
+        <SearchInput
+          value={vm.searchTerm}
+          onChangeText={vm.setSearchTerm}
+          placeholder="Buscar produtos..."
+          disabled={vm.isLoading}
+        />
 
         {/* Products List */}
         <View className="flex-1 pb-20">

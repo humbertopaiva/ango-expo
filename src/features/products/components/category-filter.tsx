@@ -1,10 +1,19 @@
 // Path: src/features/products/components/category-filter.tsx
 import React from "react";
-import { ScrollView, TouchableOpacity, Text, View } from "react-native";
-import { Category } from "@/src/features/categories/models/category";
+import {
+  ScrollView,
+  TouchableOpacity,
+  Text,
+  View,
+  StyleSheet,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Filter, Grid } from "lucide-react-native";
+import { THEME_COLORS } from "@/src/styles/colors";
+import { Box } from "@/components/ui/box";
 
 interface CategoryFilterProps {
-  categories: Category[];
+  categories: any;
   selectedCategoryId: number | null;
   onSelectCategory: (categoryId: number | null) => void;
 }
@@ -15,48 +24,58 @@ export function CategoryFilter({
   onSelectCategory,
 }: CategoryFilterProps) {
   return (
-    <View className="mb-4">
+    <View className="mb-4 mt-2">
+      {/* Cabeçalho elegante com degradê */}
+      <Box className="rounded-xl mb-4 py-2 px-4">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <Filter size={18} color={THEME_COLORS.primary} />
+            <Text className="ml-2 text-md font-medium text-primary-500">
+              Descubra por categorias
+            </Text>
+          </View>
+        </View>
+      </Box>
+
+      {/* Categorias rolantes */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
-        className="py-2"
+        contentContainerStyle={{ paddingHorizontal: 4 }}
       >
         {/* Opção "Todos" */}
         <TouchableOpacity
           onPress={() => onSelectCategory(null)}
-          className={`px-4 py-2 rounded-full mr-2 ${
-            selectedCategoryId === null
-              ? "bg-primary-500"
-              : "bg-gray-100 border border-gray-200"
-          }`}
+          style={[
+            styles.categoryButton,
+            selectedCategoryId === null && styles.activeButton,
+          ]}
         >
           <Text
-            className={`${
-              selectedCategoryId === null ? "text-white" : "text-gray-800"
-            } font-medium`}
+            style={[
+              styles.categoryText,
+              selectedCategoryId === null && styles.activeText,
+            ]}
           >
-            Todos
+            Todos os produtos
           </Text>
         </TouchableOpacity>
 
         {/* Lista de categorias */}
-        {categories.map((category) => (
+        {categories.map((category: any) => (
           <TouchableOpacity
             key={category.id.toString()}
             onPress={() => onSelectCategory(Number(category.id))}
-            className={`px-4 py-2 rounded-full mr-2 ${
-              selectedCategoryId === Number(category.id)
-                ? "bg-primary-500"
-                : "bg-gray-100 border border-gray-200"
-            }`}
+            style={[
+              styles.categoryButton,
+              selectedCategoryId === Number(category.id) && styles.activeButton,
+            ]}
           >
             <Text
-              className={`${
-                selectedCategoryId === Number(category.id)
-                  ? "text-white"
-                  : "text-gray-800"
-              } font-medium`}
+              style={[
+                styles.categoryText,
+                selectedCategoryId === Number(category.id) && styles.activeText,
+              ]}
             >
               {category.nome}
             </Text>
@@ -66,3 +85,33 @@ export function CategoryFilter({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  categoryButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 100,
+    marginRight: 10,
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "rgba(244, 81, 30, 0.15)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  activeButton: {
+    backgroundColor: THEME_COLORS.primary,
+    borderColor: THEME_COLORS.primary,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#4B5563",
+  },
+  activeText: {
+    color: "white",
+    fontWeight: "600",
+  },
+});
