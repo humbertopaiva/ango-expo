@@ -316,7 +316,7 @@ export function ProductDetailsScreen() {
             opacity: fadeAnim,
             transform: [{ scale: imageScaleAnim }],
           }}
-          className="relative"
+          className="relative bg-red-500"
         >
           <ImagePreview
             uri={product.imagem}
@@ -336,44 +336,9 @@ export function ProductDetailsScreen() {
             <Maximize size={22} color="#FFFFFF" />
           </TouchableOpacity>
 
-          {/* Overlay gradiente no topo para melhorar visibilidade dos botões */}
-          <LinearGradient
-            colors={["rgba(0,0,0,0.5)", "transparent"]}
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: 0,
-              height: 100,
-            }}
-          />
-
-          {/* Botões de navegação sobrepostos (removido o botão de coração/like) */}
-          <View
-            className="absolute top-0 left-0 right-0 flex-row items-center justify-between px-4"
-            style={{ paddingTop: insets.top || 16 }}
-          >
-            <TouchableOpacity
-              onPress={handleBack}
-              className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
-              activeOpacity={0.8}
-            >
-              <ArrowLeft size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            {/* Apenas botão de compartilhar (removido o botão de favorito/coração) */}
-            <TouchableOpacity
-              onPress={handleShareProduct}
-              className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
-              activeOpacity={0.8}
-            >
-              <Share2 size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-
           {/* Badge de desconto (se houver) */}
           {discountPercent && (
-            <View className="absolute top-20 right-4 bg-red-500 px-3 py-1 rounded-full">
+            <View className="absolute top-4 right-4 bg-primary-500 px-3 py-1 rounded-full">
               <Text className="text-white font-bold text-sm">
                 {discountPercent}% OFF
               </Text>
