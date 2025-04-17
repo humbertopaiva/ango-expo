@@ -43,7 +43,7 @@ export function CategoryFilter({
         {/* Lista de categorias */}
         {categories.map((category) => (
           <TouchableOpacity
-            key={category.id}
+            key={category.id.toString()}
             onPress={() => onSelectCategory(Number(category.id))}
             className={`px-4 py-2 rounded-full mr-2 ${
               selectedCategoryId === Number(category.id)

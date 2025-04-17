@@ -1,5 +1,6 @@
 // Path: src/features/products/screens/products-content.tsx
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useMemo } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProductsContext } from "../contexts/use-products-context";
@@ -11,12 +12,42 @@ import { router } from "expo-router";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { useCategories } from "../../categories/hooks/use-categories";
 import { CategoryFilter } from "../components/category-filter";
+import { SwipeTutorial } from "@/components/custom/swipe-tutorial";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export function ProductsContent() {
   const vm = useProductsContext();
   const { categories, isLoading: isCategoriesLoading } = useCategories();
+  const [showSwipeTutorial, setShowSwipeTutorial] = useState(false);
+
+  // Verificar se é a primeira vez que o usuário abre a tela
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      try {
+        const hasVisitedBefore = await AsyncStorage.getItem(
+          "products_swipe_tutorial_shown"
+        );
+        if (!hasVisitedBefore) {
+          setShowSwipeTutorial(true);
+          await AsyncStorage.setItem("products_swipe_tutorial_shown", "true");
+        }
+      } catch (error) {
+        console.error("Erro ao verificar primeira visita:", error);
+      }
+    };
+
+    checkFirstVisit();
+  }, []);
+
+  // Memoize as opções de categoria para evitar recriações desnecessárias
+  const categoryOptions = useMemo(() => {
+    return categories.map((category) => ({
+      id: Number(category.id),
+      nome: category.nome,
+      imagem: category.imagem || "",
+    }));
+  }, [categories]);
 
   // Funções para navegação direta em vez de usar modal
   const handleAddProduct = () => {
@@ -40,10 +71,18 @@ export function ProductsContent() {
           />
         </View>
 
+        {/* Tutorial de swipe (exibido apenas na primeira vez) */}
+        {showSwipeTutorial && (
+          <SwipeTutorial
+            show={showSwipeTutorial}
+            onDismiss={() => setShowSwipeTutorial(false)}
+          />
+        )}
+
         {/* Filtro de Categorias */}
-        {!isCategoriesLoading && categories.length > 0 && (
+        {!isCategoriesLoading && categoryOptions.length > 0 && (
           <CategoryFilter
-            categories={categories}
+            categories={categoryOptions}
             selectedCategoryId={vm.selectedCategoryId}
             onSelectCategory={vm.setSelectedCategory}
           />
@@ -52,7 +91,7 @@ export function ProductsContent() {
         {/* Products List */}
         <View className="flex-1 pb-20">
           <ProductsList
-            products={vm.products}
+            products={vm.filteredProducts}
             isLoading={vm.isLoading}
             onEdit={(product) => handleEditProduct(product.id)}
             onDelete={(product) => vm.confirmDeleteProduct(product.id)}
