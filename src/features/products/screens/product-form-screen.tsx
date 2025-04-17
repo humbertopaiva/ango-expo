@@ -92,7 +92,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         categoria: product.categoria ?? 0,
         imagem: product.imagem,
         parcelamento_cartao: product.parcelamento_cartao,
-        parcelas_sem_juros: product.parcelas_sem_juros,
+        // parcelas_sem_juros: product.parcelas_sem_juros,
         desconto_avista: product.desconto_avista,
         status: product.status,
         estoque: product.estoque,
@@ -108,6 +108,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       const dataToSubmit = {
         ...data,
         categoria: data.categoria === 0 ? null : data.categoria,
+        desconto_avista: data.desconto_avista ?? undefined,
       };
 
       if (isEditing && productId) {
@@ -400,12 +401,13 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         </SectionCard>
 
         {/* Opções de Pagamento */}
+
         <SectionCard
           title="Opções de Pagamento"
           icon={<DollarSign size={22} color="#0891B2" />}
         >
           <View className="gap-4 flex flex-col py-4">
-            {/* Usando StatusToggle para Parcelamento */}
+            {/* Checkbox para Parcelamento */}
             <Controller
               control={form.control}
               name="parcelamento_cartao"
@@ -413,14 +415,14 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                 <StatusToggle
                   value={value}
                   onChange={onChange}
-                  activeLabel="Permite Parcelamento"
-                  inactiveLabel="Não Permite Parcelamento"
+                  activeLabel="Aceita pagamento parcelado" // UX writing melhorado
+                  inactiveLabel="Não aceita pagamento parcelado" // UX writing melhorado
                   disabled={isSubmitting}
                 />
               )}
             />
 
-            {/* Quantidade de parcelas (se parcelamento_cartao for true) */}
+            {/* Quantidade de parcelas (aparece apenas se parcelamento_cartao for true) */}
             {form.watch("parcelamento_cartao") && (
               <FormControl
                 isInvalid={!!form.formState.errors.quantidade_parcelas}
@@ -454,21 +456,6 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                 )}
               </FormControl>
             )}
-
-            {/* Usando StatusToggle para Parcelas sem Juros */}
-            <Controller
-              control={form.control}
-              name="parcelas_sem_juros"
-              render={({ field: { onChange, value } }) => (
-                <StatusToggle
-                  value={value}
-                  onChange={onChange}
-                  activeLabel="Parcelas sem Juros"
-                  inactiveLabel="Parcelas com Juros"
-                  disabled={isSubmitting || !form.watch("parcelamento_cartao")}
-                />
-              )}
-            />
 
             {/* Desconto à vista */}
             <FormControl isInvalid={!!form.formState.errors.desconto_avista}>
