@@ -1,6 +1,6 @@
 // Path: src/features/category-page/screens/category-page.tsx
 import React, { useState } from "react";
-import { View } from "react-native";
+import { View, StatusBar } from "react-native";
 import { CategoryPageProvider } from "../contexts/category-page-provider";
 import { CategoryPageContent } from "./category-page-content";
 import { useLocalSearchParams } from "expo-router";
@@ -20,8 +20,8 @@ export function CategoryPage() {
   }
 
   return (
-    <View className="flex-1 bg-background">
-      {/* Utilizando o novo header compacto */}
+    <View className="flex-1 bg-white">
+      {/* Header simplificado sem margens */}
       <CategoryHeader
         categoryName={categoryName}
         categoryImage={categoryImage}

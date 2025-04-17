@@ -24,7 +24,6 @@ export default function AdminLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      <StatusBar backgroundColor="#F4511E" barStyle="light-content" />
       <Stack screenOptions={{ headerShown: false }}>
         {/* Dashboard */}
         <Stack.Screen name="dashboard/index" />

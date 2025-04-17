@@ -1,20 +1,9 @@
-// Path: src/features/category-page/components/category-header.tsx
-import React, { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-  Animated,
-  ImageBackground,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, SlidersHorizontal } from "lucide-react-native";
-import { router } from "expo-router";
+// Path: src/features/category-page/components/new-category-header.tsx
+import React from "react";
+import { View, Text, Image, StyleSheet } from "react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { LinearGradient } from "expo-linear-gradient";
-import { HStack } from "@gluestack-ui/themed";
+import { SlidersHorizontal } from "lucide-react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 interface CategoryHeaderProps {
   categoryName: string | null;
@@ -29,111 +18,65 @@ export function CategoryHeader({
   isLoading,
   onFilterPress,
 }: CategoryHeaderProps) {
-  // Animações
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(-10)).current;
-  const [imageLoaded, setImageLoaded] = useState(false);
-
   // Formata o nome da categoria para exibição
   const formattedCategoryName = formatCategoryName(categoryName);
 
-  useEffect(() => {
-    if (!isLoading && (imageLoaded || !categoryImage)) {
-      // Animar entrada dos elementos
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [isLoading, imageLoaded, categoryImage, fadeAnim, translateY]);
-
-  const handleGoBack = () => {
-    router.back();
-  };
-
-  // Placeholder para o estado de carregamento
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <View style={styles.loadingBar} className="bg-gray-200 animate-pulse" />
+      <View className="w-full px-4 py-3 border-b border-gray-100">
+        <View className="flex-row items-center justify-between">
+          <View className="w-12 h-12 rounded-lg bg-gray-200 animate-pulse" />
+          <View className="h-5 w-1/3 bg-gray-200 animate-pulse rounded-sm" />
+          <View className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+        </View>
       </View>
     );
   }
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: fadeAnim,
-        },
-      ]}
-    >
-      <ImageBackground
-        source={
-          categoryImage
-            ? { uri: categoryImage }
-            : require("@/assets/images/category-placeholder.svg")
-        }
-        style={styles.imageBackground}
-        imageStyle={styles.imageStyle}
-        onLoad={() => setImageLoaded(true)}
-      >
-        <LinearGradient
-          colors={[`${THEME_COLORS.primary}CC`, `${THEME_COLORS.primary}99`]}
-          style={styles.gradient}
+    <View className="w-full px-4 py-3  bg-background border-b border-gray-100">
+      <View className="flex-row items-center justify-between">
+        {/* Imagem da categoria (quadrado arredondado) */}
+        <View className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 border-2 border-primary-500">
+          {categoryImage ? (
+            <Image
+              source={{ uri: categoryImage }}
+              style={styles.categoryImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="w-full h-full bg-primary-50" />
+          )}
+        </View>
+
+        {/* Nome da categoria */}
+        <Text
+          className="font-semibold text-primary-500 flex-1 mx-3"
+          style={styles.categoryTitle}
+          numberOfLines={1}
         >
-          <SafeAreaView edges={["top"]} style={styles.safeArea}>
-            {/* Barra de navegação */}
-            <HStack className="justify-between items-center px-4 py-3">
-              <TouchableOpacity
-                onPress={handleGoBack}
-                style={styles.iconButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <ArrowLeft size={22} color="white" />
-              </TouchableOpacity>
+          {formattedCategoryName}
+        </Text>
 
-              {/* Botão de filtro à direita */}
-              {onFilterPress && (
-                <TouchableOpacity
-                  onPress={onFilterPress}
-                  style={styles.iconButton}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <SlidersHorizontal size={20} color="white" />
-                </TouchableOpacity>
-              )}
-            </HStack>
-
-            {/* Título da categoria - centralizado e proeminente */}
-            <Animated.View
-              style={[styles.titleContainer, { transform: [{ translateY }] }]}
-            >
-              <Text style={styles.categoryTitle} numberOfLines={2}>
-                {formattedCategoryName}
-              </Text>
-            </Animated.View>
-          </SafeAreaView>
-        </LinearGradient>
-      </ImageBackground>
-    </Animated.View>
+        {/* Botão de filtro */}
+        {onFilterPress && (
+          <TouchableOpacity
+            onPress={onFilterPress}
+            className="bg-primary-500 w-10 h-10 items-center justify-center rounded-full"
+            style={styles.filterButton}
+          >
+            <SlidersHorizontal size={18} color={THEME_COLORS.primary} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
   );
 }
 
-// Função para formatar o nome da categoria de forma mais amigável
+// Função para formatar o nome da categoria
 function formatCategoryName(name: string | null): string {
   if (!name) return "Categoria";
 
-  // Lista de palavras que devem permanecer em minúsculo
   const lowercaseWords = [
     "e",
     "de",
@@ -147,86 +90,34 @@ function formatCategoryName(name: string | null): string {
     "para",
   ];
 
-  // Transforma "alimentacao-e-bebidas" em "Alimentação e Bebidas"
   return name
     .replace(/-/g, " ")
     .split(" ")
     .map((word, index) => {
-      // Se for uma das palavras da lista e não for a primeira palavra
       if (lowercaseWords.includes(word.toLowerCase()) && index !== 0) {
         return word.toLowerCase();
       }
-      // Caso contrário, capitalize a primeira letra
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
     .join(" ");
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-      },
-    }),
-  },
-  imageBackground: {
-    width: "100%",
-    height: 160, // Altura ajustável conforme necessário
-  },
-  imageStyle: {
-    resizeMode: "cover",
-  },
-  gradient: {
+  categoryImage: {
     width: "100%",
     height: "100%",
-  },
-  safeArea: {
-    width: "100%",
-    height: "100%",
-  },
-  loadingContainer: {
-    width: "100%",
-    height: 160,
-    justifyContent: "center",
-    backgroundColor: THEME_COLORS.primary,
-  },
-  loadingBar: {
-    height: 30,
-    marginHorizontal: 20,
-    borderRadius: 8,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-  },
-  titleContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
   },
   categoryTitle: {
-    fontSize: 28,
-    fontFamily: "PlusJakartaSans_700Bold",
-    color: "white",
-    textAlign: "center",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  filterButton: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
   },
 });
