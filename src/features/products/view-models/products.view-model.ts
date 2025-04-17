@@ -40,9 +40,19 @@ export function useProductsViewModel(): IProductsViewModel {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
-      // Filtro de categoria
+      // Filtro de categoria - lidando com diferentes formatos da categoria
+      let productCategoryId = null;
+
+      if (product.categoria) {
+        // Pode ser um objeto ou um número
+        productCategoryId =
+          typeof product.categoria === "object"
+            ? product.categoria.id
+            : product.categoria;
+      }
+
       const matchesCategory =
-        selectedCategoryId === null || product.categoria === selectedCategoryId;
+        selectedCategoryId === null || productCategoryId === selectedCategoryId;
 
       // Produto é exibido se passar em ambos os filtros
       return matchesSearch && matchesCategory;
