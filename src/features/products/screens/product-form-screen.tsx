@@ -1,12 +1,11 @@
 // Path: src/features/products/screens/product-form-screen.tsx
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   View,
   ScrollView,
   ActivityIndicator,
   Text,
   Platform,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Controller, useForm } from "react-hook-form";
@@ -22,7 +21,6 @@ import {
   InputField,
   Textarea,
   TextareaInput,
-  Switch,
   useToast,
 } from "@gluestack-ui/themed";
 import { router } from "expo-router";
@@ -39,6 +37,7 @@ import { ImageUpload } from "@/components/common/image-upload";
 import { useCategories } from "@/src/features/categories/hooks/use-categories";
 import { Package, DollarSign } from "lucide-react-native";
 import { FormActions } from "@/components/custom/form-actions";
+import { CategorySelectModal } from "@/components/common/category-select-modal";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -47,7 +46,7 @@ interface ProductFormScreenProps {
 export function ProductFormScreen({ productId }: ProductFormScreenProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCategorySelector, setShowCategorySelector] = useState(false);
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
 
   const { products, createProduct, updateProduct, isLoading } = useProducts();
   const { categories, isLoading: isCategoriesLoading } = useCategories();
@@ -73,32 +72,53 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
     },
   });
 
+  // Esta função auxiliar ajuda a obter o valor correto da categoria para o formulário
+  const getProductCategoryId = useCallback(() => {
+    if (!product || !product.categoria) return 0;
+
+    // Check if categoria is an object with an id property
+    if (
+      typeof product.categoria === "object" &&
+      product.categoria !== null &&
+      "id" in product.categoria
+    ) {
+      return product.categoria.id;
+    }
+
+    // Otherwise return the categoria directly (should be a number)
+    return product.categoria;
+  }, [product]);
   // Preparar as opções de categoria para o select
-  const categoryOptions = [
-    { label: "Sem categoria", value: "0" }, // Valor zero para "Sem categoria"
-    ...categories.map((category) => ({
-      label: category.nome,
-      value: category.id,
-    })),
-  ];
+  const categoryOptions = useMemo(
+    () => [
+      { label: "Sem categoria", value: 0 }, // Valor zero para "Sem categoria"
+      ...categories.map((category) => ({
+        label: category.nome,
+        value: category.id,
+      })),
+    ],
+    [categories]
+  );
 
   useEffect(() => {
     if (product && !isSubmitting) {
+      // Obtém o ID da categoria corretamente
+      const categoryId = getProductCategoryId();
+
       form.reset({
         nome: product.nome,
         descricao: product.descricao,
         preco: product.preco,
         preco_promocional: product.preco_promocional || "",
-        categoria: product.categoria ?? 0,
+        categoria: categoryId, // Usa o valor correto da categoria
         imagem: product.imagem,
         parcelamento_cartao: product.parcelamento_cartao,
-        // parcelas_sem_juros: product.parcelas_sem_juros,
         desconto_avista: product.desconto_avista,
         status: product.status,
         estoque: product.estoque,
       });
     }
-  }, [product, form.reset, isSubmitting]);
+  }, [product, form.reset, isSubmitting, getProductCategoryId]);
 
   const handleSubmit = async (data: ProductFormData) => {
     try {
@@ -136,17 +156,6 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         `Erro ao ${isEditing ? "atualizar" : "criar"} o produto`
       );
       setIsSubmitting(false);
-    }
-  };
-
-  // Função para exibir o seletor de categorias
-  const handleOpenCategorySelect = () => {
-    if (Platform.OS !== "web") {
-      // Para mobile, você pode acessar diretamente o seletor nativo
-      const selectInput = document.getElementById("category-select");
-      if (selectInput) {
-        selectInput.click();
-      }
     }
   };
 
@@ -240,58 +249,33 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               )}
             </FormControl>
 
-            {/* Categoria - Usando o EnhancedSelect */}
+            {/* Categoria - Usando o EnhancedSelect com modal */}
             <Controller
               control={form.control}
               name="categoria"
               render={({ field: { value, onChange } }) => (
-                <EnhancedSelect
-                  label="Categoria"
-                  options={categoryOptions}
-                  value={value}
-                  onSelect={() => {
-                    // Para web, podemos usar o select nativo
-                    if (Platform.OS === "web") {
-                      // Aqui você pode implementar um modal customizado
-                      // ou usar bibliotecas como react-select
-                      const selectValue = window.prompt(
-                        "Escolha uma categoria (digite o número):",
-                        "0 = Sem categoria, " +
-                          categories
-                            .map((c, i) => `${i + 1} = ${c.nome}`)
-                            .join(", ")
-                      );
+                <>
+                  <EnhancedSelect
+                    label="Categoria"
+                    options={categoryOptions}
+                    value={value}
+                    onSelect={() => setIsCategoryModalVisible(true)}
+                    placeholder="Selecione uma categoria"
+                    isInvalid={!!form.formState.errors.categoria}
+                    error={form.formState.errors.categoria?.message}
+                  />
 
-                      if (selectValue !== null) {
-                        const numericValue = parseInt(selectValue);
-                        if (!isNaN(numericValue) && numericValue >= 0) {
-                          if (numericValue === 0) {
-                            onChange(0);
-                          } else if (numericValue <= categories.length) {
-                            onChange(Number(categories[numericValue - 1].id));
-                          }
-                        }
-                      }
-                    } else {
-                      // Em mobile, podemos mostrar um seletor nativo
-                      // através de um Modal ou ActionSheet
-                      // Para simplificar, usaremos um Alert como fizemos anteriormente
-                      Alert.alert(
-                        "Selecione uma Categoria",
-                        "Escolha uma categoria para o produto",
-                        categoryOptions.map((option) => ({
-                          text: option.label,
-                          onPress: () => {
-                            onChange(Number(option.value));
-                          },
-                        }))
-                      );
-                    }
-                  }}
-                  placeholder="Selecione uma categoria"
-                  isInvalid={!!form.formState.errors.categoria}
-                  error={form.formState.errors.categoria?.message}
-                />
+                  <CategorySelectModal
+                    isVisible={isCategoryModalVisible}
+                    onClose={() => setIsCategoryModalVisible(false)}
+                    options={categoryOptions}
+                    selectedValue={value}
+                    onSelect={(selectedValue) => {
+                      onChange(Number(selectedValue));
+                    }}
+                    title="Selecionar Categoria"
+                  />
+                </>
               )}
             />
           </View>
@@ -401,7 +385,6 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         </SectionCard>
 
         {/* Opções de Pagamento */}
-
         <SectionCard
           title="Opções de Pagamento"
           icon={<DollarSign size={22} color="#0891B2" />}
@@ -415,8 +398,8 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                 <StatusToggle
                   value={value}
                   onChange={onChange}
-                  activeLabel="Aceita pagamento parcelado" // UX writing melhorado
-                  inactiveLabel="Não aceita pagamento parcelado" // UX writing melhorado
+                  activeLabel="Aceita pagamento parcelado"
+                  inactiveLabel="Não aceita pagamento parcelado"
                   disabled={isSubmitting}
                 />
               )}
@@ -471,8 +454,8 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                   <Input>
                     <InputField
                       placeholder="0"
-                      onChangeText={(text) => onChange(Number(text))}
-                      value={value?.toString()}
+                      onChangeText={(text) => onChange(Number(text) || 0)}
+                      value={value?.toString() || "0"}
                       keyboardType="numeric"
                       className="bg-white"
                     />

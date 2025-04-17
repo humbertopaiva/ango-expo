@@ -39,7 +39,6 @@ export function EnhancedSelect({
   const selectedOption = options.find(
     (option) =>
       option.value !== null &&
-      option.value !== undefined &&
       option.value.toString() === (value !== null ? value.toString() : "")
   );
 

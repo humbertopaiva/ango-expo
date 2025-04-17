@@ -1,14 +1,17 @@
-// src/features/products/schemas/product.schema.ts
+// Path: src/features/products/schemas/product.schema.ts
 import * as z from "zod";
 
 export const productFormSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   descricao: z.string().min(1, "Descrição é obrigatória"),
   preco: z.string().min(1, "Preço é obrigatório"),
-  preco_promocional: z.string().nullable(),
+  preco_promocional: z.string().nullable().optional(),
   // Aceitando que categoria pode ser 0, que será tratado como null ao ser enviado para API
-  categoria: z.coerce.number(),
-  imagem: z.string().nullable(),
+  categoria: z.coerce
+    .number()
+    .default(0)
+    .transform((val) => (val === 0 ? null : val)), // Transforma 0 em null
+  imagem: z.string().nullable().optional(),
   parcelamento_cartao: z.boolean().default(false),
   parcelas_sem_juros: z.boolean().default(false),
   quantidade_parcelas: z

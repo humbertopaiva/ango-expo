@@ -12,8 +12,8 @@ export interface Product {
   preco_promocional: string | null;
   estoque: number;
   video: string | null;
-  categoria: number | null;
-  empresa: string;
+  categoria: { id: number; nome: string } | number | null;
+  empresa: string | { nome: string; slug: string };
   imagem: string | null;
   parcelamento_cartao: boolean;
   quantidade_parcelas: string | null;
