@@ -1,8 +1,8 @@
 // Path: src/components/common/currency-input.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { DollarSign } from "lucide-react-native";
+import { DollarSign, X } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 interface CurrencyInputProps {
@@ -26,76 +26,87 @@ export function CurrencyInput({
   disabled = false,
   required = false,
 }: CurrencyInputProps) {
-  // Estado para o texto formatado exibido no input
+  // Estado para o valor numérico (em centavos)
+  const [amountInCents, setAmountInCents] = useState<number>(0);
+
+  // Estado para controlar o texto exibido no input
   const [displayValue, setDisplayValue] = useState("");
 
-  // Formatar o valor quando ele muda externamente
+  // Converte o valor inicial para centavos e atualiza o estado
   useEffect(() => {
     if (value) {
-      // Converte para número e formata para exibição
-      const numberValue = parseFloat(value.replace(",", "."));
-      if (!isNaN(numberValue)) {
-        setDisplayValue(formatCurrency(numberValue));
-      } else {
-        setDisplayValue("");
-      }
+      // Converte para número, considerando a vírgula como separador decimal
+      const numValue = parseFloat(value.replace(",", ".")) || 0;
+      // Converte para centavos
+      const cents = Math.round(numValue * 100);
+      setAmountInCents(cents);
+      // Atualiza o texto exibido
+      setDisplayValue(formatCurrency(cents));
     } else {
+      setAmountInCents(0);
       setDisplayValue("");
     }
   }, [value]);
 
-  // Formatar valor como moeda brasileira sem o símbolo R$
-  const formatCurrency = (value: number): string => {
+  // Formata os centavos para exibição como moeda (Ex: 1234 -> "12,34")
+  const formatCurrency = (cents: number): string => {
+    if (cents === 0) return "";
+
+    // Converte centavos para a representação decimal
+    const value = cents / 100;
+
+    // Formata como moeda brasileira (sem o símbolo R$)
     return value.toLocaleString("pt-BR", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
   };
 
-  // Converter de string formatada para número
-  const parseFormattedValue = (formattedValue: string): string => {
-    // Remove todos os caracteres não numéricos exceto vírgula
-    const cleaned = formattedValue.replace(/[^\d,]/g, "");
+  // Processa a entrada de números
+  const handleNumberInput = (text: string) => {
+    // Remove todos os caracteres não numéricos
+    const numericValue = text.replace(/\D/g, "");
 
-    // Substitui vírgula por ponto para compatibilidade com número
-    const normalized = cleaned.replace(",", ".");
+    // Converte para número inteiro
+    const cents = parseInt(numericValue) || 0;
 
-    return normalized;
+    // Atualiza o estado local
+    setAmountInCents(cents);
+
+    // Formata e atualiza a exibição
+    const formattedValue = formatCurrency(cents);
+    setDisplayValue(formattedValue);
+
+    // Emite o valor atualizado no formato esperado pelo formulário (com vírgula)
+    const valueForForm = (cents / 100).toString().replace(".", ",");
+    onChangeValue(valueForForm);
   };
 
-  // Lidar com a mudança do texto no input
-  const handleChangeText = (text: string) => {
-    // Remover tudo exceto números e vírgula
-    let cleanedText = text.replace(/[^\d,]/g, "");
-
-    // Garantir que só exista uma vírgula
-    const commaCount = (cleanedText.match(/,/g) || []).length;
-    if (commaCount > 1) {
-      const parts = cleanedText.split(",");
-      cleanedText = parts[0] + "," + parts.slice(1).join("");
-    }
-
-    // Estruturar o valor como dinheiro
-    let numberValue: number;
-
-    if (cleanedText === "" || cleanedText === ",") {
-      numberValue = 0;
-    } else {
-      // Se terminar com vírgula, adicionar um zero para manter a formatação
-      if (cleanedText.endsWith(",")) {
-        cleanedText += "0";
-      }
-
-      // Converter para número
-      numberValue = parseFloat(cleanedText.replace(",", "."));
-    }
-
-    // Atualizar o estado local e emitir o valor atualizado
-    if (!isNaN(numberValue)) {
-      setDisplayValue(formatCurrency(numberValue));
-      onChangeValue(numberValue.toString().replace(".", ","));
+  // Manipula o foco no input
+  const handleFocus = () => {
+    // Se estiver vazio, mostra "0,00" ao receber foco
+    if (!displayValue) {
+      setDisplayValue("0,00");
     }
   };
+
+  // Manipula a perda de foco
+  const handleBlur = () => {
+    // Se o valor for zero, limpa o campo ao perder foco
+    if (amountInCents === 0) {
+      setDisplayValue("");
+    }
+  };
+
+  // Função para limpar o input
+  const clearInput = () => {
+    setAmountInCents(0);
+    setDisplayValue("");
+    onChangeValue("");
+  };
+
+  // Verifica se deve mostrar o botão de limpar
+  const showClearButton = !!displayValue && !disabled;
 
   return (
     <View>
@@ -113,9 +124,24 @@ export function CurrencyInput({
         <InputField
           placeholder={placeholder}
           value={displayValue}
-          onChangeText={handleChangeText}
+          onChangeText={handleNumberInput}
           keyboardType="numeric"
+          onFocus={handleFocus}
+          onBlur={handleBlur}
         />
+
+        {/* Botão de limpar - aparece apenas quando há valor */}
+        {showClearButton && (
+          <InputSlot className="pr-3">
+            <TouchableOpacity
+              onPress={clearInput}
+              className="p-1" // padding para aumentar a área de toque
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }} // aumenta a área de toque
+            >
+              <X size={16} color="#9CA3AF" />
+            </TouchableOpacity>
+          </InputSlot>
+        )}
       </Input>
 
       {isInvalid && errorMessage && (

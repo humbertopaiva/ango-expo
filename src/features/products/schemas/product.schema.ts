@@ -17,11 +17,16 @@ export const productFormSchema = z.object({
     .optional()
     .transform((val) => (val === "" ? null : val)), // Tratando string vazia como null
   estoque: z.number().nullable().optional(),
-  desconto_avista: z.coerce
-    .number()
-    .min(0)
-    .max(100, "Desconto não pode ser maior que 100%")
-    .default(0),
+  desconto_avista: z.preprocess(
+    // Converter para número, usando 0 como fallback para null ou undefined
+    (val) =>
+      val === null || val === undefined || val === "" ? 0 : Number(val),
+    // Validar como número entre 0 e 100
+    z
+      .number()
+      .min(0, "Desconto não pode ser negativo")
+      .max(100, "Desconto não pode ser maior que 100%")
+  ),
   status: z.enum(["disponivel", "indisponivel"]).default("disponivel"),
   preco_parcelado_tipo: z.string().nullable().optional(),
 });
