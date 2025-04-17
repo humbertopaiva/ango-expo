@@ -9,18 +9,6 @@ export default function EditProductScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: "Editar Produto",
-          headerShown: true,
-          // Adicione estilos ao header se necessário
-          headerStyle: {
-            backgroundColor: "white",
-          },
-          headerTintColor: "#F4511E", // Cor do texto e botão de voltar
-          headerShadowVisible: true, // Sombra sob o header
-        }}
-      />
       <View className="flex-1 bg-white">
         <ProductFormScreen productId={id} />
       </View>
