@@ -1,4 +1,4 @@
-// src/features/products/screens/product-form-screen.tsx
+// Path: src/features/products/screens/product-form-screen.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,19 +6,13 @@ import {
   ActivityIndicator,
   Text,
   Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProducts } from "../hooks/use-products";
 import { productFormSchema, ProductFormData } from "../schemas/product.schema";
-import ScreenHeader from "@/components/ui/screen-header";
-import { SectionCard } from "@/components/custom/section-card";
-import { Package, DollarSign } from "lucide-react-native";
-import { FormActions } from "@/components/custom/form-actions";
-import { useCategories } from "@/src/features/categories/hooks/use-categories";
-import { SelectComponent } from "@/components/custom/select";
-import { ImageUpload } from "@/components/common/image-upload";
 import {
   FormControl,
   FormControlError,
@@ -31,11 +25,20 @@ import {
   Switch,
   useToast,
 } from "@gluestack-ui/themed";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import {
   showErrorToast,
   showSuccessToast,
 } from "@/components/common/toast-helper";
+
+import { CurrencyInput } from "@/components/common/currency-input";
+import { StatusToggle } from "@/components/common/status-toggle";
+import { EnhancedSelect } from "@/components/common/enhanced-select";
+import { SectionCard } from "@/components/custom/section-card";
+import { ImageUpload } from "@/components/common/image-upload";
+import { useCategories } from "@/src/features/categories/hooks/use-categories";
+import { Package, DollarSign } from "lucide-react-native";
+import { FormActions } from "@/components/custom/form-actions";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -43,14 +46,15 @@ interface ProductFormScreenProps {
 
 export function ProductFormScreen({ productId }: ProductFormScreenProps) {
   const toast = useToast();
-  const params = useLocalSearchParams<{ id: string }>();
-  const id = productId || params.id;
-  const isEditing = !!id;
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCategorySelector, setShowCategorySelector] = useState(false);
 
   const { products, createProduct, updateProduct, isLoading } = useProducts();
   const { categories, isLoading: isCategoriesLoading } = useCategories();
-  const product = products.find((p) => p.id === id);
+  const product = productId
+    ? products.find((p) => p.id === productId)
+    : undefined;
+  const isEditing = !!productId;
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
@@ -85,7 +89,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         descricao: product.descricao,
         preco: product.preco,
         preco_promocional: product.preco_promocional || "",
-        categoria: product.categoria ?? undefined,
+        categoria: product.categoria ?? 0,
         imagem: product.imagem,
         parcelamento_cartao: product.parcelamento_cartao,
         parcelas_sem_juros: product.parcelas_sem_juros,
@@ -106,9 +110,9 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         categoria: data.categoria === 0 ? null : data.categoria,
       };
 
-      if (isEditing && id) {
+      if (isEditing && productId) {
         await updateProduct({
-          id,
+          id: productId,
           data: dataToSubmit,
         });
         showSuccessToast(toast, "Produto atualizado com sucesso!");
@@ -134,14 +138,21 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
     }
   };
 
+  // Função para exibir o seletor de categorias
+  const handleOpenCategorySelect = () => {
+    if (Platform.OS !== "web") {
+      // Para mobile, você pode acessar diretamente o seletor nativo
+      const selectInput = document.getElementById("category-select");
+      if (selectInput) {
+        selectInput.click();
+      }
+    }
+  };
+
   // Renderiza um indicador de carregamento enquanto busca os dados
   if ((isEditing && isLoading) || isCategoriesLoading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
-        <ScreenHeader
-          title={isEditing ? "Editar Produto" : "Novo Produto"}
-          showBackButton={true}
-        />
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#0891B2" />
         </View>
@@ -156,7 +167,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: Platform.OS === "ios" ? 180 : 160,
-        }} // Espaço extra para os botões de ação e tab bar
+        }}
       >
         {/* Informações básicas */}
         <SectionCard
@@ -167,7 +178,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             <FormControl isInvalid={!!form.formState.errors.nome}>
               <FormControlLabel>
                 <Text className="text-sm font-medium text-gray-700">
-                  Nome do Produto
+                  Nome do Produto <Text className="text-red-500">*</Text>
                 </Text>
               </FormControlLabel>
               <Controller
@@ -196,7 +207,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             <FormControl isInvalid={!!form.formState.errors.descricao}>
               <FormControlLabel>
                 <Text className="text-sm font-medium text-gray-700">
-                  Descrição
+                  Descrição <Text className="text-red-500">*</Text>
                 </Text>
               </FormControlLabel>
               <Controller
@@ -228,16 +239,54 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               )}
             </FormControl>
 
-            {/* Categoria */}
+            {/* Categoria - Usando o EnhancedSelect */}
             <Controller
               control={form.control}
               name="categoria"
-              render={({ field: { onChange, value } }) => (
-                <SelectComponent
+              render={({ field: { value, onChange } }) => (
+                <EnhancedSelect
                   label="Categoria"
                   options={categoryOptions}
                   value={value}
-                  onValueChange={(val) => onChange(parseInt(val || "0"))}
+                  onSelect={() => {
+                    // Para web, podemos usar o select nativo
+                    if (Platform.OS === "web") {
+                      // Aqui você pode implementar um modal customizado
+                      // ou usar bibliotecas como react-select
+                      const selectValue = window.prompt(
+                        "Escolha uma categoria (digite o número):",
+                        "0 = Sem categoria, " +
+                          categories
+                            .map((c, i) => `${i + 1} = ${c.nome}`)
+                            .join(", ")
+                      );
+
+                      if (selectValue !== null) {
+                        const numericValue = parseInt(selectValue);
+                        if (!isNaN(numericValue) && numericValue >= 0) {
+                          if (numericValue === 0) {
+                            onChange(0);
+                          } else if (numericValue <= categories.length) {
+                            onChange(Number(categories[numericValue - 1].id));
+                          }
+                        }
+                      }
+                    } else {
+                      // Em mobile, podemos mostrar um seletor nativo
+                      // através de um Modal ou ActionSheet
+                      // Para simplificar, usaremos um Alert como fizemos anteriormente
+                      Alert.alert(
+                        "Selecione uma Categoria",
+                        "Escolha uma categoria para o produto",
+                        categoryOptions.map((option) => ({
+                          text: option.label,
+                          onPress: () => {
+                            onChange(Number(option.value));
+                          },
+                        }))
+                      );
+                    }
+                  }}
                   placeholder="Selecione uma categoria"
                   isInvalid={!!form.formState.errors.categoria}
                   error={form.formState.errors.categoria?.message}
@@ -281,86 +330,69 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           </View>
         </SectionCard>
 
-        {/* Preços */}
+        {/* Preços - Usando o CurrencyInput */}
         <SectionCard
           title="Preços"
           icon={<DollarSign size={22} color="#0891B2" />}
         >
           <View className="gap-4 flex flex-col py-4">
-            <FormControl isInvalid={!!form.formState.errors.preco}>
-              <FormControlLabel>
-                <Text className="text-sm font-medium text-gray-700">Preço</Text>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="preco"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="0,00"
-                      onChangeText={onChange}
-                      value={value}
-                      keyboardType="numeric"
-                      className="bg-white"
-                    />
-                  </Input>
-                )}
-              />
-              {form.formState.errors.preco && (
-                <FormControlError>
-                  <FormControlErrorText className="text-sm">
-                    {form.formState.errors.preco.message}
-                  </FormControlErrorText>
-                </FormControlError>
+            {/* Preço com o novo componente */}
+            <Controller
+              control={form.control}
+              name="preco"
+              render={({ field: { onChange, value } }) => (
+                <CurrencyInput
+                  label="Preço"
+                  value={value}
+                  onChangeValue={onChange}
+                  isInvalid={!!form.formState.errors.preco}
+                  errorMessage={form.formState.errors.preco?.message}
+                  disabled={isSubmitting}
+                  required
+                />
               )}
-            </FormControl>
+            />
 
-            <FormControl isInvalid={!!form.formState.errors.preco_promocional}>
-              <FormControlLabel>
-                <Text className="text-sm font-medium text-gray-700">
-                  Preço Promocional
-                </Text>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="preco_promocional"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="0,00"
-                      onChangeText={onChange}
-                      value={value || ""}
-                      keyboardType="numeric"
-                      className="bg-white"
-                    />
-                  </Input>
-                )}
-              />
-            </FormControl>
+            {/* Preço promocional com o novo componente */}
+            <Controller
+              control={form.control}
+              name="preco_promocional"
+              render={({ field: { onChange, value } }) => (
+                <CurrencyInput
+                  label="Preço Promocional"
+                  value={value || ""}
+                  onChangeValue={onChange}
+                  isInvalid={!!form.formState.errors.preco_promocional}
+                  errorMessage={
+                    form.formState.errors.preco_promocional?.message
+                  }
+                  disabled={isSubmitting}
+                  placeholder="0,00"
+                />
+              )}
+            />
           </View>
         </SectionCard>
 
-        {/* Status */}
+        {/* Status do Produto - Usando o StatusToggle */}
         <SectionCard
           title="Status do Produto"
           icon={<Package size={22} color="#0891B2" />}
         >
           <View className="gap-4 flex flex-col py-4">
+            <Text className="text-sm font-medium text-gray-700 mb-2">
+              Disponibilidade
+            </Text>
             <Controller
               control={form.control}
               name="status"
               render={({ field: { onChange, value } }) => (
-                <SelectComponent
-                  label="Status"
-                  options={[
-                    { label: "Disponível", value: "disponivel" },
-                    { label: "Indisponível", value: "indisponivel" },
-                  ]}
-                  value={value}
-                  onValueChange={onChange}
-                  placeholder="Selecione o status"
-                  isInvalid={!!form.formState.errors.status}
-                  error={form.formState.errors.status?.message}
+                <StatusToggle
+                  value={value === "disponivel"}
+                  onChange={(newValue) => {
+                    onChange(newValue ? "disponivel" : "indisponivel");
+                  }}
+                  disabled={isSubmitting}
                 />
               )}
             />
@@ -373,26 +405,23 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           icon={<DollarSign size={22} color="#0891B2" />}
         >
           <View className="gap-4 flex flex-col py-4">
-            <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-base font-medium text-gray-700">
-                {form.watch("parcelamento_cartao")
-                  ? "Permite Parcelamento"
-                  : "Não Permite Parcelamento"}
-              </Text>
-              <Controller
-                control={form.control}
-                name="parcelamento_cartao"
-                render={({ field: { onChange, value } }) => (
-                  <Switch
-                    value={value}
-                    onValueChange={onChange}
-                    disabled={isSubmitting}
-                  />
-                )}
-              />
-            </View>
+            {/* Usando StatusToggle para Parcelamento */}
+            <Controller
+              control={form.control}
+              name="parcelamento_cartao"
+              render={({ field: { onChange, value } }) => (
+                <StatusToggle
+                  value={value}
+                  onChange={onChange}
+                  activeLabel="Permite Parcelamento"
+                  inactiveLabel="Não Permite Parcelamento"
+                  disabled={isSubmitting}
+                />
+              )}
+            />
 
-            {Boolean(form.watch("parcelamento_cartao")) && (
+            {/* Quantidade de parcelas (se parcelamento_cartao for true) */}
+            {form.watch("parcelamento_cartao") && (
               <FormControl
                 isInvalid={!!form.formState.errors.quantidade_parcelas}
               >
@@ -426,25 +455,22 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               </FormControl>
             )}
 
-            <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-base font-medium text-gray-700">
-                {form.watch("parcelas_sem_juros")
-                  ? "Parcelas sem Juros"
-                  : "Parcelas com Juros"}
-              </Text>
-              <Controller
-                control={form.control}
-                name="parcelas_sem_juros"
-                render={({ field: { onChange, value } }) => (
-                  <Switch
-                    value={value}
-                    onValueChange={onChange}
-                    disabled={isSubmitting}
-                  />
-                )}
-              />
-            </View>
+            {/* Usando StatusToggle para Parcelas sem Juros */}
+            <Controller
+              control={form.control}
+              name="parcelas_sem_juros"
+              render={({ field: { onChange, value } }) => (
+                <StatusToggle
+                  value={value}
+                  onChange={onChange}
+                  activeLabel="Parcelas sem Juros"
+                  inactiveLabel="Parcelas com Juros"
+                  disabled={isSubmitting || !form.watch("parcelamento_cartao")}
+                />
+              )}
+            />
 
+            {/* Desconto à vista */}
             <FormControl isInvalid={!!form.formState.errors.desconto_avista}>
               <FormControlLabel>
                 <Text className="text-sm font-medium text-gray-700">

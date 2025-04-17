@@ -1,5 +1,5 @@
 // Path: components/ui/screen-header.tsx
-import React from "react";
+import React, { useCallback } from "react";
 import { View, Text, TouchableOpacity, Platform } from "react-native";
 import {
   SafeAreaView,
@@ -37,25 +37,27 @@ export default function ScreenHeader({
   // Usando o hook de navegação personalizado
   const { navigateBack, canGoBack, setCustomBackRoute } = useNavigation();
 
-  // Configurar rota personalizada de retorno se backTo for fornecido
-  React.useEffect(() => {
+  // Memoize a função de configurar rota de retorno para evitar chamadas repetidas
+  const setupBackRoute = useCallback(() => {
     if (backTo) {
       setCustomBackRoute(backTo);
     }
 
-    // Limpar ao desmontar
-    return () => {
-      if (backTo) {
-        setCustomBackRoute(null);
-      }
-    };
+    // Note que não limpamos a rota ao desmontar, pois isso causa loop
+    // Isso será gerenciado pelo próprio contexto de navegação
   }, [backTo, setCustomBackRoute]);
+
+  // Chamamos a configuração apenas uma vez ao montar o componente
+  React.useEffect(() => {
+    setupBackRoute();
+  }, [setupBackRoute]);
 
   const bgColor = variant === "primary" ? THEME_COLORS.primary : "white";
   const textColor = variant === "primary" ? "white" : "#333333";
   const iconColor = variant === "primary" ? "white" : THEME_COLORS.primary;
 
-  const handleBack = () => {
+  // Memoize a função de voltar para evitar re-renderizações
+  const handleBack = useCallback(() => {
     if (onBackPress) {
       // Callback personalizado tem prioridade
       onBackPress();
@@ -63,7 +65,7 @@ export default function ScreenHeader({
       // Caso contrário, use a navegação do contexto
       navigateBack();
     }
-  };
+  }, [onBackPress, navigateBack]);
 
   return (
     <SafeAreaView
@@ -101,7 +103,7 @@ export default function ScreenHeader({
               {/* Título e Subtítulo */}
               <View className="flex-1">
                 <Text
-                  className={`text-2xl font-semibold ${
+                  className={`text-2xl font-bold ${
                     variant === "primary" ? "text-white" : "text-gray-900"
                   }`}
                 >
@@ -109,7 +111,7 @@ export default function ScreenHeader({
                 </Text>
                 {subtitle && (
                   <Text
-                    className={`text-sm font-medium ${
+                    className={`text-sm ${
                       variant === "primary" ? "text-white/80" : "text-gray-500"
                     }`}
                   >

@@ -1,23 +1,20 @@
-// Path: src/features/category-page/components/enhanced-category-header.tsx
-import React, { useEffect, useState } from "react";
+// Path: src/features/category-page/components/category-header.tsx
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  ImageBackground,
   StyleSheet,
   Platform,
   Animated,
+  ImageBackground,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react-native";
 import { router } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
-import { getContrastText } from "@/src/utils/color.utils";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { animationUtils } from "@/src/utils/animations.utils";
+import { LinearGradient } from "expo-linear-gradient";
 import { HStack } from "@gluestack-ui/themed";
-import { Image } from "@/components/ui/image";
 
 interface CategoryHeaderProps {
   categoryName: string | null;
@@ -32,59 +29,54 @@ export function CategoryHeader({
   isLoading,
   onFilterPress,
 }: CategoryHeaderProps) {
+  // Animações
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(-10)).current;
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Animações
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const titleScaleAnim = React.useRef(new Animated.Value(0.9)).current;
-  const titleTranslateY = React.useRef(new Animated.Value(20)).current;
+  // Formata o nome da categoria para exibição
+  const formattedCategoryName = formatCategoryName(categoryName);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && (imageLoaded || !categoryImage)) {
       // Animar entrada dos elementos
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 600,
+          duration: 400,
           useNativeDriver: true,
         }),
-        Animated.timing(titleScaleAnim, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(titleTranslateY, {
+        Animated.timing(translateY, {
           toValue: 0,
-          duration: 600,
+          duration: 400,
           useNativeDriver: true,
         }),
       ]).start();
     }
-  }, [isLoading, imageLoaded]);
+  }, [isLoading, imageLoaded, categoryImage, fadeAnim, translateY]);
 
   const handleGoBack = () => {
     router.back();
   };
 
-  // Formata o nome da categoria para exibição
-  const formattedCategoryName = formatCategoryName(categoryName);
-
   // Placeholder para o estado de carregamento
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <SafeAreaView edges={["top"]}>
-          <View
-            style={styles.gradientPlaceholder}
-            className="bg-gray-200 animate-pulse"
-          />
-        </SafeAreaView>
+        <View style={styles.loadingBar} className="bg-gray-200 animate-pulse" />
       </View>
     );
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+        },
+      ]}
+    >
       <ImageBackground
         source={
           categoryImage
@@ -92,53 +84,39 @@ export function CategoryHeader({
             : require("@/assets/images/category-placeholder.svg")
         }
         style={styles.imageBackground}
-        imageStyle={{ resizeMode: "cover", alignSelf: "flex-start" }}
+        imageStyle={styles.imageStyle}
         onLoad={() => setImageLoaded(true)}
       >
         <LinearGradient
-          colors={["rgba(0,0,0,0.7)", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.1)"]}
+          colors={[`${THEME_COLORS.primary}CC`, `${THEME_COLORS.primary}99`]}
           style={styles.gradient}
         >
           <SafeAreaView edges={["top"]} style={styles.safeArea}>
-            {/* Botões de Ação */}
-            <View style={styles.actionsContainer}>
-              <HStack className="items-center justify-between flex-1 w-full">
-                <HStack className="items-center gap-4">
-                  <TouchableOpacity
-                    onPress={handleGoBack}
-                    style={styles.backButton}
-                  >
-                    <ArrowLeft size={22} color="#FFFFFF" />
-                  </TouchableOpacity>
-                  <Image
-                    source={require("@/assets/images/logo-white.png")}
-                    style={{ width: 80, height: 28 }}
-                    resizeMode="contain"
-                    className="w-16"
-                  />
-                </HStack>
-                {onFilterPress && (
-                  <TouchableOpacity
-                    onPress={onFilterPress}
-                    style={styles.filterButton}
-                  >
-                    <SlidersHorizontal size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-              </HStack>
-            </View>
+            {/* Barra de navegação */}
+            <HStack className="justify-between items-center px-4 py-3">
+              <TouchableOpacity
+                onPress={handleGoBack}
+                style={styles.iconButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <ArrowLeft size={22} color="white" />
+              </TouchableOpacity>
 
-            {/* Título da Categoria */}
+              {/* Botão de filtro à direita */}
+              {onFilterPress && (
+                <TouchableOpacity
+                  onPress={onFilterPress}
+                  style={styles.iconButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <SlidersHorizontal size={20} color="white" />
+                </TouchableOpacity>
+              )}
+            </HStack>
+
+            {/* Título da categoria - centralizado e proeminente */}
             <Animated.View
-              style={[
-                styles.titleContainer,
-                {
-                  transform: [
-                    { scale: titleScaleAnim },
-                    { translateY: titleTranslateY },
-                  ],
-                },
-              ]}
+              style={[styles.titleContainer, { transform: [{ translateY }] }]}
             >
               <Text style={styles.categoryTitle} numberOfLines={2}>
                 {formattedCategoryName}
@@ -191,75 +169,63 @@ const styles = StyleSheet.create({
       ios: {
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
       },
       android: {
         elevation: 4,
       },
       web: {
-        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
       },
     }),
   },
-  loadingContainer: {
-    width: "100%",
-    height: 160,
-    backgroundColor: "#f0f0f0",
-  },
-  gradientPlaceholder: {
-    width: "100%",
-    height: 160,
-  },
   imageBackground: {
     width: "100%",
-    height: 160,
-
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "flex-start",
+    height: 160, // Altura ajustável conforme necessário
+  },
+  imageStyle: {
+    resizeMode: "cover",
   },
   gradient: {
-    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
   },
   safeArea: {
     width: "100%",
     height: "100%",
   },
-  actionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 8,
+  loadingContainer: {
+    width: "100%",
+    height: 160,
+    justifyContent: "center",
+    backgroundColor: THEME_COLORS.primary,
   },
-  backButton: {
+  loadingBar: {
+    height: 30,
+    marginHorizontal: 20,
+    borderRadius: 8,
+  },
+  iconButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.3)",
     alignItems: "center",
     justifyContent: "center",
-  },
-  filterButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
   titleContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 32,
+    paddingHorizontal: 40,
   },
   categoryTitle: {
     fontSize: 28,
     fontFamily: "PlusJakartaSans_700Bold",
-    color: "#FFFFFF",
+    color: "white",
     textAlign: "center",
-    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },

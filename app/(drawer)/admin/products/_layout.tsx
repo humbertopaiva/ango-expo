@@ -11,6 +11,7 @@ export default function ProductsLayout() {
           name="index"
           options={{
             title: "Produtos",
+            headerShown: true,
           }}
         />
         <Stack.Screen
