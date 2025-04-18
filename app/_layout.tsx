@@ -1,7 +1,7 @@
 // Path: app/_layout.tsx
 import { View } from "react-native";
 import "@/global.css";
-import { GluestackUIProvider } from "@gluestack-ui/themed";
+import { GluestackUIProvider, StatusBar } from "@gluestack-ui/themed";
 import { config } from "@gluestack-ui/config";
 import { Slot } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -11,6 +11,7 @@ import { LoadingProvider } from "@/src/providers/loading-provider";
 import { NavigationProvider } from "@/src/providers/navigation-provider"; // Importando o novo provedor
 import { Loader } from "@/components/common/loader";
 import { useFonts } from "@/src/hooks/use-fonts";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,10 @@ export default function RootLayout() {
               <DrawerProvider>
                 <Loader />
                 <View className="flex-1 bg-background">
+                  <StatusBar
+                    backgroundColor={THEME_COLORS.primary}
+                    barStyle="light-content"
+                  />
                   <Slot />
                 </View>
               </DrawerProvider>
