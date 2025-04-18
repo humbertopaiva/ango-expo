@@ -24,7 +24,6 @@ export const CustomStatusBar: React.FC<CustomStatusBarProps> = ({
           zIndex: 1,
         }}
       />
-      <StatusBar backgroundColor={backgroundColor} {...props} />
     </>
   );
 };

@@ -47,17 +47,12 @@ export function CategoryPageContent({
   }, [hasVitrines, vm.activeTab]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["bottom"]}>
+    <SafeAreaView className="flex-1 bg-gray-50" edges={["bottom"]}>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Breadcrumb de navegação */}
-        <View className="bg-white py-1">
-          <CategoryBreadcrumb categoryName={vm.categoryName} />
-        </View>
-
         <Section paddingX={0}>
           {/* Barra de pesquisa simplificada */}
           <View className="rounded-xl flex-row items-center px-4 mt-4 mx-4 mb-6 bg-white">

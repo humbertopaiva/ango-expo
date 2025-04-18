@@ -24,10 +24,6 @@ export function AboutScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
-        <StatusBar
-          backgroundColor={THEME_COLORS.primary}
-          barStyle="light-content"
-        />
         <ActivityIndicator size="large" color={THEME_COLORS.primary} />
       </View>
     );

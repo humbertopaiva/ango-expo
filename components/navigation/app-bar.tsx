@@ -62,8 +62,6 @@ export function AppBar({
 
   return (
     <View>
-      <StatusBar backgroundColor={backgroundColor} barStyle="light-content" />
-
       <View
         style={{
           backgroundColor: backgroundColor,

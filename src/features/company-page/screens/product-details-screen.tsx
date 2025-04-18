@@ -295,8 +295,6 @@ export function ProductDetailsScreen() {
       style={{ flex: 1 }}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
-      <StatusBar barStyle="light-content" />
-
       <View className="flex-1 bg-white">
         {/* Visualizador de imagem em tamanho completo */}
         <ProductImageViewer
