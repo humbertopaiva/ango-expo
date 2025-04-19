@@ -47,6 +47,8 @@ export interface Profile {
   fechamento_sabado: string;
   abertura_domingo: string;
   fechamento_domingo: string;
+  chave_pix: string | null;
+  tipo_chave_pix: string | null;
 }
 
 export interface DiasFuncionamento {
