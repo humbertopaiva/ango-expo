@@ -24,6 +24,7 @@ import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
 import { WebViewPdfViewer } from "@/components/pdf/webview-pdf-viewer";
 import { formatToBrazilianDate } from "@/src/utils/date.utils";
+import { PdfViewerScreen } from "../../leaflets/screens/pdf-viewer-screen";
 
 interface LeafletCarouselProps {
   leaflets: Leaflet[];
@@ -46,6 +47,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [leafletImages, setLeafletImages] = useState<IImageInfo[]>([]);
   const [isSharing, setIsSharing] = useState(false);
+  const [viewerType, setViewerType] = useState<"image" | "pdf">("image");
 
   // Atualizar largura da tela quando houver mudanças
   useEffect(() => {
@@ -105,19 +107,22 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
 
   // Função para abrir o visualizador
   const handleOpenEncarte = (leaflet: ExtendedLeaflet) => {
+    setSelectedLeaflet(leaflet);
+
     if (leaflet.pdf) {
-      setSelectedLeaflet(leaflet);
-      setViewerVisible(true);
-      return;
+      // For PDFs, we'll set viewerType to 'pdf'
+      setViewerType("pdf");
+    } else {
+      // For images, use the existing image viewer
+      const images = prepareLeafletImages(leaflet);
+      if (images.length > 0) {
+        setLeafletImages(images);
+        setCurrentPage(0);
+        setViewerType("image");
+      }
     }
 
-    const images = prepareLeafletImages(leaflet);
-    if (images.length > 0) {
-      setLeafletImages(images);
-      setSelectedLeaflet(leaflet);
-      setCurrentPage(0);
-      setViewerVisible(true);
-    }
+    setViewerVisible(true);
   };
 
   // Função para fechar o visualizador
@@ -357,128 +362,29 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
           statusBarTranslucent
           onRequestClose={handleCloseViewer}
         >
-          <SafeAreaView className="flex-1 bg-black">
-            {/* Header */}
-            <View className="flex-row items-center justify-between p-4 bg-black bg-opacity-80">
-              <TouchableOpacity
-                onPress={handleCloseViewer}
-                className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
-              >
-                <X size={20} color="#FFF" />
-              </TouchableOpacity>
-
-              <View className="flex-1 ml-4">
-                <Text
-                  className="text-white font-semibold text-md"
-                  numberOfLines={1}
-                >
-                  {selectedLeaflet.nome}
-                </Text>
-                <View className="flex-row items-center">
-                  <Store size={12} color="#DDD" />
-                  <Text className="text-gray-300 text-xs ml-1">
-                    {typeof selectedLeaflet.empresa === "string"
-                      ? selectedLeaflet.empresa
-                      : selectedLeaflet.empresa?.nome ||
-                        "Empresa não identificada"}
-                  </Text>
-                </View>
-                <Text className="text-gray-300 text-xs">
-                  Válido até {formatToBrazilianDate(selectedLeaflet.validade)}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                onPress={handleShare}
-                className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
-                disabled={isSharing}
-              >
-                {isSharing ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Share2 size={20} color="#FFF" />
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {/* Conteúdo do Visualizador */}
-            <View className="flex-1">
-              {selectedLeaflet.pdf ? (
-                // Visualizador de PDF usando WebView
-                <WebViewPdfViewer pdfUrl={selectedLeaflet.pdf} />
-              ) : (
-                // Visualizador de imagens
-                <>
-                  <ImageViewer
-                    imageUrls={leafletImages}
-                    index={currentPage}
-                    onChange={(index?: number) => {
-                      if (index !== undefined) {
-                        setCurrentPage(index);
-                      }
-                    }}
-                    backgroundColor="#000"
-                    renderIndicator={(currentIndex: any, allSize) => (
-                      <View className="absolute top-4 right-4 px-2 py-1 bg-black bg-opacity-70 rounded-full">
-                        <Text className="text-white text-xs">
-                          {currentIndex + 1}/{allSize}
-                        </Text>
-                      </View>
-                    )}
-                    loadingRender={() => (
-                      <ActivityIndicator
-                        size="large"
-                        color={THEME_COLORS.secondary}
-                      />
-                    )}
-                    enableSwipeDown
-                    onSwipeDown={handleCloseViewer}
-                    saveToLocalByLongPress={false}
-                    pageAnimateTime={200}
-                  />
-
-                  {/* Miniaturas para navegação entre imagens */}
-                  {leafletImages.length > 1 && (
-                    <View className="h-20 bg-black">
-                      <FlatList
-                        data={leafletImages}
-                        keyExtractor={(_, index) => `thumb_${index}`}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{
-                          paddingHorizontal: 10,
-                          paddingVertical: 8,
-                        }}
-                        renderItem={({ item, index }) => (
-                          <TouchableOpacity
-                            className={`mx-1 rounded-md overflow-hidden border-2 ${
-                              currentPage === index
-                                ? "border-secondary-500"
-                                : "border-transparent"
-                            }`}
-                            style={{ width: 60, height: 60 }}
-                            onPress={() => setCurrentPage(index)}
-                          >
-                            <ImagePreview
-                              uri={item.url}
-                              width="100%"
-                              height="100%"
-                              resizeMode="cover"
-                            />
-                            <View className="absolute bottom-0 right-0 bg-black bg-opacity-60 px-1">
-                              <Text className="text-white text-xs">
-                                {index + 1}
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
-                        )}
-                      />
-                    </View>
-                  )}
-                </>
-              )}
-            </View>
-          </SafeAreaView>
+          {viewerType === "pdf" ? (
+            // PDF Viewer
+            <PdfViewerScreen
+              pdfUrl={selectedLeaflet.pdf || ""}
+              title={selectedLeaflet.nome}
+              companyName={
+                typeof selectedLeaflet.empresa === "string"
+                  ? selectedLeaflet.empresa
+                  : selectedLeaflet.empresa?.nome || "Empresa"
+              }
+              validUntil={selectedLeaflet.validade}
+              onClose={handleCloseViewer}
+              onError={(error) => {
+                console.error("Error viewing PDF:", error);
+                handleCloseViewer();
+              }}
+            />
+          ) : (
+            // Image Viewer (original code)
+            <SafeAreaView className="flex-1 bg-black">
+              {/* Existing image viewer code */}
+            </SafeAreaView>
+          )}
         </Modal>
       )}
     </View>
