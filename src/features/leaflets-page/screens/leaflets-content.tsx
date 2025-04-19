@@ -40,6 +40,7 @@ import ImageViewer from "react-native-image-zoom-viewer";
 import { IImageInfo } from "react-native-image-zoom-viewer/built/image-viewer.type";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
+import { PdfViewerScreen } from "../../leaflets/screens/pdf-viewer-screen";
 
 // Interface estendida para suportar PDFs
 interface ExtendedLeaflet extends Leaflet {
@@ -58,6 +59,7 @@ export function LeafletsContent() {
   const [currentPage, setCurrentPage] = useState(0);
   const [leafletImages, setLeafletImages] = useState<IImageInfo[]>([]);
   const [isSharing, setIsSharing] = useState(false);
+  const [viewerType, setViewerType] = useState<"image" | "pdf">("image");
 
   const isMounted = useRef(true);
 
@@ -116,10 +118,12 @@ export function LeafletsContent() {
     const extendedLeaflet = leaflet as ExtendedLeaflet;
 
     if (extendedLeaflet.pdf) {
-      // Se for PDF, não precisamos preparar imagens
+      // Se for PDF, configuramos para o visualizador de PDF
+      setViewerType("pdf");
       setLeafletImages([]);
     } else {
-      // Prepara as imagens para o visualizador
+      // Se forem imagens, configuramos para o visualizador de imagens
+      setViewerType("image");
       const images = prepareLeafletImages(extendedLeaflet);
       setLeafletImages(images);
     }
@@ -275,7 +279,6 @@ export function LeafletsContent() {
         </View>
       </ScrollView>
 
-      {/* Visualizador Modal - EXATAMENTE IGUAL AO LEAFLET CAROUSEL */}
       {selectedLeaflet && viewerVisible && (
         <Modal
           visible={viewerVisible}
@@ -284,128 +287,139 @@ export function LeafletsContent() {
           statusBarTranslucent
           onRequestClose={handleCloseViewer}
         >
-          <StatusBar backgroundColor="black" barStyle="light-content" />
-          <SafeAreaView className="flex-1 bg-black">
-            {/* Header */}
-            <View className="flex-row items-center justify-between p-4 bg-black bg-opacity-80">
-              <TouchableOpacity
-                onPress={handleCloseViewer}
-                className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
-              >
-                <X size={20} color="#FFF" />
-              </TouchableOpacity>
-
-              <View className="flex-1 ml-4">
-                <Text
-                  className="text-white font-semibold text-md"
-                  numberOfLines={1}
+          {viewerType === "pdf" ? (
+            // Visualizador de PDF Nativo
+            <PdfViewerScreen
+              pdfUrl={selectedLeaflet.pdf || ""}
+              title={selectedLeaflet.nome}
+              companyName={
+                typeof selectedLeaflet.empresa === "string"
+                  ? selectedLeaflet.empresa
+                  : selectedLeaflet.empresa?.nome || "Empresa"
+              }
+              validUntil={selectedLeaflet.validade}
+              onClose={handleCloseViewer}
+              onError={(error) => {
+                console.error("Erro ao visualizar PDF:", error);
+                handleCloseViewer();
+              }}
+            />
+          ) : (
+            // Visualizador de imagens (manter código original)
+            <SafeAreaView className="flex-1 bg-black">
+              {/* Header */}
+              <View className="flex-row items-center justify-between p-4 bg-black bg-opacity-80">
+                <TouchableOpacity
+                  onPress={handleCloseViewer}
+                  className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
                 >
-                  {selectedLeaflet.nome}
-                </Text>
-                <View className="flex-row items-center">
-                  <Text className="text-gray-300 text-xs ml-1">
-                    {typeof selectedLeaflet.empresa === "string"
-                      ? selectedLeaflet.empresa
-                      : selectedLeaflet.empresa?.nome ||
-                        "Empresa não identificada"}
+                  <X size={20} color="#FFF" />
+                </TouchableOpacity>
+
+                <View className="flex-1 ml-4">
+                  <Text
+                    className="text-white font-semibold text-md"
+                    numberOfLines={1}
+                  >
+                    {selectedLeaflet.nome}
+                  </Text>
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-300 text-xs ml-1">
+                      {typeof selectedLeaflet.empresa === "string"
+                        ? selectedLeaflet.empresa
+                        : selectedLeaflet.empresa?.nome ||
+                          "Empresa não identificada"}
+                    </Text>
+                  </View>
+                  <Text className="text-gray-300 text-xs">
+                    Válido até {formatToBrazilianDate(selectedLeaflet.validade)}
                   </Text>
                 </View>
-                <Text className="text-gray-300 text-xs">
-                  Válido até {formatToBrazilianDate(selectedLeaflet.validade)}
-                </Text>
+
+                <TouchableOpacity
+                  onPress={handleShare}
+                  className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
+                  disabled={isSharing}
+                >
+                  {isSharing ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Share2 size={20} color="#FFF" />
+                  )}
+                </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                onPress={handleShare}
-                className="w-10 h-10 rounded-full bg-gray-800 items-center justify-center"
-                disabled={isSharing}
-              >
-                {isSharing ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Share2 size={20} color="#FFF" />
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {/* Conteúdo do Visualizador */}
-            <View className="flex-1">
-              {selectedLeaflet.pdf ? (
-                // Visualizador de PDF usando WebView
-                <WebViewPdfViewer pdfUrl={selectedLeaflet.pdf} />
-              ) : (
-                // Visualizador de imagens
-                <>
-                  <ImageViewer
-                    imageUrls={leafletImages}
-                    index={currentPage}
-                    onChange={(index?: number) => {
-                      if (index !== undefined) {
-                        setCurrentPage(index);
-                      }
-                    }}
-                    backgroundColor="#000"
-                    renderIndicator={(currentIndex: any, allSize) => (
-                      <View className="absolute top-4 right-4 px-2 py-1 bg-black bg-opacity-70 rounded-full">
-                        <Text className="text-white text-xs">
-                          {currentIndex + 1}/{allSize}
-                        </Text>
-                      </View>
-                    )}
-                    loadingRender={() => (
-                      <ActivityIndicator
-                        size="large"
-                        color={THEME_COLORS.secondary}
-                      />
-                    )}
-                    enableSwipeDown
-                    onSwipeDown={handleCloseViewer}
-                    saveToLocalByLongPress={false}
-                    pageAnimateTime={200}
-                  />
-
-                  {/* Miniaturas para navegação entre imagens */}
-                  {leafletImages.length > 1 && (
-                    <View className="h-20 bg-black">
-                      <FlatList
-                        data={leafletImages}
-                        keyExtractor={(_, index) => `thumb_${index}`}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{
-                          paddingHorizontal: 10,
-                          paddingVertical: 8,
-                        }}
-                        renderItem={({ item, index }) => (
-                          <TouchableOpacity
-                            className={`mx-1 rounded-md overflow-hidden border-2 ${
-                              currentPage === index
-                                ? "border-secondary-500"
-                                : "border-transparent"
-                            }`}
-                            style={{ width: 60, height: 60 }}
-                            onPress={() => setCurrentPage(index)}
-                          >
-                            <ImagePreview
-                              uri={item.url}
-                              width="100%"
-                              height="100%"
-                              resizeMode="cover"
-                            />
-                            <View className="absolute bottom-0 right-0 bg-black bg-opacity-60 px-1">
-                              <Text className="text-white text-xs">
-                                {index + 1}
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
-                        )}
-                      />
+              {/* Conteúdo do Visualizador de Imagens */}
+              <View className="flex-1">
+                <ImageViewer
+                  imageUrls={leafletImages}
+                  index={currentPage}
+                  onChange={(index?: number) => {
+                    if (index !== undefined) {
+                      setCurrentPage(index);
+                    }
+                  }}
+                  backgroundColor="#000"
+                  renderIndicator={(currentIndex: any, allSize) => (
+                    <View className="absolute top-4 right-4 px-2 py-1 bg-black bg-opacity-70 rounded-full">
+                      <Text className="text-white text-xs">
+                        {currentIndex + 1}/{allSize}
+                      </Text>
                     </View>
                   )}
-                </>
-              )}
-            </View>
-          </SafeAreaView>
+                  loadingRender={() => (
+                    <ActivityIndicator
+                      size="large"
+                      color={THEME_COLORS.secondary}
+                    />
+                  )}
+                  enableSwipeDown
+                  onSwipeDown={handleCloseViewer}
+                  saveToLocalByLongPress={false}
+                  pageAnimateTime={200}
+                />
+
+                {/* Miniaturas para navegação entre imagens */}
+                {leafletImages.length > 1 && (
+                  <View className="h-20 bg-black">
+                    <FlatList
+                      data={leafletImages}
+                      keyExtractor={(_, index) => `thumb_${index}`}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{
+                        paddingHorizontal: 10,
+                        paddingVertical: 8,
+                      }}
+                      renderItem={({ item, index }) => (
+                        <TouchableOpacity
+                          className={`mx-1 rounded-md overflow-hidden border-2 ${
+                            currentPage === index
+                              ? "border-secondary-500"
+                              : "border-transparent"
+                          }`}
+                          style={{ width: 60, height: 60 }}
+                          onPress={() => setCurrentPage(index)}
+                        >
+                          <ImagePreview
+                            uri={item.url}
+                            width="100%"
+                            height="100%"
+                            resizeMode="cover"
+                          />
+                          <View className="absolute bottom-0 right-0 bg-black bg-opacity-60 px-1">
+                            <Text className="text-white text-xs">
+                              {index + 1}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      )}
+                    />
+                  </View>
+                )}
+              </View>
+            </SafeAreaView>
+          )}
         </Modal>
       )}
     </SafeAreaView>
