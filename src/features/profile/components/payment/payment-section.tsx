@@ -1,7 +1,8 @@
 // Path: src/features/profile/components/payment/payment-section.tsx
+
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Edit3, CreditCard, Wallet } from "lucide-react-native";
+import { Edit3, CreditCard, Wallet, Key } from "lucide-react-native";
 import { Badge } from "@/components/ui/badge";
 
 import { useProfileContext } from "../../contexts/use-profile-context";
@@ -33,6 +34,14 @@ const PAYMENT_OPTIONS = [
   { id: "boleto", label: "Boleto", icon: CreditCard, color: "#F59E0B" },
 ];
 
+// Mapeamento dos tipos de chave PIX para exibição
+const PIX_KEY_TYPE_LABELS = {
+  "cpf-cnpj": "CPF/CNPJ",
+  email: "Email",
+  telefone: "Telefone",
+  aleatoria: "Aleatória",
+};
+
 export function PaymentSection() {
   const vm = useProfileContext();
 
@@ -41,6 +50,36 @@ export function PaymentSection() {
   const isPaymentEnabled = (tipo: string) =>
     vm.profile?.opcoes_pagamento?.find((op) => op.tipo === tipo)?.ativo ||
     false;
+
+  // Verificar se o PIX está habilitado para exibir a seção de chave
+  const isPixEnabled = isPaymentEnabled("pix");
+
+  // Formatar a chave PIX para exibição (ocultar parte dela por segurança)
+  const formatPixKey = (key: string | null, type: string | null) => {
+    if (!key) return "";
+
+    switch (type) {
+      case "cpf-cnpj":
+        // Exibe apenas os primeiros e últimos 3 dígitos
+        return key.length > 6
+          ? `${key.substring(0, 3)}...${key.substring(key.length - 3)}`
+          : key;
+      case "email":
+        // Exibe parte do email antes do @ e o domínio completo
+        const [username, domain] = key.split("@");
+        return username && domain
+          ? `${username.substring(0, 3)}...@${domain}`
+          : key;
+      case "telefone":
+        // Exibe apenas os últimos 4 dígitos
+        return key.length > 4 ? `...${key.substring(key.length - 4)}` : key;
+      default:
+        // Para chaves aleatórias, exibe apenas os primeiros e últimos caracteres
+        return key.length > 8
+          ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}`
+          : key;
+    }
+  };
 
   return (
     <View>
@@ -84,6 +123,40 @@ export function PaymentSection() {
               </View>
             );
           })}
+
+          {/* Seção de chave PIX - exibida apenas se PIX estiver ativo */}
+          {isPixEnabled && vm.profile.chave_pix && (
+            <View className="bg-white rounded-md p-4 border border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <Key size={18} color="#0891B2" className="mr-2" />
+                <Text className="text-base font-medium text-gray-700">
+                  Chave PIX Cadastrada
+                </Text>
+              </View>
+
+              <View className="bg-gray-50 p-3 rounded-lg">
+                <View className="flex-row justify-between items-center">
+                  <Text className="text-sm text-gray-500">Tipo de Chave:</Text>
+                  <Text className="text-sm font-medium">
+                    {PIX_KEY_TYPE_LABELS[
+                      vm.profile
+                        .tipo_chave_pix as keyof typeof PIX_KEY_TYPE_LABELS
+                    ] || "Não especificado"}
+                  </Text>
+                </View>
+
+                <View className="flex-row justify-between items-center mt-2">
+                  <Text className="text-sm text-gray-500">Chave:</Text>
+                  <Text className="text-sm font-medium">
+                    {formatPixKey(
+                      vm.profile.chave_pix,
+                      vm.profile.tipo_chave_pix
+                    )}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
         </View>
       </Section>
 
