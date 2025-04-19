@@ -69,6 +69,19 @@ export function useProfileViewModel(companyId: string): IProfileViewModel {
     setState((prev) => ({ ...prev, isAdditionalOpen: isOpen }));
   }, []);
 
+  const closeModals = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      isBasicInfoOpen: false,
+      isContactInfoOpen: false,
+      isSocialLinksOpen: false,
+      isHoursOpen: false,
+      isVisualOpen: false,
+      isPaymentOpen: false,
+      isAdditionalOpen: false,
+    }));
+  }, []);
+
   // Função genérica para manipular atualizações
   const handleUpdate = useCallback(
     async (section: string, data: UpdateProfileDTO) => {
@@ -76,6 +89,8 @@ export function useProfileViewModel(companyId: string): IProfileViewModel {
 
       try {
         await updateProfile({ id: profile.id, data });
+
+        // Fechamos os modais após atualização bem-sucedida
         closeModals();
         showSuccessToast(toast, `${section} atualizado com sucesso!`);
       } catch (error) {
@@ -86,7 +101,7 @@ export function useProfileViewModel(companyId: string): IProfileViewModel {
         );
       }
     },
-    [profile, updateProfile, toast]
+    [profile, updateProfile, toast, closeModals]
   );
 
   // Handlers
@@ -138,19 +153,6 @@ export function useProfileViewModel(companyId: string): IProfileViewModel {
     },
     [handleUpdate]
   );
-
-  const closeModals = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      isBasicInfoOpen: false,
-      isContactInfoOpen: false,
-      isSocialLinksOpen: false,
-      isHoursOpen: false,
-      isVisualOpen: false,
-      isPaymentOpen: false,
-      isAdditionalOpen: false,
-    }));
-  }, []);
 
   return {
     // Estados
