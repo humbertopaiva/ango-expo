@@ -4,7 +4,7 @@ import * as z from "zod";
 export const productFormSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   descricao: z.string().min(1, "Descrição é obrigatória"),
-  preco: z.string().min(1, "Preço é obrigatório"),
+  preco: z.string().min(1, "Preço é obrigatório").nullable().optional(),
   preco_promocional: z.string().nullable().optional(),
   // Aceitando que categoria pode ser 0, que será tratado como null ao ser enviado para API
   categoria: z.coerce
@@ -32,7 +32,20 @@ export const productFormSchema = z.object({
   ),
   status: z.enum(["disponivel", "indisponivel"]).default("disponivel"),
   preco_parcelado_tipo: z.string().nullable().optional(),
-  hasVariation: z.boolean().default(false), // Novo campo
+  tem_variacao: z.boolean().default(false),
+  variacao: z.string().nullable().optional(),
+  // Array de variações de produto para quando tem_variacao = true
+  variacoes_produtos: z
+    .array(
+      z.object({
+        valor_variacao: z.string(),
+        preco: z.string().min(1, "Preço é obrigatório"),
+        preco_promocional: z.string().nullable().optional(),
+        imagem: z.string().nullable().optional(),
+        status: z.enum(["disponivel", "indisponivel"]).default("disponivel"),
+      })
+    )
+    .optional(),
 });
 
 export type ProductFormData = z.infer<typeof productFormSchema>;
