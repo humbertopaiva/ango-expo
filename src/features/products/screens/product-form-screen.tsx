@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Text,
   Platform,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Controller, useForm } from "react-hook-form";
@@ -35,7 +36,7 @@ import { EnhancedSelect } from "@/components/common/enhanced-select";
 import { SectionCard } from "@/components/custom/section-card";
 import { ImageUpload } from "@/components/common/image-upload";
 import { useCategories } from "@/src/features/categories/hooks/use-categories";
-import { Package, DollarSign } from "lucide-react-native";
+import { Package, DollarSign, Tag } from "lucide-react-native";
 import { FormActions } from "@/components/custom/form-actions";
 import { CategorySelectModal } from "@/components/common/category-select-modal";
 
@@ -179,6 +180,68 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           paddingBottom: Platform.OS === "ios" ? 180 : 160,
         }}
       >
+        {/* Variação do Produto */}
+        <SectionCard
+          title="Variações de Produto"
+          icon={<Tag size={22} color="#0891B2" />}
+        >
+          <View className="gap-4 flex flex-col py-4">
+            <Controller
+              control={form.control}
+              name="hasVariation"
+              render={({ field: { onChange, value } }) => (
+                <StatusToggle
+                  value={value}
+                  onChange={onChange}
+                  activeLabel="Este produto possui variações"
+                  inactiveLabel="Este produto não possui variações"
+                  disabled={isSubmitting}
+                />
+              )}
+            />
+
+            {form.watch("hasVariation") && productId && (
+              <View className="space-y-4">
+                <TouchableOpacity
+                  onPress={() => router.push("/admin/products/variations")}
+                  className="bg-gray-100 p-4 rounded-lg flex-row items-center justify-between"
+                >
+                  <View className="flex-row items-center">
+                    <Tag size={20} color="#0891B2" />
+                    <Text className="ml-2 text-gray-800 font-medium">
+                      Gerenciar tipos de variação
+                    </Text>
+                  </View>
+                  <View>
+                    <Text className="text-primary-500">Configurar</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    if (productId) {
+                      // Navegue para a tela de gerenciamento de variações para este produto específico
+                      // Esta rota pode ser implementada posteriormente
+                      router.push(`/admin/products/${productId}/variations`);
+                    }
+                  }}
+                  className="bg-primary-50 p-4 rounded-lg flex-row items-center justify-between"
+                >
+                  <View className="flex-row items-center">
+                    <Package size={20} color="#0891B2" />
+                    <Text className="ml-2 text-gray-800 font-medium">
+                      Gerenciar variações deste produto
+                    </Text>
+                  </View>
+                  <View>
+                    <Text className="text-primary-500">Personalizar</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </SectionCard>
+
         {/* Informações básicas */}
         <SectionCard
           title="Informações Básicas"

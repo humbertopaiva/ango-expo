@@ -1,8 +1,10 @@
 // Path: src/features/products/components/products-list.tsx
+// Adicione badges para indicar produtos com variações
+
 import React from "react";
 import { Product } from "../models/product";
 import { SwipeableDataList } from "@/components/custom/swipeable-data-list";
-import { Package } from "lucide-react-native";
+import { Package, Tag } from "lucide-react-native";
 import { ProductSkeletonList } from "./product-skeleton";
 
 interface ProductsListProps {

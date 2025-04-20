@@ -1,13 +1,13 @@
 // Path: src/features/products/screens/products-content.tsx
 
 import React, { useState, useEffect, useMemo } from "react";
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useProductsContext } from "../contexts/use-products-context";
 import { ProductsList } from "../components/products-list";
 import { SearchInput } from "@/components/custom/search-input";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
-import { Plus } from "lucide-react-native";
+import { Plus, Tag } from "lucide-react-native";
 import { router } from "expo-router";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { useCategories } from "../../categories/hooks/use-categories";
@@ -15,6 +15,8 @@ import { CategoryFilter } from "../components/category-filter";
 import { SwipeTutorial } from "@/components/custom/swipe-tutorial";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SectionCard } from "@/components/custom/section-card";
+import { Text } from "@gluestack-ui/themed";
 
 export function ProductsContent() {
   const vm = useProductsContext();
@@ -61,6 +63,24 @@ export function ProductsContent() {
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       <View className="flex-1 w-full container px-4 mx-auto">
+        <SectionCard title="Gerenciamento de Produtos">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-gray-700">
+                Gerencie seus produtos e suas variações (tamanhos, cores, etc.)
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push("/admin/products/variations")}
+              className="bg-primary-50 px-4 py-2 rounded-lg flex-row items-center"
+            >
+              <Tag size={18} color="#0891B2" />
+              <Text className="ml-2 text-primary-700 font-medium">
+                Variações
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SectionCard>
         {/* Tutorial de swipe (exibido apenas na primeira vez) */}
         {showSwipeTutorial && (
           <SwipeTutorial

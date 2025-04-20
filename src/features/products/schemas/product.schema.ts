@@ -32,6 +32,7 @@ export const productFormSchema = z.object({
   ),
   status: z.enum(["disponivel", "indisponivel"]).default("disponivel"),
   preco_parcelado_tipo: z.string().nullable().optional(),
+  hasVariation: z.boolean().default(false), // Novo campo
 });
 
 export type ProductFormData = z.infer<typeof productFormSchema>;

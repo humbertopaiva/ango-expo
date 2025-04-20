@@ -21,6 +21,7 @@ export interface Product {
   desconto_avista: number;
   preco_parcelado_tipo: string | null;
   status: "disponivel" | "indisponivel";
+  hasVariation?: boolean;
 }
 
 export interface CreateProductDTO {
@@ -39,6 +40,7 @@ export interface CreateProductDTO {
   preco_parcelado_tipo?: string | null;
   status?: "disponivel" | "indisponivel";
   estoque?: number | null;
+  hasVariation?: boolean;
 }
 
 export type UpdateProductDTO = Partial<CreateProductDTO>;
