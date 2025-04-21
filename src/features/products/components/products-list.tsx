@@ -1,6 +1,4 @@
 // Path: src/features/products/components/products-list.tsx
-// Adicione badges para indicar produtos com variações
-
 import React from "react";
 import { Product } from "../models/product";
 import { SwipeableDataList } from "@/components/custom/swipeable-data-list";
@@ -37,6 +35,24 @@ export function ProductsList({
       getStatusLabel={(product) =>
         product.status === "disponivel" ? "Disponível" : "Indisponível"
       }
+      getMetadata={(product) => {
+        const metadata = [];
+
+        // Adicionar informação sobre o tipo de variação se tiver
+        if (product.tem_variacao && product.variacao) {
+          const variationName =
+            typeof product.variacao === "object"
+              ? product.variacao.nome
+              : "Variação";
+
+          metadata.push({
+            label: "Tipo",
+            value: variationName,
+          });
+        }
+
+        return metadata;
+      }}
       onEdit={onEdit}
       onDelete={onDelete}
       onItemPress={onItemPress}

@@ -13,6 +13,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProducts } from "../hooks/use-products";
 import { productFormSchema, ProductFormData } from "../schemas/product.schema";
+import { ProductVariationDTO } from "../models/product";
 import {
   FormControl,
   FormControlError,
@@ -36,9 +37,16 @@ import { EnhancedSelect } from "@/components/common/enhanced-select";
 import { SectionCard } from "@/components/custom/section-card";
 import { ImageUpload } from "@/components/common/image-upload";
 import { useCategories } from "@/src/features/categories/hooks/use-categories";
-import { Package, DollarSign, Tag } from "lucide-react-native";
+import { Package, DollarSign, Tag, Layers } from "lucide-react-native";
 import { FormActions } from "@/components/custom/form-actions";
 import { CategorySelectModal } from "@/components/common/category-select-modal";
+import { VariationSelector } from "../components/variation-selector";
+import { ProductVariationsForm } from "../components/product-variations-form";
+
+import useAuthStore from "@/src/stores/auth";
+import { api } from "@/src/services/api";
+import { useProductVariations } from "../hooks/use-product-variations";
+import { ProductVariationsSummary } from "../components/product-variations-summary";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -48,9 +56,16 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [variationValues, setVariationValues] = useState<string[]>([]);
+  const [isCreatingVariations, setIsCreatingVariations] = useState(false);
 
   const { products, createProduct, updateProduct, isLoading } = useProducts();
   const { categories, isLoading: isCategoriesLoading } = useCategories();
+
+  const companyId = useAuthStore((state) => state.getCompanyId());
+
+  const { variations } = useProductVariations(productId);
+
   const product = productId
     ? products.find((p) => p.id === productId)
     : undefined;
@@ -70,6 +85,9 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       desconto_avista: 0,
       status: "disponivel",
       estoque: 0,
+      tem_variacao: false,
+      variacao: undefined,
+      variacoes_produtos: [],
     },
   });
 
@@ -89,6 +107,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
     // Otherwise return the categoria directly (should be a number)
     return product.categoria;
   }, [product]);
+
   // Preparar as opções de categoria para o select
   const categoryOptions = useMemo(
     () => [
@@ -106,6 +125,30 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       // Obtém o ID da categoria corretamente
       const categoryId = getProductCategoryId();
 
+      // Verificar se o produto tem variação
+      const temVariacao = product.tem_variacao || false;
+
+      // Verificar qual é a variação, se houver
+      let variacaoId = null;
+      if (product.variacao) {
+        if (typeof product.variacao === "object" && "id" in product.variacao) {
+          variacaoId = product.variacao.id;
+
+          // Se temos o objeto da variação com os valores, atualizar os valores
+          if (
+            "variacao" in product.variacao &&
+            Array.isArray(product.variacao.variacao)
+          ) {
+            setVariationValues(product.variacao.variacao);
+          }
+        } else {
+          variacaoId = product.variacao;
+
+          // Buscar os valores da variação
+          fetchVariationValues(variacaoId);
+        }
+      }
+
       form.reset({
         nome: product.nome,
         descricao: product.descricao,
@@ -117,9 +160,56 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         desconto_avista: product.desconto_avista,
         status: product.status,
         estoque: product.estoque,
+        tem_variacao: temVariacao,
+        variacao: variacaoId,
       });
+
+      // Se o produto tem variações, carregar os produtos variados
+      if (temVariacao && productId) {
+        fetchProductVariations(productId);
+      }
     }
   }, [product, form.reset, isSubmitting, getProductCategoryId]);
+
+  // Função para buscar os valores de uma variação
+  const fetchVariationValues = async (variationId: string) => {
+    try {
+      const response = await api.get(`/api/products/variations/${variationId}`);
+      if (response.data?.data?.variacao) {
+        setVariationValues(response.data.data.variacao);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar valores da variação:", error);
+    }
+  };
+
+  // Função para buscar os produtos variados
+  const fetchProductVariations = async (productId: string) => {
+    try {
+      const response = await api.get(`/api/products/${productId}/variations`);
+
+      if (response.data?.data) {
+        // Mapear os produtos variados para o formato do formulário
+        const variations = response.data.data.map((item: any) => ({
+          id: item.id,
+          valor_variacao: item.valor_variacao,
+          preco: item.produto?.preco || "",
+          preco_promocional: item.produto?.preco_promocional || "",
+          imagem: item.produto?.imagem || null,
+          status: item.produto?.status || "disponivel",
+        }));
+
+        form.setValue("variacoes_produtos", variations);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar produtos variados:", error);
+    }
+  };
+
+  // Handler para mudança de variação
+  const handleVariationChange = (variationId: string, values: string[]) => {
+    setVariationValues(values);
+  };
 
   const handleSubmit = async (data: ProductFormData) => {
     try {
@@ -130,21 +220,52 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         ...data,
         categoria: data.categoria === 0 ? null : data.categoria,
         desconto_avista: data.desconto_avista ?? undefined,
+        // Se o produto tem variação, o preço fica nulo
+        preco: data.tem_variacao ? undefined : data.preco || undefined,
       };
 
-      if (isEditing && productId) {
-        await updateProduct({
-          id: productId,
-          data: dataToSubmit,
-        });
-        showSuccessToast(toast, "Produto atualizado com sucesso!");
-      } else {
-        await createProduct({
-          ...dataToSubmit,
-          estoque: 0,
-        });
-        showSuccessToast(toast, "Produto criado com sucesso!");
+      // Se não tem variação, remove o campo variacao
+      if (!data.tem_variacao) {
+        dataToSubmit.variacao = null;
       }
+
+      let productResponse;
+
+      if (isEditing && productId) {
+        productResponse = await updateProduct({
+          id: productId,
+          data: {
+            ...dataToSubmit,
+            variacao: dataToSubmit.variacao ?? undefined,
+          },
+        });
+      } else {
+        productResponse = await createProduct({
+          ...dataToSubmit,
+          preco: dataToSubmit.preco || "", // Ensure preco is always a string
+          estoque: 0,
+          variacao: dataToSubmit.variacao ?? undefined, // Ensure variacao is undefined instead of null
+        });
+      }
+
+      // Se o produto tem variação e temos variações preenchidas, criar/atualizar os produtos variados
+      if (
+        data.tem_variacao &&
+        data.variacao &&
+        data.variacoes_produtos &&
+        data.variacoes_produtos.length > 0
+      ) {
+        await handleSubmitVariations(
+          productId || productResponse?.id,
+          data.variacao,
+          data.variacoes_produtos
+        );
+      }
+
+      showSuccessToast(
+        toast,
+        `Produto ${isEditing ? "atualizado" : "criado"} com sucesso!`
+      );
 
       // Aguarda um momento antes de voltar para evitar race conditions
       setTimeout(() => {
@@ -159,6 +280,51 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       setIsSubmitting(false);
     }
   };
+
+  // Função para criar/atualizar os produtos variados
+  const handleSubmitVariations = async (
+    productId: string,
+    variationId: string,
+    variations: any[]
+  ) => {
+    try {
+      setIsCreatingVariations(true);
+
+      // Para cada variação, criar ou atualizar o produto variado
+      for (const variation of variations) {
+        const variationData: ProductVariationDTO = {
+          produto: productId,
+          variacao: variationId,
+          valor_variacao: variation.valor_variacao,
+          preco: variation.preco,
+          preco_promocional: variation.preco_promocional || null,
+          imagem: variation.imagem || null,
+          status: variation.status || "disponivel",
+          empresa: companyId!,
+        };
+
+        // Se já tem ID, atualizar, senão criar
+        if (variation.id) {
+          await api.patch(
+            `/api/products/variation-items/${variation.id}`,
+            variationData
+          );
+        } else {
+          await api.post(`/api/products/variation-items`, variationData);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao salvar variações:", error);
+      throw error;
+    } finally {
+      setIsCreatingVariations(false);
+    }
+  };
+
+  // Watcher para o campo tem_variacao, para ajustar o formulário
+  const temVariacao = form.watch("tem_variacao");
+  const selectedVariation = form.watch("variacao");
+  const variacoesProducts = form.watch("variacoes_produtos") || [];
 
   // Renderiza um indicador de carregamento enquanto busca os dados
   if ((isEditing && isLoading) || isCategoriesLoading) {
@@ -183,12 +349,12 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         {/* Variação do Produto */}
         <SectionCard
           title="Variações de Produto"
-          icon={<Tag size={22} color="#0891B2" />}
+          icon={<Layers size={22} color="#0891B2" />}
         >
           <View className="gap-4 flex flex-col py-4">
             <Controller
               control={form.control}
-              name="hasVariation"
+              name="tem_variacao"
               render={({ field: { onChange, value } }) => (
                 <StatusToggle
                   value={value}
@@ -200,43 +366,84 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               )}
             />
 
-            {form.watch("hasVariation") && productId && (
-              <View className="space-y-4">
-                <TouchableOpacity
-                  onPress={() => router.push("/admin/products/variations")}
-                  className="bg-gray-100 p-4 rounded-lg flex-row items-center justify-between"
-                >
-                  <View className="flex-row items-center">
-                    <Tag size={20} color="#0891B2" />
-                    <Text className="ml-2 text-gray-800 font-medium">
-                      Gerenciar tipos de variação
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-primary-500">Configurar</Text>
-                  </View>
-                </TouchableOpacity>
+            {/* Mostrar botão para gerenciar variações se o produto já existe */}
+            {temVariacao && productId && (
+              <View className="mt-4">
+                <ProductVariationsSummary
+                  variations={variations}
+                  variationName={
+                    typeof product?.variacao === "object" &&
+                    product?.variacao?.nome
+                      ? product.variacao.nome
+                      : "Variações"
+                  }
+                  onPressManage={() =>
+                    router.push(`/admin/products/${productId}/variations`)
+                  }
+                />
+              </View>
+            )}
 
-                <TouchableOpacity
-                  onPress={() => {
-                    if (productId) {
-                      // Navegue para a tela de gerenciamento de variações para este produto específico
-                      // Esta rota pode ser implementada posteriormente
-                      router.push(`/admin/products/${productId}/variations`);
+            {/* Mostrar seletor de tipo de variação se tem_variacao for true */}
+            {temVariacao && (
+              <Controller
+                control={form.control}
+                name="variacao"
+                render={({
+                  field: { onChange, value },
+                  fieldState: { error },
+                }) => (
+                  <VariationSelector
+                    value={value}
+                    onChange={onChange}
+                    onVariationChange={handleVariationChange}
+                    error={error?.message}
+                    disabled={isSubmitting}
+                  />
+                )}
+              />
+            )}
+
+            {/* Mostrar resumo das variações se o produto tem variações */}
+            {temVariacao &&
+              productId &&
+              variations &&
+              variations.length > 0 && (
+                <View className="mt-4">
+                  <ProductVariationsSummary
+                    variations={variations}
+                    variationName={
+                      typeof product?.variacao === "object" &&
+                      product?.variacao?.nome
+                        ? product.variacao.nome
+                        : "Variações"
                     }
-                  }}
-                  className="bg-primary-50 p-4 rounded-lg flex-row items-center justify-between"
-                >
-                  <View className="flex-row items-center">
-                    <Package size={20} color="#0891B2" />
-                    <Text className="ml-2 text-gray-800 font-medium">
-                      Gerenciar variações deste produto
-                    </Text>
-                  </View>
-                  <View>
-                    <Text className="text-primary-500">Personalizar</Text>
-                  </View>
-                </TouchableOpacity>
+                    onPressManage={() =>
+                      router.push(`/admin/products/${productId}/variations`)
+                    }
+                  />
+                </View>
+              )}
+
+            {/* Mostrar formulário de variações se tem_variacao for true e uma variação foi selecionada */}
+            {temVariacao && selectedVariation && (
+              <View className="mt-2">
+                <Text className="text-lg font-semibold text-gray-800 mb-2">
+                  Configurar Variações
+                </Text>
+
+                <Controller
+                  control={form.control}
+                  name="variacoes_produtos"
+                  render={({ field: { onChange, value } }) => (
+                    <ProductVariationsForm
+                      variations={value || []}
+                      variationValues={variationValues}
+                      onChange={onChange}
+                      isLoading={isSubmitting}
+                    />
+                  )}
+                />
               </View>
             )}
           </View>
@@ -335,6 +542,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                     selectedValue={value}
                     onSelect={(selectedValue) => {
                       onChange(Number(selectedValue));
+                      setIsCategoryModalVisible(false);
                     }}
                     title="Selecionar Categoria"
                   />
@@ -378,49 +586,51 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           </View>
         </SectionCard>
 
-        {/* Preços - Usando o CurrencyInput */}
-        <SectionCard
-          title="Preços"
-          icon={<DollarSign size={22} color="#0891B2" />}
-        >
-          <View className="gap-4 flex flex-col py-4">
-            {/* Preço com o novo componente */}
-            <Controller
-              control={form.control}
-              name="preco"
-              render={({ field: { onChange, value } }) => (
-                <CurrencyInput
-                  label="Preço"
-                  value={value}
-                  onChangeValue={onChange}
-                  isInvalid={!!form.formState.errors.preco}
-                  errorMessage={form.formState.errors.preco?.message}
-                  disabled={isSubmitting}
-                  required
-                />
-              )}
-            />
+        {/* Preços - apenas se não tiver variação */}
+        {!temVariacao && (
+          <SectionCard
+            title="Preços"
+            icon={<DollarSign size={22} color="#0891B2" />}
+          >
+            <View className="gap-4 flex flex-col py-4">
+              {/* Preço com o novo componente */}
+              <Controller
+                control={form.control}
+                name="preco"
+                render={({ field: { onChange, value } }) => (
+                  <CurrencyInput
+                    label="Preço"
+                    value={value}
+                    onChangeValue={onChange}
+                    isInvalid={!!form.formState.errors.preco}
+                    errorMessage={form.formState.errors.preco?.message}
+                    disabled={isSubmitting}
+                    required
+                  />
+                )}
+              />
 
-            {/* Preço promocional com o novo componente */}
-            <Controller
-              control={form.control}
-              name="preco_promocional"
-              render={({ field: { onChange, value } }) => (
-                <CurrencyInput
-                  label="Preço Promocional"
-                  value={value || ""}
-                  onChangeValue={onChange}
-                  isInvalid={!!form.formState.errors.preco_promocional}
-                  errorMessage={
-                    form.formState.errors.preco_promocional?.message
-                  }
-                  disabled={isSubmitting}
-                  placeholder="0,00"
-                />
-              )}
-            />
-          </View>
-        </SectionCard>
+              {/* Preço promocional com o novo componente */}
+              <Controller
+                control={form.control}
+                name="preco_promocional"
+                render={({ field: { onChange, value } }) => (
+                  <CurrencyInput
+                    label="Preço Promocional"
+                    value={value || ""}
+                    onChangeValue={onChange}
+                    isInvalid={!!form.formState.errors.preco_promocional}
+                    errorMessage={
+                      form.formState.errors.preco_promocional?.message
+                    }
+                    disabled={isSubmitting}
+                    placeholder="0,00"
+                  />
+                )}
+              />
+            </View>
+          </SectionCard>
+        )}
 
         {/* Status do Produto - Usando o StatusToggle */}
         <SectionCard
@@ -544,15 +754,16 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       >
         <FormActions
           primaryAction={{
-            label: isSubmitting ? "Salvando..." : "Salvar",
+            label:
+              isSubmitting || isCreatingVariations ? "Salvando..." : "Salvar",
             onPress: form.handleSubmit(handleSubmit),
-            isLoading: isSubmitting,
+            isLoading: isSubmitting || isCreatingVariations,
           }}
           secondaryAction={{
             label: "Cancelar",
             onPress: () => router.back(),
             variant: "outline",
-            isDisabled: isSubmitting,
+            isDisabled: isSubmitting || isCreatingVariations,
           }}
           className="px-4 w-full"
           spacing="sm"

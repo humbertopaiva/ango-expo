@@ -1,6 +1,12 @@
 // Path: src/features/products/screens/variations-screen.tsx
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { useVariations } from "../hooks/use-variations";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ModalForm } from "@/components/custom/modal-form";
@@ -8,15 +14,16 @@ import { VariationForm, VariationFormRef } from "../components/variation-form";
 import { ListItem } from "@/components/custom/list-item";
 import { SearchInput } from "@/components/custom/search-input";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
+import { Card, useToast } from "@gluestack-ui/themed";
 import { Plus, Tag, AlertTriangle } from "lucide-react-native";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { ProductVariation } from "../models/variation";
-import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
-import { useToast } from "@gluestack-ui/themed";
+import { router } from "expo-router";
 import {
   showErrorToast,
   showSuccessToast,
 } from "@/components/common/toast-helper";
+import useAuthStore from "@/src/stores/auth";
 
 export function VariationsScreen() {
   const toast = useToast();
@@ -82,11 +89,13 @@ export function VariationsScreen() {
   }) => {
     try {
       console.log("Criando variação com dados:", data);
+      const companyId = useAuthStore((state) => state.getCompanyId());
 
       // Garantir que os dados estão no formato correto
       const payload = {
         nome: data.nome,
         variacao: Array.isArray(data.variacao) ? data.variacao : [],
+        empresa: companyId,
       };
 
       createVariation(payload, {
@@ -184,6 +193,29 @@ export function VariationsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       <View className="flex-1 p-4">
+        <Card className="p-4 mb-4">
+          <View className="flex-row justify-between items-center">
+            <View>
+              <Text className="text-lg font-semibold text-gray-800">
+                Variações
+              </Text>
+              <Text className="text-sm text-gray-600">
+                Gerencie os tipos de variação para seus produtos
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              className="bg-primary-500 px-4 py-2 rounded-lg"
+              onPress={() => router.push("/admin/products/variations/types")}
+            >
+              <View className="flex-row items-center">
+                <Tag size={16} color="white" className="mr-1" />
+                <Text className="text-white font-medium">Gerenciar Tipos</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </Card>
+
         {/* Search */}
         <SearchInput
           value={searchTerm}

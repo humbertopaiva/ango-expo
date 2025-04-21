@@ -71,7 +71,7 @@ export function ProductsContent() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => router.push("/admin/products/variations")}
+              onPress={() => router.push("/admin/products/variations/types")}
               className="bg-primary-50 px-4 py-2 rounded-lg flex-row items-center"
             >
               <Tag size={18} color="#0891B2" />

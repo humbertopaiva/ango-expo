@@ -3,6 +3,7 @@ export interface ProductVariation {
   id: string;
   nome: string;
   variacao: string[];
+  empresa?: string;
 }
 
 export interface ProductVariationItem {
@@ -16,11 +17,17 @@ export interface ProductVariationItem {
     nome: string;
   };
   valor_variacao: string;
+  preco?: string;
+  preco_promocional?: string;
+  imagem?: string | null;
+  status?: "disponivel" | "indisponivel";
+  empresa?: string;
 }
 
 export interface CreateVariationDTO {
   nome: string;
   variacao: string[];
+  empresa: string;
 }
 
 export interface UpdateVariationDTO {
@@ -32,10 +39,9 @@ export interface CreateVariationItemDTO {
   produto: string;
   variacao: string;
   valor_variacao: string;
-}
-
-export interface UpdateVariationItemDTO {
-  produto?: string;
-  variacao?: string;
-  valor_variacao?: string;
+  preco: string;
+  preco_promocional?: string | null;
+  imagem?: string | null;
+  status?: "disponivel" | "indisponivel";
+  empresa: string;
 }

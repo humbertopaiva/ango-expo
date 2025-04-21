@@ -1,6 +1,4 @@
 // Path: app/(drawer)/admin/products/_layout.tsx
-// Atualize o layout existente para incluir a nova rota de variações
-
 import { Stack } from "expo-router";
 import { ProductsProvider } from "@/src/features/products/contexts/products-provider";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -45,6 +43,20 @@ export default function ProductsLayout() {
           name="variations/index"
           options={{
             title: "Variações",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="variations/types"
+          options={{
+            title: "Tipos de Variação",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="[id]/variations"
+          options={{
+            title: "Variações do Produto",
             headerShown: true,
           }}
         />
