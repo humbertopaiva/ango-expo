@@ -1,8 +1,8 @@
 // Path: src/features/products/components/product-variations-summary.tsx
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Card } from "@gluestack-ui/themed";
-import { Tag, ChevronRight } from "lucide-react-native";
+import { Card, Badge } from "@gluestack-ui/themed";
+import { Tag, ChevronRight, CheckCircle, XCircle } from "lucide-react-native";
 
 interface ProductVariation {
   id: string;
@@ -10,6 +10,7 @@ interface ProductVariation {
   produto?: {
     preco?: string;
     status?: string;
+    imagem?: string | null;
   };
 }
 
@@ -44,7 +45,7 @@ export function ProductVariationsSummary({
         <View className="flex-row items-center">
           <Tag size={18} color="#0891B2" />
           <Text className="ml-2 font-semibold text-gray-800">
-            {variationName}
+            {variationName} ({variations.length})
           </Text>
         </View>
 
@@ -63,27 +64,42 @@ export function ProductVariationsSummary({
         </View>
       ) : (
         <View className="border-t border-gray-100 pt-2">
-          {variations.map((variation, index) => (
+          {variations.slice(0, 3).map((variation, index) => (
             <View
               key={variation.id}
               className={`py-2 flex-row justify-between items-center ${
                 index < variations.length - 1 ? "border-b border-gray-100" : ""
               }`}
             >
-              <Text className="text-gray-800 font-medium">
-                {variation.valor_variacao}
-              </Text>
+              <View className="flex-row items-center">
+                <Text className="text-gray-800 font-medium">
+                  {variation.valor_variacao}
+                </Text>
+                {variation.produto?.status === "disponivel" ? (
+                  <CheckCircle size={14} color="#22C55E" className="ml-2" />
+                ) : (
+                  <XCircle size={14} color="#EF4444" className="ml-2" />
+                )}
+              </View>
               <Text className="text-gray-600">
                 {formatCurrency(variation.produto?.preco)}
               </Text>
             </View>
           ))}
 
+          {variations.length > 3 && (
+            <View className="pt-2 border-t border-gray-100 mt-2">
+              <Text className="text-center text-gray-500 text-sm">
+                +{variations.length - 3} outras variações
+              </Text>
+            </View>
+          )}
+
           <TouchableOpacity
             className="mt-3 bg-gray-50 py-2 rounded-lg items-center"
             onPress={onPressManage}
           >
-            <Text className="text-primary-500">Ver todas variações</Text>
+            <Text className="text-primary-500">Gerenciar variações</Text>
           </TouchableOpacity>
         </View>
       )}

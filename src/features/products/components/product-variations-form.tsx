@@ -2,7 +2,7 @@
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Edit, Trash, Image as ImageIcon } from "lucide-react-native";
+import { AlertTriangle } from "lucide-react-native";
 import { CurrencyInput } from "@/components/common/currency-input";
 import { StatusToggle } from "@/components/common/status-toggle";
 import { ImageUpload } from "@/components/common/image-upload";
@@ -92,7 +92,11 @@ export function ProductVariationsForm({
 
             <View className="flex-row">
               <TouchableOpacity
-                className="p-2 bg-gray-100 rounded-full mr-2"
+                className={`p-2 rounded-full ${
+                  variation.status === "disponivel"
+                    ? "bg-green-100"
+                    : "bg-red-100"
+                }`}
                 onPress={() => {
                   // Toggle status
                   handleVariationChange(
@@ -105,10 +109,10 @@ export function ProductVariationsForm({
                 }}
               >
                 <Text
-                  className={`text-xs ${
+                  className={`text-xs font-medium ${
                     variation.status === "disponivel"
-                      ? "text-green-600"
-                      : "text-red-600"
+                      ? "text-green-700"
+                      : "text-red-700"
                   }`}
                 >
                   {variation.status === "disponivel"
@@ -120,20 +124,6 @@ export function ProductVariationsForm({
           </View>
 
           <View className="space-y-4">
-            {/* Imagem */}
-            <View>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                Imagem
-              </Text>
-              <ImageUpload
-                value={variation.imagem || ""}
-                onChange={(value) =>
-                  handleVariationChange(index, "imagem", value)
-                }
-                disabled={isLoading}
-              />
-            </View>
-
             {/* Preço */}
             <CurrencyInput
               label="Preço"
@@ -158,19 +148,18 @@ export function ProductVariationsForm({
               placeholder="0,00"
             />
 
-            {/* Status */}
+            {/* Imagem */}
             <View>
               <Text className="text-sm font-medium text-gray-700 mb-2">
-                Disponibilidade
+                Imagem da Variação (opcional)
               </Text>
-              <StatusToggle
-                value={variation.status === "disponivel"}
+              <Text className="text-xs text-gray-500 mb-2">
+                Deixe em branco para usar a imagem principal do produto
+              </Text>
+              <ImageUpload
+                value={variation.imagem || ""}
                 onChange={(value) =>
-                  handleVariationChange(
-                    index,
-                    "status",
-                    value ? "disponivel" : "indisponivel"
-                  )
+                  handleVariationChange(index, "imagem", value)
                 }
                 disabled={isLoading}
               />

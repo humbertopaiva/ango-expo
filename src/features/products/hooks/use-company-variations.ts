@@ -19,14 +19,23 @@ export function useCompanyVariations() {
         }>(`/api/products/variations/empresa/${companyId}`);
 
         // Garantir que retornamos um array mesmo se a API retornar um objeto único
-        const variations = response.data?.data || [];
-        return Array.isArray(variations) ? variations : [variations];
+        let variations = response.data?.data || [];
+        variations = Array.isArray(variations) ? variations : [variations];
+
+        // Processar cada item para garantir os formatos corretos
+        return variations.map((v) => ({
+          ...v,
+          id: v.id || "",
+          nome: v.nome || "",
+          variacao: Array.isArray(v.variacao) ? v.variacao : [],
+        }));
       } catch (error) {
         console.error("Erro ao buscar variações da empresa:", error);
         throw error;
       }
     },
     enabled: !!companyId,
+    staleTime: 5 * 60 * 1000, // 5 minutos de cache
   });
 
   return {

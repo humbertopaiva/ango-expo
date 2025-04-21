@@ -15,7 +15,11 @@ import { EnhancedSelect } from "@/components/common/enhanced-select";
 interface VariationSelectorProps {
   value: string | null;
   onChange: (value: string | null) => void;
-  onVariationChange: (variationId: string, values: string[]) => void;
+  onVariationChange: (
+    variationId: string,
+    values: string[],
+    name: string
+  ) => void;
   error?: string;
   disabled?: boolean;
 }
@@ -56,7 +60,11 @@ export function VariationSelector({
     if (value) {
       const selectedVariation = processedVariations.find((v) => v.id === value);
       if (selectedVariation) {
-        onVariationChange(value, selectedVariation.variacao);
+        onVariationChange(
+          value,
+          selectedVariation.variacao,
+          selectedVariation.nome
+        );
       }
     }
   }, [value, processedVariations, onVariationChange]);
@@ -68,7 +76,7 @@ export function VariationSelector({
     <FormControl isInvalid={!!error} isDisabled={disabled || isLoading}>
       <FormControlLabel>
         <Text className="text-sm font-medium text-gray-700">
-          Tipo de Variação
+          Tipo de Variação <Text className="text-red-500">*</Text>
         </Text>
       </FormControlLabel>
 
