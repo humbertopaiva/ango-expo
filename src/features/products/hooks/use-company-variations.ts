@@ -31,15 +31,16 @@ export function useCompanyVariations() {
         }));
       } catch (error) {
         console.error("Erro ao buscar variações da empresa:", error);
-        throw error;
+        return [];
       }
     },
     enabled: !!companyId,
-    staleTime: 5 * 60 * 1000, // 5 minutos de cache
+    staleTime: 1000 * 60, // 1 minuto de cache, igual ao das categorias
+    retry: 2, // Tentar novamente até 2 vezes em caso de falha
   });
 
   return {
-    variations: data || [],
+    variations: Array.isArray(data) ? data : [],
     isLoading,
     error,
     refetch,

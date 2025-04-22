@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query"; // Adicionado useQueryClient
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/services/api";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { Controller, useForm } from "react-hook-form";
@@ -51,7 +51,7 @@ type ProductVariationFormData = z.infer<typeof productVariationFormSchema>;
 export function AddProductVariationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
-  const queryClient = useQueryClient(); // Adicionada a definição do queryClient
+  const queryClient = useQueryClient();
   const { createVariationItem, isCreating } = useProductVariationItems(
     id as string
   );
@@ -88,7 +88,7 @@ export function AddProductVariationScreen() {
       preco: "",
       preco_promocional: "",
       descricao: "",
-      imagem: product?.imagem || null, // Usa a imagem do produto principal como padrão
+      imagem: product?.imagem || null,
       disponivel: true,
     },
   });
@@ -142,6 +142,36 @@ export function AddProductVariationScreen() {
     value: value,
   }));
 
+  // Função para invalidar todas as queries relacionadas
+  const invalidateAllRelatedQueries = async () => {
+    console.log("Invalidando todas as queries relacionadas");
+
+    // Invalidar primeiro as queries específicas de variações
+    await queryClient.invalidateQueries({
+      queryKey: ["product-variation-items", id],
+    });
+
+    // Depois, invalidar queries de produtos específicos
+    await queryClient.invalidateQueries({
+      queryKey: ["product-details", id],
+    });
+
+    await queryClient.invalidateQueries({
+      queryKey: ["product-for-variation", id],
+    });
+
+    // Por fim, invalidar queries gerais
+    await queryClient.invalidateQueries({
+      queryKey: ["products"],
+    });
+
+    await queryClient.invalidateQueries({
+      queryKey: ["product-variation-items"],
+    });
+
+    console.log("Queries invalidadas com sucesso");
+  };
+
   const onSubmit = async (data: ProductVariationFormData) => {
     if (!id || !companyId) {
       showErrorToast(toast, "Dados incompletos para criar variação");
@@ -163,20 +193,26 @@ export function AddProductVariationScreen() {
         disponivel: data.disponivel,
       });
 
-      // Invalidar todas as queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      // Forçar refetch IMEDIATAMENTE de todas as queries relacionadas
       queryClient.invalidateQueries({ queryKey: ["product-details", id] });
       queryClient.invalidateQueries({
         queryKey: ["product-variation-items", id],
       });
-      queryClient.invalidateQueries({ queryKey: ["product-variation-items"] });
+      queryClient.refetchQueries({ queryKey: ["product-details", id] });
+      queryClient.refetchQueries({ queryKey: ["product-variation-items", id] });
 
       showSuccessToast(toast, "Variação de produto adicionada com sucesso!");
 
-      // Redirecionar para a página de detalhes do produto após um breve delay
+      // Aguardar um momento para garantir que a refetch termine
       setTimeout(() => {
+        // Refetch novamente antes de navegar (garantia dupla)
+        queryClient.refetchQueries({ queryKey: ["product-details", id] });
+        queryClient.refetchQueries({
+          queryKey: ["product-variation-items", id],
+        });
+
         router.push(`/admin/products/view/${id}`);
-      }, 500);
+      }, 1000); // Aumentado para 1 segundo para dar mais tempo
     } catch (error) {
       console.error("Erro ao adicionar variação:", error);
       showErrorToast(toast, "Erro ao adicionar variação de produto");

@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/services/api";
 import { THEME_COLORS } from "@/src/styles/colors";
 import {
@@ -28,10 +28,14 @@ import { useProductVariationItems } from "../hooks/use-product-variations-items"
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
 import { Card, useToast } from "@gluestack-ui/themed";
-import { showErrorToast } from "@/components/common/toast-helper";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/components/common/toast-helper";
 import useAuthStore from "@/src/stores/auth";
 import { Product } from "../models/product";
 import { useProducts } from "../hooks/use-products";
+import { invalidateAllProductQueries } from "../utils/query-utils";
 
 export function ProductDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,12 +45,27 @@ export function ProductDetailsScreen() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const toast = useToast();
   const { hasVariation } = useProducts();
+  const queryClient = useQueryClient();
+
+  // Efeito para forçar refetch quando a tela for montada ou o ID mudar
+  useEffect(() => {
+    if (id) {
+      console.log(`Forçando refetch das queries para o produto ${id}`);
+      // Invalidar e forçar refetch de todas as queries relevantes
+      invalidateAllProductQueries(queryClient);
+
+      // Forçar refetch específico para este produto
+      queryClient.refetchQueries({ queryKey: ["product-details", id] });
+      queryClient.refetchQueries({ queryKey: ["product-variation-items", id] });
+    }
+  }, [id, queryClient]);
 
   // Buscar detalhes do produto com tratamento melhorado
   const {
     data: product,
     isLoading,
     error,
+    refetch: refetchProduct,
   } = useQuery({
     queryKey: ["product-details", id],
     queryFn: async () => {
@@ -58,9 +77,12 @@ export function ProductDetailsScreen() {
           throw new Error("ID do produto ou empresa não fornecido");
         }
 
+        console.log(`Buscando detalhes do produto ${id}`);
+
         // Buscar todos os produtos da empresa
         const response = await api.get<{ data: Product[] }>(
-          `/api/products?company=${companyId}`
+          `/api/products?company=${companyId}`,
+          { params: { _t: Date.now() } } // Adicionar cache buster
         );
 
         // Encontrar o produto específico pelo ID
@@ -79,6 +101,7 @@ export function ProductDetailsScreen() {
     },
     enabled: !!id,
     retry: 2,
+    staleTime: 0, // Sem cache em memória
   });
 
   // Buscar variações do produto
@@ -87,9 +110,24 @@ export function ProductDetailsScreen() {
     isLoading: isLoadingVariations,
     deleteVariationItem,
     isDeleting,
+    refetch: refetchVariations,
   } = useProductVariationItems(id as string);
 
-  // Adicione useEffect para debug
+  // Efeito adicional para refetch periódico
+  useEffect(() => {
+    // Refetch a cada 5 segundos para garantir dados atualizados
+    const intervalId = setInterval(() => {
+      if (id) {
+        console.log("Refetch periódico de dados");
+        refetchProduct();
+        refetchVariations();
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [id, refetchProduct, refetchVariations]);
+
+  // Efeito para debug
   useEffect(() => {
     if (error) {
       console.error("Erro na consulta do produto:", error);
@@ -97,7 +135,8 @@ export function ProductDetailsScreen() {
     if (product) {
       console.log("Produto carregado com sucesso:", product);
     }
-  }, [product, error]);
+    console.log("Variações carregadas:", variationItems.length);
+  }, [product, error, variationItems]);
 
   const formatCurrency = (value: string | null | undefined) => {
     if (!value) return "";
@@ -128,10 +167,32 @@ export function ProductDetailsScreen() {
     if (!deleteVariationId) return;
 
     try {
+      console.log(`Excluindo variação ${deleteVariationId}`);
       await deleteVariationItem(deleteVariationId);
-      setIsDeleteDialogOpen(false);
+
+      // Forçar refetch IMEDIATAMENTE após exclusão
+      invalidateAllProductQueries(queryClient);
+
+      // Forçar refetch específico
+      queryClient.refetchQueries({ queryKey: ["product-details", id] });
+      queryClient.refetchQueries({ queryKey: ["product-variation-items", id] });
+
+      showSuccessToast(toast, "Variação excluída com sucesso");
+
+      // Aguardar um momento antes de fechar o diálogo
+      setTimeout(() => {
+        setIsDeleteDialogOpen(false);
+        setDeleteVariationId(null);
+
+        // Refetch novamente (garantia dupla)
+        refetchProduct();
+        refetchVariations();
+      }, 500);
     } catch (error) {
       console.error("Erro ao excluir variação:", error);
+      showErrorToast(toast, "Erro ao excluir variação");
+      setIsDeleteDialogOpen(false);
+      setDeleteVariationId(null);
     }
   };
 
@@ -148,6 +209,14 @@ export function ProductDetailsScreen() {
 
   // Verificar se o produto tem variação
   const productHasVariation = product ? hasVariation(product) : false;
+
+  // Forçar refetch manualmente das variações, útil para debugging
+  const forceRefetchData = () => {
+    console.log("Forçando refetch manual de dados");
+    invalidateAllProductQueries(queryClient);
+    refetchProduct();
+    refetchVariations();
+  };
 
   if (isLoading) {
     return (
@@ -186,6 +255,14 @@ export function ProductDetailsScreen() {
           <Text className="text-gray-500 text-center mt-2">
             ID consultado: {id || "não fornecido"}
           </Text>
+
+          {/* Botão para forçar refetch */}
+          <TouchableOpacity
+            onPress={forceRefetchData}
+            className="mt-6 bg-blue-500 rounded-lg py-3 px-6"
+          >
+            <Text className="text-white font-medium">Tentar novamente</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -327,6 +404,14 @@ export function ProductDetailsScreen() {
                 <Text className="text-gray-500 text-center mt-1">
                   Adicione variações para este produto clicando no botão abaixo.
                 </Text>
+
+                {/* Botão para forçar refetch das variações */}
+                <TouchableOpacity
+                  onPress={forceRefetchData}
+                  className="mt-4 bg-blue-100 rounded-lg py-2 px-4"
+                >
+                  <Text className="text-blue-700">Atualizar lista</Text>
+                </TouchableOpacity>
               </View>
             ) : (
               <View className="space-y-3 mt-2">
@@ -418,6 +503,14 @@ export function ProductDetailsScreen() {
                     </View>
                   </Card>
                 ))}
+
+                {/* Botão para forçar refetch das variações */}
+                <TouchableOpacity
+                  onPress={forceRefetchData}
+                  className="self-center mt-2 bg-gray-100 rounded-lg py-2 px-4"
+                >
+                  <Text className="text-gray-700">Atualizar lista</Text>
+                </TouchableOpacity>
               </View>
             )}
           </SectionCard>
@@ -436,7 +529,10 @@ export function ProductDetailsScreen() {
       {/* Diálogo de confirmação para excluir variação */}
       <ConfirmationDialog
         isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setDeleteVariationId(null);
+        }}
         onConfirm={handleDeleteVariation}
         title="Excluir Variação"
         message="Tem certeza que deseja excluir esta variação? Esta ação não pode ser desfeita."
