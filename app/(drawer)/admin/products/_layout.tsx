@@ -81,6 +81,13 @@ export default function ProductsLayout() {
             headerShown: true,
           }}
         />
+        <Stack.Screen
+          name="variations/edit/[id]"
+          options={{
+            title: "Editar Variação",
+            headerShown: false,
+          }}
+        />
       </Stack>
     </ProductsProvider>
   );
