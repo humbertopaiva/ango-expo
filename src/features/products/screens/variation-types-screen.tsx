@@ -57,7 +57,7 @@ export function VariationTypesScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       <AdminScreenHeader title="Tipos de Variação" backTo="/admin/products" />
 
-      <View className="p-4">
+      <View className="p-4 flex-1">
         <Card className="p-4 mb-4">
           <Text className="text-lg font-semibold text-gray-800">
             Tipos de Variação
@@ -105,6 +105,7 @@ export function VariationTypesScreen() {
           </ScrollView>
         )}
 
+        {/* Botão de adicionar variação */}
         <PrimaryActionButton
           onPress={handleAddVariation}
           label="Nova Variação"
