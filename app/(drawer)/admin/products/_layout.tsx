@@ -11,7 +11,7 @@ export default function ProductsLayout() {
           headerStyle: {
             backgroundColor: THEME_COLORS.primary,
           },
-          headerTintColor: "#FFFFFF", // Texto e ícones brancos
+          headerTintColor: "#FFFFFF",
           headerTitleStyle: {
             fontWeight: "600",
           },
@@ -22,7 +22,14 @@ export default function ProductsLayout() {
           name="index"
           options={{
             title: "Produtos",
-            headerShown: true,
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="list"
+          options={{
+            title: "Lista de Produtos",
+            headerShown: false,
           }}
         />
         <Stack.Screen
@@ -47,10 +54,24 @@ export default function ProductsLayout() {
           }}
         />
         <Stack.Screen
+          name="variations/new"
+          options={{
+            title: "Nova Variação",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="variations/types"
           options={{
             title: "Tipos de Variação",
-            headerShown: true,
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="settings"
+          options={{
+            title: "Configurações de Produto",
+            headerShown: false,
           }}
         />
         <Stack.Screen
