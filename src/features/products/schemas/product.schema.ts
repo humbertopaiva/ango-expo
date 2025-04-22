@@ -4,8 +4,8 @@ import * as z from "zod";
 export const productFormSchema = z
   .object({
     nome: z.string().min(1, "Nome é obrigatório"),
-    descricao: z.string().min(1, "Descrição é obrigatória").optional(),
-    preco: z.string().min(1, "Preço é obrigatório").nullable().optional(),
+    descricao: z.string().nullable().optional(),
+    preco: z.string().nullable().optional(),
     preco_promocional: z.string().nullable().optional(),
     // Aceitando que categoria pode ser 0, que será tratado como null ao ser enviado para API
     categoria: z.coerce
@@ -41,7 +41,7 @@ export const productFormSchema = z
       if (!data.tem_variacao) {
         return !!data.preco && !!data.descricao;
       }
-      return true;
+      return true; // Se tem_variacao é true, não exigimos preço nem descrição
     },
     {
       message: "Preço e descrição são obrigatórios para produtos sem variação",

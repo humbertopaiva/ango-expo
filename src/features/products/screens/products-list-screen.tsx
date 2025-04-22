@@ -92,6 +92,12 @@ export function ProductsListScreen() {
             isLoading={vm.isLoading}
             onEdit={(product) => handleEditProduct(product.id)}
             onDelete={(product) => vm.confirmDeleteProduct(product.id)}
+            onView={(product) =>
+              router.push(`/admin/products/view/${product.id}`)
+            }
+            onAddVariation={(product) =>
+              router.push(`/admin/products/${product.id}/add-variation`)
+            }
           />
         </View>
 
