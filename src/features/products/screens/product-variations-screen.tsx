@@ -95,8 +95,11 @@ export function ProductVariationsScreen({
   const variationValues = variationType?.variacao || [];
 
   // Filtra os valores que já estão em uso
-  const availableValues = variationValues.filter(
-    (value) => !variations.some((v) => v.valor_variacao === value)
+  const availableValues: string[] = variationValues.filter(
+    (value: string) =>
+      !variations.some(
+        (v: { valor_variacao: string }) => v.valor_variacao === value
+      )
   );
 
   const handleAddVariation = () => {
@@ -264,31 +267,42 @@ export function ProductVariationsScreen({
           </Card>
         ) : (
           <ScrollView>
-            {variations.map((variation) => (
-              <View key={variation.id} className="mb-3">
-                <ListItem
-                  title={variation.valor_variacao}
-                  subtitle={`Preço: ${
-                    variation.produto?.preco
-                      ? new Intl.NumberFormat("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        }).format(Number(variation.produto.preco))
-                      : "Não definido"
-                  }`}
-                  imageUri={variation.produto?.imagem}
-                  imageIcon={Package}
-                  status={variation.produto?.status}
-                  statusLabel={
-                    variation.produto?.status === "disponivel"
-                      ? "Disponível"
-                      : "Indisponível"
-                  }
-                  onEdit={() => handleEditVariation(variation)}
-                  onDelete={() => handleDeleteVariation(variation.id)}
-                />
-              </View>
-            ))}
+            {variations.map(
+              (variation: {
+                id: string;
+                valor_variacao: string;
+                produto?: {
+                  preco?: string;
+                  preco_promocional?: string;
+                  imagem?: string | null;
+                  status?: "disponivel" | "indisponivel";
+                };
+              }) => (
+                <View key={variation.id} className="mb-3">
+                  <ListItem
+                    title={variation.valor_variacao}
+                    subtitle={`Preço: ${
+                      variation.produto?.preco
+                        ? new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(Number(variation.produto.preco))
+                        : "Não definido"
+                    }`}
+                    imageUri={variation.produto?.imagem}
+                    imageIcon={Package}
+                    status={variation.produto?.status}
+                    statusLabel={
+                      variation.produto?.status === "disponivel"
+                        ? "Disponível"
+                        : "Indisponível"
+                    }
+                    onEdit={() => handleEditVariation(variation)}
+                    onDelete={() => handleDeleteVariation(variation.id)}
+                  />
+                </View>
+              )
+            )}
           </ScrollView>
         )}
 
