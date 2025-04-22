@@ -18,6 +18,7 @@ export default function ProductsLayout() {
           headerShadowVisible: true,
         }}
       >
+        {/* Dashboard principal de produtos */}
         <Stack.Screen
           name="index"
           options={{
@@ -25,6 +26,8 @@ export default function ProductsLayout() {
             headerShown: false,
           }}
         />
+
+        {/* Gerenciamento de produtos */}
         <Stack.Screen
           name="list"
           options={{
@@ -46,20 +49,8 @@ export default function ProductsLayout() {
             headerShown: true,
           }}
         />
-        <Stack.Screen
-          name="variations/index"
-          options={{
-            title: "Variações",
-            headerShown: true,
-          }}
-        />
-        <Stack.Screen
-          name="variations/new"
-          options={{
-            title: "Nova Variação",
-            headerShown: false,
-          }}
-        />
+
+        {/* Gerenciamento de tipos de variação */}
         <Stack.Screen
           name="variations/types"
           options={{
@@ -68,17 +59,10 @@ export default function ProductsLayout() {
           }}
         />
         <Stack.Screen
-          name="settings"
+          name="variations/new"
           options={{
-            title: "Configurações de Produto",
+            title: "Nova Variação",
             headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="[id]/variations"
-          options={{
-            title: "Variações do Produto",
-            headerShown: true,
           }}
         />
         <Stack.Screen
