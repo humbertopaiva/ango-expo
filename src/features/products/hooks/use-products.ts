@@ -31,8 +31,26 @@ export function useProducts() {
 
       return productService.createProduct(transformedData);
     },
-    onSuccess: () => {
+    onSuccess: (newProduct) => {
+      // Invalidar a query de produtos
       queryClient.invalidateQueries({ queryKey });
+
+      // Invalidar a query de detalhes do produto, se o novo produto tiver um ID
+      if (newProduct && newProduct.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["product-details", newProduct.id],
+        });
+      }
+
+      // Se o produto tem variação, invalidar as queries relacionadas a variações
+      if (newProduct && newProduct.variacao) {
+        queryClient.invalidateQueries({
+          queryKey: ["product-variation-items", newProduct.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["product-variation-items"],
+        });
+      }
     },
     onError: (error: any) => {
       console.error("Erro ao criar produto:", error);
@@ -50,11 +68,51 @@ export function useProducts() {
 
       return productService.updateProduct(id, transformedData);
     },
-    onSuccess: () => {
+    onSuccess: (updatedProduct, variables) => {
+      // Invalidar a query de produtos
       queryClient.invalidateQueries({ queryKey });
+
+      // Invalidar a query de detalhes do produto
+      queryClient.invalidateQueries({
+        queryKey: ["product-details", variables.id],
+      });
+
+      // Se o produto tem variação, invalidar as queries relacionadas a variações
+      if (updatedProduct && updatedProduct.variacao) {
+        queryClient.invalidateQueries({
+          queryKey: ["product-variation-items", variables.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["product-variation-items"],
+        });
+      }
     },
     onError: (error: any) => {
       console.error("Erro ao atualizar produto:", error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => productService.deleteProduct(id),
+    onSuccess: (_, deletedProductId) => {
+      // Invalidar a query de produtos
+      queryClient.invalidateQueries({ queryKey });
+
+      // Invalidar a query de detalhes do produto
+      queryClient.invalidateQueries({
+        queryKey: ["product-details", deletedProductId],
+      });
+
+      // Invalidar as queries relacionadas a variações do produto
+      queryClient.invalidateQueries({
+        queryKey: ["product-variation-items", deletedProductId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["product-variation-items"],
+      });
+    },
+    onError: (error: any) => {
+      console.error("Erro ao excluir produto:", error);
     },
   });
 
@@ -68,9 +126,10 @@ export function useProducts() {
     isLoading,
     createProduct: createMutation.mutate,
     updateProduct: updateMutation.mutate,
-    deleteProduct: productService.deleteProduct,
+    deleteProduct: deleteMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
     hasVariation, // Adicionar função auxiliar
   };
 }

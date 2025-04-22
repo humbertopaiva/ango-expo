@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/services/api";
 import useAuthStore from "@/src/stores/auth";
-import { ProductVariation, CreateVariationDTO } from "../models/variation";
+import { CreateVariationDTO, ProductVariation } from "../models/variation";
 
 export function useVariationTypes() {
   const queryClient = useQueryClient();
@@ -37,9 +37,16 @@ export function useVariationTypes() {
       );
     },
     onSuccess: () => {
+      // Invalidar queries relacionadas às variações
       queryClient.invalidateQueries({
         queryKey: ["variation-types", companyId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["company-variations", companyId],
+      });
+
+      // Invalidar também as queries de produtos, já que produtos podem ter variações
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 
@@ -58,8 +65,20 @@ export function useVariationTypes() {
       );
     },
     onSuccess: () => {
+      // Invalidar queries relacionadas às variações
       queryClient.invalidateQueries({
         queryKey: ["variation-types", companyId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["company-variations", companyId],
+      });
+
+      // Invalidar também as queries de produtos, já que produtos podem ter variações
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      // Invalidar todas as queries de detalhes de produtos
+      queryClient.invalidateQueries({
+        queryKey: ["product-details"],
       });
     },
   });
@@ -70,8 +89,20 @@ export function useVariationTypes() {
       return api.delete(`/api/products/variations/${id}`);
     },
     onSuccess: () => {
+      // Invalidar queries relacionadas às variações
       queryClient.invalidateQueries({
         queryKey: ["variation-types", companyId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["company-variations", companyId],
+      });
+
+      // Invalidar também as queries de produtos, já que produtos podem ter variações
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      // Invalidar todas as queries de detalhes de produtos
+      queryClient.invalidateQueries({
+        queryKey: ["product-details"],
       });
     },
   });

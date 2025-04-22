@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Adicionado useQueryClient
 import { api } from "@/src/services/api";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { Controller, useForm } from "react-hook-form";
@@ -51,6 +51,7 @@ type ProductVariationFormData = z.infer<typeof productVariationFormSchema>;
 export function AddProductVariationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
+  const queryClient = useQueryClient(); // Adicionada a definição do queryClient
   const { createVariationItem, isCreating } = useProductVariationItems(
     id as string
   );
@@ -161,6 +162,14 @@ export function AddProductVariationScreen() {
         imagem: data.imagem || undefined,
         disponivel: data.disponivel,
       });
+
+      // Invalidar todas as queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["product-details", id] });
+      queryClient.invalidateQueries({
+        queryKey: ["product-variation-items", id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["product-variation-items"] });
 
       showSuccessToast(toast, "Variação de produto adicionada com sucesso!");
 
