@@ -33,7 +33,18 @@ export function useProductVariationItems(productId?: string) {
       );
     },
     onSuccess: () => {
+      // Invalidar a query de variações deste produto específico
       queryClient.invalidateQueries({ queryKey });
+
+      // Invalidar também as queries de produtos para atualizar a lista de produtos
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      // Invalidar a query de detalhes do produto específico
+      if (productId) {
+        queryClient.invalidateQueries({
+          queryKey: ["product-details", productId],
+        });
+      }
     },
   });
 
@@ -51,7 +62,18 @@ export function useProductVariationItems(productId?: string) {
       );
     },
     onSuccess: () => {
+      // Invalidar a query de variações deste produto específico
       queryClient.invalidateQueries({ queryKey });
+
+      // Invalidar também as queries de produtos para atualizar a lista de produtos
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      // Invalidar a query de detalhes do produto específico
+      if (productId) {
+        queryClient.invalidateQueries({
+          queryKey: ["product-details", productId],
+        });
+      }
     },
   });
 
@@ -60,7 +82,18 @@ export function useProductVariationItems(productId?: string) {
       return api.delete(`/api/products/variation-items/${id}`);
     },
     onSuccess: () => {
+      // Invalidar a query de variações deste produto específico
       queryClient.invalidateQueries({ queryKey });
+
+      // Invalidar também as queries de produtos para atualizar a lista de produtos
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      // Invalidar a query de detalhes do produto específico
+      if (productId) {
+        queryClient.invalidateQueries({
+          queryKey: ["product-details", productId],
+        });
+      }
     },
   });
 
