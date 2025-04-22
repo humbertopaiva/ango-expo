@@ -5,7 +5,6 @@ import { ProductCard } from "./product-card";
 import { Product } from "../models/product";
 import { ProductSkeletonList } from "./product-skeleton";
 import { Package } from "lucide-react-native";
-import { THEME_COLORS } from "@/src/styles/colors";
 
 interface ProductsListProps {
   products: Product[];
@@ -42,17 +41,21 @@ export function ProductsList({
   }
 
   return (
-    <View className="space-y-3">
-      {products.map((product) => (
+    <FlatList
+      data={products}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
         <ProductCard
-          key={product.id}
-          product={product}
-          onEdit={() => onEdit(product)}
-          onDelete={() => onDelete(product)}
-          onView={() => onView(product)}
-          onAddVariation={() => onAddVariation(product)}
+          product={item}
+          onEdit={() => onEdit(item)}
+          onDelete={() => onDelete(item)}
+          onView={() => onView(item)}
+          onAddVariation={() => onAddVariation(item)}
         />
-      ))}
-    </View>
+      )}
+      contentContainerStyle={{ paddingBottom: 100 }}
+      showsVerticalScrollIndicator={false}
+      ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+    />
   );
 }

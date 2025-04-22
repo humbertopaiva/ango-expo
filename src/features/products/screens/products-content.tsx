@@ -1,7 +1,6 @@
 // Path: src/features/products/screens/products-content.tsx
-import React, { useState } from "react";
-import { View, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React from "react";
+import { View, Text, SafeAreaView } from "react-native";
 import { useProductsContext } from "../contexts/use-products-context";
 import { ProductsList } from "../components/products-list";
 import { SearchInput } from "@/components/custom/search-input";
@@ -38,9 +37,9 @@ export function ProductsContent() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
-      <View className="flex-1 w-full container px-4 mx-auto">
+      <View className="flex-1 px-4">
         <SectionCard title="Gerenciamento de Produtos">
-          <View className="flex-1">
+          <View className="py-2">
             <Text className="text-gray-700">
               Gerencie seus produtos e suas variações (tamanhos, cores, etc.)
             </Text>
@@ -68,8 +67,8 @@ export function ProductsContent() {
           disabled={vm.isLoading}
         />
 
-        {/* Products List */}
-        <View className="flex-1 pb-20">
+        {/* Products List - Agora com rolagem apropriada */}
+        <View className="flex-1">
           <ProductsList
             products={vm.filteredProducts}
             isLoading={vm.isLoading}
