@@ -9,21 +9,22 @@ import { View, Text } from "react-native";
 import {
   FormControl,
   FormControlLabel,
+  FormControlError,
+  FormControlErrorText,
   Input,
   InputField,
   useToast,
 } from "@gluestack-ui/themed";
 import { TagInput } from "@/components/custom/tag-input";
 import { showErrorToast } from "@/components/common/toast-helper";
-import { ProductVariation } from "../models/variation";
 
-// Interface para o ref
+// Interface for the ref
 export interface VariationFormRef {
   handleSubmit: () => void;
 }
 
 interface VariationFormProps {
-  initialData?: ProductVariation;
+  initialData?: any; // arrumar aqui
   onSubmit: (data: { nome: string; variacao: string[] }) => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -31,7 +32,7 @@ interface VariationFormProps {
 
 export const VariationForm = forwardRef<VariationFormRef, VariationFormProps>(
   ({ initialData, onSubmit, onCancel, isSubmitting }, ref) => {
-    // Garantir que os valores iniciais sejam válidos
+    // Ensure initial values are valid
     const [nome, setNome] = useState(initialData?.nome || "");
     const [tags, setTags] = useState<string[]>(
       Array.isArray(initialData?.variacao) ? initialData.variacao : []
@@ -39,7 +40,7 @@ export const VariationForm = forwardRef<VariationFormRef, VariationFormProps>(
     const [error, setError] = useState<{ nome?: string; tags?: string }>({});
     const toast = useToast();
 
-    // Atualizar valores quando initialData mudar
+    // Update values when initialData changes
     useEffect(() => {
       if (initialData) {
         setNome(initialData.nome || "");
@@ -80,7 +81,7 @@ export const VariationForm = forwardRef<VariationFormRef, VariationFormProps>(
       }
     };
 
-    // Expor o método handleSubmit para uso externo
+    // Expose the handleSubmit method for external use
     useImperativeHandle(ref, () => ({
       handleSubmit,
     }));

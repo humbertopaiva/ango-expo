@@ -54,6 +54,7 @@ import { FormActions } from "@/components/custom/form-actions";
 import { CategorySelectModal } from "@/components/common/category-select-modal";
 import { CreateProductDTO } from "../models/product";
 import useAuthStore from "@/src/stores/auth";
+import { VariationSelector } from "../components/variation-selector";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -64,6 +65,12 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const [showVariationWarning, setShowVariationWarning] = useState(false);
+  const [selectedVariationType, setSelectedVariationType] = useState<
+    string | null
+  >(null);
+  const [selectedVariationName, setSelectedVariationName] =
+    useState<string>("");
+  const [variationValues, setVariationValues] = useState<string[]>([]);
 
   const { products, createProduct, updateProduct, isLoading } = useProducts();
   const { categories, isLoading: isCategoriesLoading } = useCategories();
@@ -86,7 +93,8 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       quantidade_parcelas: "",
       desconto_avista: 0,
       status: "disponivel",
-      tem_variacao: false,
+      variacao: null,
+      is_variacao_enabled: false,
     },
   });
 
@@ -107,6 +115,19 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
     return product.categoria;
   }, [product]);
 
+  // Função para lidar com a mudança na seleção de variação
+  const handleVariationChange = useCallback(
+    (variationId: string | null, values: string[], name: string) => {
+      setSelectedVariationType(variationId);
+      setVariationValues(values);
+      setSelectedVariationName(name);
+
+      // Atualizar o formulário
+      form.setValue("variacao", variationId);
+    },
+    [form]
+  );
+
   // Preparar as opções de categoria para o select
   const categoryOptions = useMemo(
     () => [
@@ -124,6 +145,13 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       // Obtém o ID da categoria corretamente
       const categoryId = getProductCategoryId();
 
+      // Verificar se o produto tem variação
+      const hasVariation = !!product.variacao;
+      const variationId =
+        typeof product.variacao === "object"
+          ? product.variacao?.id
+          : product.variacao;
+
       form.reset({
         nome: product.nome,
         descricao: product.descricao,
@@ -135,10 +163,40 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         quantidade_parcelas: product.quantidade_parcelas || "",
         desconto_avista: product.desconto_avista,
         status: product.status,
-        tem_variacao: product.tem_variacao || false,
+        variacao: variationId,
+        is_variacao_enabled: hasVariation,
       });
+
+      // Se o produto tem variação, atualize os estados relacionados
+      if (hasVariation && variationId) {
+        setSelectedVariationType(variationId);
+      }
     }
   }, [product, form.reset, isSubmitting, getProductCategoryId]);
+
+  // Handler para mudança no campo is_variacao_enabled
+  const handleVariacaoEnabledChange = (value: boolean) => {
+    // Se estiver marcando como produto com variação
+    if (value && !form.watch("is_variacao_enabled")) {
+      setShowVariationWarning(true);
+    } else {
+      form.setValue("is_variacao_enabled", value);
+
+      // Se estiver desmarcando, limpe os campos de variação
+      if (!value) {
+        form.setValue("variacao", null);
+        setSelectedVariationType(null);
+        setVariationValues([]);
+        setSelectedVariationName("");
+      }
+    }
+  };
+
+  // Confirmação de transformação em produto com variação
+  const confirmVariacaoChange = () => {
+    form.setValue("is_variacao_enabled", true);
+    setShowVariationWarning(false);
+  };
 
   const handleSubmit = async (data: ProductFormData) => {
     try {
@@ -153,6 +211,9 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         return;
       }
 
+      // Tratamento do campo variacao
+      const variacao = data.is_variacao_enabled ? data.variacao : null;
+
       // Se categoria for 0, enviamos como null para a API
       const dataToSubmit: CreateProductDTO = {
         ...data,
@@ -160,11 +221,15 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         categoria: data.categoria === 0 ? null : data.categoria,
         descricao: data.descricao ?? "", // Garantir que seja string
         desconto_avista: data.desconto_avista ?? 0,
-        // Se tem variação, definimos automaticamente o status como indisponível
-        // até que as variações sejam configuradas
-        status: data.tem_variacao ? "disponivel" : data.status,
+        // Definir a variação conforme o estado is_variacao_enabled
+        variacao: variacao ?? null,
+        // Configura o status conforme necessário
+        status: data.status || "disponivel",
         parcelas_sem_juros: true, // Sempre true, conforme solicitado
       };
+
+      // Remover is_variacao_enabled que é apenas para controle no frontend
+      delete (dataToSubmit as any).is_variacao_enabled;
 
       console.log("Dados a serem enviados para o produto:", dataToSubmit);
 
@@ -199,25 +264,6 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Watch para o campo tem_variacao
-  const temVariacao = form.watch("tem_variacao");
-
-  // Handler para mudança no campo tem_variacao
-  const handleTemVariacaoChange = (value: boolean) => {
-    // Se estiver marcando como produto com variação
-    if (value && !temVariacao) {
-      setShowVariationWarning(true);
-    } else {
-      form.setValue("tem_variacao", value);
-    }
-  };
-
-  // Confirmação de transformação em produto com variação
-  const confirmVariacaoChange = () => {
-    form.setValue("tem_variacao", true);
-    setShowVariationWarning(false);
   };
 
   // Renderiza um indicador de carregamento enquanto busca os dados
@@ -284,26 +330,44 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               </FormControlLabel>
               <Controller
                 control={form.control}
-                name="tem_variacao"
+                name="is_variacao_enabled"
                 render={({ field: { value } }) => (
                   <StatusToggle
                     value={value}
-                    onChange={handleTemVariacaoChange}
+                    onChange={handleVariacaoEnabledChange}
                     activeLabel="Produto com variações (tamanhos, cores, etc.)"
                     inactiveLabel="Produto simples (sem variações)"
                     disabled={isSubmitting}
                   />
                 )}
               />
-              {temVariacao && (
-                <View className="mt-2 p-3 bg-blue-50 rounded-md">
-                  <View className="flex-row">
-                    <Layers size={16} color="#1E40AF" className="mt-1 mr-2" />
-                    <Text className="text-blue-800 text-sm flex-1">
-                      Este produto terá variações. Após criar o produto, você
-                      poderá adicionar e configurar as variações específicas.
-                    </Text>
-                  </View>
+              {form.watch("is_variacao_enabled") && (
+                <View className="mt-4">
+                  <VariationSelector
+                    value={form.watch("variacao") ?? null}
+                    onChange={(value) => form.setValue("variacao", value)}
+                    onVariationChange={handleVariationChange}
+                    error={form.formState.errors.variacao?.message}
+                    disabled={isSubmitting}
+                    productId={productId}
+                  />
+                  {selectedVariationType && (
+                    <View className="mt-2 p-3 bg-blue-50 rounded-md">
+                      <View className="flex-row">
+                        <Layers
+                          size={16}
+                          color="#1E40AF"
+                          className="mt-1 mr-2"
+                        />
+                        <Text className="text-blue-800 text-sm flex-1">
+                          Variação selecionada: {selectedVariationName}. As
+                          opções disponíveis são: {variationValues.join(", ")}.
+                          Você poderá criar variações específicas após salvar
+                          este produto.
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
               )}
             </FormControl>
@@ -340,7 +404,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             />
 
             {/* Descrição - apenas se não for produto com variação */}
-            {!temVariacao && (
+            {!form.watch("is_variacao_enabled") && (
               <FormControl isInvalid={!!form.formState.errors.descricao}>
                 <FormControlLabel>
                   <Text className="text-sm font-medium text-gray-700">
@@ -414,7 +478,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         </SectionCard>
 
         {/* Preços - apenas se não for produto com variação */}
-        {!temVariacao && (
+        {!form.watch("is_variacao_enabled") && (
           <SectionCard
             title="Preços"
             icon={<DollarSign size={22} color="#0891B2" />}
@@ -460,7 +524,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         )}
 
         {/* Status do Produto - apenas se não for produto com variação */}
-        {!temVariacao && (
+        {!form.watch("is_variacao_enabled") && (
           <SectionCard
             title="Status do Produto"
             icon={<Package size={22} color="#0891B2" />}
@@ -600,7 +664,8 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                 • A descrição será específica para cada variação
               </Text>
               <Text className="text-gray-600">
-                • O produto ficará indisponível até configurar as variações
+                • Após salvar, você precisará configurar as variações
+                específicas
               </Text>
             </View>
             <Text className="text-gray-700">Deseja continuar?</Text>

@@ -21,10 +21,15 @@ export function useProducts() {
     mutationFn: (data: Omit<CreateProductDTO, "empresa">) => {
       if (!companyId) throw new Error("ID da empresa não encontrado");
 
-      return productService.createProduct({
+      // Transformar dados antes de enviar
+      const transformedData = {
         ...data,
         empresa: companyId,
-      });
+        // Se o produto não tem variação (is_variacao_enabled = false), então variacao deve ser null
+        variacao: data.variacao || null,
+      };
+
+      return productService.createProduct(transformedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -35,8 +40,16 @@ export function useProducts() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateProductDTO }) =>
-      productService.updateProduct(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductDTO }) => {
+      // Transformar dados antes de enviar
+      const transformedData = {
+        ...data,
+        // Se o produto não tem variação (is_variacao_enabled = false), então variacao deve ser null
+        variacao: data.variacao || null,
+      };
+
+      return productService.updateProduct(id, transformedData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
     },
@@ -45,24 +58,19 @@ export function useProducts() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: productService.deleteProduct,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-    },
-    onError: (error: any) => {
-      console.error("Erro ao excluir produto:", error);
-    },
-  });
+  // Função auxiliar para verificar se um produto tem variação
+  const hasVariation = (product: any): boolean => {
+    return !!product.variacao;
+  };
 
   return {
     products: Array.isArray(products) ? products : [],
     isLoading,
     createProduct: createMutation.mutate,
     updateProduct: updateMutation.mutate,
-    deleteProduct: deleteMutation.mutate,
+    deleteProduct: productService.deleteProduct,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    hasVariation, // Adicionar função auxiliar
   };
 }
