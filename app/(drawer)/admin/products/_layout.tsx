@@ -1,4 +1,4 @@
-// Path: app/(drawer)/admin/products/_layout.tsx
+// Path: app/(drawer)/admin/products/_layout.tsx (atualização)
 import { Stack } from "expo-router";
 import { ProductsProvider } from "@/src/features/products/contexts/products-provider";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -47,6 +47,22 @@ export default function ProductsLayout() {
           options={{
             title: "Editar Produto",
             headerShown: true,
+          }}
+        />
+
+        {/* Visualização e variações de produtos */}
+        <Stack.Screen
+          name="view/[id]"
+          options={{
+            title: "Detalhes do Produto",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="[id]/add-variation"
+          options={{
+            title: "Adicionar Variação",
+            headerShown: false,
           }}
         />
 

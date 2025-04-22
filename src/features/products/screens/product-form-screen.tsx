@@ -53,6 +53,7 @@ import {
 import { FormActions } from "@/components/custom/form-actions";
 import { CategorySelectModal } from "@/components/common/category-select-modal";
 import { CreateProductDTO } from "../models/product";
+import useAuthStore from "@/src/stores/auth";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -144,15 +145,24 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       setIsSubmitting(true);
       console.log("Iniciando salvamento do produto");
 
+      // Obter o ID da empresa do store
+      const companyId = useAuthStore.getState().getCompanyId();
+
+      if (!companyId) {
+        showErrorToast(toast, "ID da empresa não encontrado");
+        return;
+      }
+
       // Se categoria for 0, enviamos como null para a API
-      const dataToSubmit: Omit<CreateProductDTO, "empresa"> = {
+      const dataToSubmit: CreateProductDTO = {
         ...data,
+        empresa: companyId, // Adicionando o ID da empresa
         categoria: data.categoria === 0 ? null : data.categoria,
+        descricao: data.descricao ?? "", // Garantir que seja string
         desconto_avista: data.desconto_avista ?? 0,
-        // Se tem variação, não enviamos preço nem descrição
-        preco: data.tem_variacao ? null : data.preco || "",
-        descricao: data.tem_variacao ? undefined : data.descricao,
-        status: data.tem_variacao ? "indisponivel" : data.status, // Produto com variação começa indisponível até configurar variações
+        // Se tem variação, definimos automaticamente o status como indisponível
+        // até que as variações sejam configuradas
+        status: data.tem_variacao ? "disponivel" : data.status,
         parcelas_sem_juros: true, // Sempre true, conforme solicitado
       };
 
@@ -230,7 +240,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           paddingBottom: Platform.OS === "ios" ? 180 : 160,
         }}
       >
-        {/* Informações básicas - Primeiro para garantir que o usuário preencha informações essenciais */}
+        {/* Informações básicas */}
         <SectionCard
           title="Informações Básicas"
           icon={<Package size={22} color="#0891B2" />}
@@ -298,7 +308,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               )}
             </FormControl>
 
-            {/* Categoria - Usando o EnhancedSelect com modal */}
+            {/* Categoria */}
             <Controller
               control={form.control}
               name="categoria"
@@ -329,7 +339,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               )}
             />
 
-            {/* Descrição - Visível apenas se não for produto com variação */}
+            {/* Descrição - apenas se não for produto com variação */}
             {!temVariacao && (
               <FormControl isInvalid={!!form.formState.errors.descricao}>
                 <FormControlLabel>
@@ -403,14 +413,14 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           </View>
         </SectionCard>
 
-        {/* Preços - Visível apenas se não for produto com variação */}
+        {/* Preços - apenas se não for produto com variação */}
         {!temVariacao && (
           <SectionCard
             title="Preços"
             icon={<DollarSign size={22} color="#0891B2" />}
           >
             <View className="gap-4 flex flex-col py-4">
-              {/* Preço com o novo componente */}
+              {/* Preço */}
               <Controller
                 control={form.control}
                 name="preco"
@@ -427,7 +437,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                 )}
               />
 
-              {/* Preço promocional com o novo componente */}
+              {/* Preço promocional */}
               <Controller
                 control={form.control}
                 name="preco_promocional"
@@ -449,7 +459,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
           </SectionCard>
         )}
 
-        {/* Status do Produto - Visível apenas se não for produto com variação */}
+        {/* Status do Produto - apenas se não for produto com variação */}
         {!temVariacao && (
           <SectionCard
             title="Status do Produto"

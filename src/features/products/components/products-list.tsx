@@ -1,61 +1,58 @@
 // Path: src/features/products/components/products-list.tsx
 import React from "react";
+import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { ProductCard } from "./product-card";
 import { Product } from "../models/product";
-import { SwipeableDataList } from "@/components/custom/swipeable-data-list";
-import { Package, Tag } from "lucide-react-native";
 import { ProductSkeletonList } from "./product-skeleton";
+import { Package } from "lucide-react-native";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface ProductsListProps {
   products: Product[];
   isLoading: boolean;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
-  onItemPress?: (product: Product) => void;
+  onView: (product: Product) => void;
+  onAddVariation: (product: Product) => void;
+  emptyMessage?: string;
 }
 
 export function ProductsList({
-  products = [],
-  isLoading = false,
-  onEdit = () => {},
-  onDelete = () => {},
-  onItemPress,
+  products,
+  isLoading,
+  onEdit,
+  onDelete,
+  onView,
+  onAddVariation,
+  emptyMessage = "Nenhum produto encontrado. Crie um novo produto para começar.",
 }: ProductsListProps) {
+  if (isLoading) {
+    return <ProductSkeletonList count={3} />;
+  }
+
+  if (products.length === 0) {
+    return (
+      <View className="bg-white p-6 rounded-lg items-center justify-center">
+        <Package size={40} color="#9CA3AF" />
+        <Text className="text-lg font-medium text-gray-500 mt-2">
+          {emptyMessage}
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <SwipeableDataList
-      data={products}
-      isLoading={isLoading}
-      emptyMessage="Nenhum produto encontrado. Crie um novo produto para começar."
-      renderSkeleton={() => <ProductSkeletonList count={3} />}
-      getTitle={(product) => product.nome}
-      getPrice={(product) => product.preco}
-      getPromotionalPrice={(product) => product.preco_promocional || undefined}
-      getImageUri={(product) => product.imagem}
-      getImageIcon={() => Package}
-      getStatus={(product) => product.status}
-      getStatusLabel={(product) =>
-        product.status === "disponivel" ? "Disponível" : "Indisponível"
-      }
-      getMetadata={(product) => {
-        const metadata = [];
-
-        // Adicionar informação sobre o tipo de variação se tiver
-        if (product.tem_variacao && product.variacao) {
-          const variationName =
-            typeof product.variacao === "object"
-              ? product.variacao.nome
-              : "Variação";
-
-          metadata.push({
-            label: "Tipo",
-            value: variationName,
-          });
-        }
-
-        return metadata;
-      }}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      onItemPress={onItemPress}
-    />
+    <View className="space-y-3">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onEdit={() => onEdit(product)}
+          onDelete={() => onDelete(product)}
+          onView={() => onView(product)}
+          onAddVariation={() => onAddVariation(product)}
+        />
+      ))}
+    </View>
   );
 }
