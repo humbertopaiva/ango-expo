@@ -1,19 +1,26 @@
 // Path: src/features/products/services/variation.service.ts
 import { api } from "@/src/services/api";
 import {
-  ProductVariation,
   CreateVariationDTO,
+  ProductVariation,
   UpdateVariationDTO,
-  ProductVariationItem,
-  CreateVariationItemDTO,
-  UpdateVariationItemDTO,
 } from "../models/variation";
+import {
+  CreateProductVariationItemDTO,
+  ProductVariationItem,
+  UpdateProductVariationItemDTO,
+} from "../models/product-variation-item";
 
 class VariationService {
   async getVariations() {
     try {
       const response = await api.get<{ data: ProductVariation[] }>(
-        "/api/products/variations"
+        "/api/products/variations",
+        {
+          params: {
+            _t: Date.now(), // Adicionar um parâmetro de timestamp para evitar cache do navegador
+          },
+        }
       );
       return response.data.data || [];
     } catch (error) {
@@ -25,7 +32,12 @@ class VariationService {
   async getVariationById(id: string) {
     try {
       const response = await api.get<{ data: ProductVariation }>(
-        `/api/products/variations/${id}`
+        `/api/products/variations/${id}`,
+        {
+          params: {
+            _t: Date.now(), // Adicionar um parâmetro de timestamp para evitar cache do navegador
+          },
+        }
       );
       return response.data.data;
     } catch (error) {
@@ -96,7 +108,7 @@ class VariationService {
     }
   }
 
-  async createVariationItem(data: CreateVariationItemDTO) {
+  async createVariationItem(data: CreateProductVariationItemDTO) {
     try {
       // Garantir que o formato seja exatamente o esperado pela API
       const payload = {
@@ -116,7 +128,7 @@ class VariationService {
     }
   }
 
-  async updateVariationItem(id: string, data: UpdateVariationItemDTO) {
+  async updateVariationItem(id: string, data: UpdateProductVariationItemDTO) {
     try {
       const response = await api.patch<{ data: ProductVariationItem }>(
         `/api/products/variation-items/${id}`,

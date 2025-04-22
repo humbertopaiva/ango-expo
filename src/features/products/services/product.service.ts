@@ -1,3 +1,4 @@
+// Path: src/features/products/services/product.service.ts
 import { api } from "@/src/services/api";
 import { Product, CreateProductDTO, UpdateProductDTO } from "../models/product";
 import useAuthStore from "@/src/stores/auth";
@@ -6,17 +7,22 @@ class ProductService {
   async getProducts() {
     try {
       const companyId = useAuthStore.getState().getCompanyId();
+      if (!companyId) {
+        console.warn("ID da empresa não encontrado");
+        return [];
+      }
+
       const response = await api.get<{ data: Product[] }>("/api/products", {
         params: {
           company: companyId,
-          _t: Date.now(),
+          _t: Date.now(), // Adicionar um parâmetro de timestamp para evitar cache do navegador
         },
       });
 
-      return response.data.data;
+      return response.data.data || [];
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
-      throw error;
+      return [];
     }
   }
 
@@ -46,8 +52,19 @@ class ProductService {
   async deleteProduct(id: string) {
     try {
       await api.delete(`/api/products/${id}`);
+      return true;
     } catch (error) {
       console.error("Erro ao excluir produto:", error);
+      throw error;
+    }
+  }
+
+  async getProductById(id: string) {
+    try {
+      const response = await api.get<{ data: Product }>(`/api/products/${id}`);
+      return response.data.data;
+    } catch (error) {
+      console.error(`Erro ao buscar produto ${id}:`, error);
       throw error;
     }
   }

@@ -1,10 +1,11 @@
 // Path: src/features/products/components/products-list.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, FlatList, ActivityIndicator } from "react-native";
 import { ProductCard } from "./product-card";
 import { Product } from "../models/product";
 import { ProductSkeletonList } from "./product-skeleton";
 import { Package } from "lucide-react-native";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProductsListProps {
   products: Product[];
@@ -25,6 +26,14 @@ export function ProductsList({
   onAddVariation,
   emptyMessage = "Nenhum produto encontrado. Crie um novo produto para começar.",
 }: ProductsListProps) {
+  const queryClient = useQueryClient(); // Adicionar esta linha
+
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    queryClient.refetchQueries({ queryKey: ["products"] });
+    console.log("Forçando refetch da lista de produtos");
+  }, [queryClient]);
+
   if (isLoading) {
     return <ProductSkeletonList count={3} />;
   }

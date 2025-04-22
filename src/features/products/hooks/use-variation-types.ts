@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/services/api";
 import useAuthStore from "@/src/stores/auth";
 import { CreateVariationDTO, ProductVariation } from "../models/variation";
+import { invalidateAllProductQueries } from "../utils/query-utils";
 
 export function useVariationTypes() {
   const queryClient = useQueryClient();
@@ -19,13 +20,18 @@ export function useVariationTypes() {
           data: ProductVariation[];
         }>(`/api/products/variations/empresa/${companyId}`);
 
-        return response.data?.data || [];
+        // Garantir que retornamos um array mesmo se a API retornar um objeto único
+        let variations = response.data?.data || [];
+        variations = Array.isArray(variations) ? variations : [variations];
+
+        return variations;
       } catch (error) {
         console.error("Erro ao buscar tipos de variação:", error);
         throw error;
       }
     },
     enabled: !!companyId,
+    staleTime: 1000 * 60, // 1 minuto de cache, igual ao das categorias
   });
 
   // Mutação para criar um novo tipo de variação
@@ -37,16 +43,14 @@ export function useVariationTypes() {
       );
     },
     onSuccess: () => {
-      // Invalidar queries relacionadas às variações
+      // Invalidar todas as queries relevantes
+      invalidateAllProductQueries(queryClient);
       queryClient.invalidateQueries({
         queryKey: ["variation-types", companyId],
       });
       queryClient.invalidateQueries({
         queryKey: ["company-variations", companyId],
       });
-
-      // Invalidar também as queries de produtos, já que produtos podem ter variações
-      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 
@@ -65,20 +69,13 @@ export function useVariationTypes() {
       );
     },
     onSuccess: () => {
-      // Invalidar queries relacionadas às variações
+      // Invalidar todas as queries relevantes
+      invalidateAllProductQueries(queryClient);
       queryClient.invalidateQueries({
         queryKey: ["variation-types", companyId],
       });
       queryClient.invalidateQueries({
         queryKey: ["company-variations", companyId],
-      });
-
-      // Invalidar também as queries de produtos, já que produtos podem ter variações
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-
-      // Invalidar todas as queries de detalhes de produtos
-      queryClient.invalidateQueries({
-        queryKey: ["product-details"],
       });
     },
   });
@@ -89,26 +86,19 @@ export function useVariationTypes() {
       return api.delete(`/api/products/variations/${id}`);
     },
     onSuccess: () => {
-      // Invalidar queries relacionadas às variações
+      // Invalidar todas as queries relevantes
+      invalidateAllProductQueries(queryClient);
       queryClient.invalidateQueries({
         queryKey: ["variation-types", companyId],
       });
       queryClient.invalidateQueries({
         queryKey: ["company-variations", companyId],
       });
-
-      // Invalidar também as queries de produtos, já que produtos podem ter variações
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-
-      // Invalidar todas as queries de detalhes de produtos
-      queryClient.invalidateQueries({
-        queryKey: ["product-details"],
-      });
     },
   });
 
   return {
-    variations: data || [],
+    variations: Array.isArray(data) ? data : [],
     isLoading,
     error,
     refetch,
