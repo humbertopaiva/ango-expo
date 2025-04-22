@@ -1,5 +1,5 @@
 // Path: src/features/products/screens/product-details-screen.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,10 @@ import { StatusBadge } from "@/components/custom/status-badge";
 import { useProductVariationItems } from "../hooks/use-product-variations-items";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
-import { Card } from "@gluestack-ui/themed";
+import { Card, useToast } from "@gluestack-ui/themed";
+import { showErrorToast } from "@/components/common/toast-helper";
+import useAuthStore from "@/src/stores/auth";
+import { Product } from "../models/product";
 
 export function ProductDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,15 +31,45 @@ export function ProductDetailsScreen() {
     null
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const toast = useToast();
 
-  // Buscar detalhes do produto
-  const { data: product, isLoading } = useQuery({
+  // Buscar detalhes do produto com tratamento melhorado
+  const {
+    data: product,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["product-details", id],
     queryFn: async () => {
-      const response = await api.get<{ data: any }>(`/api/products/${id}`);
-      return response.data.data;
+      try {
+        // Obter o ID da empresa do usuário logado
+        const companyId = useAuthStore.getState().getCompanyId();
+
+        if (!id || !companyId) {
+          throw new Error("ID do produto ou empresa não fornecido");
+        }
+
+        // Buscar todos os produtos da empresa
+        const response = await api.get<{ data: Product[] }>(
+          `/api/products?company=${companyId}`
+        );
+
+        // Encontrar o produto específico pelo ID
+        const productFound = response.data.data.find((p) => p.id === id);
+
+        if (!productFound) {
+          throw new Error("Produto não encontrado");
+        }
+
+        console.log("Produto encontrado:", productFound);
+        return productFound;
+      } catch (error) {
+        console.error("Erro ao buscar detalhes do produto:", error);
+        throw error;
+      }
     },
     enabled: !!id,
+    retry: 2,
   });
 
   // Buscar variações do produto
@@ -46,6 +79,16 @@ export function ProductDetailsScreen() {
     deleteVariationItem,
     isDeleting,
   } = useProductVariationItems(id as string);
+
+  // Adicione useEffect para debug
+  useEffect(() => {
+    if (error) {
+      console.error("Erro na consulta do produto:", error);
+    }
+    if (product) {
+      console.log("Produto carregado com sucesso:", product);
+    }
+  }, [product, error]);
 
   const formatCurrency = (value: string | null | undefined) => {
     if (!value) return "";
@@ -88,7 +131,7 @@ export function ProductDetailsScreen() {
       <SafeAreaView className="flex-1 bg-white">
         <AdminScreenHeader
           title="Detalhes do Produto"
-          backTo="/admin/products"
+          backTo="/admin/products/list"
         />
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color={THEME_COLORS.primary} />
@@ -100,12 +143,13 @@ export function ProductDetailsScreen() {
     );
   }
 
+  // Verificação adicional para garantir que o produto existe
   if (!product) {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <AdminScreenHeader
           title="Detalhes do Produto"
-          backTo="/admin/products"
+          backTo="/admin/products/list"
         />
         <View className="flex-1 justify-center items-center p-4">
           <Package size={48} color="#9CA3AF" />
@@ -113,7 +157,11 @@ export function ProductDetailsScreen() {
             Produto não encontrado
           </Text>
           <Text className="text-gray-500 text-center mt-2">
-            Não foi possível encontrar os detalhes deste produto.
+            Não foi possível encontrar os detalhes deste produto. Verifique se o
+            ID está correto.
+          </Text>
+          <Text className="text-gray-500 text-center mt-2">
+            ID consultado: {id || "não fornecido"}
           </Text>
         </View>
       </SafeAreaView>
@@ -122,7 +170,7 @@ export function ProductDetailsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <AdminScreenHeader title={product.nome} backTo="/admin/products" />
+      <AdminScreenHeader title={product.nome} backTo="/admin/products/list" />
 
       <ScrollView className="flex-1 p-4 pb-20">
         {/* Imagem e informações básicas */}
@@ -158,7 +206,11 @@ export function ProductDetailsScreen() {
               {product.categoria && (
                 <Text className="text-sm text-gray-600 mt-2">
                   Categoria:{" "}
-                  <Text className="font-medium">{product.categoria.nome}</Text>
+                  <Text className="font-medium">
+                    {typeof product.categoria === "object"
+                      ? product.categoria.nome
+                      : "Categoria #" + product.categoria}
+                  </Text>
                 </Text>
               )}
             </View>
