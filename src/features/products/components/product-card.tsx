@@ -1,12 +1,13 @@
 // Path: src/features/products/components/product-card.tsx
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Pressable } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Edit, Trash, Eye, Layers } from "lucide-react-native";
+import { Edit, Trash, Eye, Layers, MoreVertical } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { StatusBadge } from "@/components/custom/status-badge";
 import { Product } from "../models/product";
+import * as Haptics from "expo-haptics";
 
 interface ProductCardProps {
   product: Product;
@@ -23,6 +24,8 @@ export function ProductCard({
   onView,
   onAddVariation,
 }: ProductCardProps) {
+  const [showActions, setShowActions] = React.useState(false);
+
   const formatCurrency = (value: string | null | undefined) => {
     if (!value) return "";
     try {
@@ -41,105 +44,149 @@ export function ProductCard({
   // Se o produto já tem variação, o botão de adicionar variação ficará ativo
   const canAddVariation = product.tem_variacao;
 
+  const toggleActions = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowActions(!showActions);
+  };
+
   return (
-    <Card className="p-4 bg-white mb-3">
-      <View className="flex-row items-center gap-3">
-        {/* Imagem do produto */}
-        <View className="h-16 w-16">
-          <ImagePreview uri={product.imagem} containerClassName="rounded-lg" />
-        </View>
-
-        {/* Informações do produto */}
-        <View className="flex-1">
-          <Text
-            className="font-medium text-sm"
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {product.nome}
-          </Text>
-
-          {/* Preço */}
-          {product.preco && (
-            <View className="flex-row items-center mt-1">
-              {product.preco_promocional ? (
-                <>
-                  <Text className="font-medium text-xs text-primary-500">
-                    {formatCurrency(product.preco_promocional)}
-                  </Text>
-                  <Text className="ml-2 text-xs text-gray-500 line-through">
-                    {formatCurrency(product.preco)}
-                  </Text>
-                </>
-              ) : (
-                <Text className="font-medium text-sm text-primary-600">
-                  {formatCurrency(product.preco)}
-                </Text>
-              )}
+    <Card className="bg-white overflow-hidden">
+      <Pressable
+        onPress={onView}
+        className="flex-1"
+        android_ripple={{ color: "rgba(0, 0, 0, 0.05)" }}
+      >
+        <View className="p-4">
+          <View className="flex-row">
+            {/* Imagem do produto */}
+            <View className="h-16 w-16 mr-3">
+              <ImagePreview
+                uri={product.imagem}
+                containerClassName="rounded-lg"
+              />
             </View>
+
+            {/* Informações do produto */}
+            <View className="flex-1 justify-center">
+              <Text
+                className="font-medium text-sm"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {product.nome}
+              </Text>
+
+              {/* Preço */}
+              {product.preco && (
+                <View className="flex-row items-center mt-1">
+                  {product.preco_promocional ? (
+                    <>
+                      <Text className="font-medium text-xs text-primary-500">
+                        {formatCurrency(product.preco_promocional)}
+                      </Text>
+                      <Text className="ml-2 text-xs text-gray-500 line-through">
+                        {formatCurrency(product.preco)}
+                      </Text>
+                    </>
+                  ) : (
+                    <Text className="font-medium text-sm text-primary-600">
+                      {formatCurrency(product.preco)}
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              {/* Status e badges */}
+              <View className="flex-row items-center mt-1 gap-2">
+                <StatusBadge
+                  status={product.status}
+                  customLabel={
+                    product.status === "disponivel"
+                      ? "Disponível"
+                      : "Indisponível"
+                  }
+                />
+
+                {product.tem_variacao && (
+                  <View className="px-2 py-1 rounded-full bg-blue-100">
+                    <Text className="text-xs text-blue-800">Com variações</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* Menu de ações */}
+            <TouchableOpacity
+              onPress={toggleActions}
+              className="p-2 self-start"
+            >
+              <MoreVertical size={20} color="#374151" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Pressable>
+
+      {/* Ações (expandíveis) */}
+      {showActions && (
+        <View className="flex-row border-t border-gray-100 bg-gray-50">
+          {onView && (
+            <TouchableOpacity
+              onPress={() => {
+                onView();
+                setShowActions(false);
+              }}
+              className="flex-1 p-3 flex-row items-center justify-center"
+              style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
+            >
+              <Eye size={16} color="#374151" className="mr-1" />
+              <Text className="text-xs font-medium text-gray-700">Ver</Text>
+            </TouchableOpacity>
           )}
 
-          {/* Status e badges */}
-          <View className="flex-row items-center mt-1 gap-2">
-            <StatusBadge
-              status={product.status}
-              customLabel={
-                product.status === "disponivel" ? "Disponível" : "Indisponível"
-              }
-            />
+          {onEdit && (
+            <TouchableOpacity
+              onPress={() => {
+                onEdit();
+                setShowActions(false);
+              }}
+              className="flex-1 p-3 flex-row items-center justify-center"
+              style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
+            >
+              <Edit size={16} color="#374151" className="mr-1" />
+              <Text className="text-xs font-medium text-gray-700">Editar</Text>
+            </TouchableOpacity>
+          )}
 
-            {product.tem_variacao && (
-              <View className="px-2 py-1 rounded-full bg-blue-100">
-                <Text className="text-xs text-blue-800">Com variações</Text>
-              </View>
-            )}
-          </View>
+          {canAddVariation && onAddVariation && (
+            <TouchableOpacity
+              onPress={() => {
+                onAddVariation();
+                setShowActions(false);
+              }}
+              className="flex-1 p-3 flex-row items-center justify-center"
+              style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
+            >
+              <Layers size={16} color="#1E40AF" className="mr-1" />
+              <Text className="text-xs font-medium text-blue-800">
+                Variação
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {onDelete && (
+            <TouchableOpacity
+              onPress={() => {
+                onDelete();
+                setShowActions(false);
+              }}
+              className="flex-1 p-3 flex-row items-center justify-center"
+            >
+              <Trash size={16} color="#EF4444" className="mr-1" />
+              <Text className="text-xs font-medium text-red-500">Excluir</Text>
+            </TouchableOpacity>
+          )}
         </View>
-
-        {/* Ações */}
-        <View className="grid grid-cols-2 gap-2">
-          {/* Grid de ações 2x2 */}
-          <View className="grid grid-cols-2 gap-2">
-            {/* Botão de visualizar */}
-            <TouchableOpacity
-              onPress={onView}
-              className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center"
-            >
-              <Eye size={18} color="#374151" />
-            </TouchableOpacity>
-
-            {/* Botão de editar */}
-            <TouchableOpacity
-              onPress={onEdit}
-              className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center"
-            >
-              <Edit size={18} color="#374151" />
-            </TouchableOpacity>
-
-            {/* Botão de adicionar variação */}
-            <TouchableOpacity
-              onPress={onAddVariation}
-              disabled={!canAddVariation}
-              className={`w-9 h-9 rounded-full items-center justify-center ${
-                canAddVariation ? "bg-blue-100" : "bg-gray-100"
-              }`}
-            >
-              <Layers
-                size={18}
-                color={canAddVariation ? "#1E40AF" : "#9CA3AF"}
-              />
-            </TouchableOpacity>
-
-            {/* Botão de excluir */}
-            <TouchableOpacity
-              onPress={onDelete}
-              className="w-9 h-9 rounded-full bg-red-100 items-center justify-center"
-            >
-              <Trash size={18} color="#EF4444" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+      )}
     </Card>
   );
 }
