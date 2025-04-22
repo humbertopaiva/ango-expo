@@ -31,6 +31,7 @@ import { Card, useToast } from "@gluestack-ui/themed";
 import { showErrorToast } from "@/components/common/toast-helper";
 import useAuthStore from "@/src/stores/auth";
 import { Product } from "../models/product";
+import { useProducts } from "../hooks/use-products";
 
 export function ProductDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,6 +40,7 @@ export function ProductDetailsScreen() {
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const toast = useToast();
+  const { hasVariation } = useProducts();
 
   // Buscar detalhes do produto com tratamento melhorado
   const {
@@ -113,7 +115,7 @@ export function ProductDetailsScreen() {
   };
 
   const handleAddVariation = () => {
-    if (!product?.tem_variacao) return;
+    if (!product || !hasVariation(product)) return;
     router.push(`/admin/products/${id}/add-variation`);
   };
 
@@ -132,6 +134,20 @@ export function ProductDetailsScreen() {
       console.error("Erro ao excluir variação:", error);
     }
   };
+
+  // Função para obter o nome da variação
+  const getVariationName = () => {
+    if (!product || !product.variacao) return null;
+
+    if (typeof product.variacao === "object" && product.variacao.nome) {
+      return product.variacao.nome;
+    }
+
+    return "Variação configurada";
+  };
+
+  // Verificar se o produto tem variação
+  const productHasVariation = product ? hasVariation(product) : false;
 
   if (isLoading) {
     return (
@@ -204,7 +220,7 @@ export function ProductDetailsScreen() {
                       : "Indisponível"
                   }
                 />
-                {product.tem_variacao && (
+                {productHasVariation && (
                   <View className="ml-2 px-3 py-1 rounded-full bg-blue-100">
                     <Text className="text-xs text-blue-800">Com variações</Text>
                   </View>
@@ -220,11 +236,19 @@ export function ProductDetailsScreen() {
                   </Text>
                 </Text>
               )}
+              {productHasVariation && (
+                <Text className="text-sm text-gray-600 mt-1">
+                  Tipo de variação:{" "}
+                  <Text className="font-medium text-blue-700">
+                    {getVariationName()}
+                  </Text>
+                </Text>
+              )}
             </View>
           </View>
 
           {/* Descrição */}
-          {product.descricao && (
+          {product.descricao && !productHasVariation && (
             <View className="mt-2">
               <Text className="font-medium text-sm text-gray-700 mb-1">
                 Descrição:
@@ -235,7 +259,7 @@ export function ProductDetailsScreen() {
         </SectionCard>
 
         {/* Preço e condições de pagamento */}
-        {!product.tem_variacao && (
+        {!productHasVariation && (
           <SectionCard
             title="Preços e Pagamento"
             icon={<DollarSign size={20} color="#374151" />}
@@ -282,7 +306,7 @@ export function ProductDetailsScreen() {
         )}
 
         {/* Variações de produto */}
-        {product.tem_variacao && (
+        {productHasVariation && (
           <SectionCard
             title="Variações do Produto"
             icon={<Layers size={20} color="#374151" />}
@@ -401,7 +425,7 @@ export function ProductDetailsScreen() {
       </ScrollView>
 
       {/* Botão de adicionar variação (apenas se o produto tiver variação) */}
-      {product.tem_variacao && (
+      {productHasVariation && (
         <PrimaryActionButton
           onPress={handleAddVariation}
           label="Adicionar Variação"

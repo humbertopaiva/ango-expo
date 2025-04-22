@@ -12,12 +12,14 @@ import { useCategories } from "../../categories/hooks/use-categories";
 import { CategoryFilter } from "../components/category-filter";
 import { SectionCard } from "@/components/custom/section-card";
 import { Product } from "../models/product";
+import { useProducts } from "../hooks/use-products";
 
 export function ProductsContent() {
   const vm = useProductsContext();
   const { categories, isLoading: isCategoriesLoading } = useCategories();
+  const { hasVariation } = useProducts();
 
-  // Funções para navegação
+  // Navigation functions
   const handleAddProduct = () => {
     router.push("/admin/products/new");
   };
@@ -31,7 +33,7 @@ export function ProductsContent() {
   };
 
   const handleAddVariation = (product: Product) => {
-    if (!product.tem_variacao) return;
+    if (!hasVariation(product)) return;
     router.push(`/admin/products/${product.id}/add-variation`);
   };
 
@@ -46,7 +48,7 @@ export function ProductsContent() {
           </View>
         </SectionCard>
 
-        {/* Filtro de Categorias */}
+        {/* Category Filter */}
         {!isCategoriesLoading && categories.length > 0 && (
           <CategoryFilter
             categories={categories.map((c) => ({
@@ -67,7 +69,7 @@ export function ProductsContent() {
           disabled={vm.isLoading}
         />
 
-        {/* Products List - Agora com rolagem apropriada */}
+        {/* Products List - with proper scrolling */}
         <View className="flex-1">
           <ProductsList
             products={vm.filteredProducts}

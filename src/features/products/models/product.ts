@@ -17,7 +17,8 @@ export interface Product {
   parcelas_sem_juros: boolean;
   desconto_avista: number;
   status: "disponivel" | "indisponivel";
-  tem_variacao: boolean;
+
+  variacao: string | { id: string; nome: string } | null;
 }
 
 export interface CreateProductDTO {
@@ -33,7 +34,8 @@ export interface CreateProductDTO {
   parcelas_sem_juros: boolean;
   desconto_avista: number;
   status?: "disponivel" | "indisponivel";
-  tem_variacao: boolean;
+
+  variacao: string | null;
 }
 
 export type UpdateProductDTO = Partial<CreateProductDTO>;

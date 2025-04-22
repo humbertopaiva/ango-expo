@@ -8,9 +8,11 @@ import {
   FormControlErrorText,
 } from "@gluestack-ui/themed";
 import { useCompanyVariations } from "../hooks/use-company-variations";
+import { useProductVariationItems } from "../hooks/use-product-variations-items";
 import { Tag } from "lucide-react-native";
 import { CategorySelectModal } from "@/components/common/category-select-modal";
 import { EnhancedSelect } from "@/components/common/enhanced-select";
+import { useLocalSearchParams } from "expo-router";
 
 interface VariationSelectorProps {
   value: string | null;
@@ -22,6 +24,7 @@ interface VariationSelectorProps {
   ) => void;
   error?: string;
   disabled?: boolean;
+  productId?: string; // ID do produto atual para edição
 }
 
 export function VariationSelector({
@@ -30,35 +33,57 @@ export function VariationSelector({
   onVariationChange,
   error,
   disabled = false,
+  productId,
 }: VariationSelectorProps) {
   const { variations = [], isLoading } = useCompanyVariations();
+  const { variationItems } = useProductVariationItems(); // Carregar todos os itens
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const params = useLocalSearchParams<{ id: string }>();
+  const currentProductId = productId || params.id;
 
-  // Processamento defensivo das variações
-  const processedVariations = React.useMemo(() => {
+  // Processamento das variações para remoção daquelas já usadas
+  const availableVariations = React.useMemo(() => {
     if (!Array.isArray(variations)) return [];
 
-    return variations.map((v) => ({
-      ...v,
-      id: v?.id || "",
-      nome: v?.nome || "Sem nome",
-      variacao: Array.isArray(v?.variacao) ? v.variacao : [],
-    }));
-  }, [variations]);
+    // Se estiver editando um produto, permitir manter a variação atual
+    if (currentProductId && value) {
+      return variations.filter((v) => {
+        const isCurrentVariation = v.id === value;
+        if (isCurrentVariation) return true;
+
+        // Verificar se esta variação já está sendo usada por outro produto
+        const isUsedByOtherProduct = variationItems.some(
+          (item) =>
+            item.produto.id !== currentProductId && item.variacao.id === v.id
+        );
+
+        return !isUsedByOtherProduct;
+      });
+    }
+
+    // Caso de criação de produto, filtrar variações já usadas
+    return variations.filter((v) => {
+      const isUsedByAnyProduct = variationItems.some(
+        (item) => item.variacao.id === v.id
+      );
+
+      return !isUsedByAnyProduct;
+    });
+  }, [variations, variationItems, value, currentProductId]);
 
   // Formatar variações para o formato esperado pelo seletor
   const variationOptions = React.useMemo(() => {
-    return processedVariations.map((variation) => ({
+    return availableVariations.map((variation) => ({
       label: variation.nome,
       value: variation.id,
       data: variation.variacao,
     }));
-  }, [processedVariations]);
+  }, [availableVariations]);
 
   // Quando uma variação é selecionada, retornar os valores disponíveis
   useEffect(() => {
     if (value) {
-      const selectedVariation = processedVariations.find((v) => v.id === value);
+      const selectedVariation = availableVariations.find((v) => v.id === value);
       if (selectedVariation) {
         onVariationChange(
           value,
@@ -67,7 +92,7 @@ export function VariationSelector({
         );
       }
     }
-  }, [value, processedVariations, onVariationChange]);
+  }, [value, availableVariations, onVariationChange]);
 
   // Valor processado para garantir que é sempre uma string
   const safeValue = value || "";
@@ -98,7 +123,7 @@ export function VariationSelector({
             options={variationOptions}
             selectedValue={safeValue}
             onSelect={(selectedValue) => {
-              onChange(selectedValue);
+              onChange(selectedValue !== null ? String(selectedValue) : null);
               setIsModalVisible(false);
             }}
             title="Selecionar Tipo de Variação"
@@ -109,6 +134,8 @@ export function VariationSelector({
           <Text className="text-gray-500">
             {isLoading
               ? "Carregando variações..."
+              : availableVariations.length === 0 && variations.length > 0
+              ? "Todas as variações já estão sendo utilizadas. Crie uma nova variação primeiro."
               : "Nenhuma variação disponível. Cadastre variações primeiro."}
           </Text>
         </View>

@@ -1,6 +1,6 @@
 // Path: src/features/products/screens/add-product-variation-screen.tsx
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useEffect, useMemo } from "react";
+import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -14,8 +14,6 @@ import {
   FormControlLabel,
   FormControlError,
   FormControlErrorText,
-  Input,
-  InputField,
   Textarea,
   TextareaInput,
   useToast,
@@ -23,8 +21,6 @@ import {
 import { FormActions } from "@/components/custom/form-actions";
 import { useCompanyVariations } from "../hooks/use-company-variations";
 import { Layers, AlertCircle } from "lucide-react-native";
-import { CategorySelectModal } from "@/components/common/category-select-modal";
-import { EnhancedSelect } from "@/components/common/enhanced-select";
 import { CurrencyInput } from "@/components/common/currency-input";
 import { ImageUpload } from "@/components/common/image-upload";
 import { StatusToggle } from "@/components/common/status-toggle";
@@ -35,6 +31,9 @@ import {
   showSuccessToast,
 } from "@/components/common/toast-helper";
 import { SectionCard } from "@/components/custom/section-card";
+import { THEME_COLORS } from "@/src/styles/colors";
+import { CategorySelectModal } from "@/components/common/category-select-modal";
+import { EnhancedSelect } from "@/components/common/enhanced-select";
 
 // Schema para validação do formulário
 const productVariationFormSchema = z.object({
@@ -57,11 +56,10 @@ export function AddProductVariationScreen() {
   );
   const companyId = useAuthStore((state) => state.getCompanyId());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVariationModalVisible, setIsVariationModalVisible] = useState(false);
   const [isValueModalVisible, setIsValueModalVisible] = useState(false);
-  const [selectedVariationValues, setSelectedVariationValues] = useState<
-    string[]
-  >([]);
+  const [loadedVariation, setLoadedVariation] = useState<any>(null);
+  const [variationValues, setVariationValues] = useState<string[]>([]);
+  const [alreadyUsedValues, setAlreadyUsedValues] = useState<string[]>([]);
 
   // Buscar detalhes do produto
   const { data: product, isLoading: isLoadingProduct } = useQuery({
@@ -75,6 +73,10 @@ export function AddProductVariationScreen() {
 
   // Buscar variações disponíveis
   const { variations, isLoading: isLoadingVariations } = useCompanyVariations();
+
+  // Buscar items de variações já existentes
+  const { variationItems, isLoading: isLoadingVariationItems } =
+    useProductVariationItems(id as string);
 
   // Formulário
   const form = useForm<ProductVariationFormData>({
@@ -90,31 +92,51 @@ export function AddProductVariationScreen() {
     },
   });
 
-  // Atualizar a imagem padrão quando os dados do produto forem carregados
+  // Efeito para atualizar a imagem padrão quando os dados do produto forem carregados
   useEffect(() => {
     if (product?.imagem) {
       form.setValue("imagem", product.imagem);
     }
   }, [product, form]);
 
-  // Atualizar as opções de valores quando a variação for selecionada
-  const handleVariationChange = (variationId: string) => {
-    const selectedVariation = variations.find((v) => v.id === variationId);
-    if (selectedVariation) {
-      setSelectedVariationValues(selectedVariation.variacao || []);
-      form.setValue("variacao", variationId);
-      form.setValue("valor_variacao", ""); // Reset the value when variation changes
+  // Efeito para carregar a variação do produto
+  useEffect(() => {
+    if (product && product.variacao) {
+      // Se a variação é um objeto com id
+      const variationId =
+        typeof product.variacao === "object"
+          ? product.variacao.id
+          : product.variacao;
+
+      if (variationId) {
+        const foundVariation = variations.find((v) => v.id === variationId);
+        if (foundVariation) {
+          setLoadedVariation(foundVariation);
+          setVariationValues(foundVariation.variacao || []);
+
+          // Carregar valores já usados em outras variações deste produto
+          const usedValues = variationItems
+            .filter((item) => item.variacao.id === variationId)
+            .map((item) => item.valor_variacao);
+
+          setAlreadyUsedValues(usedValues);
+
+          // Atualizar o formulário com a variação correta
+          form.setValue("variacao", variationId);
+        }
+      }
     }
-  };
+  }, [product, variations, variationItems, form]);
 
-  // Opções para o seletor de variações
-  const variationOptions = variations.map((variation) => ({
-    label: variation.nome,
-    value: variation.id,
-  }));
+  // Filtrar as opções de valores de variação para remover as já usadas
+  const availableVariationValues = useMemo(() => {
+    return variationValues.filter(
+      (value) => !alreadyUsedValues.includes(value)
+    );
+  }, [variationValues, alreadyUsedValues]);
 
-  // Opções para o seletor de valores de variação
-  const variationValueOptions = selectedVariationValues.map((value) => ({
+  // Atualizar as opções do seletor
+  const variationValueOptions = availableVariationValues.map((value) => ({
     label: value,
     value: value,
   }));
@@ -154,6 +176,23 @@ export function AddProductVariationScreen() {
     }
   };
 
+  if (isLoadingProduct || isLoadingVariations || isLoadingVariationItems) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <AdminScreenHeader
+          title="Adicionar Variação"
+          backTo={`/admin/products/view/${id}`}
+        />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+          <Text className="mt-4 text-gray-500">
+            Carregando dados do produto...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <AdminScreenHeader
@@ -170,45 +209,51 @@ export function AddProductVariationScreen() {
             </Text>
           </View>
           <Text className="text-blue-700">
-            Adicione uma variação para este produto, como tamanho, cor ou
-            qualquer outro tipo de variação que você tenha configurado.
+            Adicione uma variação para este produto usando o tipo de variação já
+            configurado.
           </Text>
         </View>
 
         <SectionCard title="Dados da Variação">
           <View className="space-y-6 py-4">
-            {/* Tipo de Variação */}
-            <Controller
-              control={form.control}
-              name="variacao"
-              render={({ field: { value } }) => (
-                <>
-                  <EnhancedSelect
-                    label="Tipo de Variação"
-                    options={variationOptions}
-                    value={value}
-                    onSelect={() => setIsVariationModalVisible(true)}
-                    placeholder="Selecione o tipo de variação"
-                    isInvalid={!!form.formState.errors.variacao}
-                    error={form.formState.errors.variacao?.message}
-                  />
+            {/* Tipo de Variação (read-only, mostrando a variação do produto) */}
+            <FormControl isInvalid={!!form.formState.errors.variacao}>
+              <FormControlLabel>
+                <Text className="text-sm font-medium text-gray-700">
+                  Tipo de Variação
+                </Text>
+              </FormControlLabel>
 
-                  <CategorySelectModal
-                    isVisible={isVariationModalVisible}
-                    onClose={() => setIsVariationModalVisible(false)}
-                    options={variationOptions}
-                    selectedValue={value}
-                    onSelect={(selectedValue) => {
-                      if (typeof selectedValue === "string") {
-                        handleVariationChange(selectedValue);
-                      }
-                      setIsVariationModalVisible(false);
-                    }}
-                    title="Selecionar Tipo de Variação"
-                  />
-                </>
+              <View className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                <Text className="text-gray-700">
+                  {loadedVariation ? loadedVariation.nome : "Carregando..."}
+                </Text>
+              </View>
+
+              {alreadyUsedValues.length > 0 && (
+                <Text className="text-xs text-gray-500 mt-1">
+                  Variações já usadas: {alreadyUsedValues.join(", ")}
+                </Text>
               )}
-            />
+
+              <Controller
+                control={form.control}
+                name="variacao"
+                render={({ field: { value } }) => (
+                  <View className="hidden">
+                    <Text>{value}</Text>
+                  </View>
+                )}
+              />
+
+              {form.formState.errors.variacao && (
+                <FormControlError>
+                  <FormControlErrorText>
+                    {form.formState.errors.variacao.message}
+                  </FormControlErrorText>
+                </FormControlError>
+              )}
+            </FormControl>
 
             {/* Valor da Variação */}
             <Controller
@@ -240,6 +285,22 @@ export function AddProductVariationScreen() {
                 </>
               )}
             />
+
+            {availableVariationValues.length === 0 && (
+              <View className="p-3 bg-yellow-50 rounded-md">
+                <View className="flex-row">
+                  <AlertCircle
+                    size={16}
+                    color="#B45309"
+                    className="mt-1 mr-2"
+                  />
+                  <Text className="text-yellow-800 text-sm flex-1">
+                    Todos os valores dessa variação já foram utilizados. Para
+                    adicionar mais valores, edite o tipo de variação.
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         </SectionCard>
 
@@ -394,6 +455,7 @@ export function AddProductVariationScreen() {
               isSubmitting || isCreating ? "Salvando..." : "Adicionar Variação",
             onPress: form.handleSubmit(onSubmit),
             isLoading: isSubmitting || isCreating,
+            isDisabled: availableVariationValues.length === 0,
           }}
           secondaryAction={{
             label: "Cancelar",

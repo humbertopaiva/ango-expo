@@ -1,5 +1,5 @@
 // Path: src/features/products/components/product-card.tsx
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Pressable } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Edit, Trash, Eye, Layers, MoreVertical } from "lucide-react-native";
@@ -8,6 +8,7 @@ import { ImagePreview } from "@/components/custom/image-preview";
 import { StatusBadge } from "@/components/custom/status-badge";
 import { Product } from "../models/product";
 import * as Haptics from "expo-haptics";
+import { useProducts } from "../hooks/use-products";
 
 interface ProductCardProps {
   product: Product;
@@ -24,7 +25,8 @@ export function ProductCard({
   onView,
   onAddVariation,
 }: ProductCardProps) {
-  const [showActions, setShowActions] = React.useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const { hasVariation } = useProducts();
 
   const formatCurrency = (value: string | null | undefined) => {
     if (!value) return "";
@@ -41,12 +43,23 @@ export function ProductCard({
     }
   };
 
-  // Se o produto já tem variação, o botão de adicionar variação ficará ativo
-  const canAddVariation = product.tem_variacao;
+  // Verificar se o produto tem variação
+  const productHasVariation = hasVariation(product);
 
   const toggleActions = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowActions(!showActions);
+  };
+
+  // Função para obter o nome da variação
+  const getVariationName = () => {
+    if (!product.variacao) return null;
+
+    if (typeof product.variacao === "object" && product.variacao.nome) {
+      return product.variacao.nome;
+    }
+
+    return "Variação configurada";
   };
 
   return (
@@ -77,7 +90,7 @@ export function ProductCard({
               </Text>
 
               {/* Preço */}
-              {product.preco && (
+              {product.preco && !productHasVariation && (
                 <View className="flex-row items-center mt-1">
                   {product.preco_promocional ? (
                     <>
@@ -96,6 +109,15 @@ export function ProductCard({
                 </View>
               )}
 
+              {/* Variação - mostrar qual variação está configurada */}
+              {productHasVariation && (
+                <View className="mt-1">
+                  <Text className="text-xs text-blue-700">
+                    Variação: {getVariationName()}
+                  </Text>
+                </View>
+              )}
+
               {/* Status e badges */}
               <View className="flex-row items-center mt-1 gap-2">
                 <StatusBadge
@@ -107,7 +129,7 @@ export function ProductCard({
                   }
                 />
 
-                {product.tem_variacao && (
+                {productHasVariation && (
                   <View className="px-2 py-1 rounded-full bg-blue-100">
                     <Text className="text-xs text-blue-800">Com variações</Text>
                   </View>
@@ -157,7 +179,7 @@ export function ProductCard({
             </TouchableOpacity>
           )}
 
-          {canAddVariation && onAddVariation && (
+          {productHasVariation && onAddVariation && (
             <TouchableOpacity
               onPress={() => {
                 onAddVariation();
