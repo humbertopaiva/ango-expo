@@ -1,9 +1,9 @@
-// Path: src/features/products/screens/variation-new-screen.tsx
-import React, { useRef, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+// Path: src/features/products/screens/variation-edit-screen.tsx
+import React, { useRef, useState, useEffect } from "react";
+import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast } from "@gluestack-ui/themed";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Tag } from "lucide-react-native";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import {
@@ -11,55 +11,78 @@ import {
   VariationTypeFormRef,
 } from "../components/variation-type-form";
 import { FormActions } from "@/components/custom/form-actions";
-import useAuthStore from "@/src/stores/auth";
 import { useVariationTypes } from "../hooks/use-variation-types";
 import {
   showErrorToast,
   showSuccessToast,
 } from "@/components/common/toast-helper";
+import { THEME_COLORS } from "@/src/styles/colors";
 
-export function VariationNewScreen() {
+export function VariationEditScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
-  const companyId = useAuthStore((state) => state.getCompanyId());
-  const { createVariation, isCreating } = useVariationTypes();
+  const { variations, updateVariation, isUpdating, isLoading } =
+    useVariationTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formRef = useRef<VariationTypeFormRef>(null);
 
+  // Encontrar a variação pelo ID
+  const variation = variations.find((v) => v.id === id);
+
   const handleSubmit = async (data: { nome: string; variacao: string[] }) => {
-    if (!companyId) {
-      showErrorToast(toast, "ID da empresa não encontrado");
+    if (!id) {
+      showErrorToast(toast, "ID da variação não encontrado");
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      // Simplificando o modelo: apenas nome, empresa e os valores da variação
-      await createVariation({
-        nome: data.nome,
-        variacao: data.variacao,
-        empresa: companyId,
+      await updateVariation({
+        id,
+        data: {
+          nome: data.nome,
+          variacao: data.variacao,
+        },
       });
 
-      showSuccessToast(toast, "Tipo de variação criado com sucesso!");
+      showSuccessToast(toast, "Tipo de variação atualizado com sucesso!");
 
       // Navegar de volta após breve delay
       setTimeout(() => {
         router.push("/admin/products/variations/types");
       }, 500);
     } catch (error) {
-      console.error("Erro ao criar tipo de variação:", error);
-      showErrorToast(toast, "Erro ao criar tipo de variação");
+      console.error("Erro ao atualizar tipo de variação:", error);
+      showErrorToast(toast, "Erro ao atualizar tipo de variação");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Exibir loading se estiver carregando dados
+  if (isLoading || (!variation && !isLoading)) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <AdminScreenHeader
+          title="Editar Variação"
+          backTo="/admin/products/variations/types"
+        />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+          <Text className="mt-4 text-gray-500">
+            Carregando dados da variação...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <AdminScreenHeader
-        title="Nova Variação"
+        title="Editar Variação"
         backTo="/admin/products/variations/types"
       />
 
@@ -68,20 +91,20 @@ export function VariationNewScreen() {
           <View className="flex-row items-center mb-2">
             <Tag size={20} color="#1E40AF" />
             <Text className="ml-2 text-blue-800 font-medium">
-              O que são variações?
+              Editando: {variation?.nome}
             </Text>
           </View>
           <Text className="text-blue-700">
-            Variações são características dos produtos que podem ter diferentes
-            opções, como tamanhos, cores ou materiais. Aqui você cria os tipos
-            de variação que poderão ser associados a produtos posteriormente.
+            Você está editando um tipo de variação existente. Altere o nome ou
+            as opções de variação conforme necessário.
           </Text>
         </View>
 
         <VariationTypeForm
           ref={formRef}
+          initialData={variation}
           onSubmit={handleSubmit}
-          isSubmitting={isSubmitting || isCreating}
+          isSubmitting={isSubmitting || isUpdating}
         />
 
         <View className="h-20" />
@@ -91,15 +114,15 @@ export function VariationNewScreen() {
         <FormActions
           primaryAction={{
             label:
-              isSubmitting || isCreating ? "Salvando..." : "Criar Variação",
+              isSubmitting || isUpdating ? "Salvando..." : "Salvar Alterações",
             onPress: () => formRef.current?.handleSubmit(),
-            isLoading: isSubmitting || isCreating,
+            isLoading: isSubmitting || isUpdating,
           }}
           secondaryAction={{
             label: "Cancelar",
             onPress: () => router.back(),
             variant: "outline",
-            isDisabled: isSubmitting || isCreating,
+            isDisabled: isSubmitting || isUpdating,
           }}
         />
       </View>

@@ -1,38 +1,25 @@
 // Path: src/features/products/screens/variation-types-screen.tsx
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useToast } from "@gluestack-ui/themed";
 import { useVariationTypes } from "../hooks/use-variation-types";
 import { ListItem } from "@/components/custom/list-item";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
-import { ModalForm } from "@/components/custom/modal-form";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
-import { VariationTypeFormRef } from "../components/variation-type-form";
-import { Tag, Plus } from "lucide-react-native";
+import { Tag, Plus, AlertTriangle } from "lucide-react-native";
 import {
   showErrorToast,
   showSuccessToast,
 } from "@/components/common/toast-helper";
-import useAuthStore from "@/src/stores/auth";
-import { ProductVariation } from "../models/variation";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { router } from "expo-router";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 export function VariationTypesScreen() {
   const toast = useToast();
-  const companyId = useAuthStore((state) => state.getCompanyId());
-  const {
-    variations,
-    isLoading,
-    createVariation,
-    updateVariation,
-    deleteVariation,
-    isCreating,
-    isUpdating,
-    isDeleting,
-  } = useVariationTypes();
+  const { variations, isLoading, deleteVariation, isDeleting } =
+    useVariationTypes();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [variationToDelete, setVariationToDelete] = useState<string | null>(
@@ -41,6 +28,10 @@ export function VariationTypesScreen() {
 
   const handleAddVariation = () => {
     router.push("/admin/products/variations/new");
+  };
+
+  const handleEditVariation = (id: string) => {
+    router.push(`/admin/products/variations/edit/${id}`);
   };
 
   const handleDeleteVariation = (id: string) => {
@@ -72,8 +63,8 @@ export function VariationTypesScreen() {
             Tipos de Variação
           </Text>
           <Text className="mt-1 text-gray-600">
-            Crie e gerencie tipos de variação para seus produtos, como tamanho,
-            cor, etc.
+            Crie e gerencie tipos de variação como tamanho, cor, material, etc.
+            Estes poderão ser usados nos seus produtos.
           </Text>
         </Card>
 
@@ -93,7 +84,7 @@ export function VariationTypesScreen() {
             </Text>
           </Card>
         ) : (
-          <ScrollView>
+          <ScrollView className="mb-20">
             {variations.map((variation) => (
               <View key={variation.id} className="mb-3">
                 <ListItem
@@ -106,11 +97,7 @@ export function VariationTypesScreen() {
                       : "Sem opções"
                   }
                   imageIcon={Tag}
-                  onEdit={() =>
-                    router.push(
-                      `/admin/products/variations/edit/${variation.id}`
-                    )
-                  }
+                  onEdit={() => handleEditVariation(variation.id)}
                   onDelete={() => handleDeleteVariation(variation.id)}
                 />
               </View>
