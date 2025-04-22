@@ -5,7 +5,7 @@ export const productFormSchema = z
   .object({
     nome: z.string().min(1, "Nome é obrigatório"),
     descricao: z.string().min(1, "Descrição é obrigatória").optional(),
-    preco: z.string().min(1, "Preço é obrigatório").optional(),
+    preco: z.string().min(1, "Preço é obrigatório").nullable().optional(),
     preco_promocional: z.string().nullable().optional(),
     // Aceitando que categoria pode ser 0, que será tratado como null ao ser enviado para API
     categoria: z.coerce
