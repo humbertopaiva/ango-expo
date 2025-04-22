@@ -15,6 +15,8 @@ export interface ProductVariationItem {
   preco_promocional?: string;
   estoque?: number;
   imagem?: string;
+  descricao?: string;
+  disponivel?: boolean;
 }
 
 export interface CreateProductVariationItemDTO {
@@ -26,6 +28,8 @@ export interface CreateProductVariationItemDTO {
   preco_promocional?: string;
   estoque?: number;
   imagem?: string;
+  descricao?: string;
+  disponivel?: boolean;
   status?: string;
 }
 

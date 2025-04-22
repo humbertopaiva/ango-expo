@@ -12,7 +12,14 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/services/api";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { Package, DollarSign, Layers, Plus, Trash } from "lucide-react-native";
+import {
+  Package,
+  DollarSign,
+  Layers,
+  Plus,
+  Trash,
+  Edit,
+} from "lucide-react-native";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { SectionCard } from "@/components/custom/section-card";
@@ -301,23 +308,89 @@ export function ProductDetailsScreen() {
               <View className="space-y-3 mt-2">
                 {variationItems.map((item) => (
                   <Card key={item.id} className="p-4 bg-white">
-                    <View className="flex-row justify-between items-center">
-                      <View>
-                        <Text className="font-medium">
-                          {item.variacao.nome}: {item.valor_variacao}
-                        </Text>
+                    <View className="flex-row items-start">
+                      {/* Imagem da variação, se disponível */}
+                      {(item.imagem || product.imagem) && (
+                        <View className="w-16 h-16 mr-3">
+                          <ImagePreview
+                            uri={item.imagem || product.imagem}
+                            containerClassName="rounded-lg"
+                          />
+                        </View>
+                      )}
+
+                      <View className="flex-1">
+                        <View className="flex-row justify-between">
+                          <Text className="font-medium">
+                            {item.variacao.nome}: {item.valor_variacao}
+                          </Text>
+                          <View className="flex-row">
+                            <TouchableOpacity
+                              onPress={() =>
+                                router.push(
+                                  `/admin/products/${product.id}/variation/${item.id}`
+                                )
+                              }
+                              className="p-2 bg-blue-50 rounded-full mr-2"
+                            >
+                              <Edit size={18} color="#3B82F6" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => confirmDeleteVariation(item.id)}
+                              className="p-2 bg-red-50 rounded-full"
+                            >
+                              <Trash size={18} color="#EF4444" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+
+                        {/* Status */}
+                        <View className="mt-1">
+                          <StatusBadge
+                            status={
+                              item.disponivel === false
+                                ? "indisponivel"
+                                : "disponivel"
+                            }
+                            customLabel={
+                              item.disponivel === false
+                                ? "Indisponível"
+                                : "Disponível"
+                            }
+                          />
+                        </View>
+
+                        {/* Preço */}
                         {item.preco && (
-                          <Text className="text-primary-600 mt-1">
-                            {formatCurrency(item.preco)}
+                          <View className="mt-1 flex-row items-center">
+                            {item.preco_promocional ? (
+                              <>
+                                <Text className="text-primary-600 font-medium">
+                                  {formatCurrency(item.preco_promocional)}
+                                </Text>
+                                <Text className="ml-2 text-gray-500 line-through text-sm">
+                                  {formatCurrency(item.preco)}
+                                </Text>
+                              </>
+                            ) : (
+                              <Text className="text-primary-600 font-medium">
+                                {formatCurrency(item.preco)}
+                              </Text>
+                            )}
+                          </View>
+                        )}
+
+                        {/* Descrição resumida */}
+                        {item.descricao && (
+                          <Text
+                            className="text-gray-600 text-sm mt-1"
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                          >
+                            {item.descricao}
                           </Text>
                         )}
                       </View>
-                      <TouchableOpacity
-                        onPress={() => confirmDeleteVariation(item.id)}
-                        className="p-2 bg-red-50 rounded-full"
-                      >
-                        <Trash size={18} color="#EF4444" />
-                      </TouchableOpacity>
                     </View>
                   </Card>
                 ))}
