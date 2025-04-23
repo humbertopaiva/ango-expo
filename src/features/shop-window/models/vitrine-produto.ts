@@ -30,14 +30,15 @@ export interface VitrineProduto {
         slug: string;
       };
     };
+    tem_variacao?: boolean | null;
   };
   produto_variado?: {
     id: string;
     valor_variacao: string;
     descricao?: string;
-    imagem?: string;
+    imagem?: string | null;
     preco: string;
-    preco_promocional?: string;
+    preco_promocional?: string | null;
     disponivel?: boolean;
   } | null;
   disponivel?: boolean;

@@ -14,6 +14,15 @@ export interface ShowcaseItem {
   parcelas_sem_juros?: boolean;
   preco_parcelado_tipo?: string;
   desconto_avista?: string | null;
+  produto_variado?: {
+    id: string;
+    valor_variacao: string;
+    descricao?: string;
+    imagem?: string | null;
+    preco: string;
+    preco_promocional?: string | null;
+    disponivel?: boolean;
+  } | null;
   empresa: {
     nome: string;
     slug: string;

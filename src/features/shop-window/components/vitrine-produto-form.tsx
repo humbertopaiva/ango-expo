@@ -76,7 +76,7 @@ export function VitrineProdutoForm({
         disponivel: produto.disponivel ?? true,
       });
 
-      // Encontrar o produto selecionado
+      // Find the selected product
       const productDetails = products.find((p) => p.id === produto.produto.id);
       if (productDetails) {
         setSelectedProduct(productDetails);
@@ -97,14 +97,14 @@ export function VitrineProdutoForm({
 
   const handleProductSelect = (productId: string) => {
     form.setValue("produto", productId);
-    // Resetar o produto variado quando mudar o produto principal
+    // Reset the variation product when changing the main product
     form.setValue("produto_variado", null);
 
-    // Atualizar o produto selecionado para exibição
+    // Update the selected product for display
     const productDetails = products.find((p) => p.id === productId);
     setSelectedProduct(productDetails);
 
-    // Verificar se o produto tem variação
+    // Check if the product has variations
     const productHasVariation = !!productDetails?.variacao;
     setHasVariation(productHasVariation);
 
@@ -128,7 +128,7 @@ export function VitrineProdutoForm({
   };
 
   const handleSubmitForm = (data: VitrineProdutoFormData) => {
-    // Validar se um produto com variação tem um produto variado selecionado
+    // Validate if a product with variation has a variation product selected
     if (hasVariation && !data.produto_variado) {
       form.setError("produto_variado", {
         type: "manual",
@@ -137,6 +137,7 @@ export function VitrineProdutoForm({
       return;
     }
 
+    // No need to pass additional data, the API will handle it correctly now
     onSubmit(data);
   };
 
@@ -164,14 +165,14 @@ export function VitrineProdutoForm({
                   name="produto"
                   render={({ field: { value }, fieldState: { error } }) => (
                     <>
-                      {/* Preview do produto selecionado */}
+                      {/* Preview of selected product */}
                       {selectedProduct ? (
                         <TouchableOpacity
                           onPress={() => setIsProductSelectorOpen(true)}
                           className="border rounded-lg p-3 flex-row items-center bg-white"
                           style={{ borderColor: error ? "#EF4444" : "#E5E7EB" }}
                         >
-                          {/* Imagem do produto */}
+                          {/* Product image */}
                           <View className="h-16 w-16 bg-gray-100 rounded-md overflow-hidden mr-3">
                             {selectedProduct.imagem ? (
                               <ResilientImage
@@ -186,13 +187,13 @@ export function VitrineProdutoForm({
                             )}
                           </View>
 
-                          {/* Informações do produto */}
+                          {/* Product information */}
                           <View className="flex-1">
                             <Text className="font-medium" numberOfLines={2}>
                               {selectedProduct.nome}
                             </Text>
 
-                            {/* Badge de variação */}
+                            {/* Variation badge */}
                             {hasVariation && (
                               <View className="mt-1 bg-blue-100 self-start px-2 py-0.5 rounded-full">
                                 <Text className="text-xs text-blue-700">
@@ -201,7 +202,7 @@ export function VitrineProdutoForm({
                               </View>
                             )}
 
-                            {/* Preço - mostrar apenas se não tiver variação */}
+                            {/* Price - show only if no variation */}
                             {!hasVariation && (
                               <View className="flex-row items-center mt-1">
                                 {selectedProduct.preco_promocional ? (
@@ -256,7 +257,7 @@ export function VitrineProdutoForm({
                 />
               </FormControl>
 
-              {/* Seletor de variação - apenas se o produto tiver variação */}
+              {/* Variation selector - only if the product has variations */}
               {hasVariation && selectedProduct && (
                 <Controller
                   control={form.control}
@@ -265,7 +266,7 @@ export function VitrineProdutoForm({
                     <FormControl isInvalid={!!error}>
                       <ProductVariationSelector
                         productId={selectedProduct.id}
-                        productName={selectedProduct.nome} // Passando o nome do produto
+                        productName={selectedProduct.nome}
                         selectedVariationId={value ?? null}
                         onSelectVariation={handleVariationSelect}
                       />
@@ -282,7 +283,7 @@ export function VitrineProdutoForm({
                 />
               )}
 
-              {/* Disponibilidade do produto */}
+              {/* Product availability */}
               <Controller
                 control={form.control}
                 name="disponivel"
@@ -332,7 +333,7 @@ export function VitrineProdutoForm({
         </Modal.Content>
       </Modal>
 
-      {/* Seletor de produtos */}
+      {/* Product selector */}
       <ProductSelectorModal
         visible={isProductSelectorOpen}
         onClose={() => setIsProductSelectorOpen(false)}

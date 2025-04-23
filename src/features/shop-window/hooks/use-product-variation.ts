@@ -1,4 +1,4 @@
-// Path: src/features/products/hooks/use-product-variation.ts
+// Path: src/features/shop-window/hooks/use-product-variation.ts
 import { useState, useEffect } from "react";
 import { useProductVariationItems } from "../../products/hooks/use-product-variations-items";
 
@@ -9,7 +9,7 @@ export function useProductVariation(productId?: string | null) {
   );
 
   useEffect(() => {
-    // Se temos itens de variação, então o produto tem variações
+    // If we have variation items, then the product has variations
     if (!isLoading && variationItems.length > 0) {
       setHasVariation(true);
     } else if (!isLoading) {
