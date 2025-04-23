@@ -2,7 +2,13 @@
 import React, { useRef, useState } from "react";
 import { View, Text, Pressable, Animated } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Package, Trash, DollarSign, MoreVertical } from "lucide-react-native";
+import {
+  Package,
+  Trash,
+  DollarSign,
+  MoreVertical,
+  Layers,
+} from "lucide-react-native";
 import { VitrineProduto } from "../models";
 import { ResilientImage } from "@/components/common/resilient-image";
 import { ReorderButtons } from "@/components/common/reorder-buttons";
@@ -10,6 +16,7 @@ import { ReorderButtons } from "@/components/common/reorder-buttons";
 interface SortableProdutoItemProps {
   produto: VitrineProduto;
   onDelete: (produto: VitrineProduto) => void;
+  onEdit?: (produto: VitrineProduto) => void; // Agora é opcional, pois foi adicionado
   isReordering?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -19,6 +26,7 @@ interface SortableProdutoItemProps {
 export function SortableProdutoItem({
   produto,
   onDelete,
+  onEdit,
   isReordering,
   onMoveUp,
   onMoveDown,
@@ -54,16 +62,39 @@ export function SortableProdutoItem({
     }
   };
 
+  // Determinar se é um produto com variação e tem produto variado selecionado
+  const hasVariation = !!produto.produto.variacao;
+  const hasVariationSelected = !!produto.produto_variado;
+
+  // Obter a imagem correta (do produto variado se disponível, senão do produto principal)
+  const productImage =
+    produto.produto_variado?.imagem || produto.produto.imagem;
+
+  // Obter o preço correto (do produto variado se disponível, senão do produto principal)
+  const productPrice = produto.produto_variado?.preco || produto.produto.preco;
+  const productPromotionalPrice =
+    produto.produto_variado?.preco_promocional ||
+    produto.produto.preco_promocional;
+
   return (
     <View className="overflow-hidden relative mb-3">
-      {/* Botões de ação que aparecem ao deslizar - apenas delete neste caso */}
+      {/* Botões de ação que aparecem ao deslizar */}
       <View
         className="absolute right-0 top-0 bottom-0 flex-row items-center justify-center h-full"
         style={{ width: 100 }}
       >
+        {/* Adicionar botão de edição se disponível */}
+        {onEdit && (
+          <Pressable
+            onPress={() => onEdit(produto)}
+            className="bg-gray-100 h-full w-1/2 items-center justify-center"
+          >
+            <Text className="text-gray-700 font-medium">Editar</Text>
+          </Pressable>
+        )}
         <Pressable
           onPress={() => onDelete(produto)}
-          className="bg-red-100 h-full w-full items-center justify-center"
+          className="bg-red-100 h-full w-1/2 items-center justify-center"
         >
           <Trash size={20} color="#ef4444" />
         </Pressable>
@@ -97,9 +128,9 @@ export function SortableProdutoItem({
               </View>
             ) : (
               <View className="h-14 w-14 bg-gray-100 rounded-lg overflow-hidden mr-3">
-                {produto.produto.imagem ? (
+                {productImage ? (
                   <ResilientImage
-                    source={produto.produto.imagem}
+                    source={productImage}
                     style={{ height: "100%", width: "100%" }}
                     resizeMode="cover"
                   />
@@ -128,6 +159,33 @@ export function SortableProdutoItem({
                     {produto.disponivel ? "Disponível" : "Indisponível"}
                   </Text>
                 </View>
+
+                {/* Badge de variação */}
+                {hasVariation && (
+                  <View
+                    className="px-1.5 py-0.5 rounded-full ml-1 flex-row items-center"
+                    style={{
+                      backgroundColor: hasVariationSelected
+                        ? "#DBEAFE"
+                        : "#FEE2E2",
+                    }}
+                  >
+                    <Layers
+                      size={10}
+                      color={hasVariationSelected ? "#1D4ED8" : "#DC2626"}
+                    />
+                    <Text
+                      className="text-xs ml-1"
+                      style={{
+                        color: hasVariationSelected ? "#1D4ED8" : "#DC2626",
+                      }}
+                    >
+                      {hasVariationSelected
+                        ? produto.produto_variado?.valor_variacao
+                        : "Sem variação"}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* Nome do produto */}
@@ -136,20 +194,28 @@ export function SortableProdutoItem({
               </Text>
 
               {/* Informações de preço */}
-              <View className="flex-row items-center mt-0.5 flex-wrap">
-                <View className="flex-row items-center bg-gray-50 px-1.5 py-0.5 rounded-md mr-2">
-                  <DollarSign size={10} color="#4B5563" />
-                  <Text className="font-medium text-xs text-gray-700 ml-0.5">
-                    {formatCurrency(produto.produto.preco)}
-                  </Text>
-                </View>
+              {productPrice || hasVariationSelected ? (
+                <View className="flex-row items-center mt-0.5 flex-wrap">
+                  <View className="flex-row items-center bg-gray-50 px-1.5 py-0.5 rounded-md mr-2">
+                    <DollarSign size={10} color="#4B5563" />
+                    <Text className="font-medium text-xs text-gray-700 ml-0.5">
+                      {formatCurrency(productPrice)}
+                    </Text>
+                  </View>
 
-                {produto.produto.preco_promocional && (
-                  <Text className="text-xs text-gray-500 line-through">
-                    {formatCurrency(produto.produto.preco_promocional)}
-                  </Text>
-                )}
-              </View>
+                  {productPromotionalPrice && (
+                    <Text className="text-xs text-gray-500 line-through">
+                      {formatCurrency(productPromotionalPrice)}
+                    </Text>
+                  )}
+                </View>
+              ) : (
+                <Text className="text-xs text-red-500 mt-0.5">
+                  {hasVariation
+                    ? "Selecione uma variação"
+                    : "Preço não definido"}
+                </Text>
+              )}
             </View>
 
             {/* Botão de mais opções - apenas visível quando não está reordenando */}

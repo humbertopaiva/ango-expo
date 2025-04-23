@@ -134,6 +134,7 @@ export function useVitrineViewModel(): IVitrineViewModel {
             id: state.selectedProduct.id,
             data: {
               produto: data.produto,
+              produto_variado: data.produto_variado,
               disponivel: data.disponivel ?? true,
               ordem: data.ordem,
               sort: data.sort,
@@ -148,6 +149,7 @@ export function useVitrineViewModel(): IVitrineViewModel {
 
           await createVitrineProduto({
             produto: data.produto,
+            produto_variado: data.produto_variado,
             disponivel: data.disponivel ?? true,
             ordem: nextOrder,
             sort: (vitrineProdutos.length + 1) * 10,

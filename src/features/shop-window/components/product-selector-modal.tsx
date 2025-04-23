@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   TextInput,
 } from "react-native";
-import { X, Search, Package } from "lucide-react-native";
+import { X, Search, Package, Layers } from "lucide-react-native";
 import { useProducts } from "../../products/hooks/use-products";
 import { Product } from "../../products/models/product";
 import { ResilientImage } from "@/components/common/resilient-image";
@@ -55,9 +55,15 @@ export function ProductSelectorModal({
     }
   };
 
+  // Verifica se um produto tem variação
+  const hasVariation = (product: Product) => {
+    return !!product.variacao;
+  };
+
   // Renderiza um item da lista de produtos
   const renderProductItem = ({ item }: { item: Product }) => {
     const isSelected = item.id === selectedProductId;
+    const productHasVariation = hasVariation(item);
 
     return (
       <TouchableOpacity
@@ -90,22 +96,35 @@ export function ProductSelectorModal({
             {item.nome}
           </Text>
 
-          <View className="flex-row items-center">
-            {item.preco_promocional ? (
-              <>
-                <Text className="text-primary-600 font-bold">
-                  {formatCurrency(item.preco_promocional)}
-                </Text>
-                <Text className="text-gray-500 line-through ml-2 text-xs">
+          {/* Exibir badge de variação se o produto tiver variações */}
+          {productHasVariation && (
+            <View className="flex-row items-center bg-blue-100 self-start px-2 py-1 rounded-full mb-1">
+              <Layers size={12} color="#1D4ED8" />
+              <Text className="text-xs text-blue-700 ml-1">
+                Produto com variações
+              </Text>
+            </View>
+          )}
+
+          {/* Mostrar preço apenas se não for um produto com variação */}
+          {!productHasVariation && (
+            <View className="flex-row items-center">
+              {item.preco_promocional ? (
+                <>
+                  <Text className="text-primary-600 font-bold">
+                    {formatCurrency(item.preco_promocional)}
+                  </Text>
+                  <Text className="text-gray-500 line-through ml-2 text-xs">
+                    {formatCurrency(item.preco)}
+                  </Text>
+                </>
+              ) : (
+                <Text className="text-gray-800 font-semibold">
                   {formatCurrency(item.preco)}
                 </Text>
-              </>
-            ) : (
-              <Text className="text-gray-800 font-semibold">
-                {formatCurrency(item.preco)}
-              </Text>
-            )}
-          </View>
+              )}
+            </View>
+          )}
 
           {/* Status do produto */}
           <View className="mt-1">

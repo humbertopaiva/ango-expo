@@ -1,4 +1,5 @@
-// Path: src/features/vitrine/models/vitrine-produto.ts
+// Path: src/features/shop-window/models/vitrine-produto.ts
+
 export interface VitrineProduto {
   id: number;
   sort: number | null;
@@ -16,6 +17,10 @@ export interface VitrineProduto {
     preco: string;
     preco_promocional: string | null;
     date_created: string;
+    variacao?: {
+      id: string;
+      nome: string;
+    } | null;
     empresa: {
       id: string;
       nome: string;
@@ -26,6 +31,15 @@ export interface VitrineProduto {
       };
     };
   };
+  produto_variado?: {
+    id: string;
+    valor_variacao: string;
+    descricao?: string;
+    imagem?: string;
+    preco: string;
+    preco_promocional?: string;
+    disponivel?: boolean;
+  } | null;
   disponivel?: boolean;
   ordem: string;
   empresa: string;
@@ -33,6 +47,7 @@ export interface VitrineProduto {
 
 export interface CreateVitrineProdutoDTO {
   produto: string;
+  produto_variado?: string | null;
   empresa: string;
   disponivel?: boolean;
   ordem?: string;
@@ -43,6 +58,7 @@ export type UpdateVitrineProdutoDTO = Partial<CreateVitrineProdutoDTO>;
 
 export interface VitrineProdutoFormData {
   produto: string;
+  produto_variado?: string | null;
   disponivel?: boolean;
   ordem?: string;
   sort?: number;

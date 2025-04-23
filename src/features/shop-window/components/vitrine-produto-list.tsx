@@ -194,6 +194,7 @@ export function VitrineProdutoList({
             key={produto.id.toString()}
             produto={produto}
             onDelete={onDelete}
+            onEdit={onEdit} // Adicionar este prop
             isReordering={isEditingOrder}
             onMoveUp={index > 0 ? () => moveItem(index, "up") : undefined}
             onMoveDown={

@@ -53,6 +53,7 @@ class VitrineService {
         disponivel: data.disponivel ?? true,
         ordem: data.ordem || "A",
         sort: data.sort || 10,
+        produto_variado: data.produto_variado || null,
       };
 
       const response = await api.post<VitrineProduto>(
