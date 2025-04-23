@@ -19,6 +19,7 @@ import { VitrineProduto } from "../models";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ProductSelectorModal } from "./product-selector-modal";
 import { ResilientImage } from "@/components/common/resilient-image";
+import { ProductVariationSelector } from "./product-variation-selector";
 
 const formSchema = z.object({
   produto: z
@@ -26,8 +27,10 @@ const formSchema = z.object({
       required_error: "Produto é obrigatório",
     })
     .min(1, "Produto é obrigatório"),
+  produto_variado: z.string().nullable().optional(),
   ordem: z.string().optional(),
   sort: z.number().optional(),
+  disponivel: z.boolean().default(true),
 });
 
 export type VitrineProdutoFormData = z.infer<typeof formSchema>;
@@ -50,13 +53,16 @@ export function VitrineProdutoForm({
   const { products } = useProducts();
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [hasVariation, setHasVariation] = useState(false);
 
   const form = useForm<VitrineProdutoFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       produto: "",
+      produto_variado: null,
       ordem: "",
       sort: 0,
+      disponivel: true,
     },
   });
 
@@ -64,31 +70,49 @@ export function VitrineProdutoForm({
     if (produto) {
       form.reset({
         produto: produto.produto.id,
+        produto_variado: produto.produto_variado?.id || null,
         ordem: produto.ordem || "",
         sort: produto.sort || 0,
+        disponivel: produto.disponivel ?? true,
       });
 
       // Encontrar o produto selecionado
       const productDetails = products.find((p) => p.id === produto.produto.id);
       if (productDetails) {
         setSelectedProduct(productDetails);
+        setHasVariation(!!productDetails.variacao);
       }
     } else {
       form.reset({
         produto: "",
+        produto_variado: null,
         ordem: "",
         sort: 0,
+        disponivel: true,
       });
       setSelectedProduct(null);
+      setHasVariation(false);
     }
   }, [produto, form, products]);
 
   const handleProductSelect = (productId: string) => {
     form.setValue("produto", productId);
+    // Resetar o produto variado quando mudar o produto principal
+    form.setValue("produto_variado", null);
+
     // Atualizar o produto selecionado para exibição
     const productDetails = products.find((p) => p.id === productId);
     setSelectedProduct(productDetails);
+
+    // Verificar se o produto tem variação
+    const productHasVariation = !!productDetails?.variacao;
+    setHasVariation(productHasVariation);
+
     setIsProductSelectorOpen(false);
+  };
+
+  const handleVariationSelect = (variationId: string | null) => {
+    form.setValue("produto_variado", variationId);
   };
 
   const formatCurrency = (value: string) => {
@@ -101,6 +125,19 @@ export function VitrineProdutoForm({
     } catch (e) {
       return value;
     }
+  };
+
+  const handleSubmitForm = (data: VitrineProdutoFormData) => {
+    // Validar se um produto com variação tem um produto variado selecionado
+    if (hasVariation && !data.produto_variado) {
+      form.setError("produto_variado", {
+        type: "manual",
+        message: "Selecione uma variação do produto",
+      });
+      return;
+    }
+
+    onSubmit(data);
   };
 
   return (
@@ -155,25 +192,36 @@ export function VitrineProdutoForm({
                               {selectedProduct.nome}
                             </Text>
 
-                            {/* Preço */}
-                            <View className="flex-row items-center mt-1">
-                              {selectedProduct.preco_promocional ? (
-                                <>
-                                  <Text className="text-primary-600 font-bold text-sm">
-                                    {formatCurrency(
-                                      selectedProduct.preco_promocional
-                                    )}
-                                  </Text>
-                                  <Text className="text-gray-500 line-through ml-2 text-xs">
+                            {/* Badge de variação */}
+                            {hasVariation && (
+                              <View className="mt-1 bg-blue-100 self-start px-2 py-0.5 rounded-full">
+                                <Text className="text-xs text-blue-700">
+                                  Produto com variações
+                                </Text>
+                              </View>
+                            )}
+
+                            {/* Preço - mostrar apenas se não tiver variação */}
+                            {!hasVariation && (
+                              <View className="flex-row items-center mt-1">
+                                {selectedProduct.preco_promocional ? (
+                                  <>
+                                    <Text className="text-primary-600 font-bold text-sm">
+                                      {formatCurrency(
+                                        selectedProduct.preco_promocional
+                                      )}
+                                    </Text>
+                                    <Text className="text-gray-500 line-through ml-2 text-xs">
+                                      {formatCurrency(selectedProduct.preco)}
+                                    </Text>
+                                  </>
+                                ) : (
+                                  <Text className="text-gray-800 font-medium text-sm">
                                     {formatCurrency(selectedProduct.preco)}
                                   </Text>
-                                </>
-                              ) : (
-                                <Text className="text-gray-800 font-medium text-sm">
-                                  {formatCurrency(selectedProduct.preco)}
-                                </Text>
-                              )}
-                            </View>
+                                )}
+                              </View>
+                            )}
                           </View>
 
                           <ChevronRight size={20} color="#9CA3AF" />
@@ -207,6 +255,55 @@ export function VitrineProdutoForm({
                   )}
                 />
               </FormControl>
+
+              {/* Seletor de variação - apenas se o produto tiver variação */}
+              {hasVariation && selectedProduct && (
+                <Controller
+                  control={form.control}
+                  name="produto_variado"
+                  render={({ field: { value }, fieldState: { error } }) => (
+                    <FormControl isInvalid={!!error}>
+                      <ProductVariationSelector
+                        productId={selectedProduct.id}
+                        productName={selectedProduct.nome} // Passando o nome do produto
+                        selectedVariationId={value ?? null}
+                        onSelectVariation={handleVariationSelect}
+                      />
+
+                      {error && (
+                        <FormControl.Error>
+                          <FormControl.Error.Text>
+                            {error.message}
+                          </FormControl.Error.Text>
+                        </FormControl.Error>
+                      )}
+                    </FormControl>
+                  )}
+                />
+              )}
+
+              {/* Disponibilidade do produto */}
+              <Controller
+                control={form.control}
+                name="disponivel"
+                render={({ field: { onChange, value } }) => (
+                  <FormControl>
+                    <HStack alignItems="center" justifyContent="space-between">
+                      <FormControl.Label>
+                        <Text className="text-gray-700 font-medium">
+                          Disponível na vitrine
+                        </Text>
+                      </FormControl.Label>
+                      <Switch
+                        value={value}
+                        onToggle={(val) => onChange(val)}
+                        trackColor={{ false: "#D1D5DB", true: "#F4511E" }}
+                        thumbColor={value ? "#FFFFFF" : "#FFFFFF"}
+                      />
+                    </HStack>
+                  </FormControl>
+                )}
+              />
             </VStack>
           </Modal.Body>
           <Modal.Footer>
@@ -221,7 +318,7 @@ export function VitrineProdutoForm({
                 <Button.Text color="$gray700">Cancelar</Button.Text>
               </Button>
               <Button
-                onPress={form.handleSubmit(onSubmit)}
+                onPress={form.handleSubmit(handleSubmitForm)}
                 disabled={isLoading}
                 flex={1}
                 backgroundColor={THEME_COLORS.primary}

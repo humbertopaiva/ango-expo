@@ -34,6 +34,26 @@ export function SimpleProdutoItem({
     }).format(numericValue);
   };
 
+  // Determinar se é um produto com variação e tem produto variado selecionado
+  const hasVariation = !!produto.produto.variacao;
+  const hasVariationSelected = !!produto.produto_variado;
+
+  // Obter a imagem correta (do produto variado se disponível, senão do produto principal)
+  const productImage =
+    produto.produto_variado?.imagem || produto.produto.imagem;
+
+  // Obter o preço correto (do produto variado se disponível, senão do produto principal)
+  const productPrice = produto.produto_variado?.preco || produto.produto.preco;
+  const productPromotionalPrice =
+    produto.produto_variado?.preco_promocional ||
+    produto.produto.preco_promocional;
+
+  // Formatar o nome do produto para incluir a variação
+  const displayName =
+    hasVariationSelected && produto.produto_variado?.valor_variacao
+      ? `${produto.produto.nome} - ${produto.produto_variado.valor_variacao}`
+      : produto.produto.nome;
+
   const renderProductContent = () => (
     <View className="p-2 flex-row">
       {/* Área de reordenação ou imagem */}
@@ -42,9 +62,9 @@ export function SimpleProdutoItem({
           <ReorderButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
         ) : (
           <View className="h-12 w-12 bg-gray-100 rounded-lg overflow-hidden">
-            {produto.produto.imagem ? (
+            {productImage ? (
               <ResilientImage
-                source={produto.produto.imagem}
+                source={productImage}
                 style={{ height: "100%", width: "100%" }}
                 resizeMode="cover"
               />
@@ -76,26 +96,32 @@ export function SimpleProdutoItem({
           </View>
         </View>
 
-        {/* Nome do produto */}
+        {/* Nome do produto (agora incluindo a variação) */}
         <Text className="font-medium text-sm" numberOfLines={2}>
-          {produto.produto.nome}
+          {displayName}
         </Text>
 
         {/* Informações de preço */}
-        <View className="flex-row items-center mt-0.5 flex-wrap">
-          <View className="flex-row items-center bg-gray-50 px-1.5 py-0.5 rounded-md mr-2">
-            <DollarSign size={10} color="#4B5563" />
-            <Text className="font-medium text-xs text-gray-700 ml-0.5">
-              {formatCurrency(produto.produto.preco)}
-            </Text>
-          </View>
+        {productPrice || hasVariationSelected ? (
+          <View className="flex-row items-center mt-0.5 flex-wrap">
+            <View className="flex-row items-center bg-gray-50 px-1.5 py-0.5 rounded-md mr-2">
+              <DollarSign size={10} color="#4B5563" />
+              <Text className="font-medium text-xs text-gray-700 ml-0.5">
+                {formatCurrency(productPrice)}
+              </Text>
+            </View>
 
-          {produto.produto.preco_promocional && (
-            <Text className="text-xs text-gray-500 line-through">
-              {formatCurrency(produto.produto.preco_promocional)}
-            </Text>
-          )}
-        </View>
+            {productPromotionalPrice && (
+              <Text className="text-xs text-gray-500 line-through">
+                {formatCurrency(productPromotionalPrice)}
+              </Text>
+            )}
+          </View>
+        ) : (
+          <Text className="text-xs text-red-500 mt-0.5">
+            {hasVariation ? "Selecione uma variação" : "Preço não definido"}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -109,7 +135,7 @@ export function SimpleProdutoItem({
   return (
     <SwipeableCard
       onDelete={() => onDelete(produto)}
-      disableEdit={true} // Produtos não têm edição, apenas exclusão
+      onEdit={() => onEdit(produto)}
       position={position}
       badgeColor="bg-primary-100"
     >
