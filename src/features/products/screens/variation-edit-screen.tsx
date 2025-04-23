@@ -1,4 +1,5 @@
 // Path: src/features/products/screens/variation-edit-screen.tsx
+
 import React, { useRef, useState, useEffect } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,11 +22,16 @@ import { THEME_COLORS } from "@/src/styles/colors";
 export function VariationEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
-  const { variations, updateVariation, isUpdating, isLoading } =
+  const { variations, updateVariation, isUpdating, isLoading, refetch } =
     useVariationTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formRef = useRef<VariationTypeFormRef>(null);
+
+  // Forçar refetch ao montar o componente
+  useEffect(() => {
+    refetch();
+  }, [refetch, id]);
 
   // Encontrar a variação pelo ID
   const variation = variations.find((v) => v.id === id);
@@ -48,6 +54,9 @@ export function VariationEditScreen() {
       });
 
       showSuccessToast(toast, "Tipo de variação atualizado com sucesso!");
+
+      // Forçar refetch imediatamente
+      await refetch();
 
       // Navegar de volta após breve delay
       setTimeout(() => {

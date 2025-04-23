@@ -1,5 +1,6 @@
 // Path: src/features/products/screens/variation-new-screen.tsx
-import React, { useRef, useState } from "react";
+
+import React, { useRef, useState, useEffect } from "react";
 import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast } from "@gluestack-ui/themed";
@@ -21,10 +22,15 @@ import {
 export function VariationNewScreen() {
   const toast = useToast();
   const companyId = useAuthStore((state) => state.getCompanyId());
-  const { createVariation, isCreating } = useVariationTypes();
+  const { createVariation, isCreating, refetch } = useVariationTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formRef = useRef<VariationTypeFormRef>(null);
+
+  // Forçar refetch ao montar o componente
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const handleSubmit = async (data: { nome: string; variacao: string[] }) => {
     if (!companyId) {
@@ -43,6 +49,9 @@ export function VariationNewScreen() {
       });
 
       showSuccessToast(toast, "Tipo de variação criado com sucesso!");
+
+      // Forçar refetch imediatamente
+      await refetch();
 
       // Navegar de volta após breve delay
       setTimeout(() => {

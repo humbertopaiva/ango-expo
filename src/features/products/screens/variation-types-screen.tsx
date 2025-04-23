@@ -1,6 +1,13 @@
 // Path: src/features/products/screens/variation-types-screen.tsx
-import React, { useState } from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
+
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useToast } from "@gluestack-ui/themed";
 import { useVariationTypes } from "../hooks/use-variation-types";
@@ -18,13 +25,26 @@ import { THEME_COLORS } from "@/src/styles/colors";
 
 export function VariationTypesScreen() {
   const toast = useToast();
-  const { variations, isLoading, deleteVariation, isDeleting } =
+  const { variations, isLoading, deleteVariation, isDeleting, refetch } =
     useVariationTypes();
+  const [refreshing, setRefreshing] = useState(false);
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [variationToDelete, setVariationToDelete] = useState<string | null>(
     null
   );
+
+  // Efeito para forçar refetch quando a tela é montada
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  // Função de pull-to-refresh para atualizações manuais
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const handleAddVariation = () => {
     router.push("/admin/products/variations/new");
@@ -84,7 +104,16 @@ export function VariationTypesScreen() {
             </Text>
           </Card>
         ) : (
-          <ScrollView className="mb-20">
+          <ScrollView
+            className="mb-20"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[THEME_COLORS.primary]}
+              />
+            }
+          >
             {variations.map((variation) => (
               <View key={variation.id} className="mb-3">
                 <ListItem
