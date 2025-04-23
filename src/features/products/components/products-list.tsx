@@ -26,14 +26,6 @@ export function ProductsList({
   onAddVariation,
   emptyMessage = "Nenhum produto encontrado. Crie um novo produto para começar.",
 }: ProductsListProps) {
-  const queryClient = useQueryClient(); // Adicionar esta linha
-
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["products"] });
-    queryClient.refetchQueries({ queryKey: ["products"] });
-    console.log("Forçando refetch da lista de produtos");
-  }, [queryClient]);
-
   if (isLoading) {
     return <ProductSkeletonList count={3} />;
   }

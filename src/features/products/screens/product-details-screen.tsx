@@ -1,5 +1,5 @@
 // Path: src/features/products/screens/product-details-screen.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
   Plus,
   Trash,
   Edit,
+  RefreshCw,
 } from "lucide-react-native";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { ImagePreview } from "@/components/custom/image-preview";
@@ -35,7 +36,7 @@ import {
 import useAuthStore from "@/src/stores/auth";
 import { Product } from "../models/product";
 import { useProducts } from "../hooks/use-products";
-import { invalidateAllProductQueries } from "../utils/query-utils";
+import { invalidateProductQueries } from "../utils/query-utils";
 
 export function ProductDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -46,19 +47,6 @@ export function ProductDetailsScreen() {
   const toast = useToast();
   const { hasVariation } = useProducts();
   const queryClient = useQueryClient();
-
-  // Efeito para forçar refetch quando a tela for montada ou o ID mudar
-  useEffect(() => {
-    if (id) {
-      console.log(`Forçando refetch das queries para o produto ${id}`);
-      // Invalidar e forçar refetch de todas as queries relevantes
-      invalidateAllProductQueries(queryClient);
-
-      // Forçar refetch específico para este produto
-      queryClient.refetchQueries({ queryKey: ["product-details", id] });
-      queryClient.refetchQueries({ queryKey: ["product-variation-items", id] });
-    }
-  }, [id, queryClient]);
 
   // Buscar detalhes do produto com tratamento melhorado
   const {
@@ -79,21 +67,18 @@ export function ProductDetailsScreen() {
 
         console.log(`Buscando detalhes do produto ${id}`);
 
-        // Buscar todos os produtos da empresa
-        const response = await api.get<{ data: Product[] }>(
-          `/api/products?company=${companyId}`,
+        // Buscar o produto diretamente pelo endpoint específico para evitar problemas
+        const response = await api.get<{ data: Product }>(
+          `/api/products/${id}`,
           { params: { _t: Date.now() } } // Adicionar cache buster
         );
 
-        // Encontrar o produto específico pelo ID
-        const productFound = response.data.data.find((p) => p.id === id);
-
-        if (!productFound) {
+        if (!response.data.data) {
           throw new Error("Produto não encontrado");
         }
 
-        console.log("Produto encontrado:", productFound);
-        return productFound;
+        console.log("Produto encontrado:", response.data.data);
+        return response.data.data;
       } catch (error) {
         console.error("Erro ao buscar detalhes do produto:", error);
         throw error;
@@ -101,7 +86,8 @@ export function ProductDetailsScreen() {
     },
     enabled: !!id,
     retry: 2,
-    staleTime: 0, // Sem cache em memória
+    refetchOnMount: true, // Garantir refetch quando a tela é montada
+    staleTime: 1000 * 30, // Reduzir para 30 segundos enquanto depura o problema
   });
 
   // Buscar variações do produto
@@ -113,19 +99,36 @@ export function ProductDetailsScreen() {
     refetch: refetchVariations,
   } = useProductVariationItems(id as string);
 
-  // Efeito adicional para refetch periódico
+  // Adicionar um useEffect para forçar refetch quando a tela é montada
   useEffect(() => {
-    // Refetch a cada 5 segundos para garantir dados atualizados
-    const intervalId = setInterval(() => {
-      if (id) {
-        console.log("Refetch periódico de dados");
-        refetchProduct();
-        refetchVariations();
-      }
-    }, 5000);
-
-    return () => clearInterval(intervalId);
+    if (id) {
+      console.log("Tela de detalhes montada, forçando refetch");
+      refetchProduct();
+      refetchVariations();
+    }
   }, [id, refetchProduct, refetchVariations]);
+
+  const refreshProductData = useCallback(async () => {
+    console.log("Atualizando dados do produto manualmente");
+
+    try {
+      // Invalidar e refetch em paralelo
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["product-details", id] }),
+        queryClient.invalidateQueries({
+          queryKey: ["product-variation-items", id],
+        }),
+      ]);
+
+      // Forçar refetch imediato
+      await Promise.all([refetchProduct(), refetchVariations()]);
+
+      showSuccessToast(toast, "Dados atualizados com sucesso");
+    } catch (error) {
+      console.error("Erro ao atualizar dados:", error);
+      showErrorToast(toast, "Erro ao atualizar dados");
+    }
+  }, [id, refetchProduct, refetchVariations, queryClient, toast]);
 
   // Efeito para debug
   useEffect(() => {
@@ -171,11 +174,12 @@ export function ProductDetailsScreen() {
       await deleteVariationItem(deleteVariationId);
 
       // Forçar refetch IMEDIATAMENTE após exclusão
-      invalidateAllProductQueries(queryClient);
-
-      // Forçar refetch específico
-      queryClient.refetchQueries({ queryKey: ["product-details", id] });
-      queryClient.refetchQueries({ queryKey: ["product-variation-items", id] });
+      await invalidateProductQueries(queryClient, id as string, {
+        invalidateList: true,
+        invalidateDetails: true,
+        invalidateVariations: true,
+        refetch: true,
+      });
 
       showSuccessToast(toast, "Variação excluída com sucesso");
 
@@ -213,9 +217,12 @@ export function ProductDetailsScreen() {
   // Forçar refetch manualmente das variações, útil para debugging
   const forceRefetchData = () => {
     console.log("Forçando refetch manual de dados");
-    invalidateAllProductQueries(queryClient);
-    refetchProduct();
-    refetchVariations();
+    invalidateProductQueries(queryClient, id as string, {
+      invalidateList: true,
+      invalidateDetails: true,
+      invalidateVariations: true,
+      refetch: true,
+    });
   };
 
   if (isLoading) {
@@ -271,6 +278,17 @@ export function ProductDetailsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <AdminScreenHeader title={product.nome} backTo="/admin/products/list" />
+
+      {/* Botão de atualização manual */}
+      <View className="bg-blue-50 p-3 mx-4 my-2 rounded-lg">
+        <TouchableOpacity
+          onPress={refreshProductData}
+          className="flex-row items-center justify-center"
+        >
+          <RefreshCw size={16} color="#3B82F6" className="mr-2" />
+          <Text className="text-blue-600 font-medium">Atualizar dados</Text>
+        </TouchableOpacity>
+      </View>
 
       <ScrollView className="flex-1 p-4 pb-20">
         {/* Imagem e informações básicas */}
