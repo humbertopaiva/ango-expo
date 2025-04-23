@@ -48,6 +48,12 @@ export function SimpleProdutoItem({
     produto.produto_variado?.preco_promocional ||
     produto.produto.preco_promocional;
 
+  // Formatar o nome do produto para incluir a variação
+  const displayName =
+    hasVariationSelected && produto.produto_variado?.valor_variacao
+      ? `${produto.produto.nome} - ${produto.produto_variado.valor_variacao}`
+      : produto.produto.nome;
+
   const renderProductContent = () => (
     <View className="p-2 flex-row">
       {/* Área de reordenação ou imagem */}
@@ -88,22 +94,11 @@ export function SimpleProdutoItem({
               {produto.disponivel ? "Disponível" : "Indisponível"}
             </Text>
           </View>
-
-          {/* Badge para produto com variação */}
-          {hasVariation && (
-            <View className="px-1.5 py-0.5 rounded-full bg-blue-100 ml-1">
-              <Text className="text-xs text-blue-700">
-                {hasVariationSelected
-                  ? produto.produto_variado?.valor_variacao
-                  : "Variação não selecionada"}
-              </Text>
-            </View>
-          )}
         </View>
 
-        {/* Nome do produto */}
+        {/* Nome do produto (agora incluindo a variação) */}
         <Text className="font-medium text-sm" numberOfLines={2}>
-          {produto.produto.nome}
+          {displayName}
         </Text>
 
         {/* Informações de preço */}

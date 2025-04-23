@@ -15,12 +15,14 @@ import { THEME_COLORS } from "@/src/styles/colors";
 
 interface ProductVariationSelectorProps {
   productId: string;
+  productName: string; // Adicionando nome do produto para referência
   selectedVariationId: string | null;
   onSelectVariation: (variationId: string | null) => void;
 }
 
 export function ProductVariationSelector({
   productId,
+  productName, // Nome do produto para ser usado na visualização
   selectedVariationId,
   onSelectVariation,
 }: ProductVariationSelectorProps) {
@@ -116,27 +118,16 @@ export function ProductVariationSelector({
                 </View>
 
                 <View className="flex-1">
-                  {/* Valor da variação */}
-                  <View
-                    className={`px-2 py-0.5 rounded-full self-start ${
-                      selectedVariationId === item.id
-                        ? "bg-primary-100"
-                        : "bg-gray-100"
-                    } mb-1`}
-                  >
-                    <Text
-                      className={`text-xs ${
-                        selectedVariationId === item.id
-                          ? "text-primary-700"
-                          : "text-gray-700"
-                      }`}
-                    >
+                  {/* Nome do produto com valor da variação */}
+                  <Text className="font-medium text-gray-800" numberOfLines={2}>
+                    {productName} -{" "}
+                    <Text className="text-primary-600">
                       {item.valor_variacao}
                     </Text>
-                  </View>
+                  </Text>
 
                   {/* Status de disponibilidade */}
-                  <View className="flex-row">
+                  <View className="flex-row mt-1">
                     <View
                       className={`px-1.5 py-0.5 rounded-full ${
                         item.disponivel || item.status === "disponivel"

@@ -265,7 +265,8 @@ export function VitrineProdutoForm({
                     <FormControl isInvalid={!!error}>
                       <ProductVariationSelector
                         productId={selectedProduct.id}
-                        selectedVariationId={value}
+                        productName={selectedProduct.nome} // Passando o nome do produto
+                        selectedVariationId={value ?? null}
                         onSelectVariation={handleVariationSelect}
                       />
 

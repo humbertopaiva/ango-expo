@@ -2,13 +2,7 @@
 import React, { useRef, useState } from "react";
 import { View, Text, Pressable, Animated } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import {
-  Package,
-  Trash,
-  DollarSign,
-  MoreVertical,
-  Layers,
-} from "lucide-react-native";
+import { Package, Trash, DollarSign, MoreVertical } from "lucide-react-native";
 import { VitrineProduto } from "../models";
 import { ResilientImage } from "@/components/common/resilient-image";
 import { ReorderButtons } from "@/components/common/reorder-buttons";
@@ -16,7 +10,7 @@ import { ReorderButtons } from "@/components/common/reorder-buttons";
 interface SortableProdutoItemProps {
   produto: VitrineProduto;
   onDelete: (produto: VitrineProduto) => void;
-  onEdit?: (produto: VitrineProduto) => void; // Agora é opcional, pois foi adicionado
+  onEdit?: (produto: VitrineProduto) => void;
   isReordering?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -75,6 +69,12 @@ export function SortableProdutoItem({
   const productPromotionalPrice =
     produto.produto_variado?.preco_promocional ||
     produto.produto.preco_promocional;
+
+  // Formatar o nome do produto para incluir a variação
+  const displayName =
+    hasVariationSelected && produto.produto_variado?.valor_variacao
+      ? `${produto.produto.nome} - ${produto.produto_variado.valor_variacao}`
+      : produto.produto.nome;
 
   return (
     <View className="overflow-hidden relative mb-3">
@@ -159,38 +159,11 @@ export function SortableProdutoItem({
                     {produto.disponivel ? "Disponível" : "Indisponível"}
                   </Text>
                 </View>
-
-                {/* Badge de variação */}
-                {hasVariation && (
-                  <View
-                    className="px-1.5 py-0.5 rounded-full ml-1 flex-row items-center"
-                    style={{
-                      backgroundColor: hasVariationSelected
-                        ? "#DBEAFE"
-                        : "#FEE2E2",
-                    }}
-                  >
-                    <Layers
-                      size={10}
-                      color={hasVariationSelected ? "#1D4ED8" : "#DC2626"}
-                    />
-                    <Text
-                      className="text-xs ml-1"
-                      style={{
-                        color: hasVariationSelected ? "#1D4ED8" : "#DC2626",
-                      }}
-                    >
-                      {hasVariationSelected
-                        ? produto.produto_variado?.valor_variacao
-                        : "Sem variação"}
-                    </Text>
-                  </View>
-                )}
               </View>
 
-              {/* Nome do produto */}
+              {/* Nome do produto (agora incluindo a variação) */}
               <Text className="font-medium text-sm" numberOfLines={2}>
-                {produto.produto.nome}
+                {displayName}
               </Text>
 
               {/* Informações de preço */}

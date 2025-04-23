@@ -112,15 +112,15 @@ export function ProductSelectorModal({
               {item.preco_promocional ? (
                 <>
                   <Text className="text-primary-600 font-bold">
-                    {formatCurrency(item.preco_promocional)}
+                    {formatCurrency(item.preco_promocional || "")}
                   </Text>
                   <Text className="text-gray-500 line-through ml-2 text-xs">
-                    {formatCurrency(item.preco)}
+                    {formatCurrency(item.preco || "")}
                   </Text>
                 </>
               ) : (
                 <Text className="text-gray-800 font-semibold">
-                  {formatCurrency(item.preco)}
+                  {formatCurrency(item.preco || "")}
                 </Text>
               )}
             </View>
