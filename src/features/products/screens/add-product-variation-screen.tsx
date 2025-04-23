@@ -193,26 +193,27 @@ export function AddProductVariationScreen() {
         disponivel: data.disponivel,
       });
 
-      // Forçar refetch IMEDIATAMENTE de todas as queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ["product-details", id] });
-      queryClient.invalidateQueries({
-        queryKey: ["product-variation-items", id],
-      });
-      queryClient.refetchQueries({ queryKey: ["product-details", id] });
-      queryClient.refetchQueries({ queryKey: ["product-variation-items", id] });
-
       showSuccessToast(toast, "Variação de produto adicionada com sucesso!");
 
-      // Aguardar um momento para garantir que a refetch termine
-      setTimeout(() => {
-        // Refetch novamente antes de navegar (garantia dupla)
-        queryClient.refetchQueries({ queryKey: ["product-details", id] });
-        queryClient.refetchQueries({
-          queryKey: ["product-variation-items", id],
-        });
+      queryClient.removeQueries({ queryKey: ["product-variation-items", id] });
+      queryClient.removeQueries({ queryKey: ["product-details", id] });
 
-        router.push(`/admin/products/view/${id}`);
-      }, 1000); // Aumentado para 1 segundo para dar mais tempo
+      try {
+        await queryClient.fetchQuery({
+          queryKey: ["product-variation-items", id],
+          queryFn: async () => {
+            const response = await api.get(`/api/products/${id}/variations`, {
+              params: { _t: Date.now() },
+            });
+            return response.data.data;
+          },
+          staleTime: 0,
+        });
+      } catch (error) {
+        console.error("Erro ao buscar variações:", error);
+      }
+
+      router.push(`/admin/products/view/${id}`);
     } catch (error) {
       console.error("Erro ao adicionar variação:", error);
       showErrorToast(toast, "Erro ao adicionar variação de produto");

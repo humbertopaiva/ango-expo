@@ -6,17 +6,22 @@ import {
   CreateProductVariationItemDTO,
   UpdateProductVariationItemDTO,
 } from "../models/product-variation-item";
-import { invalidateAllProductQueries } from "../utils/query-utils";
+import { invalidateProductQueries } from "../utils/query-utils";
 
 export function useProductVariationItems(productId?: string) {
   const queryClient = useQueryClient();
 
-  // Definir várias chaves de query para aumentar a chance de sucesso na invalidação
+  // Definir a query key principal
+  // Definir a query key principal
   const mainQueryKey = productId
     ? ["product-variation-items", productId]
     : ["product-variation-items"];
 
-  const { data: variationItems = [], isLoading } = useQuery({
+  const {
+    data: variationItems = [],
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: mainQueryKey,
     queryFn: async () => {
       try {
@@ -24,16 +29,56 @@ export function useProductVariationItems(productId?: string) {
 
         console.log(`Buscando variações para o produto ${productId}`);
 
-        const response = await api.get<{ data: ProductVariationItem[] }>(
-          `/api/products/${productId}/variations`,
-          {
-            params: {
-              _t: Date.now(), // Cache buster
-            },
-          }
+        // Adicionar um timestamp para evitar cache do navegador/API
+        const response = await api.get<{
+          data: ProductVariationItem[];
+          total?: number;
+        }>(`/api/products/${productId}/variations`, {
+          params: {
+            _t: Date.now(), // Adicionar cache buster
+            forceNoCache: true,
+          },
+          // Ignorar cache do axios
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        console.log(
+          `Variações recebidas: ${response.data.data?.length || 0}`,
+          response.data.data
         );
 
-        console.log(`Variações recebidas: ${response.data.data?.length || 0}`);
+        // Se recebeu dados vazios, mas há um total > 0, tentar novamente
+        if (
+          (!response.data.data || response.data.data.length === 0) &&
+          response.data.total &&
+          response.data.total > 0
+        ) {
+          console.warn(
+            "Recebeu total > 0 mas dados vazios, tentando novamente..."
+          );
+
+          // Esperar um momento e tentar de novo
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const retryResponse = await api.get<{
+            data: ProductVariationItem[];
+            total?: number;
+          }>(`/api/products/${productId}/variations`, {
+            params: { _t: Date.now() + 1 },
+            headers: {
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+              Expires: "0",
+            },
+          });
+
+          return retryResponse.data.data || [];
+        }
+
         return response.data.data || [];
       } catch (error) {
         console.error("Erro ao buscar itens de variação:", error);
@@ -41,7 +86,11 @@ export function useProductVariationItems(productId?: string) {
       }
     },
     enabled: !!productId,
-    staleTime: 0, // Sem cache em memória, sempre buscar dados frescos
+    // Modificações críticas para evitar problemas de cache
+    staleTime: 0, // Sempre considerar os dados obsoletos
+
+    refetchOnMount: true, // Sempre buscar ao montar
+    refetchOnWindowFocus: true, // Atualizar ao focar janela
   });
 
   const createMutation = useMutation({
@@ -55,15 +104,26 @@ export function useProductVariationItems(productId?: string) {
     onSuccess: (result, variables) => {
       console.log("Item de variação criado com sucesso!");
 
-      // Invalidar TODAS as queries
-      invalidateAllProductQueries(queryClient);
-
-      // Forçar um refetch específico da lista de variações deste produto
+      // Invalidar e FORÇAR REFETCH do produto específico e suas variações
       if (productId) {
-        queryClient.refetchQueries({ queryKey: mainQueryKey, exact: true });
+        // Invalidar queries
+        invalidateProductQueries(queryClient, productId, {
+          invalidateList: true, // Agora também atualizamos a lista
+          invalidateDetails: true,
+          invalidateVariations: true,
+          refetch: true, // Forçar refetch imediatamente
+        });
+
+        // Garantir uma refetch imediata
+        queryClient.refetchQueries({
+          queryKey: ["product-details", productId],
+        });
+        queryClient.refetchQueries({ queryKey: mainQueryKey });
       }
     },
   });
+
+  // Restante do código sem alteração
 
   const updateMutation = useMutation({
     mutationFn: ({
@@ -79,15 +139,17 @@ export function useProductVariationItems(productId?: string) {
         data
       );
     },
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       console.log("Item de variação atualizado com sucesso!");
 
-      // Invalidar TODAS as queries
-      invalidateAllProductQueries(queryClient);
-
-      // Forçar um refetch específico da lista de variações deste produto
+      // Invalidar e forçar refetch
       if (productId) {
-        queryClient.refetchQueries({ queryKey: mainQueryKey, exact: true });
+        invalidateProductQueries(queryClient, productId, {
+          invalidateList: true,
+          invalidateDetails: true,
+          invalidateVariations: true,
+          refetch: true,
+        });
       }
     },
   });
@@ -100,18 +162,20 @@ export function useProductVariationItems(productId?: string) {
     onSuccess: (result, id) => {
       console.log(`Item de variação ${id} excluído com sucesso!`);
 
-      // Invalidar TODAS as queries
-      invalidateAllProductQueries(queryClient);
-
-      // Forçar um refetch específico da lista de variações deste produto
+      // Invalidar e forçar refetch
       if (productId) {
-        queryClient.refetchQueries({ queryKey: mainQueryKey, exact: true });
+        invalidateProductQueries(queryClient, productId, {
+          invalidateList: true,
+          invalidateDetails: true,
+          invalidateVariations: true,
+          refetch: true,
+        });
       }
     },
   });
 
   return {
-    variationItems,
+    variationItems: variationItems || [], // Garantir que nunca seja undefined
     isLoading,
     createVariationItem: createMutation.mutate,
     updateVariationItem: updateMutation.mutate,
@@ -119,7 +183,6 @@ export function useProductVariationItems(productId?: string) {
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
-    refetch: () =>
-      queryClient.refetchQueries({ queryKey: mainQueryKey, exact: true }),
+    refetch,
   };
 }
