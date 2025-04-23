@@ -87,7 +87,6 @@ export function ProductDetailsScreen() {
     enabled: !!id,
     retry: 2,
     refetchOnMount: true, // Garantir refetch quando a tela é montada
-    staleTime: 1000 * 30, // Reduzir para 30 segundos enquanto depura o problema
   });
 
   // Buscar variações do produto
@@ -184,14 +183,14 @@ export function ProductDetailsScreen() {
       showSuccessToast(toast, "Variação excluída com sucesso");
 
       // Aguardar um momento antes de fechar o diálogo
-      setTimeout(() => {
-        setIsDeleteDialogOpen(false);
-        setDeleteVariationId(null);
+      // setTimeout(() => {
+      //   setIsDeleteDialogOpen(false);
+      //   setDeleteVariationId(null);
 
-        // Refetch novamente (garantia dupla)
-        refetchProduct();
-        refetchVariations();
-      }, 500);
+      //   // Refetch novamente (garantia dupla)
+      //   refetchProduct();
+      //   refetchVariations();
+      // }, 500);
     } catch (error) {
       console.error("Erro ao excluir variação:", error);
       showErrorToast(toast, "Erro ao excluir variação");

@@ -10,19 +10,31 @@ import {
   ProductVariationItem,
   UpdateProductVariationItemDTO,
 } from "../models/product-variation-item";
+import useAuthStore from "@/src/stores/auth";
 
 class VariationService {
   async getVariations() {
     try {
+      // Obter ID da empresa
+      const companyId = useAuthStore.getState().getCompanyId();
+      if (!companyId) {
+        console.warn("ID da empresa não encontrado");
+        return [];
+      }
+
+      // Buscar variações específicas da empresa em vez de todas
       const response = await api.get<{ data: ProductVariation[] }>(
-        "/api/products/variations",
+        `/api/products/variations/empresa/${companyId}`,
         {
           params: {
-            _t: Date.now(), // Adicionar um parâmetro de timestamp para evitar cache do navegador
+            _t: Date.now(), // Adicionar parâmetro de timestamp para evitar cache
           },
         }
       );
-      return response.data.data || [];
+
+      // Garantir que o resultado seja sempre um array
+      const variations = response.data?.data || [];
+      return Array.isArray(variations) ? variations : [variations];
     } catch (error) {
       console.error("Erro ao buscar variações:", error);
       throw error;
@@ -35,7 +47,7 @@ class VariationService {
         `/api/products/variations/${id}`,
         {
           params: {
-            _t: Date.now(), // Adicionar um parâmetro de timestamp para evitar cache do navegador
+            _t: Date.now(), // Evitar cache do navegador
           },
         }
       );
@@ -48,13 +60,14 @@ class VariationService {
 
   async createVariation(data: CreateVariationDTO) {
     try {
-      // Garantir que o formato seja exatamente o esperado pela API
+      // Garantir que o formato seja correto
       const payload = {
         nome: data.nome,
         variacao: data.variacao,
+        empresa: data.empresa,
       };
 
-      console.log("Enviando payload:", payload);
+      console.log("Criando variação:", payload);
 
       const response = await api.post<{ data: ProductVariation }>(
         "/api/products/variations",
@@ -69,7 +82,9 @@ class VariationService {
 
   async updateVariation(id: string, data: UpdateVariationDTO) {
     try {
-      // Garantir que o formato seja exatamente o esperado pela API
+      console.log(`Atualizando variação ${id}:`, data);
+
+      // Garantir que o formato seja correto
       const payload = {
         nome: data.nome,
         variacao: data.variacao,
@@ -88,9 +103,15 @@ class VariationService {
 
   async deleteVariation(id: string) {
     try {
-      await api.delete(`/api/products/variations/${id}`);
+      console.log(`Tentando excluir variação ${id}`);
+
+      // Fazer a solicitação DELETE com apenas o ID da variação
+      const response = await api.delete(`/api/products/variations/${id}`);
+
+      console.log(`Variação ${id} excluída com sucesso`);
+      return response.data;
     } catch (error) {
-      console.error("Erro ao excluir variação:", error);
+      console.error(`Erro ao excluir variação ${id}:`, error);
       throw error;
     }
   }
