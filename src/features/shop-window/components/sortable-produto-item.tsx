@@ -1,8 +1,15 @@
 // Path: src/features/shop-window/components/sortable-produto-item.tsx
+
 import React, { useRef, useState } from "react";
 import { View, Text, Pressable, Animated } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Package, Trash, DollarSign, MoreVertical } from "lucide-react-native";
+import {
+  Package,
+  Trash,
+  DollarSign,
+  MoreVertical,
+  Edit,
+} from "lucide-react-native";
 import { VitrineProduto } from "../models";
 import { ResilientImage } from "@/components/common/resilient-image";
 import { ReorderButtons } from "@/components/common/reorder-buttons";
@@ -30,66 +37,87 @@ export function SortableProdutoItem({
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const formatCurrency = (value: string) => {
-    const numericValue = parseFloat(value);
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(numericValue);
+    if (!value) return "";
+    try {
+      const numericValue = parseFloat(value);
+      if (isNaN(numericValue)) return "";
+      return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(numericValue);
+    } catch (error) {
+      console.error("Error formatting currency value:", error);
+      return value;
+    }
   };
 
-  // Função para mostrar ou esconder as ações
+  // Function to show or hide actions
   const toggleActions = () => {
     if (isActionsVisible) {
-      // Esconder ações
+      // Hide actions
       Animated.spring(slideAnim, {
         toValue: 0,
         useNativeDriver: true,
       }).start();
       setIsActionsVisible(false);
     } else {
-      // Mostrar ações
+      // Show actions
       Animated.spring(slideAnim, {
-        toValue: -100, // Valor negativo para deslizar para a esquerda
+        toValue: -100, // Negative value to slide left
         useNativeDriver: true,
       }).start();
       setIsActionsVisible(true);
     }
   };
 
-  // Determinar se é um produto com variação e tem produto variado selecionado
-  const hasVariation = !!produto.produto.variacao;
+  // Determine if it's a product with variation and has a variation product selected
+  const hasVariation = produto.produto.tem_variacao;
   const hasVariationSelected = !!produto.produto_variado;
 
-  // Obter a imagem correta (do produto variado se disponível, senão do produto principal)
+  // Get the correct image (from variation product if available, else from main product)
   const productImage =
     produto.produto_variado?.imagem || produto.produto.imagem;
 
-  // Obter o preço correto (do produto variado se disponível, senão do produto principal)
-  const productPrice = produto.produto_variado?.preco || produto.produto.preco;
-  const productPromotionalPrice =
-    produto.produto_variado?.preco_promocional ||
-    produto.produto.preco_promocional;
+  // Get the correct price (from variation product if available, else from main product)
+  const productPrice = hasVariationSelected
+    ? produto.produto_variado?.preco
+    : produto.produto.preco;
 
-  // Formatar o nome do produto para incluir a variação
+  const productPromotionalPrice = hasVariationSelected
+    ? produto.produto_variado?.preco_promocional
+    : produto.produto.preco_promocional;
+
+  // Format the product name to include the variation
   const displayName =
     hasVariationSelected && produto.produto_variado?.valor_variacao
       ? `${produto.produto.nome} - ${produto.produto_variado.valor_variacao}`
       : produto.produto.nome;
 
+  // Get the correct availability status
+  const isAvailable = hasVariationSelected
+    ? produto.produto_variado?.disponivel
+    : produto.disponivel;
+
+  // Get the description (from variation if available, else from main product)
+  const productDescription =
+    hasVariationSelected && produto.produto_variado?.descricao
+      ? produto.produto_variado.descricao
+      : produto.produto.descricao;
+
   return (
     <View className="overflow-hidden relative mb-3">
-      {/* Botões de ação que aparecem ao deslizar */}
+      {/* Action buttons that appear when sliding */}
       <View
         className="absolute right-0 top-0 bottom-0 flex-row items-center justify-center h-full"
         style={{ width: 100 }}
       >
-        {/* Adicionar botão de edição se disponível */}
+        {/* Add edit button if available */}
         {onEdit && (
           <Pressable
             onPress={() => onEdit(produto)}
             className="bg-gray-100 h-full w-1/2 items-center justify-center"
           >
-            <Text className="text-gray-700 font-medium">Editar</Text>
+            <Edit size={20} color="#374151" />
           </Pressable>
         )}
         <Pressable
@@ -100,7 +128,7 @@ export function SortableProdutoItem({
         </Pressable>
       </View>
 
-      {/* Card principal que desliza */}
+      {/* Main card that slides */}
       <Animated.View
         style={{
           transform: [{ translateX: slideAnim }],
@@ -108,10 +136,10 @@ export function SortableProdutoItem({
       >
         <Card
           className={`bg-white shadow-sm border border-gray-100 overflow-hidden ${
-            !produto.disponivel ? "opacity-70" : ""
+            !isAvailable ? "opacity-70" : ""
           }`}
         >
-          {/* Posição do item como "tag" no canto superior direito */}
+          {/* Item position as tag in top right corner */}
           {!isReordering && position && (
             <View className="absolute top-0 right-0 bg-primary-100 rounded-bl-lg px-1.5 py-0.5 z-10">
               <Text className="text-xs font-bold text-primary-700">
@@ -121,7 +149,7 @@ export function SortableProdutoItem({
           )}
 
           <View className="p-3 flex-row items-center">
-            {/* Área de reordenação ou imagem */}
+            {/* Reordering area or image */}
             {isReordering ? (
               <View className="mr-3">
                 <ReorderButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
@@ -142,32 +170,32 @@ export function SortableProdutoItem({
               </View>
             )}
 
-            {/* Informações do produto */}
+            {/* Product information */}
             <View className="flex-1">
-              {/* Status de disponibilidade */}
+              {/* Availability status */}
               <View className="flex-row mb-0.5">
                 <View
                   className={`px-1.5 py-0.5 rounded-full ${
-                    produto.disponivel ? "bg-green-100" : "bg-gray-100"
+                    isAvailable ? "bg-green-100" : "bg-gray-100"
                   }`}
                 >
                   <Text
                     className={`text-xs ${
-                      produto.disponivel ? "text-green-700" : "text-gray-700"
+                      isAvailable ? "text-green-700" : "text-gray-700"
                     }`}
                   >
-                    {produto.disponivel ? "Disponível" : "Indisponível"}
+                    {isAvailable ? "Disponível" : "Indisponível"}
                   </Text>
                 </View>
               </View>
 
-              {/* Nome do produto (agora incluindo a variação) */}
+              {/* Product name (now including variation) */}
               <Text className="font-medium text-sm" numberOfLines={2}>
                 {displayName}
               </Text>
 
-              {/* Informações de preço */}
-              {productPrice || hasVariationSelected ? (
+              {/* Price information */}
+              {productPrice ? (
                 <View className="flex-row items-center mt-0.5 flex-wrap">
                   <View className="flex-row items-center bg-gray-50 px-1.5 py-0.5 rounded-md mr-2">
                     <DollarSign size={10} color="#4B5563" />
@@ -184,14 +212,14 @@ export function SortableProdutoItem({
                 </View>
               ) : (
                 <Text className="text-xs text-red-500 mt-0.5">
-                  {hasVariation
+                  {hasVariation && !hasVariationSelected
                     ? "Selecione uma variação"
                     : "Preço não definido"}
                 </Text>
               )}
             </View>
 
-            {/* Botão de mais opções - apenas visível quando não está reordenando */}
+            {/* More options button - only visible when not reordering */}
             {!isReordering && (
               <Pressable
                 onPress={toggleActions}

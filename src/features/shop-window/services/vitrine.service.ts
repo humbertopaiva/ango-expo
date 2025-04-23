@@ -35,6 +35,10 @@ class VitrineService {
           },
         }
       );
+      console.log(
+        `Vitrine produtos recebidos: ${response.data.data.length}`,
+        response.data.data
+      );
       return response.data;
     } catch (error) {
       console.error("Erro ao buscar produtos da vitrine:", error);

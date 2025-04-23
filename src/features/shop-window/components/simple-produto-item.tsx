@@ -1,4 +1,5 @@
 // Path: src/features/shop-window/components/simple-produto-item.tsx
+
 import React from "react";
 import { View, Text } from "react-native";
 import { DollarSign, Package } from "lucide-react-native";
@@ -27,36 +28,51 @@ export function SimpleProdutoItem({
   position,
 }: SimpleProdutoItemProps) {
   const formatCurrency = (value: string) => {
-    const numericValue = parseFloat(value);
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(numericValue);
+    if (!value) return "";
+    try {
+      const numericValue = parseFloat(value);
+      if (isNaN(numericValue)) return "";
+      return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(numericValue);
+    } catch (error) {
+      console.error("Error formatting currency value:", error);
+      return value;
+    }
   };
 
-  // Determinar se é um produto com variação e tem produto variado selecionado
-  const hasVariation = !!produto.produto.variacao;
+  // Determine if it's a product with variation and has a variation product selected
+  const hasVariation = produto.produto.tem_variacao;
   const hasVariationSelected = !!produto.produto_variado;
 
-  // Obter a imagem correta (do produto variado se disponível, senão do produto principal)
+  // Get the correct image (from variation product if available, else from main product)
   const productImage =
     produto.produto_variado?.imagem || produto.produto.imagem;
 
-  // Obter o preço correto (do produto variado se disponível, senão do produto principal)
-  const productPrice = produto.produto_variado?.preco || produto.produto.preco;
-  const productPromotionalPrice =
-    produto.produto_variado?.preco_promocional ||
-    produto.produto.preco_promocional;
+  // Get the correct price (from variation product if available, else from main product)
+  const productPrice = hasVariationSelected
+    ? produto.produto_variado?.preco
+    : produto.produto.preco;
 
-  // Formatar o nome do produto para incluir a variação
+  const productPromotionalPrice = hasVariationSelected
+    ? produto.produto_variado?.preco_promocional
+    : produto.produto.preco_promocional;
+
+  // Format the product name to include the variation
   const displayName =
     hasVariationSelected && produto.produto_variado?.valor_variacao
       ? `${produto.produto.nome} - ${produto.produto_variado.valor_variacao}`
       : produto.produto.nome;
 
+  // Get the correct availability status
+  const isAvailable = hasVariationSelected
+    ? produto.produto_variado?.disponivel
+    : produto.disponivel;
+
   const renderProductContent = () => (
     <View className="p-2 flex-row">
-      {/* Área de reordenação ou imagem */}
+      {/* Reordering area or image */}
       <View className="pr-2">
         {isReordering ? (
           <ReorderButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
@@ -77,32 +93,32 @@ export function SimpleProdutoItem({
         )}
       </View>
 
-      {/* Informações do produto */}
+      {/* Product information */}
       <View className="flex-1">
-        {/* Status de disponibilidade */}
+        {/* Availability status */}
         <View className="flex-row mb-0.5">
           <View
             className={`px-1.5 py-0.5 rounded-full ${
-              produto.disponivel ? "bg-green-100" : "bg-gray-100"
+              isAvailable ? "bg-green-100" : "bg-gray-100"
             }`}
           >
             <Text
               className={`text-xs ${
-                produto.disponivel ? "text-green-700" : "text-gray-700"
+                isAvailable ? "text-green-700" : "text-gray-700"
               }`}
             >
-              {produto.disponivel ? "Disponível" : "Indisponível"}
+              {isAvailable ? "Disponível" : "Indisponível"}
             </Text>
           </View>
         </View>
 
-        {/* Nome do produto (agora incluindo a variação) */}
+        {/* Product name (now including the variation) */}
         <Text className="font-medium text-sm" numberOfLines={2}>
           {displayName}
         </Text>
 
-        {/* Informações de preço */}
-        {productPrice || hasVariationSelected ? (
+        {/* Price information */}
+        {productPrice ? (
           <View className="flex-row items-center mt-0.5 flex-wrap">
             <View className="flex-row items-center bg-gray-50 px-1.5 py-0.5 rounded-md mr-2">
               <DollarSign size={10} color="#4B5563" />
@@ -119,19 +135,21 @@ export function SimpleProdutoItem({
           </View>
         ) : (
           <Text className="text-xs text-red-500 mt-0.5">
-            {hasVariation ? "Selecione uma variação" : "Preço não definido"}
+            {hasVariation && !hasVariationSelected
+              ? "Selecione uma variação"
+              : "Preço não definido"}
           </Text>
         )}
       </View>
     </View>
   );
 
-  // Durante a reordenação, desative o swipe
+  // During reordering, disable swipe
   if (isReordering) {
     return <View className="mb-3">{renderProductContent()}</View>;
   }
 
-  // Caso contrário, use o SwipeableCard
+  // Otherwise, use SwipeableCard
   return (
     <SwipeableCard
       onDelete={() => onDelete(produto)}

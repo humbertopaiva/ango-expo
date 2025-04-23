@@ -15,14 +15,14 @@ import { THEME_COLORS } from "@/src/styles/colors";
 
 interface ProductVariationSelectorProps {
   productId: string;
-  productName: string; // Adicionando nome do produto para referência
+  productName: string;
   selectedVariationId: string | null;
   onSelectVariation: (variationId: string | null) => void;
 }
 
 export function ProductVariationSelector({
   productId,
-  productName, // Nome do produto para ser usado na visualização
+  productName,
   selectedVariationId,
   onSelectVariation,
 }: ProductVariationSelectorProps) {
@@ -30,7 +30,7 @@ export function ProductVariationSelector({
     useProductVariationItems(productId);
   const [hasTriedRefetch, setHasTriedRefetch] = useState(false);
 
-  // Tentar uma refetch automática se não houver itens inicialmente
+  // Try automatic refetch if no items initially
   useEffect(() => {
     if (!isLoading && variationItems.length === 0 && !hasTriedRefetch) {
       setHasTriedRefetch(true);
@@ -102,7 +102,7 @@ export function ProductVariationSelector({
               }`}
             >
               <View className="flex-row items-center">
-                {/* Imagem da variação (se disponível) */}
+                {/* Variation image (if available) */}
                 <View className="h-12 w-12 bg-gray-100 rounded-lg overflow-hidden mr-3">
                   {item.imagem ? (
                     <ResilientImage
@@ -118,7 +118,7 @@ export function ProductVariationSelector({
                 </View>
 
                 <View className="flex-1">
-                  {/* Nome do produto com valor da variação */}
+                  {/* Product name with variation value */}
                   <Text className="font-medium text-gray-800" numberOfLines={2}>
                     {productName} -{" "}
                     <Text className="text-primary-600">
@@ -126,7 +126,7 @@ export function ProductVariationSelector({
                     </Text>
                   </Text>
 
-                  {/* Status de disponibilidade */}
+                  {/* Availability status */}
                   <View className="flex-row mt-1">
                     <View
                       className={`px-1.5 py-0.5 rounded-full ${
@@ -149,7 +149,7 @@ export function ProductVariationSelector({
                     </View>
                   </View>
 
-                  {/* Preço */}
+                  {/* Price */}
                   <View className="flex-row items-center mt-1">
                     <View className="flex-row items-center bg-gray-50 px-1.5 py-0.5 rounded-md mr-2">
                       <DollarSign size={10} color="#4B5563" />
@@ -166,7 +166,7 @@ export function ProductVariationSelector({
                   </View>
                 </View>
 
-                {/* Indicador de seleção */}
+                {/* Selection indicator */}
                 {selectedVariationId === item.id && (
                   <View className="w-6 h-6 rounded-full bg-primary-500 items-center justify-center">
                     <Text className="text-white font-bold">✓</Text>
