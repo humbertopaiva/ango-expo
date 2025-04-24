@@ -4,7 +4,7 @@ import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Card } from "@gluestack-ui/themed";
-import { Package, Tag } from "lucide-react-native";
+import { Package, Plus, Tag } from "lucide-react-native";
 import { ContentContainer } from "@/components/custom/content-container";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
@@ -23,6 +23,12 @@ export function ProductsDashboardScreen() {
       description: "Veja e edite os tipos de variação existentes",
       icon: <Tag size={24} color="#4B5563" />,
       route: "/admin/products/variations/types",
+    },
+    {
+      title: "Gerenciar Adicionais",
+      description: "Crie e gerencie listas de produtos adicionais",
+      icon: <Plus size={24} color="#4B5563" />,
+      route: "/admin/addons",
     },
   ];
 
