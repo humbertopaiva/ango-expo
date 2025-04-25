@@ -101,7 +101,7 @@ export function AdminNavigation() {
           router.push(item.path as any);
           if (!isWeb) setIsMenuOpen(false);
         }}
-        className={`flex-row items-center p-4 ${isWeb ? "space-x-4" : ""} ${
+        className={`flex-row items-center p-4 ${isWeb ? "gap-4" : ""} ${
           isActive ? "bg-primary-50 border-r-4 border-primary-500" : ""
         }`}
       >

@@ -181,7 +181,7 @@ export function AdditionalForm({
               </View>
 
               {tagsFields.map((field, index) => (
-                <View key={field.id} className="flex-row space-x-2">
+                <View key={field.id} className="flex-row gap-2">
                   <FormControl
                     isInvalid={!!form.formState.errors.tags?.[index]?.value}
                     className="flex-1"

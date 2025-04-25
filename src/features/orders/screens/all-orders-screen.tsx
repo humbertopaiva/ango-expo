@@ -147,7 +147,7 @@ export function AllOrdersScreen() {
       >
         <View className="p-4 border-l-4 border-primary-500">
           <HStack className="items-center justify-between mb-2">
-            <HStack className="items-center space-x-2">
+            <HStack className="items-center gap-2">
               <View className="bg-primary-50 p-2 rounded-full">
                 <Store size={18} color={primaryColor} />
               </View>
@@ -175,7 +175,7 @@ export function AllOrdersScreen() {
             •{item.items.length} {item.items.length === 1 ? "item" : "itens"}
           </Text>
 
-          <HStack className="justify-end space-x-4 mt-3">
+          <HStack className="justify-end gap-4 mt-3">
             <TouchableOpacity
               onPress={() => handleContactCompany(item.id)}
               className="flex-row items-center"

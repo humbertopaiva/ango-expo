@@ -1,4 +1,4 @@
-// Path: src/features/addons/components/enhanced-category-product-selector.tsx
+// Path: src/features/addons/components/category-product-selector.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
+  StyleSheet,
 } from "react-native";
 import {
   Card,
@@ -19,14 +20,7 @@ import {
   Heading,
   CloseIcon,
 } from "@gluestack-ui/themed";
-import {
-  PlusCircle,
-  Tag,
-  Box,
-  Search,
-  Check,
-  Filter,
-} from "lucide-react-native";
+import { PlusCircle, Tag, Box, Search, Check } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { SectionCard } from "@/components/custom/section-card";
 import { ImagePreview } from "@/components/custom/image-preview";
@@ -51,7 +45,6 @@ export function CategoryProductSelector({
   const [productModalVisible, setProductModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
-  // Usar o hook customizado para gerenciar dados
   const {
     categories,
     products,
@@ -79,73 +72,6 @@ export function CategoryProductSelector({
   React.useEffect(() => {
     onProductsChange(selectedProductIds);
   }, [selectedProductIds, onProductsChange]);
-
-  // Renderizar item de produto no modal
-  const renderProductItem = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => toggleProductSelection(item.id)}
-      className={`p-3 mb-2 rounded-lg border ${
-        selectedProductIds.includes(item.id)
-          ? "border-primary-500 bg-primary-50"
-          : "border-gray-200 bg-white"
-      }`}
-    >
-      <View className="flex-row items-center">
-        <View className="w-16 h-16 rounded-lg overflow-hidden mr-3">
-          <ImagePreview
-            uri={item.imagem}
-            fallbackIcon={Box}
-            containerClassName="rounded-lg"
-          />
-        </View>
-        <View className="flex-1">
-          <Text className="font-medium text-base">{item.nome}</Text>
-          {item.preco && (
-            <Text className="text-sm text-gray-600">
-              Preço: {formatCurrency(parseFloat(item.preco))}
-            </Text>
-          )}
-        </View>
-        {selectedProductIds.includes(item.id) && (
-          <View className="w-8 h-8 rounded-full bg-primary-500 items-center justify-center">
-            <Check size={16} color="white" />
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-
-  // Renderizar item de categoria no modal
-  const renderCategoryItem = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => toggleCategorySelection(Number(item.id))}
-      className={`p-3 mb-2 rounded-lg border ${
-        selectedCategoryIds.includes(Number(item.id))
-          ? "border-primary-500 bg-primary-50"
-          : "border-gray-200 bg-white"
-      }`}
-    >
-      <View className="flex-row items-center">
-        <View className="w-12 h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 items-center justify-center">
-          {item.imagem ? (
-            <ImagePreview
-              uri={item.imagem}
-              fallbackIcon={Tag}
-              containerClassName="rounded-lg"
-            />
-          ) : (
-            <Tag size={20} color="#9CA3AF" />
-          )}
-        </View>
-        <Text className="font-medium flex-1">{item.nome}</Text>
-        {selectedCategoryIds.includes(Number(item.id)) && (
-          <View className="w-8 h-8 rounded-full bg-primary-500 items-center justify-center">
-            <Check size={16} color="white" />
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
 
   const selectedCategories = getSelectedCategories();
   const selectedProducts = getSelectedProducts();
@@ -337,12 +263,12 @@ export function CategoryProductSelector({
         }}
         size="full"
       >
-        <ModalContent>
-          <ModalHeader>
-            <View className="flex-row items-center justify-between w-full">
+        <ModalContent style={styles.modalContainer}>
+          {/* Modal Header (Fixed) */}
+          <View style={styles.modalHeader}>
+            <View className="flex-row items-center justify-between w-full px-4 py-3">
               <Heading size="md">Selecionar Produtos</Heading>
               <Button
-                variant="ghost"
                 onPress={() => {
                   setProductModalVisible(false);
                   setProductSearchTerm("");
@@ -351,11 +277,9 @@ export function CategoryProductSelector({
                 <CloseIcon color={THEME_COLORS.primary} />
               </Button>
             </View>
-          </ModalHeader>
 
-          <ModalBody>
-            {/* Campo de busca */}
-            <View className="mb-4 bg-gray-100 rounded-lg flex-row items-center px-3 py-2">
+            {/* Campo de busca (Fixed) */}
+            <View className="mx-4 mb-3 bg-gray-100 rounded-lg flex-row items-center px-3 py-2">
               <Search size={20} color="#6B7280" />
               <TextInput
                 className="flex-1 ml-2 text-base text-gray-800"
@@ -369,7 +293,10 @@ export function CategoryProductSelector({
                 </TouchableOpacity>
               ) : null}
             </View>
+          </View>
 
+          {/* Modal Body (Scrollable) */}
+          <View style={styles.modalBody}>
             {/* Loading State */}
             {isProductsLoading ? (
               <View className="p-4 items-center">
@@ -382,15 +309,50 @@ export function CategoryProductSelector({
             ) : (
               <FlatList
                 data={filteredProducts}
-                renderItem={renderProductItem}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => toggleProductSelection(item.id)}
+                    className={`p-3 mb-2 mx-4 rounded-lg border ${
+                      selectedProductIds.includes(item.id)
+                        ? "border-primary-500 bg-primary-50"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <View className="flex-row items-center">
+                      <View className="w-16 h-16 rounded-lg overflow-hidden mr-3">
+                        <ImagePreview
+                          uri={item.imagem}
+                          fallbackIcon={Box}
+                          containerClassName="rounded-lg"
+                        />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="font-medium text-base">
+                          {item.nome}
+                        </Text>
+                        {item.preco && (
+                          <Text className="text-sm text-gray-600">
+                            Preço: {formatCurrency(parseFloat(item.preco))}
+                          </Text>
+                        )}
+                      </View>
+                      {selectedProductIds.includes(item.id) && (
+                        <View className="w-8 h-8 rounded-full bg-primary-500 items-center justify-center">
+                          <Check size={16} color="white" />
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                )}
                 keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 20 }}
+                showsVerticalScrollIndicator={true}
+                contentContainerStyle={{ paddingVertical: 8 }}
               />
             )}
-          </ModalBody>
+          </View>
 
-          <ModalFooter>
+          {/* Modal Footer (Fixed) */}
+          <View style={styles.modalFooter}>
             <Button
               onPress={() => {
                 setProductModalVisible(false);
@@ -402,7 +364,7 @@ export function CategoryProductSelector({
                 Concluído ({selectedProductIds.length} selecionados)
               </ButtonText>
             </Button>
-          </ModalFooter>
+          </View>
         </ModalContent>
       </Modal>
 
@@ -415,12 +377,12 @@ export function CategoryProductSelector({
         }}
         size="full"
       >
-        <ModalContent>
-          <ModalHeader>
-            <View className="flex-row items-center justify-between w-full">
+        <ModalContent style={styles.modalContainer}>
+          {/* Modal Header (Fixed) */}
+          <View style={styles.modalHeader}>
+            <View className="flex-row items-center justify-between w-full px-4 py-3">
               <Heading size="md">Selecionar Categorias</Heading>
               <Button
-                variant="ghost"
                 onPress={() => {
                   setCategoryModalVisible(false);
                   setCategorySearchTerm("");
@@ -429,11 +391,9 @@ export function CategoryProductSelector({
                 <CloseIcon color={THEME_COLORS.primary} />
               </Button>
             </View>
-          </ModalHeader>
 
-          <ModalBody>
-            {/* Campo de busca */}
-            <View className="mb-4 bg-gray-100 rounded-lg flex-row items-center px-3 py-2">
+            {/* Campo de busca (Fixed) */}
+            <View className="mx-4 mb-3 bg-gray-100 rounded-lg flex-row items-center px-3 py-2">
               <Search size={20} color="#6B7280" />
               <TextInput
                 className="flex-1 ml-2 text-base text-gray-800"
@@ -447,7 +407,10 @@ export function CategoryProductSelector({
                 </TouchableOpacity>
               ) : null}
             </View>
+          </View>
 
+          {/* Modal Body (Scrollable) */}
+          <View style={styles.modalBody}>
             {/* Loading State */}
             {isCategoriesLoading ? (
               <View className="p-4 items-center">
@@ -462,15 +425,37 @@ export function CategoryProductSelector({
             ) : (
               <FlatList
                 data={filteredCategories}
-                renderItem={renderCategoryItem}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => toggleCategorySelection(Number(item.id))}
+                    className={`p-3 mb-2 mx-4 rounded-lg border ${
+                      selectedCategoryIds.includes(Number(item.id))
+                        ? "border-primary-500 bg-primary-50"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <View className="flex-row items-center">
+                      <View className="w-8 h-8 rounded-full bg-primary-100 items-center justify-center mr-3">
+                        <Tag size={16} color={THEME_COLORS.primary} />
+                      </View>
+                      <Text className="font-medium flex-1">{item.nome}</Text>
+                      {selectedCategoryIds.includes(Number(item.id)) && (
+                        <View className="w-8 h-8 rounded-full bg-primary-500 items-center justify-center">
+                          <Check size={16} color="white" />
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                )}
                 keyExtractor={(item) => item.id.toString()}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 20 }}
+                showsVerticalScrollIndicator={true}
+                contentContainerStyle={{ paddingVertical: 8 }}
               />
             )}
-          </ModalBody>
+          </View>
 
-          <ModalFooter>
+          {/* Modal Footer (Fixed) */}
+          <View style={styles.modalFooter}>
             <Button
               onPress={() => {
                 setCategoryModalVisible(false);
@@ -482,9 +467,34 @@ export function CategoryProductSelector({
                 Concluído ({selectedCategoryIds.length} selecionados)
               </ButtonText>
             </Button>
-          </ModalFooter>
+          </View>
         </ModalContent>
       </Modal>
     </View>
   );
 }
+
+// Styles for proper modal layout
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    padding: 0,
+  },
+  modalHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "white",
+  },
+  modalBody: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  modalFooter: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+    backgroundColor: "white",
+  },
+});

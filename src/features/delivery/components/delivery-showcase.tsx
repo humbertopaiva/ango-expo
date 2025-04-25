@@ -21,7 +21,7 @@ export function DeliveryShowcase({
     return (
       <View className="space-y-4">
         <View className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
-        <View className="flex-row space-x-4">
+        <View className="flex-row gap-4">
           {[1, 2, 3, 4].map((i) => (
             <View
               key={`skeleton-${i}`}

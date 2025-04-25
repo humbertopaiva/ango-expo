@@ -11,7 +11,7 @@ const ColorInput = ({
 }) => {
   if (Platform.OS === "web") {
     return (
-      <View className="flex-row items-center space-x-2">
+      <View className="flex-row items-center gap-2">
         <View className="flex-1">
           <input
             type="color"
