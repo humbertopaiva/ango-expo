@@ -1,12 +1,7 @@
-// Path: src/features/addons/screens/enhanced-addon-form-screen.tsx
+// Path: src/features/addons/screens/addon-form-screen.tsx
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, Platform, ActivityIndicator } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -166,13 +161,18 @@ export function AddonFormScreen() {
         backTo="/admin/addons"
       />
 
-      <ScrollView
-        className="flex-1 px-4"
+      <KeyboardAwareScrollView
+        className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: Platform.OS === "ios" ? 180 : 160,
           paddingTop: 16,
+          paddingHorizontal: 16,
         }}
+        enableResetScrollToCoords={false}
+        resetScrollToCoords={{ x: 0, y: 0 }}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
       >
         {/* Instruções de uso */}
         <View className="bg-blue-50 p-4 rounded-lg mb-6">
@@ -241,10 +241,7 @@ export function AddonFormScreen() {
           onCategoriesChange={setSelectedCategories}
           onProductsChange={setSelectedProducts}
         />
-
-        {/* Espaço adicional para garantir que o formulário não seja cortado */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Botões de ação */}
       <View
