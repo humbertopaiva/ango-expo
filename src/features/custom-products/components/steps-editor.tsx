@@ -355,23 +355,6 @@ export function StepsEditor({
                   value={searchTerm}
                   onChangeText={setSearchTerm}
                   className="text-base"
-                  leftElement={
-                    <Search
-                      size={20}
-                      color="#6B7280"
-                      style={{ marginLeft: 8 }}
-                    />
-                  }
-                  rightElement={
-                    searchTerm ? (
-                      <TouchableOpacity
-                        onPress={() => setSearchTerm("")}
-                        style={{ marginRight: 8 }}
-                      >
-                        <CloseIcon size="sm" />
-                      </TouchableOpacity>
-                    ) : null
-                  }
                 />
               </Input>
             </View>

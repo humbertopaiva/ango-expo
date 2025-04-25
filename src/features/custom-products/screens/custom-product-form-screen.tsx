@@ -74,7 +74,6 @@ export function CustomProductFormScreen() {
     },
   });
 
-  // Inicializar valores do formulário quando estiver editando
   useEffect(() => {
     if (isEditing && customProduct) {
       form.reset({
@@ -83,8 +82,25 @@ export function CustomProductFormScreen() {
         status: customProduct.status === "ativo",
       });
 
+      // Definir imagem do produto
       setImageUri(customProduct.imagem);
-      setSteps(customProduct.passos || []);
+
+      // Importante: Clone os passos para garantir que temos uma nova referência
+      // Também garanta que todos os campos necessários estão presentes
+      if (customProduct.passos && customProduct.passos.length > 0) {
+        const formattedSteps = customProduct.passos.map((passo) => ({
+          passo_numero: passo.passo_numero,
+          qtd_items_step: passo.qtd_items_step,
+          produtos: Array.isArray(passo.produtos) ? [...passo.produtos] : [],
+        }));
+
+        // Agora definimos os passos devidamente formatados
+        setSteps(formattedSteps);
+
+        console.log("Passos carregados:", formattedSteps);
+      } else {
+        setSteps([]);
+      }
     }
   }, [isEditing, customProduct, form]);
 

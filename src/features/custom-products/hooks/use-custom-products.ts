@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customProductsService } from "../services/custom-products.service";
 import {
+  CustomProduct,
   CreateCustomProductDTO,
   UpdateCustomProductDTO,
 } from "../models/custom-product";
@@ -86,20 +87,38 @@ export function useCustomProducts() {
 
 // Hook para obter um produto personalizado específico por ID
 export function useCustomProductById(id: string | undefined) {
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["custom-product", id],
-    queryFn: () => (id ? customProductsService.getCustomProductById(id) : null),
+    queryFn: async () => {
+      if (!id) return null;
+      try {
+        const result = await customProductsService.getCustomProductById(id);
+        console.log("Produto personalizado carregado:", JSON.stringify(result));
+        return result;
+      } catch (error) {
+        console.error("Erro ao carregar produto personalizado:", error);
+        throw error;
+      }
+    },
     enabled: !!id,
   });
 
-  const refetch = () => {
-    const queryClient = useQueryClient();
-    queryClient.invalidateQueries({ queryKey: ["custom-product", id] });
-    queryClient.invalidateQueries({ queryKey: ["custom-products"] });
+  const refetch = async () => {
+    if (!id) return;
+
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["custom-product", id] });
+      await queryClient.invalidateQueries({ queryKey: ["custom-products"] });
+      console.log("Dados de produto personalizado atualizados com sucesso");
+    } catch (error) {
+      console.error("Erro ao atualizar dados do produto personalizado:", error);
+    }
   };
 
   return {
-    customProduct: data,
+    customProduct: data as CustomProduct | null,
     isLoading,
     error,
     refetch,
