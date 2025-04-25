@@ -1,6 +1,12 @@
-// Path: src/features/addons/screens/addon-form-screen.tsx
+// Path: src/features/addons/screens/enhanced-addon-form-screen.tsx
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, Platform } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +32,7 @@ import { FormActions } from "@/components/custom/form-actions";
 import { CategoryProductSelector } from "../components/category-product-selector";
 import { SectionCard } from "@/components/custom/section-card";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { Plus } from "lucide-react-native";
+import { ListIcon, AlertCircle } from "lucide-react-native";
 
 // Form validation schema
 const addonsFormSchema = z.object({
@@ -43,7 +49,9 @@ export function AddonFormScreen() {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
-  const { addonsList, isLoading: isLoadingAddon } = useAddonsListById(id);
+  const { addonsList, isLoading: isLoadingAddon } = useAddonsListById(
+    id as string
+  );
   const { createAddonsList, updateAddonsList, isCreating, isUpdating } =
     useAddons();
 
@@ -54,21 +62,23 @@ export function AddonFormScreen() {
     },
   });
 
-  // Initialize form values when editing
+  // Inicializar valores do formulário quando estiver editando
   useEffect(() => {
     if (isEditing && addonsList) {
       form.reset({
         nome: addonsList.nome,
       });
 
-      // Set selected categories
-      const categoryIds = addonsList.categorias.map(
-        (cat) => cat.categorias_produto_id.id
-      );
+      // Definir categorias selecionadas
+      const categoryIds =
+        addonsList.categorias?.map((cat) =>
+          Number(cat.categorias_produto_id.id)
+        ) || [];
       setSelectedCategories(categoryIds);
 
-      // Set selected products
-      const productIds = addonsList.produtos.map((prod) => prod.produtos_id.id);
+      // Definir produtos selecionados
+      const productIds =
+        addonsList.produtos?.map((prod) => prod.produtos_id.id) || [];
       setSelectedProducts(productIds);
     }
   }, [isEditing, addonsList, form]);
@@ -77,7 +87,13 @@ export function AddonFormScreen() {
     try {
       setIsSubmitting(true);
 
-      // Prepare categories and products in the expected format
+      // Se não há produtos selecionados, exibir um aviso
+      if (selectedProducts.length === 0) {
+        showErrorToast(toast, "Selecione pelo menos um produto adicional");
+        setIsSubmitting(false);
+        return;
+      }
+
       const categoriesData = selectedCategories.map((catId) => ({
         categorias_produto_id: catId,
       }));
@@ -87,7 +103,7 @@ export function AddonFormScreen() {
       }));
 
       if (isEditing && id) {
-        // Update existing addon list
+        // Atualizar lista de adicionais existente
         await updateAddonsList({
           id,
           data: {
@@ -99,10 +115,10 @@ export function AddonFormScreen() {
 
         showSuccessToast(toast, "Lista de adicionais atualizada com sucesso!");
       } else {
-        // Create new addon list
+        // Criar nova lista de adicionais
         await createAddonsList({
           nome: data.nome,
-          empresa: "", // This will be set in the hook
+          empresa: "", // Será definido no hook
           categorias: categoriesData,
           produtos: productsData,
         });
@@ -110,7 +126,7 @@ export function AddonFormScreen() {
         showSuccessToast(toast, "Lista de adicionais criada com sucesso!");
       }
 
-      // Navigate back after a brief delay
+      // Navegar de volta após um breve atraso
       setTimeout(() => {
         router.push("/admin/addons");
       }, 500);
@@ -125,6 +141,22 @@ export function AddonFormScreen() {
     }
   };
 
+  // Exibir indicador de carregamento quando estiver buscando dados para edição
+  if (isEditing && isLoadingAddon && !addonsList) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <AdminScreenHeader
+          title="Editar Lista de Adicionais"
+          backTo="/admin/addons"
+        />
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+          <Text className="mt-4 text-gray-500">Carregando dados...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <AdminScreenHeader
@@ -135,16 +167,39 @@ export function AddonFormScreen() {
       />
 
       <ScrollView
-        className="flex-1 p-4"
+        className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: Platform.OS === "ios" ? 180 : 160,
+          paddingTop: 16,
         }}
       >
+        {/* Instruções de uso */}
+        <View className="bg-blue-50 p-4 rounded-lg mb-6">
+          <View className="flex-row">
+            <AlertCircle size={20} color="#1E40AF" className="mr-2 mt-0.5" />
+            <View>
+              <Text className="text-blue-800 font-medium">
+                Como criar uma lista de adicionais:
+              </Text>
+              <Text className="text-blue-700 mt-1">
+                1. Dê um nome para a lista de adicionais
+              </Text>
+              <Text className="text-blue-700">
+                2. Selecione os produtos que farão parte desta lista
+              </Text>
+              <Text className="text-blue-700">
+                3. Escolha as categorias onde estes adicionais estarão
+                disponíveis
+              </Text>
+            </View>
+          </View>
+        </View>
+
         {/* Informações básicas */}
         <SectionCard
           title="Informações Básicas"
-          icon={<Plus size={22} color={THEME_COLORS.primary} />}
+          icon={<ListIcon size={22} color={THEME_COLORS.primary} />}
         >
           <View className="gap-4 flex flex-col py-4">
             <FormControl isInvalid={!!form.formState.errors.nome}>
@@ -179,13 +234,16 @@ export function AddonFormScreen() {
           </View>
         </SectionCard>
 
-        {/* Category and Product Selector */}
+        {/* Seletor de categorias e produtos */}
         <CategoryProductSelector
-          selectedCategories={selectedCategories}
-          selectedProducts={selectedProducts}
+          initialCategories={selectedCategories}
+          initialProducts={selectedProducts}
           onCategoriesChange={setSelectedCategories}
           onProductsChange={setSelectedProducts}
         />
+
+        {/* Espaço adicional para garantir que o formulário não seja cortado */}
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Botões de ação */}
@@ -198,7 +256,9 @@ export function AddonFormScreen() {
             label:
               isSubmitting || isCreating || isUpdating
                 ? "Salvando..."
-                : "Salvar",
+                : isEditing
+                ? "Atualizar Lista"
+                : "Criar Lista",
             onPress: form.handleSubmit(handleSubmit),
             isLoading: isSubmitting || isCreating || isUpdating,
           }}
