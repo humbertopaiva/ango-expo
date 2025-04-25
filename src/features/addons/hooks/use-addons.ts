@@ -83,9 +83,23 @@ export function useAddonsListById(id: string | undefined) {
     enabled: !!id,
   });
 
+  const refetch = () => {
+    const queryClient = useQueryClient();
+    const queryKey = ["addons-lists"];
+    queryClient
+      .invalidateQueries({ queryKey })
+      .then(() => {
+        console.log("Lista de adicionais atualizada com sucesso!");
+      })
+      .catch((error) => {
+        console.error("Erro ao atualizar lista de adicionais:", error);
+      });
+  };
+
   return {
     addonsList: data,
     isLoading,
     error,
+    refetch,
   };
 }

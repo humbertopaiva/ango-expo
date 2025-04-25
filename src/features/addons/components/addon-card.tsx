@@ -1,6 +1,6 @@
-// Path: src/features/addons/components/addon-card.tsx
-import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+// Path: src/features/addons/components/enhanced-addon-card.tsx
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, Pressable } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import {
   MoreVertical,
@@ -9,10 +9,12 @@ import {
   Eye,
   Tag,
   Box,
-  LayersIcon,
+  Layers,
+  Calendar,
 } from "lucide-react-native";
 import { AddonsList } from "../models/addon";
 import { THEME_COLORS } from "@/src/styles/colors";
+import * as Haptics from "expo-haptics";
 
 interface AddonCardProps {
   addon: AddonsList;
@@ -22,45 +24,86 @@ interface AddonCardProps {
 }
 
 export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
-  const [isActionsVisible, setIsActionsVisible] = React.useState(false);
+  const [isActionsVisible, setIsActionsVisible] = useState(false);
+
+  // Formatar data para exibição legível
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Data inválida";
+
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
 
   const toggleActions = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsActionsVisible(!isActionsVisible);
   };
 
   return (
-    <Card className="p-4 bg-white">
-      <TouchableOpacity onPress={onView} className="flex-1">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text className="font-medium text-lg text-gray-800">
-              {addon.nome}
-            </Text>
-            <View className="flex-row items-center mt-2">
-              <View className="flex-row items-center mr-4">
-                <Tag size={16} color={THEME_COLORS.primary} className="mr-1" />
-                <Text className="text-gray-600">
-                  {addon.categorias?.length || 0} Categorias
-                </Text>
+    <Card className="p-0 bg-white mb-3 overflow-hidden">
+      <Pressable
+        onPress={onView}
+        className="flex-1"
+        android_ripple={{ color: "rgba(0, 0, 0, 0.05)" }}
+      >
+        <View className="p-4">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1">
+              <Text className="font-medium text-lg text-gray-800">
+                {addon.nome}
+              </Text>
+
+              {/* Estatísticas e datas */}
+              <View className="flex-row items-center flex-wrap mt-2">
+                <View className="flex-row items-center mr-4 mb-1">
+                  <Tag
+                    size={16}
+                    color={THEME_COLORS.primary}
+                    className="mr-1"
+                  />
+                  <Text className="text-gray-600">
+                    {addon.categorias?.length || 0} Categorias
+                  </Text>
+                </View>
+                <View className="flex-row items-center mb-1">
+                  <Box
+                    size={16}
+                    color={THEME_COLORS.primary}
+                    className="mr-1"
+                  />
+                  <Text className="text-gray-600">
+                    {addon.produtos?.length || 0} Produtos
+                  </Text>
+                </View>
               </View>
-              <View className="flex-row items-center">
-                <Box size={16} color={THEME_COLORS.primary} className="mr-1" />
-                <Text className="text-gray-600">
-                  {addon.produtos?.length || 0} Produtos
+
+              {/* Data de modificação */}
+              <View className="flex-row items-center mt-1">
+                <Calendar size={14} color="#6B7280" className="mr-1" />
+                <Text className="text-gray-500 text-xs">
+                  {addon.date_updated
+                    ? `Atualizado em ${formatDate(addon.date_updated)}`
+                    : `Criado em ${formatDate(addon.date_created)}`}
                 </Text>
               </View>
             </View>
-          </View>
 
-          <TouchableOpacity onPress={toggleActions} className="p-2">
-            <MoreVertical size={20} color="#374151" />
-          </TouchableOpacity>
+            <TouchableOpacity onPress={toggleActions} className="p-2">
+              <MoreVertical size={20} color="#374151" />
+            </TouchableOpacity>
+          </View>
         </View>
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Ações (expandíveis) */}
       {isActionsVisible && (
-        <View className="flex-row border-t border-gray-100 mt-2 pt-2 bg-gray-50">
+        <View className="flex-row border-t border-gray-100 bg-gray-50">
           <TouchableOpacity
             onPress={() => {
               onView();

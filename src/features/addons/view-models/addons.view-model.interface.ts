@@ -2,9 +2,10 @@
 import { AddonsList } from "../models/addon";
 
 export interface IAddonsViewModel {
-  // States
+  // Estados
   addonsList: AddonsList[];
   isLoading: boolean;
+  isRefreshing: boolean;
   searchTerm: string;
   isCreating: boolean;
   isUpdating: boolean;
@@ -17,6 +18,7 @@ export interface IAddonsViewModel {
 
   // Handlers
   handleDeleteAddonsList: (id: string) => Promise<void>;
+  refreshAddonsList: () => Promise<void>;
 
   // Filtered data
   filteredAddonsList: AddonsList[];

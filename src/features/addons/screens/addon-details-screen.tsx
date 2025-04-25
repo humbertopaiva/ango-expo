@@ -1,11 +1,13 @@
-// Path: src/features/addons/screens/addon-details-screen.tsx
-import React from "react";
+// Path: src/features/addons/screens/-addon-details-screen.tsx
+import React, { useCallback } from "react";
 import {
   View,
   Text,
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  RefreshControl,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
@@ -13,20 +15,68 @@ import { useAddonsListById } from "../hooks/use-addons";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { SectionCard } from "@/components/custom/section-card";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { Tag, Box, Edit, ListIcon, Layers } from "lucide-react-native";
+import {
+  Tag,
+  Box,
+  Edit,
+  ListIcon,
+  Calendar,
+  RefreshCw,
+  Info,
+  AlertCircle,
+} from "lucide-react-native";
 import { Card, useToast } from "@gluestack-ui/themed";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { ImagePreview } from "@/components/custom/image-preview";
+import { formatCurrency } from "@/src/utils/format.utils";
+import {
+  showSuccessToast,
+  showErrorToast,
+} from "@/components/common/toast-helper";
 
 export function AddonDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { addonsList, isLoading } = useAddonsListById(id as string);
+  const { addonsList, isLoading, error, refetch } = useAddonsListById(
+    id as string
+  );
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
   const toast = useToast();
 
   const handleEditAddon = () => {
     router.push(`/admin/addons/${id}`);
   };
 
+  // Formatar data para exibição
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Data inválida";
+
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Para atualizar os dados com pull-to-refresh
+  const onRefresh = useCallback(async () => {
+    try {
+      setIsRefreshing(true);
+      await refetch();
+      showSuccessToast(toast, "Dados atualizados com sucesso");
+    } catch (error) {
+      console.error("Erro ao atualizar dados:", error);
+      showErrorToast(toast, "Erro ao atualizar dados");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetch, toast]);
+
+  // Renderizar tela de carregamento
   if (isLoading || !addonsList) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -44,11 +94,62 @@ export function AddonDetailsScreen() {
     );
   }
 
+  // Renderizar tela de erro
+  if (error) {
+    return (
+      <SafeAreaView className="flex-1 bg-white">
+        <AdminScreenHeader
+          title="Detalhes da Lista de Adicionais"
+          backTo="/admin/addons"
+        />
+        <View className="flex-1 justify-center items-center p-4">
+          <AlertCircle size={48} color="#EF4444" />
+          <Text className="mt-4 text-lg font-semibold text-gray-800">
+            Erro ao carregar dados
+          </Text>
+          <Text className="text-gray-600 text-center mt-2">
+            Ocorreu um erro ao carregar os detalhes desta lista de adicionais.
+          </Text>
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="mt-6 bg-primary-500 py-3 px-6 rounded-lg"
+          >
+            <Text className="text-white font-medium">Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <AdminScreenHeader title={addonsList.nome} backTo="/admin/addons" />
 
-      <ScrollView className="flex-1 p-4 pb-20">
+      <ScrollView
+        className="flex-1 p-4 pb-20"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={[THEME_COLORS.primary]}
+            tintColor={THEME_COLORS.primary}
+          />
+        }
+      >
+        {/* Atualizar manualmente */}
+        <View className="bg-blue-50 p-3 mb-4 rounded-lg">
+          <TouchableOpacity
+            onPress={onRefresh}
+            className="flex-row items-center justify-center"
+            disabled={isRefreshing}
+          >
+            <RefreshCw size={16} color="#3B82F6" className="mr-2" />
+            <Text className="text-blue-600 font-medium">
+              {isRefreshing ? "Atualizando..." : "Atualizar dados"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Informações Gerais */}
         <SectionCard
           title="Informações Gerais"
@@ -56,18 +157,45 @@ export function AddonDetailsScreen() {
         >
           <View className="py-4">
             <Text className="text-lg font-semibold">{addonsList.nome}</Text>
-            <Text className="text-sm text-gray-600 mt-2">
-              Data de criação:{" "}
-              {new Date(addonsList.date_created || "").toLocaleDateString()}
-            </Text>
-            <Text className="text-sm text-gray-600">
-              Última atualização:{" "}
-              {addonsList.date_updated
-                ? new Date(addonsList.date_updated).toLocaleDateString()
-                : "Nunca atualizado"}
-            </Text>
+
+            <View className="flex-row items-center mt-3">
+              <Calendar size={16} color="#4B5563" className="mr-2" />
+              <View>
+                <Text className="text-sm text-gray-600">
+                  Data de criação: {formatDate(addonsList.date_created)}
+                </Text>
+                {addonsList.date_updated && (
+                  <Text className="text-sm text-gray-600">
+                    Última atualização: {formatDate(addonsList.date_updated)}
+                  </Text>
+                )}
+              </View>
+            </View>
           </View>
         </SectionCard>
+
+        {/* Estatísticas */}
+        <View className="flex-row justify-between mb-4 mt-2">
+          <Card className="w-[48%] p-4 bg-white">
+            <View className="items-center">
+              <Box size={20} color={THEME_COLORS.primary} className="mb-2" />
+              <Text className="text-2xl font-bold">
+                {addonsList.produtos?.length || 0}
+              </Text>
+              <Text className="text-gray-500 text-center">Produtos</Text>
+            </View>
+          </Card>
+
+          <Card className="w-[48%] p-4 bg-white">
+            <View className="items-center">
+              <Tag size={20} color={THEME_COLORS.primary} className="mb-2" />
+              <Text className="text-2xl font-bold">
+                {addonsList.categorias?.length || 0}
+              </Text>
+              <Text className="text-gray-500 text-center">Categorias</Text>
+            </View>
+          </Card>
+        </View>
 
         {/* Categorias associadas */}
         <SectionCard
@@ -80,30 +208,50 @@ export function AddonDetailsScreen() {
                 <Card key={category.id} className="p-3 bg-white">
                   <View className="flex-row items-center">
                     {category.categorias_produto_id.imagem && (
-                      <View className="w-10 h-10 mr-3">
+                      <View className="w-12 h-12 mr-3">
                         <ImagePreview
                           uri={category.categorias_produto_id.imagem}
                           containerClassName="rounded-lg"
+                          fallbackIcon={Tag}
                         />
                       </View>
                     )}
-                    <View>
+                    <View className="flex-1">
                       <Text className="font-medium">
                         {category.categorias_produto_id.nome}
                       </Text>
-                      <Text className="text-xs text-gray-500">
-                        {category.categorias_produto_id.categoria_ativa
-                          ? "Ativa"
-                          : "Inativa"}
-                      </Text>
+                      <View className="flex-row mt-1">
+                        <View
+                          className={`px-2 py-0.5 rounded-full ${
+                            category.categorias_produto_id.categoria_ativa
+                              ? "bg-green-100"
+                              : "bg-red-100"
+                          }`}
+                        >
+                          <Text
+                            className={
+                              category.categorias_produto_id.categoria_ativa
+                                ? "text-xs text-green-800"
+                                : "text-xs text-red-800"
+                            }
+                          >
+                            {category.categorias_produto_id.categoria_ativa
+                              ? "Ativa"
+                              : "Inativa"}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                 </Card>
               ))}
             </View>
           ) : (
-            <View className="py-4">
-              <Text className="text-gray-500">Nenhuma categoria associada</Text>
+            <View className="py-4 items-center">
+              <Info size={24} color="#9CA3AF" />
+              <Text className="text-gray-500 mt-2">
+                Nenhuma categoria associada
+              </Text>
             </View>
           )}
         </SectionCard>
@@ -117,12 +265,13 @@ export function AddonDetailsScreen() {
             <View className="space-y-2 py-4">
               {addonsList.produtos.map((product) => (
                 <Card key={product.id} className="p-3 bg-white">
-                  <View className="flex-row items-center">
+                  <View className="flex-row">
                     {product.produtos_id.imagem && (
-                      <View className="w-12 h-12 mr-3">
+                      <View className="w-16 h-16 mr-3">
                         <ImagePreview
                           uri={product.produtos_id.imagem}
                           containerClassName="rounded-lg"
+                          fallbackIcon={Box}
                         />
                       </View>
                     )}
@@ -137,43 +286,66 @@ export function AddonDetailsScreen() {
                             <>
                               <Text className="text-xs text-primary-500 font-medium">
                                 {formatCurrency(
-                                  product.produtos_id.preco_promocional
+                                  parseFloat(
+                                    product.produtos_id.preco_promocional
+                                  )
                                 )}
                               </Text>
                               <Text className="ml-2 text-xs text-gray-500 line-through">
-                                {formatCurrency(product.produtos_id.preco)}
+                                {formatCurrency(
+                                  parseFloat(product.produtos_id.preco)
+                                )}
                               </Text>
                             </>
                           ) : (
                             <Text className="text-xs text-primary-600 font-medium">
-                              {formatCurrency(product.produtos_id.preco)}
+                              {formatCurrency(
+                                parseFloat(product.produtos_id.preco)
+                              )}
                             </Text>
                           )}
                         </View>
                       )}
 
-                      {product.produtos_id.tem_variacao && (
-                        <View className="mt-1 flex-row items-center">
-                          <Layers size={12} color="#3B82F6" />
-                          <Text className="text-xs text-blue-600 ml-1">
-                            Com variações
+                      {/* Status do produto */}
+                      <View className="mt-1">
+                        <View
+                          className={`px-2 py-0.5 rounded-full self-start ${
+                            product.produtos_id.status === "disponivel"
+                              ? "bg-green-100"
+                              : "bg-red-100"
+                          }`}
+                        >
+                          <Text
+                            className={
+                              product.produtos_id.status === "disponivel"
+                                ? "text-xs text-green-800"
+                                : "text-xs text-red-800"
+                            }
+                          >
+                            {product.produtos_id.status === "disponivel"
+                              ? "Disponível"
+                              : "Indisponível"}
                           </Text>
                         </View>
-                      )}
+                      </View>
                     </View>
                   </View>
                 </Card>
               ))}
             </View>
           ) : (
-            <View className="py-4">
-              <Text className="text-gray-500">Nenhum produto associado</Text>
+            <View className="py-4 items-center">
+              <Info size={24} color="#9CA3AF" />
+              <Text className="text-gray-500 mt-2">
+                Nenhum produto associado
+              </Text>
             </View>
           )}
         </SectionCard>
       </ScrollView>
 
-      {/* Edit Button */}
+      {/* Botão de edição */}
       <PrimaryActionButton
         onPress={handleEditAddon}
         label="Editar Lista"
@@ -181,20 +353,4 @@ export function AddonDetailsScreen() {
       />
     </SafeAreaView>
   );
-}
-
-// Helper function to format currency values
-function formatCurrency(value: string): string {
-  if (!value) return "";
-  try {
-    const numericValue = parseFloat(value.replace(",", "."));
-    if (isNaN(numericValue)) return "";
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(numericValue);
-  } catch (error) {
-    console.error("Error formatting currency value:", error);
-    return "";
-  }
 }
