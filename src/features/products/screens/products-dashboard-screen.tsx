@@ -1,14 +1,13 @@
-// Path: src/features/products/screens/products-dashboard-screen.tsx
+// Path: src/features/products/screens/products-dashboard-screen.tsx (atualização)
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Card } from "@gluestack-ui/themed";
-import { Package, Plus, Tag } from "lucide-react-native";
+import { Package, Plus, Tag, MenuSquare } from "lucide-react-native";
 import { ContentContainer } from "@/components/custom/content-container";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
-import { useEffect } from "react";
 
 export function ProductsDashboardScreen() {
   const menuItems = [
@@ -30,6 +29,12 @@ export function ProductsDashboardScreen() {
       icon: <Plus size={24} color="#4B5563" />,
       route: "/admin/addons",
     },
+    {
+      title: "Produtos Personalizados",
+      description: "Crie produtos com passos de personalização",
+      icon: <MenuSquare size={24} color="#4B5563" />,
+      route: "/admin/custom-products",
+    },
   ];
 
   return (
@@ -44,7 +49,7 @@ export function ProductsDashboardScreen() {
           Gerenciamento de Produtos
         </Text>
         <Text className="text-gray-600 mb-6">
-          Gerencie seu catálogo de produtos e variações
+          Gerencie seu catálogo de produtos, variações e personalização
         </Text>
 
         <ScrollView showsVerticalScrollIndicator={false}>
