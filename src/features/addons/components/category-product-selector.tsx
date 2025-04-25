@@ -1,10 +1,10 @@
-// Path: src/features/addons/components/enhanced-category-product-selector.tsx
+// Path: src/features/addons/components/category-product-selector.tsx
 import React, { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  FlatList,
+  SectionList,
   TextInput,
 } from "react-native";
 import {
@@ -115,7 +115,7 @@ export function CategoryProductSelector({
     </TouchableOpacity>
   );
 
-  // Renderizar item de categoria no modal
+  // Renderizar item de categoria no modal - Modificado para não mostrar imagens
   const renderCategoryItem = ({ item }) => (
     <TouchableOpacity
       onPress={() => toggleCategorySelection(Number(item.id))}
@@ -126,16 +126,8 @@ export function CategoryProductSelector({
       }`}
     >
       <View className="flex-row items-center">
-        <View className="w-12 h-12 rounded-lg overflow-hidden mr-3 bg-gray-100 items-center justify-center">
-          {item.imagem ? (
-            <ImagePreview
-              uri={item.imagem}
-              fallbackIcon={Tag}
-              containerClassName="rounded-lg"
-            />
-          ) : (
-            <Tag size={20} color="#9CA3AF" />
-          )}
+        <View className="w-8 h-8 rounded-full bg-primary-100 items-center justify-center mr-3">
+          <Tag size={16} color={THEME_COLORS.primary} />
         </View>
         <Text className="font-medium flex-1">{item.nome}</Text>
         {selectedCategoryIds.includes(Number(item.id)) && (
@@ -328,7 +320,7 @@ export function CategoryProductSelector({
         </Button>
       </SectionCard>
 
-      {/* Modal de Seleção de Produtos */}
+      {/* Modal de Seleção de Produtos - Usando SectionList em vez de FlatList */}
       <Modal
         isOpen={productModalVisible}
         onClose={() => {
@@ -342,7 +334,6 @@ export function CategoryProductSelector({
             <View className="flex-row items-center justify-between w-full">
               <Heading size="md">Selecionar Produtos</Heading>
               <Button
-                variant="ghost"
                 onPress={() => {
                   setProductModalVisible(false);
                   setProductSearchTerm("");
@@ -380,12 +371,14 @@ export function CategoryProductSelector({
                 <Text className="text-gray-500">Nenhum produto encontrado</Text>
               </View>
             ) : (
-              <FlatList
-                data={filteredProducts}
-                renderItem={renderProductItem}
+              <SectionList
+                sections={[{ title: "Produtos", data: filteredProducts }]}
+                renderItem={({ item }) => renderProductItem({ item })}
+                renderSectionHeader={() => null}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 20 }}
+                stickySectionHeadersEnabled={false}
               />
             )}
           </ModalBody>
@@ -406,7 +399,7 @@ export function CategoryProductSelector({
         </ModalContent>
       </Modal>
 
-      {/* Modal de Seleção de Categorias */}
+      {/* Modal de Seleção de Categorias - Usando SectionList em vez de FlatList */}
       <Modal
         isOpen={categoryModalVisible}
         onClose={() => {
@@ -420,7 +413,6 @@ export function CategoryProductSelector({
             <View className="flex-row items-center justify-between w-full">
               <Heading size="md">Selecionar Categorias</Heading>
               <Button
-                variant="ghost"
                 onPress={() => {
                   setCategoryModalVisible(false);
                   setCategorySearchTerm("");
@@ -460,12 +452,14 @@ export function CategoryProductSelector({
                 </Text>
               </View>
             ) : (
-              <FlatList
-                data={filteredCategories}
-                renderItem={renderCategoryItem}
+              <SectionList
+                sections={[{ title: "Categorias", data: filteredCategories }]}
+                renderItem={({ item }) => renderCategoryItem({ item })}
+                renderSectionHeader={() => null}
                 keyExtractor={(item) => item.id.toString()}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 20 }}
+                stickySectionHeadersEnabled={false}
               />
             )}
           </ModalBody>
