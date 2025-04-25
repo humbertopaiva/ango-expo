@@ -57,7 +57,7 @@ const MobileColorPicker = ({
     <>
       <Pressable
         onPress={() => setIsVisible(true)}
-        className="flex-row items-center space-x-2 bg-gray-50 p-2 rounded-lg border border-gray-200"
+        className="flex-row items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200"
       >
         <View className="flex-1">
           <Text className="text-gray-600">{value}</Text>
@@ -86,7 +86,7 @@ const MobileColorPicker = ({
 
             {/* Input Hex */}
             <View className="mb-4">
-              <View className="flex-row items-center space-x-2">
+              <View className="flex-row items-center gap-2">
                 <View className="flex-1">
                   <Input>
                     <InputField
@@ -118,7 +118,7 @@ const MobileColorPicker = ({
               />
             </View>
 
-            <View className="flex-row space-x-4">
+            <View className="flex-row gap-4">
               <Button
                 variant="outline"
                 onPress={() => setIsVisible(false)}

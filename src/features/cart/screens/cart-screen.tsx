@@ -149,7 +149,7 @@ const CartItemComponent: React.FC<CartItemProps> = ({
               style={{ textAlignVertical: "top" }}
             />
 
-            <HStack className="justify-end space-x-2">
+            <HStack className="justify-end gap-2">
               <TouchableOpacity
                 onPress={() => {
                   setTempObservation(item.observation || "");
@@ -182,7 +182,7 @@ const CartItemComponent: React.FC<CartItemProps> = ({
               </Text>
             </HStack>
 
-            <HStack className="space-x-3">
+            <HStack className="gap-3">
               <TouchableOpacity
                 onPress={() => setIsEditing(true)}
                 className="p-1 rounded-full"

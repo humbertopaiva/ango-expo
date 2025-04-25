@@ -24,7 +24,7 @@ export function AdditionalSection() {
       >
         {/* Adicionais */}
         <View className="mb-6">
-          <View className="flex-row items-center space-x-2 mb-4">
+          <View className="flex-row items-center gap-2 mb-4">
             <Info size={20} color="#6B7280" />
             <Text className="font-medium text-gray-800">
               Informações Extras
@@ -56,7 +56,7 @@ export function AdditionalSection() {
 
         {/* Tags */}
         <View>
-          <View className="flex-row items-center space-x-2 mb-4">
+          <View className="flex-row items-center gap-2 mb-4">
             <Tag size={20} color="#6B7280" />
             <Text className="font-medium text-gray-800">Tags</Text>
           </View>

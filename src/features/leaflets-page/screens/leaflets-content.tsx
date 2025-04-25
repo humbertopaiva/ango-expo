@@ -245,7 +245,7 @@ export function LeafletsContent() {
               {[1, 2].map((i) => (
                 <View key={i} className="space-y-4">
                   <View className="h-8 w-40 bg-gray-200 rounded-lg animate-pulse" />
-                  <View className="flex-row space-x-4">
+                  <View className="flex-row gap-4">
                     <View className="h-48 w-40 bg-gray-200 rounded-lg animate-pulse" />
                     <View className="h-48 w-40 bg-gray-200 rounded-lg animate-pulse" />
                   </View>

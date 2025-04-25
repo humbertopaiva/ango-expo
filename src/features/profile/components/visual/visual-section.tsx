@@ -47,7 +47,7 @@ export function VisualSection() {
                 <Text className="text-sm font-medium text-gray-700">
                   Cor Primária
                 </Text>
-                <View className="flex-row items-center space-x-3">
+                <View className="flex-row items-center gap-3">
                   <View
                     className="w-12 h-12 rounded-lg border border-gray-200"
                     style={{ backgroundColor: vm.profile.cor_primaria }}
