@@ -1,12 +1,11 @@
-// Path: src/features/custom-products/components/steps-editor.tsx
+// Path: src/features/custom-products/components/steps-editor.tsx (correção)
 import React, { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
-  TextInput,
-  ScrollView,
+  StyleSheet,
 } from "react-native";
 import {
   Card,
@@ -178,11 +177,11 @@ export function StepsEditor({
                 color={step.qtd_items_step <= 1 ? "#D1D5DB" : "#374151"}
               />
             </TouchableOpacity>
-            // Path: src/features/custom-products/components/steps-editor.tsx
-            (continuação)
+
             <Text className="mx-4 text-lg font-medium">
               {step.qtd_items_step}
             </Text>
+
             <TouchableOpacity
               onPress={() =>
                 updateStepQuantity(step.passo_numero, step.qtd_items_step + 1)
@@ -191,6 +190,7 @@ export function StepsEditor({
             >
               <Plus size={20} color="#374151" />
             </TouchableOpacity>
+
             <Text className="ml-4 text-gray-500">
               Itens que o cliente poderá escolher neste passo
             </Text>
@@ -210,9 +210,9 @@ export function StepsEditor({
             >
               <View className="flex-row items-center">
                 <PlusCircle size={16} color={THEME_COLORS.primary} />
-                <Text className="text-primary-600 ml-1 font-medium">
+                <ButtonText className="ml-1" color={THEME_COLORS.primary}>
                   Adicionar produtos
-                </Text>
+                </ButtonText>
               </View>
             </Button>
           </View>
@@ -290,6 +290,7 @@ export function StepsEditor({
             cada um
           </Text>
         </View>
+
         {/* Lista de passos */}
         <View className="mt-2 mb-4">
           {steps.length === 0 ? (
@@ -306,15 +307,16 @@ export function StepsEditor({
             <View>{steps.map((step, index) => renderStep(step, index))}</View>
           )}
         </View>
+
         {/* Botão para adicionar novo passo */}
         <Button variant="outline" onPress={addStep} className="mt-2">
           <View className="flex-row items-center">
             <PlusCircle size={18} color={THEME_COLORS.primary} />
-            <Text className="text-primary-600 ml-2 font-medium">
+            <ButtonText className="ml-2" color={THEME_COLORS.primary}>
               {steps.length > 0
                 ? "Adicionar outro passo"
                 : "Adicionar primeiro passo"}
-            </Text>
+            </ButtonText>
           </View>
         </Button>
       </SectionCard>
@@ -329,11 +331,12 @@ export function StepsEditor({
         }}
         size="full"
       >
-        <ModalContent>
-          <ModalHeader>
-            <View className="flex-row items-center justify-between w-full">
+        <ModalContent style={styles.modalContainer}>
+          {/* Modal Header (Fixed) */}
+          <View style={styles.modalHeader}>
+            <View className="flex-row items-center justify-between w-full px-4 py-3">
               <Heading size="md">Selecionar Produtos</Heading>
-              <TouchableOpacity
+              <Button
                 onPress={() => {
                   setProductSelectorVisible(false);
                   setSearchTerm("");
@@ -341,30 +344,41 @@ export function StepsEditor({
                 }}
               >
                 <CloseIcon color={THEME_COLORS.primary} />
-              </TouchableOpacity>
+              </Button>
             </View>
-          </ModalHeader>
 
-          <ModalBody>
-            {/* Campo de busca */}
-            <View className="mb-4">
-              <Input variant="outline">
+            {/* Campo de busca (Fixed) */}
+            <View className="mx-4 mb-3">
+              <Input variant="outline" className="bg-gray-100">
                 <InputField
                   placeholder="Buscar produtos..."
                   value={searchTerm}
                   onChangeText={setSearchTerm}
-                  className="bg-white"
-                  //   leftElement={
-                  //     <Search
-                  //       size={20}
-                  //       color="#6B7280"
-                  //       style={{ marginLeft: 8 }}
-                  //     />
-                  //   }
+                  className="text-base"
+                  leftElement={
+                    <Search
+                      size={20}
+                      color="#6B7280"
+                      style={{ marginLeft: 8 }}
+                    />
+                  }
+                  rightElement={
+                    searchTerm ? (
+                      <TouchableOpacity
+                        onPress={() => setSearchTerm("")}
+                        style={{ marginRight: 8 }}
+                      >
+                        <CloseIcon size="sm" />
+                      </TouchableOpacity>
+                    ) : null
+                  }
                 />
               </Input>
             </View>
+          </View>
 
+          {/* Modal Body (Scrollable) */}
+          <View style={styles.modalBody}>
             {/* Loading State */}
             {isProductsLoading ? (
               <View className="p-4 items-center">
@@ -398,7 +412,7 @@ export function StepsEditor({
                           }
                         }
                       }}
-                      className={`p-3 mb-2 rounded-lg border ${
+                      className={`p-3 mb-2 mx-4 rounded-lg border ${
                         isSelected
                           ? "border-primary-500 bg-primary-50"
                           : "border-gray-200 bg-white"
@@ -436,9 +450,10 @@ export function StepsEditor({
                 contentContainerStyle={{ paddingVertical: 8 }}
               />
             )}
-          </ModalBody>
+          </View>
 
-          <ModalFooter>
+          {/* Modal Footer (Fixed) */}
+          <View style={styles.modalFooter}>
             <Button
               onPress={() => {
                 setProductSelectorVisible(false);
@@ -447,11 +462,43 @@ export function StepsEditor({
               }}
               width="100%"
             >
-              <Text className="text-white font-medium">Concluído</Text>
+              <ButtonText>
+                Concluído (
+                {currentStepIndex !== null
+                  ? steps.find((s) => s.passo_numero === currentStepIndex)
+                      ?.produtos.length || 0
+                  : 0}{" "}
+                selecionados)
+              </ButtonText>
             </Button>
-          </ModalFooter>
+          </View>
         </ModalContent>
       </Modal>
     </View>
   );
 }
+
+// Styles for proper modal layout
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    padding: 0,
+  },
+  modalHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+    backgroundColor: "white",
+  },
+  modalBody: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  modalFooter: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+    backgroundColor: "white",
+  },
+});
