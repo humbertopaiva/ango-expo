@@ -1,6 +1,6 @@
 // Path: src/features/custom-products/hooks/use-custom-product-form.ts
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useProducts } from "@/src/features/products/hooks/use-products";
 import {
   CustomProductStep,
@@ -13,8 +13,16 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
   const { products, isLoading: isProductsLoading } = useProducts();
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Referência para controlar a inicialização
+  const initializedRef = useRef(false);
+
   // Importante: Inicializar os passos quando initialSteps mudar
   useEffect(() => {
+    // Evitar inicialização repetida devido a re-renderizações
+    if (initializedRef.current && initialSteps.length === 0) {
+      return;
+    }
+
     if (initialSteps && initialSteps.length > 0) {
       // Certifique-se de criar uma cópia profunda para não modificar o objeto original
       const formattedSteps = initialSteps.map((step) => ({
@@ -30,8 +38,10 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
         "Passos inicializados no hook:",
         JSON.stringify(formattedSteps)
       );
-    } else {
+      initializedRef.current = true;
+    } else if (!initializedRef.current) {
       setSteps([]);
+      initializedRef.current = true;
     }
   }, [JSON.stringify(initialSteps)]); // Use JSON.stringify para comparação profunda
 
@@ -41,12 +51,12 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
   );
 
   // Adicionar um novo passo
-  const addStep = () => {
+  const addStep = useCallback(() => {
     const newStepNumber =
       steps.length > 0 ? Math.max(...steps.map((s) => s.passo_numero)) + 1 : 1;
 
-    setSteps([
-      ...steps,
+    setSteps((prevSteps) => [
+      ...prevSteps,
       {
         passo_numero: newStepNumber,
         qtd_items_step: 1,
@@ -55,128 +65,150 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
         produtos: [],
       },
     ]);
-  };
+  }, [steps]);
 
   // Remover um passo existente
-  const removeStep = (stepNumber: number) => {
-    const newSteps = steps.filter((step) => step.passo_numero !== stepNumber);
+  const removeStep = useCallback((stepNumber: number) => {
+    setSteps((prevSteps) => {
+      const newSteps = prevSteps.filter(
+        (step) => step.passo_numero !== stepNumber
+      );
 
-    // Reordenar os passos restantes
-    const reorderedSteps = newSteps.map((step, index) => ({
-      ...step,
-      passo_numero: index + 1,
-      nome: step.nome || `Passo ${index + 1}`,
-    }));
+      // Reordenar os passos restantes
+      const reorderedSteps = newSteps.map((step, index) => ({
+        ...step,
+        passo_numero: index + 1,
+        nome: step.nome || `Passo ${index + 1}`,
+      }));
 
-    setSteps(reorderedSteps);
-  };
+      return reorderedSteps;
+    });
+  }, []);
 
   // Atualizar a quantidade de itens de um passo
-  const updateStepQuantity = (stepNumber: number, quantity: number) => {
-    setSteps(
-      steps.map((step) =>
-        step.passo_numero === stepNumber
-          ? { ...step, qtd_items_step: quantity }
-          : step
-      )
-    );
-  };
+  const updateStepQuantity = useCallback(
+    (stepNumber: number, quantity: number) => {
+      setSteps((prevSteps) =>
+        prevSteps.map((step) =>
+          step.passo_numero === stepNumber
+            ? { ...step, qtd_items_step: quantity }
+            : step
+        )
+      );
+    },
+    []
+  );
 
   // Atualizar o nome de um passo
-  const updateStepName = (stepNumber: number, name: string) => {
-    setSteps(
-      steps.map((step) =>
+  const updateStepName = useCallback((stepNumber: number, name: string) => {
+    setSteps((prevSteps) =>
+      prevSteps.map((step) =>
         step.passo_numero === stepNumber ? { ...step, nome: name } : step
       )
     );
-  };
+  }, []);
 
   // Atualizar a descrição de um passo
-  const updateStepDescription = (stepNumber: number, description: string) => {
-    setSteps(
-      steps.map((step) =>
-        step.passo_numero === stepNumber
-          ? { ...step, descricao: description }
-          : step
-      )
-    );
-  };
+  const updateStepDescription = useCallback(
+    (stepNumber: number, description: string) => {
+      setSteps((prevSteps) =>
+        prevSteps.map((step) =>
+          step.passo_numero === stepNumber
+            ? { ...step, descricao: description }
+            : step
+        )
+      );
+    },
+    []
+  );
 
   // Adicionar um produto a um passo
-  const addProductToStep = (stepNumber: number, product: Product) => {
-    setSteps(
-      steps.map((step) => {
-        if (step.passo_numero === stepNumber) {
-          // Verificar se o produto já existe no passo
-          const productExists = step.produtos.some(
-            (p) => p.produtos.key === product.id
-          );
+  const addProductToStep = useCallback(
+    (stepNumber: number, product: Product) => {
+      setSteps((prevSteps) =>
+        prevSteps.map((step) => {
+          if (step.passo_numero === stepNumber) {
+            // Verificar se o produto já existe no passo
+            const productExists = step.produtos.some(
+              (p) => p.produtos.key === product.id
+            );
 
-          if (!productExists) {
-            return {
-              ...step,
-              produtos: [
-                ...step.produtos,
-                {
-                  produtos: {
-                    key: product.id,
-                    collection: "produtos",
+            if (!productExists) {
+              return {
+                ...step,
+                produtos: [
+                  ...step.produtos,
+                  {
+                    produtos: {
+                      key: product.id,
+                      collection: "produtos",
+                    },
                   },
-                },
-              ],
-            };
+                ],
+              };
+            }
           }
-        }
-        return step;
-      })
-    );
-  };
+          return step;
+        })
+      );
+    },
+    []
+  );
 
   // Remover um produto de um passo
-  const removeProductFromStep = (stepNumber: number, productKey: string) => {
-    setSteps(
-      steps.map((step) => {
-        if (step.passo_numero === stepNumber) {
-          return {
-            ...step,
-            produtos: step.produtos.filter(
-              (p) => p.produtos.key !== productKey
-            ),
-          };
-        }
-        return step;
-      })
-    );
-  };
+  const removeProductFromStep = useCallback(
+    (stepNumber: number, productKey: string) => {
+      setSteps((prevSteps) =>
+        prevSteps.map((step) => {
+          if (step.passo_numero === stepNumber) {
+            return {
+              ...step,
+              produtos: step.produtos.filter(
+                (p) => p.produtos.key !== productKey
+              ),
+            };
+          }
+          return step;
+        })
+      );
+    },
+    []
+  );
 
   // Calcular preço baseado no tipo (menor, maior, média)
-  const calculatePrice = (priceType: "menor" | "media" | "maior"): string => {
-    // Obter todos os produtos selecionados em todos os passos
-    const allSelectedProducts = steps
-      .flatMap((step) =>
-        step.produtos.map((productItem) => {
-          const productDetails = products.find(
-            (p) => p.id === productItem.produtos.key
+  const calculatePrice = useCallback(
+    (priceType: "menor" | "media" | "maior"): string => {
+      // Obter todos os produtos selecionados em todos os passos
+      const allSelectedProducts = steps
+        .flatMap((step) =>
+          step.produtos.map((productItem) => {
+            const productDetails = products.find(
+              (p) => p.id === productItem.produtos.key
+            );
+            return productDetails ? parseFloat(productDetails.preco || "0") : 0;
+          })
+        )
+        .filter((price) => price > 0);
+
+      if (allSelectedProducts.length === 0) return "0";
+
+      switch (priceType) {
+        case "menor":
+          return Math.min(...allSelectedProducts).toFixed(2);
+        case "maior":
+          return Math.max(...allSelectedProducts).toFixed(2);
+        case "media":
+          const sum = allSelectedProducts.reduce(
+            (acc, price) => acc + price,
+            0
           );
-          return productDetails ? parseFloat(productDetails.preco || "0") : 0;
-        })
-      )
-      .filter((price) => price > 0);
-
-    if (allSelectedProducts.length === 0) return "0";
-
-    switch (priceType) {
-      case "menor":
-        return Math.min(...allSelectedProducts).toFixed(2);
-      case "maior":
-        return Math.max(...allSelectedProducts).toFixed(2);
-      case "media":
-        const sum = allSelectedProducts.reduce((acc, price) => acc + price, 0);
-        return (sum / allSelectedProducts.length).toFixed(2);
-      default:
-        return "0";
-    }
-  };
+          return (sum / allSelectedProducts.length).toFixed(2);
+        default:
+          return "0";
+      }
+    },
+    [steps, products]
+  );
 
   return {
     steps,

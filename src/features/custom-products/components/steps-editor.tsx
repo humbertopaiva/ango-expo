@@ -1,12 +1,12 @@
 // Path: src/features/custom-products/components/steps-editor.tsx
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef, memo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  TextInput as RNTextInput,
+  TextInput,
 } from "react-native";
 import {
   Card,
@@ -14,19 +14,15 @@ import {
   Modal,
   ModalContent,
   ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ButtonText,
   Heading,
   CloseIcon,
   Input,
   InputField,
-  TextareaInput,
+  ButtonText,
 } from "@gluestack-ui/themed";
 import {
   PlusCircle,
   Package,
-  Search,
   Check,
   Trash,
   Plus,
@@ -43,101 +39,80 @@ import { ImagePreview } from "@/components/custom/image-preview";
 import { CustomProductStep } from "../models/custom-product";
 import { useCustomProductForm } from "../hooks/use-custom-product-form";
 import { formatCurrency } from "@/src/utils/format.utils";
+import { Product } from "@/src/features/products/models/product";
 
 interface StepsEditorProps {
   initialSteps?: CustomProductStep[];
   onStepsChange: (steps: CustomProductStep[]) => void;
 }
 
-export function StepsEditor({
-  initialSteps = [],
-  onStepsChange,
-}: StepsEditorProps) {
-  const [productSelectorVisible, setProductSelectorVisible] = useState(false);
-  const [currentStepIndex, setCurrentStepIndex] = useState<number | null>(null);
-
-  const {
-    steps,
-    addStep,
-    removeStep,
-    updateStepQuantity,
-    updateStepName,
-    updateStepDescription,
-    addProductToStep,
-    removeProductFromStep,
+// Componente de passo memoizado para evitar re-renderização desnecessária
+const StepItem = memo(
+  ({
+    step,
+    index,
+    onNameChange,
+    onDescriptionChange,
+    onUpdateQuantity,
+    onRemoveStep,
+    onMoveUp,
+    onMoveDown,
+    onOpenProductSelector,
+    onRemoveProduct,
     products,
-    filteredProducts,
-    isProductsLoading,
-    searchTerm,
-    setSearchTerm,
-  } = useCustomProductForm(initialSteps);
+    isLastStep,
+    isFirstStep,
+  }: {
+    step: CustomProductStep;
+    index: number;
+    onNameChange: (stepNumber: number, name: string) => void;
+    onDescriptionChange: (stepNumber: number, description: string) => void;
+    onUpdateQuantity: (stepNumber: number, quantity: number) => void;
+    onRemoveStep: (stepNumber: number) => void;
+    onMoveUp: (index: number) => void;
+    onMoveDown: (index: number) => void;
+    onOpenProductSelector: (stepNumber: number) => void;
+    onRemoveProduct: (stepNumber: number, productKey: string) => void;
+    products: Product[];
+    isLastStep: boolean;
+    isFirstStep: boolean;
+  }) => {
+    // Estado local para o input para evitar re-renderizações
+    const [name, setName] = useState(step.nome || `Passo ${step.passo_numero}`);
+    const [description, setDescription] = useState(step.descricao || "");
+    const nameTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const descriptionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Notificar mudanças nos passos
-  React.useEffect(() => {
-    // Importante: Só notifique se os passos realmente mudarem
-    if (steps && steps.length > 0) {
-      console.log("Notificando mudanças nos passos:", steps.length);
-      onStepsChange(steps);
-    }
-  }, [steps, onStepsChange]);
+    const handleNameChange = (text: string) => {
+      setName(text);
 
-  // Adicione um log para verificar os initialSteps recebidos
-  React.useEffect(() => {
-    console.log(
-      "initialSteps recebidos no StepsEditor:",
-      initialSteps ? initialSteps.length : 0,
-      JSON.stringify(initialSteps)
-    );
-  }, [initialSteps]);
+      // Limpar timeout anterior se existir
+      if (nameTimeoutRef.current) {
+        clearTimeout(nameTimeoutRef.current);
+      }
 
-  // Função para mostrar o seletor de produtos para um passo específico
-  const openProductSelector = (stepNumber: number) => {
-    setCurrentStepIndex(stepNumber);
-    setProductSelectorVisible(true);
-  };
+      // Criar novo timeout
+      nameTimeoutRef.current = setTimeout(() => {
+        onNameChange(step.passo_numero, text);
+      }, 500);
+    };
 
-  // Mover um passo para cima
-  const moveStepUp = (index: number) => {
-    if (index <= 0) return;
+    const handleDescriptionChange = (text: string) => {
+      setDescription(text);
 
-    const newSteps = [...steps];
-    // Trocar o passo atual com o anterior
-    [newSteps[index - 1], newSteps[index]] = [
-      newSteps[index],
-      newSteps[index - 1],
-    ];
+      // Limpar timeout anterior se existir
+      if (descriptionTimeoutRef.current) {
+        clearTimeout(descriptionTimeoutRef.current);
+      }
 
-    // Atualizar os números dos passos
-    newSteps.forEach((step, i) => {
-      step.passo_numero = i + 1;
-    });
+      // Criar novo timeout
+      descriptionTimeoutRef.current = setTimeout(() => {
+        onDescriptionChange(step.passo_numero, text);
+      }, 500);
+    };
 
-    onStepsChange(newSteps);
-  };
-
-  // Mover um passo para baixo
-  const moveStepDown = (index: number) => {
-    if (index >= steps.length - 1) return;
-
-    const newSteps = [...steps];
-    // Trocar o passo atual com o próximo
-    [newSteps[index], newSteps[index + 1]] = [
-      newSteps[index + 1],
-      newSteps[index],
-    ];
-
-    // Atualizar os números dos passos
-    newSteps.forEach((step, i) => {
-      step.passo_numero = i + 1;
-    });
-
-    onStepsChange(newSteps);
-  };
-
-  // Renderizar um passo
-  const renderStep = (step: CustomProductStep, index: number) => {
     return (
-      <Card key={step.passo_numero} className="mb-4 p-4 bg-white">
+      <Card className="mb-4 p-4 bg-white">
         <View className="flex-row items-center justify-between mb-4">
           <View className="bg-primary-100 px-3 py-1 rounded-full">
             <Text className="text-primary-800 font-medium">
@@ -146,18 +121,18 @@ export function StepsEditor({
           </View>
 
           <View className="flex-row">
-            {index > 0 && (
+            {!isFirstStep && (
               <TouchableOpacity
-                onPress={() => moveStepUp(index)}
+                onPress={() => onMoveUp(index)}
                 className="p-2 mr-1"
               >
                 <MoveUp size={20} color="#6B7280" />
               </TouchableOpacity>
             )}
 
-            {index < steps.length - 1 && (
+            {!isLastStep && (
               <TouchableOpacity
-                onPress={() => moveStepDown(index)}
+                onPress={() => onMoveDown(index)}
                 className="p-2 mr-1"
               >
                 <MoveDown size={20} color="#6B7280" />
@@ -165,7 +140,7 @@ export function StepsEditor({
             )}
 
             <TouchableOpacity
-              onPress={() => removeStep(step.passo_numero)}
+              onPress={() => onRemoveStep(step.passo_numero)}
               className="p-2 bg-red-50 rounded-full"
             >
               <Trash size={20} color="#EF4444" />
@@ -179,14 +154,12 @@ export function StepsEditor({
             <Tag size={16} color="#374151" className="mr-2" />
             <Text className="text-gray-700 font-medium">Nome do passo:</Text>
           </View>
-          <Input>
-            <InputField
-              placeholder={`Nome do passo ${step.passo_numero}`}
-              value={step.nome || ""}
-              onChangeText={(text) => updateStepName(step.passo_numero, text)}
-              className="bg-white"
-            />
-          </Input>
+          <TextInput
+            style={styles.textInput}
+            placeholder={`Nome do passo ${step.passo_numero}`}
+            value={name}
+            onChangeText={handleNameChange}
+          />
         </View>
 
         {/* Descrição do passo */}
@@ -197,18 +170,14 @@ export function StepsEditor({
               Descrição do passo:
             </Text>
           </View>
-          <Input>
-            <InputField
-              placeholder="Descreva este passo de personalização"
-              value={step.descricao || ""}
-              onChangeText={(text) =>
-                updateStepDescription(step.passo_numero, text)
-              }
-              multiline={true}
-              numberOfLines={3}
-              className="bg-white min-h-[80px] text-base py-2 px-3"
-            />
-          </Input>
+          <TextInput
+            style={styles.textAreaInput}
+            placeholder="Descreva este passo de personalização"
+            value={description}
+            onChangeText={handleDescriptionChange}
+            multiline={true}
+            numberOfLines={3}
+          />
         </View>
 
         {/* Configuração de quantidade */}
@@ -220,10 +189,7 @@ export function StepsEditor({
             <TouchableOpacity
               onPress={() => {
                 if (step.qtd_items_step > 1) {
-                  updateStepQuantity(
-                    step.passo_numero,
-                    step.qtd_items_step - 1
-                  );
+                  onUpdateQuantity(step.passo_numero, step.qtd_items_step - 1);
                 }
               }}
               className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
@@ -241,7 +207,7 @@ export function StepsEditor({
 
             <TouchableOpacity
               onPress={() =>
-                updateStepQuantity(step.passo_numero, step.qtd_items_step + 1)
+                onUpdateQuantity(step.passo_numero, step.qtd_items_step + 1)
               }
               className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
             >
@@ -263,7 +229,7 @@ export function StepsEditor({
             <Button
               variant="outline"
               size="sm"
-              onPress={() => openProductSelector(step.passo_numero)}
+              onPress={() => onOpenProductSelector(step.passo_numero)}
             >
               <View className="flex-row items-center">
                 <PlusCircle size={16} color={THEME_COLORS.primary} />
@@ -316,7 +282,7 @@ export function StepsEditor({
                     </View>
                     <TouchableOpacity
                       onPress={() =>
-                        removeProductFromStep(
+                        onRemoveProduct(
                           step.passo_numero,
                           productItem.produtos.key
                         )
@@ -333,7 +299,108 @@ export function StepsEditor({
         </View>
       </Card>
     );
-  };
+  }
+);
+
+export function StepsEditor({
+  initialSteps = [],
+  onStepsChange,
+}: StepsEditorProps) {
+  const [productSelectorVisible, setProductSelectorVisible] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState<number | null>(null);
+
+  // Referência para evitar causar re-renderizações por causa do efeito de notificação
+  const notifiedStepsRef = useRef<string>("");
+
+  const {
+    steps,
+    addStep,
+    removeStep,
+    updateStepQuantity,
+    updateStepName,
+    updateStepDescription,
+    addProductToStep,
+    removeProductFromStep,
+    products,
+    filteredProducts,
+    isProductsLoading,
+    searchTerm,
+    setSearchTerm,
+  } = useCustomProductForm(initialSteps);
+
+  // Notificar mudanças nos passos - usando um efeito controlado com comparação profunda
+  React.useEffect(() => {
+    // Converte os passos para string para comparação profunda
+    const stepsAsString = JSON.stringify(steps);
+
+    // Só notifica se os passos mudaram
+    if (
+      steps &&
+      steps.length > 0 &&
+      stepsAsString !== notifiedStepsRef.current
+    ) {
+      console.log("Notificando mudanças nos passos:", steps.length);
+      onStepsChange(steps);
+      // Atualiza a referência com os passos atuais
+      notifiedStepsRef.current = stepsAsString;
+    }
+  }, [steps, onStepsChange]);
+
+  // Função para mostrar o seletor de produtos para um passo específico
+  const openProductSelector = useCallback((stepNumber: number) => {
+    setCurrentStepIndex(stepNumber);
+    setProductSelectorVisible(true);
+  }, []);
+
+  // Mover um passo para cima - usando referência direta ao passo em vez de índice
+  const moveStepUp = useCallback(
+    (index: number) => {
+      if (index <= 0) return;
+
+      // Clone os passos atuais
+      const newSteps = [...steps];
+
+      // Troque a posição dos passos
+      [newSteps[index - 1], newSteps[index]] = [
+        newSteps[index],
+        newSteps[index - 1],
+      ];
+
+      // Atualize os números dos passos
+      newSteps.forEach((step, i) => {
+        step.passo_numero = i + 1;
+      });
+
+      // Notifique a mudança
+      onStepsChange(newSteps);
+    },
+    [steps, onStepsChange]
+  );
+
+  // Mover um passo para baixo
+  const moveStepDown = useCallback(
+    (index: number) => {
+      if (index >= steps.length - 1) return;
+
+      // Clone os passos atuais
+      const newSteps = [...steps];
+
+      // Troque a posição dos passos
+      [newSteps[index], newSteps[index + 1]] = [
+        newSteps[index + 1],
+        newSteps[index],
+      ];
+
+      // Atualize os números dos passos
+      newSteps.forEach((step, i) => {
+        step.passo_numero = i + 1;
+      });
+
+      // Notifique a mudança
+      onStepsChange(newSteps);
+    },
+    [steps, onStepsChange]
+  );
 
   return (
     <View className="space-y-4">
@@ -361,7 +428,26 @@ export function StepsEditor({
               </Text>
             </View>
           ) : (
-            <View>{steps.map((step, index) => renderStep(step, index))}</View>
+            <View>
+              {steps.map((step, index) => (
+                <StepItem
+                  key={`step-${step.passo_numero}-${index}`}
+                  step={step}
+                  index={index}
+                  onNameChange={updateStepName}
+                  onDescriptionChange={updateStepDescription}
+                  onUpdateQuantity={updateStepQuantity}
+                  onRemoveStep={removeStep}
+                  onMoveUp={moveStepUp}
+                  onMoveDown={moveStepDown}
+                  onOpenProductSelector={openProductSelector}
+                  onRemoveProduct={removeProductFromStep}
+                  products={products}
+                  isFirstStep={index === 0}
+                  isLastStep={index === steps.length - 1}
+                />
+              ))}
+            </View>
           )}
         </View>
 
@@ -517,8 +603,8 @@ export function StepsEditor({
     </View>
   );
 }
-
 // Styles for proper modal layout
+
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
@@ -540,5 +626,27 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#E5E7EB",
     backgroundColor: "white",
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "white",
+    fontSize: 16,
+    color: "#1F2937",
+  },
+  textAreaInput: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "white",
+    fontSize: 16,
+    color: "#1F2937",
+    minHeight: 80,
+    textAlignVertical: "top",
   },
 });
