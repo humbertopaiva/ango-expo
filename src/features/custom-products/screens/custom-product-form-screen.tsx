@@ -85,19 +85,27 @@ export function CustomProductFormScreen() {
       // Definir imagem do produto
       setImageUri(customProduct.imagem);
 
-      // Importante: Clone os passos para garantir que temos uma nova referência
-      // Também garanta que todos os campos necessários estão presentes
-      if (customProduct.passos && customProduct.passos.length > 0) {
-        const formattedSteps = customProduct.passos.map((passo) => ({
-          passo_numero: passo.passo_numero,
-          qtd_items_step: passo.qtd_items_step,
-          produtos: Array.isArray(passo.produtos) ? [...passo.produtos] : [],
+      // Importante: Verificar se temos passos definidos e formatá-los corretamente
+      if (
+        customProduct.passos &&
+        Array.isArray(customProduct.passos) &&
+        customProduct.passos.length > 0
+      ) {
+        // Garanta que temos uma cópia profunda dos dados
+        const formattedSteps = customProduct.passos.map((step) => ({
+          passo_numero: step.passo_numero,
+          qtd_items_step: step.qtd_items_step,
+          produtos: Array.isArray(step.produtos) ? [...step.produtos] : [],
         }));
 
         // Agora definimos os passos devidamente formatados
         setSteps(formattedSteps);
 
-        console.log("Passos carregados:", formattedSteps);
+        // Log para debug
+        console.log(
+          "Passos formatados para edição:",
+          JSON.stringify(formattedSteps)
+        );
       } else {
         setSteps([]);
       }

@@ -68,8 +68,21 @@ export function StepsEditor({
 
   // Notificar mudanças nos passos
   React.useEffect(() => {
-    onStepsChange(steps);
+    // Importante: Só notifique se os passos realmente mudarem
+    if (steps && steps.length > 0) {
+      console.log("Notificando mudanças nos passos:", steps.length);
+      onStepsChange(steps);
+    }
   }, [steps, onStepsChange]);
+
+  // Adicione um log para verificar os initialSteps recebidos
+  React.useEffect(() => {
+    console.log(
+      "initialSteps recebidos no StepsEditor:",
+      initialSteps ? initialSteps.length : 0,
+      JSON.stringify(initialSteps)
+    );
+  }, [initialSteps]);
 
   // Função para mostrar o seletor de produtos para um passo específico
   const openProductSelector = (stepNumber: number) => {

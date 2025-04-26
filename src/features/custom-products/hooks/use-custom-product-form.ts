@@ -1,4 +1,5 @@
 // Path: src/features/custom-products/hooks/use-custom-product-form.ts
+
 import { useState, useEffect } from "react";
 import { useProducts } from "@/src/features/products/hooks/use-products";
 import {
@@ -8,9 +9,29 @@ import {
 import { Product } from "@/src/features/products/models/product";
 
 export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
-  const [steps, setSteps] = useState<CustomProductStep[]>(initialSteps);
+  const [steps, setSteps] = useState<CustomProductStep[]>([]);
   const { products, isLoading: isProductsLoading } = useProducts();
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Importante: Inicializar os passos quando initialSteps mudar
+  useEffect(() => {
+    if (initialSteps && initialSteps.length > 0) {
+      // Certifique-se de criar uma cópia profunda para não modificar o objeto original
+      const formattedSteps = initialSteps.map((step) => ({
+        passo_numero: step.passo_numero,
+        qtd_items_step: step.qtd_items_step,
+        produtos: Array.isArray(step.produtos) ? [...step.produtos] : [],
+      }));
+
+      setSteps(formattedSteps);
+      console.log(
+        "Passos inicializados no hook:",
+        JSON.stringify(formattedSteps)
+      );
+    } else {
+      setSteps([]);
+    }
+  }, [JSON.stringify(initialSteps)]); // Use JSON.stringify para comparação profunda
 
   // Filtrar produtos com base no termo de pesquisa
   const filteredProducts = products.filter((product) =>
