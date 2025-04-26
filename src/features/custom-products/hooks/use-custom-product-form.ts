@@ -20,6 +20,8 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
       const formattedSteps = initialSteps.map((step) => ({
         passo_numero: step.passo_numero,
         qtd_items_step: step.qtd_items_step,
+        nome: step.nome || `Passo ${step.passo_numero}`,
+        descricao: step.descricao || "",
         produtos: Array.isArray(step.produtos) ? [...step.produtos] : [],
       }));
 
@@ -48,6 +50,8 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
       {
         passo_numero: newStepNumber,
         qtd_items_step: 1,
+        nome: `Passo ${newStepNumber}`,
+        descricao: "",
         produtos: [],
       },
     ]);
@@ -61,6 +65,7 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
     const reorderedSteps = newSteps.map((step, index) => ({
       ...step,
       passo_numero: index + 1,
+      nome: step.nome || `Passo ${index + 1}`,
     }));
 
     setSteps(reorderedSteps);
@@ -72,6 +77,26 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
       steps.map((step) =>
         step.passo_numero === stepNumber
           ? { ...step, qtd_items_step: quantity }
+          : step
+      )
+    );
+  };
+
+  // Atualizar o nome de um passo
+  const updateStepName = (stepNumber: number, name: string) => {
+    setSteps(
+      steps.map((step) =>
+        step.passo_numero === stepNumber ? { ...step, nome: name } : step
+      )
+    );
+  };
+
+  // Atualizar a descrição de um passo
+  const updateStepDescription = (stepNumber: number, description: string) => {
+    setSteps(
+      steps.map((step) =>
+        step.passo_numero === stepNumber
+          ? { ...step, descricao: description }
           : step
       )
     );
@@ -124,14 +149,46 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
     );
   };
 
+  // Calcular preço baseado no tipo (menor, maior, média)
+  const calculatePrice = (priceType: "menor" | "media" | "maior"): string => {
+    // Obter todos os produtos selecionados em todos os passos
+    const allSelectedProducts = steps
+      .flatMap((step) =>
+        step.produtos.map((productItem) => {
+          const productDetails = products.find(
+            (p) => p.id === productItem.produtos.key
+          );
+          return productDetails ? parseFloat(productDetails.preco || "0") : 0;
+        })
+      )
+      .filter((price) => price > 0);
+
+    if (allSelectedProducts.length === 0) return "0";
+
+    switch (priceType) {
+      case "menor":
+        return Math.min(...allSelectedProducts).toFixed(2);
+      case "maior":
+        return Math.max(...allSelectedProducts).toFixed(2);
+      case "media":
+        const sum = allSelectedProducts.reduce((acc, price) => acc + price, 0);
+        return (sum / allSelectedProducts.length).toFixed(2);
+      default:
+        return "0";
+    }
+  };
+
   return {
     steps,
     setSteps,
     addStep,
     removeStep,
     updateStepQuantity,
+    updateStepName,
+    updateStepDescription,
     addProductToStep,
     removeProductFromStep,
+    calculatePrice,
     products,
     filteredProducts,
     isProductsLoading,

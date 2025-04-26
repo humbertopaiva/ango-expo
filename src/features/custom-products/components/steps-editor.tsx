@@ -1,4 +1,4 @@
-// Path: src/features/custom-products/components/steps-editor.tsx (correção)
+// Path: src/features/custom-products/components/steps-editor.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  TextInput as RNTextInput,
 } from "react-native";
 import {
   Card,
@@ -20,6 +21,7 @@ import {
   CloseIcon,
   Input,
   InputField,
+  TextareaInput,
 } from "@gluestack-ui/themed";
 import {
   PlusCircle,
@@ -32,6 +34,8 @@ import {
   MoveUp,
   MoveDown,
   Box,
+  Tag,
+  FileText,
 } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { SectionCard } from "@/components/custom/section-card";
@@ -57,6 +61,8 @@ export function StepsEditor({
     addStep,
     removeStep,
     updateStepQuantity,
+    updateStepName,
+    updateStepDescription,
     addProductToStep,
     removeProductFromStep,
     products,
@@ -165,6 +171,44 @@ export function StepsEditor({
               <Trash size={20} color="#EF4444" />
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Nome do passo */}
+        <View className="mb-4">
+          <View className="flex-row items-center mb-2">
+            <Tag size={16} color="#374151" className="mr-2" />
+            <Text className="text-gray-700 font-medium">Nome do passo:</Text>
+          </View>
+          <Input>
+            <InputField
+              placeholder={`Nome do passo ${step.passo_numero}`}
+              value={step.nome || ""}
+              onChangeText={(text) => updateStepName(step.passo_numero, text)}
+              className="bg-white"
+            />
+          </Input>
+        </View>
+
+        {/* Descrição do passo */}
+        <View className="mb-4">
+          <View className="flex-row items-center mb-2">
+            <FileText size={16} color="#374151" className="mr-2" />
+            <Text className="text-gray-700 font-medium">
+              Descrição do passo:
+            </Text>
+          </View>
+          <Input>
+            <InputField
+              placeholder="Descreva este passo de personalização"
+              value={step.descricao || ""}
+              onChangeText={(text) =>
+                updateStepDescription(step.passo_numero, text)
+              }
+              multiline={true}
+              numberOfLines={3}
+              className="bg-white min-h-[80px] text-base py-2 px-3"
+            />
+          </Input>
         </View>
 
         {/* Configuração de quantidade */}
@@ -299,8 +343,8 @@ export function StepsEditor({
       >
         <View className="mb-4">
           <Text className="text-gray-600">
-            Configure os passos de personalização e os produtos disponíveis em
-            cada um
+            Configure os passos de personalização com nome, descrição e os
+            produtos disponíveis em cada um
           </Text>
         </View>
 

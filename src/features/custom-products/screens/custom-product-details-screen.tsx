@@ -22,6 +22,8 @@ import {
   RefreshCw,
   AlertCircle,
   StepForwardIcon,
+  Tag,
+  Percent,
 } from "lucide-react-native";
 import { Card, useToast } from "@gluestack-ui/themed";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
@@ -31,6 +33,7 @@ import {
   showErrorToast,
 } from "@/components/common/toast-helper";
 import { useProducts } from "@/src/features/products/hooks/use-products";
+import { formatCurrency } from "@/src/utils/format.utils";
 
 export function CustomProductDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -59,6 +62,22 @@ export function CustomProductDetailsScreen() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Para exibir o tipo de preço de forma amigável
+  const getPriceTypeLabel = (priceType?: string) => {
+    switch (priceType) {
+      case "menor":
+        return "Menor preço";
+      case "maior":
+        return "Maior preço";
+      case "media":
+        return "Média de preços";
+      case "unico":
+        return "Preço único";
+      default:
+        return "Não definido";
+    }
   };
 
   // Para atualizar os dados com pull-to-refresh
@@ -222,6 +241,46 @@ export function CustomProductDetailsScreen() {
           </View>
         </SectionCard>
 
+        {/* Informações de Preço */}
+        <SectionCard
+          title="Informações de Preço"
+          icon={<Tag size={20} color="#374151" />}
+        >
+          <View className="py-4">
+            <View className="flex-row items-center">
+              <Percent
+                size={18}
+                color={THEME_COLORS.primary}
+                className="mr-2"
+              />
+              <Text className="text-gray-700 font-medium">
+                Tipo de Preço: {getPriceTypeLabel(customProduct.preco_tipo)}
+              </Text>
+            </View>
+
+            {customProduct.preco_tipo === "unico" && customProduct.preco && (
+              <View className="bg-primary-50 rounded-lg p-3 mt-2">
+                <Text className="text-primary-700 font-semibold text-lg">
+                  {formatCurrency(parseFloat(customProduct.preco))}
+                </Text>
+              </View>
+            )}
+
+            <View className="bg-gray-50 p-3 rounded-lg mt-3">
+              <Text className="text-gray-600">
+                {customProduct.preco_tipo === "menor" &&
+                  "O preço será calculado como o menor valor entre todos os produtos selecionados pelo cliente."}
+                {customProduct.preco_tipo === "media" &&
+                  "O preço será calculado como a média dos valores de todos os produtos selecionados pelo cliente."}
+                {customProduct.preco_tipo === "maior" &&
+                  "O preço será calculado como o maior valor entre todos os produtos selecionados pelo cliente."}
+                {customProduct.preco_tipo === "unico" &&
+                  "Este produto tem um preço fixo, independente das escolhas do cliente."}
+              </Text>
+            </View>
+          </View>
+        </SectionCard>
+
         {/* Estatísticas */}
         <View className="flex-row justify-between mb-4 mt-2">
           <Card className="w-[48%] p-4 bg-white">
@@ -273,6 +332,22 @@ export function CustomProductDetailsScreen() {
                     </Text>
                   </View>
 
+                  {/* Nome do passo */}
+                  {passo.nome && (
+                    <View className="mb-2 border-l-4 border-primary-200 pl-3">
+                      <Text className="font-semibold text-gray-800">
+                        {passo.nome}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Descrição do passo */}
+                  {passo.descricao && (
+                    <View className="mb-3 bg-gray-50 p-3 rounded-lg">
+                      <Text className="text-gray-600">{passo.descricao}</Text>
+                    </View>
+                  )}
+
                   <Text className="font-medium mb-2 mt-2">
                     Produtos disponíveis:
                   </Text>
@@ -313,6 +388,13 @@ export function CustomProductDetailsScreen() {
                             <Text className="font-medium">
                               {produtoDetalhes.nome}
                             </Text>
+                            {produtoDetalhes.preco && (
+                              <Text className="text-xs text-gray-600">
+                                {formatCurrency(
+                                  parseFloat(produtoDetalhes.preco)
+                                )}
+                              </Text>
+                            )}
                           </View>
                         </View>
                       );
