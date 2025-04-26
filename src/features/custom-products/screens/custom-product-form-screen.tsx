@@ -173,7 +173,7 @@ export function CustomProductFormScreen() {
 
       // Validar se cada passo tem pelo menos um produto
       const stepsWithoutProducts = steps.filter(
-        (step) => step.produtos.length === 0
+        (step) => !step.produtos || step.produtos.length === 0
       );
       if (stepsWithoutProducts.length > 0) {
         showErrorToast(
@@ -185,43 +185,66 @@ export function CustomProductFormScreen() {
 
       setIsSubmitting(true);
 
-      const customProductData: CreateCustomProductDTO = {
-        nome: data.nome,
-        descricao: data.descricao || "",
-        imagem: imageUri,
-        status: data.status ? "ativo" : "desativado",
-        passos: steps,
-        empresa: "",
-      };
-
+      // Vamos enviar apenas os passos como fizemos no teste direto na API
       if (isEditing && id) {
+        // Criar um objeto com APENAS o campo passos
+        const updateData = {
+          passos: steps,
+        };
+
+        console.log("Enviando dados para update:", JSON.stringify(updateData));
+
         // Atualizar produto personalizado existente
         await updateCustomProduct({
           id,
-          data: customProductData,
+          data: updateData,
         });
 
         showSuccessToast(
           toast,
           "Produto personalizado atualizado com sucesso!"
         );
+
+        // Navegar de volta após um breve atraso
+        setTimeout(() => {
+          router.push("/admin/custom-products");
+        }, 500);
       } else {
-        // Criar novo produto personalizado
+        // Para criação, precisamos de mais campos
+        const customProductData = {
+          nome: data.nome,
+          descricao: data.descricao || "",
+          imagem: imageUri,
+          status: data.status ? "ativo" : "desativado",
+          passos: steps,
+          empresa: "", // Será preenchido no backend
+        };
+
         await createCustomProduct(customProductData);
-
         showSuccessToast(toast, "Produto personalizado criado com sucesso!");
-      }
 
-      // Navegar de volta após um breve atraso
-      setTimeout(() => {
-        router.push("/admin/custom-products");
-      }, 500);
+        // Navegar de volta após um breve atraso
+        setTimeout(() => {
+          router.push("/admin/custom-products");
+        }, 500);
+      }
     } catch (error) {
       console.error("Erro ao salvar produto personalizado:", error);
-      showErrorToast(
-        toast,
-        `Erro ao ${isEditing ? "atualizar" : "criar"} produto personalizado`
-      );
+
+      // Mostrar detalhes do erro se disponíveis
+      if (error instanceof Error) {
+        showErrorToast(
+          toast,
+          `Erro ao ${
+            isEditing ? "atualizar" : "criar"
+          } produto personalizado: ${error.message}`
+        );
+      } else {
+        showErrorToast(
+          toast,
+          `Erro ao ${isEditing ? "atualizar" : "criar"} produto personalizado`
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
