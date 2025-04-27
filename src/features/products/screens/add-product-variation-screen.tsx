@@ -44,6 +44,19 @@ const productVariationFormSchema = z.object({
   descricao: z.string().nullable().optional(),
   imagem: z.string().nullable().optional(),
   disponivel: z.boolean().default(true),
+
+  // Novos campos
+  quantidade_maxima_carrinho: z.preprocess(
+    (val) =>
+      val === null || val === undefined || val === "" ? null : Number(val),
+    z
+      .number()
+      .min(0, "Quantidade máxima não pode ser negativa")
+      .nullable()
+      .optional()
+  ),
+  exibir_produto: z.boolean().default(true),
+  exibir_preco: z.boolean().default(true),
 });
 
 type ProductVariationFormData = z.infer<typeof productVariationFormSchema>;
@@ -90,6 +103,9 @@ export function AddProductVariationScreen() {
       descricao: "",
       imagem: product?.imagem || null,
       disponivel: true,
+      quantidade_maxima_carrinho: null,
+      exibir_produto: true,
+      exibir_preco: true,
     },
   });
 
@@ -191,6 +207,9 @@ export function AddProductVariationScreen() {
         descricao: data.descricao || undefined,
         imagem: data.imagem || undefined,
         disponivel: data.disponivel,
+        quantidade_maxima_carrinho: data.quantidade_maxima_carrinho,
+        exibir_produto: data.exibir_produto,
+        exibir_preco: data.exibir_preco,
       });
 
       showSuccessToast(toast, "Variação de produto adicionada com sucesso!");

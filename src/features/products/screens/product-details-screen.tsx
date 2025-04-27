@@ -20,6 +20,7 @@ import {
   Trash,
   Edit,
   RefreshCw,
+  Eye,
 } from "lucide-react-native";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { ImagePreview } from "@/components/custom/image-preview";
@@ -181,16 +182,6 @@ export function ProductDetailsScreen() {
       });
 
       showSuccessToast(toast, "Variação excluída com sucesso");
-
-      // Aguardar um momento antes de fechar o diálogo
-      // setTimeout(() => {
-      //   setIsDeleteDialogOpen(false);
-      //   setDeleteVariationId(null);
-
-      //   // Refetch novamente (garantia dupla)
-      //   refetchProduct();
-      //   refetchVariations();
-      // }, 500);
     } catch (error) {
       console.error("Erro ao excluir variação:", error);
       showErrorToast(toast, "Erro ao excluir variação");
@@ -398,6 +389,43 @@ export function ProductDetailsScreen() {
             </View>
           </SectionCard>
         )}
+
+        {/* Opções de Visibilidade */}
+        <SectionCard
+          title="Opções de Visibilidade"
+          icon={<Eye size={20} color="#374151" />}
+        >
+          <View className="space-y-2 py-4">
+            {/* Visibilidade do Produto */}
+            <View className="flex-row justify-between">
+              <Text className="text-gray-700">Visibilidade do produto:</Text>
+              <Text className="font-medium">
+                {product.exibir_produto !== false ? "Visível" : "Oculto"}
+              </Text>
+            </View>
+
+            {/* Visibilidade do Preço */}
+            <View className="flex-row justify-between">
+              <Text className="text-gray-700">Visibilidade do preço:</Text>
+              <Text className="font-medium">
+                {product.exibir_preco !== false ? "Visível" : "Sob consulta"}
+              </Text>
+            </View>
+
+            {/* Quantidade Máxima no Carrinho */}
+            <View className="flex-row justify-between">
+              <Text className="text-gray-700">
+                Quantidade máxima no carrinho:
+              </Text>
+              <Text className="font-medium">
+                {product.quantidade_maxima_carrinho !== null &&
+                product.quantidade_maxima_carrinho !== undefined
+                  ? product.quantidade_maxima_carrinho
+                  : "Sem limite"}
+              </Text>
+            </View>
+          </View>
+        </SectionCard>
 
         {/* Variações de produto */}
         {productHasVariation && (

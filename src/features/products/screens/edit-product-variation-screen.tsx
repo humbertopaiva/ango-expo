@@ -33,11 +33,26 @@ import { THEME_COLORS } from "@/src/styles/colors";
 
 // Schema para validação do formulário
 const productVariationFormSchema = z.object({
+  variacao: z.string().min(1, "A variação é obrigatória"),
+  valor_variacao: z.string().min(1, "O valor da variação é obrigatório"),
   preco: z.string().min(1, "O preço é obrigatório"),
   preco_promocional: z.string().nullable().optional(),
   descricao: z.string().nullable().optional(),
   imagem: z.string().nullable().optional(),
   disponivel: z.boolean().default(true),
+
+  // Novos campos
+  exibir_produto: z.boolean().default(true),
+  exibir_preco: z.boolean().default(true),
+  quantidade_maxima_carrinho: z.preprocess(
+    (val) =>
+      val === null || val === undefined || val === "" ? null : Number(val),
+    z
+      .number()
+      .min(0, "Quantidade máxima não pode ser negativa")
+      .nullable()
+      .optional()
+  ),
 });
 
 type ProductVariationFormData = z.infer<typeof productVariationFormSchema>;
@@ -94,6 +109,12 @@ export function EditProductVariationScreen() {
         descricao: currentVariation.descricao || "",
         imagem: currentVariation.imagem || "",
         disponivel: currentVariation.disponivel !== false,
+
+        // Novos campos - use valores padrão caso não estejam definidos
+        quantidade_maxima_carrinho:
+          currentVariation.quantidade_maxima_carrinho ?? null,
+        exibir_produto: currentVariation.exibir_produto !== false, // default true
+        exibir_preco: currentVariation.exibir_preco !== false, // default true
       });
     }
   }, [currentVariation, form]);
@@ -115,6 +136,9 @@ export function EditProductVariationScreen() {
           descricao: data.descricao || undefined,
           imagem: data.imagem || undefined,
           disponivel: data.disponivel,
+          quantidade_maxima_carrinho: data.quantidade_maxima_carrinho,
+          exibir_produto: data.exibir_produto,
+          exibir_preco: data.exibir_preco,
         },
       });
 
