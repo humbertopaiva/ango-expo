@@ -4,12 +4,14 @@ import React from "react";
 import { View, Text } from "react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { CustomProductCard } from "./custom-product-card";
-import { Package, Palette } from "lucide-react-native";
+import { Layers, Settings } from "lucide-react-native";
 import { Card, HStack } from "@gluestack-ui/themed";
 
 export function CustomProductsSection() {
   const vm = useCompanyPageContext();
   const { customProducts } = vm;
+
+  console.log("Custom Products Section", customProducts);
 
   // Não renderiza nada se não houver produtos personalizados
   if (!customProducts || customProducts.length === 0) {
@@ -24,7 +26,7 @@ export function CustomProductsSection() {
       {/* Cabeçalho da seção */}
       <View className="px-4 mb-4">
         <HStack className="items-center mb-2">
-          <Palette size={20} color={primaryColor} className="mr-2" />
+          <Layers size={20} color={primaryColor} className="mr-2" />
           <Text
             className="text-xl font-semibold"
             style={{ color: primaryColor }}
@@ -34,7 +36,7 @@ export function CustomProductsSection() {
         </HStack>
 
         <Text className="text-gray-600 text-sm">
-          Monte seu próprio produto com as opções disponíveis
+          Monte seu próprio produto selecionando as opções em cada etapa
         </Text>
       </View>
 

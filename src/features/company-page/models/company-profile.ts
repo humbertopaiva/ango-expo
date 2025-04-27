@@ -39,6 +39,7 @@ export interface CompanyProfile {
   instagram?: string;
   facebook?: string;
   empresa: {
+    id?: string;
     slug: string;
     categoria: {
       nome: string;

@@ -6,10 +6,12 @@ import { CustomProduct } from "../models/custom-product";
 class CustomProductService {
   async getCompanyCustomProducts(companyId: string): Promise<CustomProduct[]> {
     try {
-      const response = await api.get(`/api/custom-products/${companyId}`);
-      // A API retorna um único objeto, mas vamos adaptar para um array para manter o padrão
-      const product = response.data.data;
-      return product ? [product] : [];
+      const response = await api.get(
+        `/api/custom-products/company/${companyId}/active`,
+        { params: { _t: Date.now() } }
+      );
+      console.log("Custom products response:", response.data);
+      return response.data.data || [];
     } catch (error) {
       console.error("Error fetching custom products:", error);
       return [];

@@ -17,6 +17,8 @@ export interface CustomProduct {
 export interface CustomProductStep {
   passo_numero: number;
   qtd_items_step: number;
+  nome?: string;
+  descricao?: string;
   produtos: CustomProductStepItem[];
 }
 
