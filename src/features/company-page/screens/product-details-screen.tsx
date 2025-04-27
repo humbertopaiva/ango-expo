@@ -46,6 +46,8 @@ import { animationUtils } from "@/src/utils/animations.utils";
 import { LinearGradient } from "expo-linear-gradient";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { ProductImageViewer } from "../components/product-image-viewer";
+import { useProductAddons } from "../hooks/use-product-addons";
+import { ProductAddonsSection } from "../components/product-addons-section";
 
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -134,6 +136,13 @@ export function ProductDetailsScreen() {
   const hasVariation = product?.tem_variacao === true;
   const variationOptions = product?.variacao?.variacao || [];
 
+  // Buscar adicionais do produto
+  const {
+    addonLists,
+    isLoading: isLoadingAddons,
+    hasAddons,
+  } = useProductAddons(productId);
+
   if (isLoading) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
@@ -201,6 +210,22 @@ export function ProductDetailsScreen() {
 
     // Mostrar toast usando toastUtils
     toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
+  };
+
+  const handleAddAddonToCart = (addon: CompanyProduct) => {
+    if (!vm.profile) return;
+
+    // Adicionar o produto ao carrinho com quantidade 1 e sem observação
+    cartVm.addToCartWithObservation(
+      addon,
+      vm.profile.empresa.slug,
+      vm.profile.nome,
+      1,
+      ""
+    );
+
+    // Mostrar toast
+    toastUtils.success(toast, `${addon.nome} adicionado ao carrinho!`);
   };
 
   // Voltar para a página da empresa
@@ -507,6 +532,12 @@ export function ProductDetailsScreen() {
               </View>
             )}
           </View>
+          {hasAddons && (
+            <ProductAddonsSection
+              addonLists={addonLists}
+              onAddAddonToCart={handleAddAddonToCart}
+            />
+          )}
         </Animated.ScrollView>
 
         {/* Barra inferior com botão de adicionar ao carrinho */}

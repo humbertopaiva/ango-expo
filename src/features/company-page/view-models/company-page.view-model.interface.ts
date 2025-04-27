@@ -3,6 +3,7 @@ import { CompanyProfile } from "../models/company-profile";
 import { CompanyProduct } from "../models/company-product";
 import { CompanyConfig } from "../models/company-config";
 import { CustomProduct } from "../models/custom-product";
+import { ProductAddonList } from "../models/product-addon-list";
 
 export interface ICompanyPageViewModel {
   profile: CompanyProfile | null;
@@ -24,4 +25,5 @@ export interface ICompanyPageViewModel {
   getGalleryImages: () => string[];
 
   customProducts: CustomProduct[];
+  getProductAddonLists: (productId: string) => Promise<ProductAddonList[]>;
 }
