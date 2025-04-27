@@ -2,6 +2,7 @@
 import { CompanyProfile } from "../models/company-profile";
 import { CompanyProduct } from "../models/company-product";
 import { CompanyConfig } from "../models/company-config";
+import { CustomProduct } from "../models/custom-product";
 
 export interface ICompanyPageViewModel {
   profile: CompanyProfile | null;
@@ -21,4 +22,6 @@ export interface ICompanyPageViewModel {
   isCartEnabled: () => boolean;
 
   getGalleryImages: () => string[];
+
+  customProducts: CustomProduct[];
 }
