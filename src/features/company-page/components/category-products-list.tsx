@@ -78,6 +78,7 @@ export function CategoryProductsList({
               <AdaptiveProductCard
                 key={`${title}-${product.id}`}
                 product={product}
+                showFeaturedBadge={index === 0 && product.tem_variacao !== true}
               />
             )}
             fallback={

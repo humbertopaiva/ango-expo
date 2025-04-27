@@ -32,6 +32,7 @@ import {
   MessageCircle,
   Maximize,
   X,
+  ChevronRight,
 } from "lucide-react-native";
 import { HStack, VStack, useToast } from "@gluestack-ui/themed";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
@@ -128,6 +129,10 @@ export function ProductDetailsScreen() {
       setIsLoading(false);
     }, 300);
   }, [productId, vm.products]);
+
+  // Verificar se o produto tem variação
+  const hasVariation = product?.tem_variacao === true;
+  const variationOptions = product?.variacao?.variacao || [];
 
   if (isLoading) {
     return (
@@ -389,6 +394,36 @@ export function ProductDetailsScreen() {
                   </Text>
                 )}
               </HStack>
+
+              {hasVariation && (
+                <View className="mt-6 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                  <Text className="text-base font-semibold text-gray-800 mb-3">
+                    {product.variacao?.nome || "Selecione uma opção"}
+                  </Text>
+
+                  <View className="space-y-2">
+                    {variationOptions.map((option, index) => (
+                      <TouchableOpacity
+                        key={`option-${index}`}
+                        className="bg-white p-3 rounded-lg border border-gray-200 flex-row justify-between items-center"
+                        onPress={() => {
+                          // Aqui você adicionaria a lógica para selecionar uma variação
+                          // que será implementada na próxima fase
+                        }}
+                      >
+                        <Text className="font-medium text-gray-800">
+                          {option}
+                        </Text>
+                        <ChevronRight size={18} color="#9CA3AF" />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text className="text-sm text-gray-500 mt-3">
+                    Selecione uma opção para ver preços e disponibilidade
+                  </Text>
+                </View>
+              )}
 
               {/* Informações de parcelamento melhoradas */}
               {product.parcelamento_cartao && product.quantidade_parcelas && (

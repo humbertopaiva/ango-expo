@@ -68,17 +68,35 @@ export const useProductsViewModel = (
 
     switch (sortOption) {
       case "price_asc":
-        return sorted.sort(
-          (a, b) =>
-            parseFloat(a.preco_promocional || a.preco) -
-            parseFloat(b.preco_promocional || b.preco)
-        );
+        return sorted.sort((a, b) => {
+          // Se ambos tiverem variação, manter a ordem original
+          if (a.tem_variacao && b.tem_variacao) return 0;
+          // Se apenas a tem variação, considerar b como menor
+          if (a.tem_variacao) return 1;
+          // Se apenas b tem variação, considerar a como menor
+          if (b.tem_variacao) return -1;
+
+          // Caso contrário, ordenar por preço
+          return (
+            parseFloat(a.preco_promocional || a.preco || "0") -
+            parseFloat(b.preco_promocional || b.preco || "0")
+          );
+        });
       case "price_desc":
-        return sorted.sort(
-          (a, b) =>
-            parseFloat(b.preco_promocional || b.preco) -
-            parseFloat(a.preco_promocional || a.preco)
-        );
+        return sorted.sort((a, b) => {
+          // Se ambos tiverem variação, manter a ordem original
+          if (a.tem_variacao && b.tem_variacao) return 0;
+          // Se apenas a tem variação, considerar b como maior
+          if (a.tem_variacao) return 1;
+          // Se apenas b tem variação, considerar a como maior
+          if (b.tem_variacao) return -1;
+
+          // Caso contrário, ordenar por preço
+          return (
+            parseFloat(b.preco_promocional || b.preco || "0") -
+            parseFloat(a.preco_promocional || a.preco || "0")
+          );
+        });
       case "name_asc":
         return sorted.sort((a, b) => a.nome.localeCompare(b.nome));
       case "relevance":
