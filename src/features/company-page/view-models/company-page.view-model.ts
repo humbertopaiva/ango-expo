@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { companyPageService } from "../services/company-page.service";
 import { ICompanyPageViewModel } from "./company-page.view-model.interface";
+import { customProductService } from "../services/custom-product.service";
 
 export function useCompanyPageViewModel(
   companySlug: string
@@ -32,6 +33,19 @@ export function useCompanyPageViewModel(
       queryFn: () => companyPageService.getCompanyShowcase(companySlug),
       staleTime: 5 * 60 * 1000,
       enabled: !!companySlug,
+    });
+
+  const { data: customProducts = [], isLoading: isLoadingCustomProducts } =
+    useQuery({
+      queryKey: ["company-custom-products", companySlug],
+      queryFn: async () => {
+        // Buscar ID da empresa a partir do profile
+        if (!profile) return [];
+        const companyId = profile.id;
+        return customProductService.getCompanyCustomProducts(companyId);
+      },
+      enabled: !!profile, // Só busca após carregar o perfil para obter o ID
+      staleTime: 5 * 60 * 1000,
     });
 
   // Verificar se deve mostrar informações de delivery
@@ -135,6 +149,7 @@ export function useCompanyPageViewModel(
     products,
     showcaseProducts,
     config,
+    customProducts,
     isLoading:
       isLoadingProfile ||
       isLoadingProducts ||

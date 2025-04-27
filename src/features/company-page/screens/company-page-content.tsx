@@ -12,6 +12,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { CompanySpecificHeader } from "../components/company-specific-header";
 import { router } from "expo-router";
 import { CompanyGallery } from "../components/company-gallery";
+import { CustomProductsSection } from "../components/custom-products-section";
 
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
@@ -111,6 +112,9 @@ export function CompanyPageContent() {
 
           {/* Galeria de imagens da empresa */}
           <CompanyGallery />
+
+          {/* Produtos personalizados */}
+          <CustomProductsSection />
 
           {/* Produtos em destaque (da vitrine) */}
           {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
