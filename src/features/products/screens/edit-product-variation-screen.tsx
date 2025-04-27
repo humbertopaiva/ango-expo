@@ -30,6 +30,7 @@ import {
 } from "@/components/common/toast-helper";
 import { SectionCard } from "@/components/custom/section-card";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { VariationVisibilityOptions } from "../components/variation-visibility-options";
 
 // Schema para validação do formulário
 const productVariationFormSchema = z.object({
@@ -175,11 +176,6 @@ export function EditProductVariationScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <AdminScreenHeader
-        title="Editar Variação"
-        backTo={`/admin/products/view/${productId}`}
-      />
-
       <ScrollView className="flex-1 p-4">
         <View className="bg-blue-50 p-4 rounded-lg mb-6">
           <View className="flex-row items-center mb-2">
@@ -296,6 +292,13 @@ export function EditProductVariationScreen() {
               />
             </FormControl>
           </View>
+        </SectionCard>
+
+        <SectionCard title="Opções de Visibilidade">
+          <VariationVisibilityOptions
+            control={form.control}
+            isSubmitting={isSubmitting || isUpdating}
+          />
         </SectionCard>
 
         <SectionCard title="Preços">

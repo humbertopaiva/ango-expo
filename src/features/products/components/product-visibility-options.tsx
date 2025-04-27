@@ -95,7 +95,7 @@ export function ProductVisibilityOptions({
                     value={value !== null ? String(value) : ""}
                     onChangeText={(text) => {
                       const numValue = text === "" ? null : parseInt(text, 10);
-                      onChange(isNaN(numValue) ? null : numValue);
+                      onChange(isNaN(numValue as any) ? null : numValue);
                     }}
                     onBlur={onBlur}
                     keyboardType="numeric"

@@ -34,6 +34,7 @@ import { SectionCard } from "@/components/custom/section-card";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { CategorySelectModal } from "@/components/common/category-select-modal";
 import { EnhancedSelect } from "@/components/common/enhanced-select";
+import { VariationVisibilityOptions } from "../components/variation-visibility-options";
 
 // Schema para validação do formulário
 const productVariationFormSchema = z.object({
@@ -471,6 +472,13 @@ export function AddProductVariationScreen() {
               />
             </FormControl>
           </View>
+        </SectionCard>
+
+        <SectionCard title="Opções de Visibilidade">
+          <VariationVisibilityOptions
+            control={form.control}
+            isSubmitting={isSubmitting || isCreating}
+          />
         </SectionCard>
 
         <SectionCard title="Preços">
