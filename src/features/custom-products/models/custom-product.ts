@@ -8,12 +8,18 @@ export interface CustomProduct {
   status: "ativo" | "desativado";
   date_created?: string;
   date_updated?: string;
+  // New fields
+  preco_tipo: "menor" | "media" | "maior" | "unico";
+  preco: string;
   passos: CustomProductStep[];
 }
 
 export interface CustomProductStep {
   passo_numero: number;
   qtd_items_step: number;
+  // New fields
+  nome: string;
+  descricao: string;
   produtos: CustomProductStepItem[];
 }
 
@@ -30,6 +36,9 @@ export interface CreateCustomProductDTO {
   imagem?: string | null;
   empresa: string;
   status?: "ativo" | "desativado";
+  // New fields
+  preco_tipo: "menor" | "media" | "maior" | "unico";
+  preco?: string;
   passos: CustomProductStep[];
 }
 
@@ -39,5 +48,8 @@ export interface UpdateCustomProductDTO {
   imagem?: string | null;
   empresa?: string;
   status?: "ativo" | "desativado";
+  // New fields
+  preco_tipo?: "menor" | "media" | "maior" | "unico";
+  preco?: string;
   passos?: CustomProductStep[];
 }

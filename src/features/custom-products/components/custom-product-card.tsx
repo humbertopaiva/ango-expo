@@ -10,10 +10,12 @@ import {
   MenuSquare,
   Calendar,
   StepForwardIcon,
+  Tag,
 } from "lucide-react-native";
 import { CustomProduct } from "../models/custom-product";
 import { THEME_COLORS } from "@/src/styles/colors";
 import * as Haptics from "expo-haptics";
+import { formatCurrency } from "@/src/utils/format.utils";
 
 interface CustomProductCardProps {
   product: CustomProduct;
@@ -44,6 +46,22 @@ export function CustomProductCard({
     });
   };
 
+  // Obter a exibição do tipo de preço
+  const getPriceTypeLabel = (priceType?: string) => {
+    switch (priceType) {
+      case "menor":
+        return "Menor preço";
+      case "maior":
+        return "Maior preço";
+      case "media":
+        return "Média de preços";
+      case "unico":
+        return "Preço único";
+      default:
+        return "Não definido";
+    }
+  };
+
   const toggleActions = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsActionsVisible(!isActionsVisible);
@@ -68,7 +86,18 @@ export function CustomProductCard({
                 {product.descricao}
               </Text>
 
-              {/* Estatísticas e datas */}
+              {/* Informação de preço */}
+              <View className="flex-row items-center mt-2">
+                <Tag size={16} color={THEME_COLORS.primary} className="mr-1" />
+                <Text className="text-primary-600 font-medium">
+                  {getPriceTypeLabel(product.preco_tipo)}
+                  {product.preco_tipo === "unico" && product.preco && (
+                    <>: {formatCurrency(parseFloat(product.preco))}</>
+                  )}
+                </Text>
+              </View>
+
+              {/* Estatísticas e status */}
               <View className="flex-row items-center flex-wrap mt-2">
                 <View className="flex-row items-center mr-4 mb-1">
                   <StepForwardIcon

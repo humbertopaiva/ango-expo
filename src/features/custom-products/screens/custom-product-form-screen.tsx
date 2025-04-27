@@ -20,7 +20,12 @@ import {
   InputField,
   Switch,
   useToast,
-  TextareaInput,
+  Radio,
+  RadioGroup,
+  RadioIndicator,
+  RadioIcon,
+  RadioLabel,
+  CircleIcon,
 } from "@gluestack-ui/themed";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -35,22 +40,31 @@ import {
   CreateCustomProductDTO,
   CustomProductStep,
 } from "../models/custom-product";
-import { MenuSquare, Image, AlertCircle } from "lucide-react-native";
+import {
+  MenuSquare,
+  Image,
+  AlertCircle,
+  Tag,
+  Percent,
+} from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { imageUtils } from "@/src/utils/image.utils";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { TouchableOpacity } from "react-native";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 // Form validation schema
 const customProductFormSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   descricao: z.string().optional(),
   status: z.boolean().default(false),
+  // New fields
+  preco_tipo: z.enum(["menor", "media", "maior", "unico"]).default("menor"),
+  preco: z.string().optional(),
 });
 
 type CustomProductFormData = z.infer<typeof customProductFormSchema>;
 
-// Path: src/features/custom-products/screens/custom-product-form-screen.tsx (continuação)
 export function CustomProductFormScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
@@ -59,6 +73,7 @@ export function CustomProductFormScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [steps, setSteps] = useState<CustomProductStep[]>([]);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [selectedPriceType, setSelectedPriceType] = useState<string>("menor");
 
   const { customProduct, isLoading: isLoadingCustomProduct } =
     useCustomProductById(id as string);
@@ -71,6 +86,8 @@ export function CustomProductFormScreen() {
       nome: "",
       descricao: "",
       status: false,
+      preco_tipo: "menor",
+      preco: "",
     },
   });
 
@@ -80,7 +97,11 @@ export function CustomProductFormScreen() {
         nome: customProduct.nome,
         descricao: customProduct.descricao,
         status: customProduct.status === "ativo",
+        preco_tipo: customProduct.preco_tipo || "menor",
+        preco: customProduct.preco || "",
       });
+
+      setSelectedPriceType(customProduct.preco_tipo || "menor");
 
       // Definir imagem do produto
       setImageUri(customProduct.imagem);
@@ -95,6 +116,8 @@ export function CustomProductFormScreen() {
         const formattedSteps = customProduct.passos.map((step) => ({
           passo_numero: step.passo_numero,
           qtd_items_step: step.qtd_items_step,
+          nome: step.nome || `Passo ${step.passo_numero}`,
+          descricao: step.descricao || "",
           produtos: Array.isArray(step.produtos) ? [...step.produtos] : [],
         }));
 
@@ -162,6 +185,12 @@ export function CustomProductFormScreen() {
     setImageUri(null);
   };
 
+  // Handle price type change
+  const handlePriceTypeChange = (value: string) => {
+    setSelectedPriceType(value);
+    form.setValue("preco_tipo", value as "menor" | "media" | "maior" | "unico");
+  };
+
   // Enviar formulário
   const handleSubmit = async (data: CustomProductFormData) => {
     try {
@@ -183,18 +212,32 @@ export function CustomProductFormScreen() {
         return;
       }
 
+      // Validar se preço foi informado quando tipo de preço é "unico"
+      if (
+        data.preco_tipo === "unico" &&
+        (!data.preco || data.preco.trim() === "")
+      ) {
+        showErrorToast(
+          toast,
+          "Você deve informar um preço quando o tipo é 'Preço único'"
+        );
+        return;
+      }
+
       setIsSubmitting(true);
 
-      // Vamos enviar apenas os passos como fizemos no teste direto na API
       if (isEditing && id) {
-        // Criar um objeto com APENAS o campo passos
+        // Atualizar produto personalizado existente
         const updateData = {
+          nome: data.nome,
+          descricao: data.descricao || "",
+          imagem: imageUri,
+          status: data.status ? "ativo" : "desativado",
+          preco_tipo: data.preco_tipo,
+          preco: data.preco_tipo === "unico" ? data.preco : undefined,
           passos: steps,
         };
 
-        console.log("Enviando dados para update:", JSON.stringify(updateData));
-
-        // Atualizar produto personalizado existente
         await updateCustomProduct({
           id,
           data: updateData,
@@ -210,12 +253,14 @@ export function CustomProductFormScreen() {
           router.push("/admin/custom-products");
         }, 500);
       } else {
-        // Para criação, precisamos de mais campos
+        // Para criação, precisamos de todos os campos
         const customProductData = {
           nome: data.nome,
           descricao: data.descricao || "",
           imagem: imageUri,
           status: data.status ? "ativo" : "desativado",
+          preco_tipo: data.preco_tipo,
+          preco: data.preco_tipo === "unico" ? data.preco : undefined,
           passos: steps,
           empresa: "", // Será preenchido no backend
         };
@@ -302,10 +347,13 @@ export function CustomProductFormScreen() {
                 1. Preencha as informações básicas do produto
               </Text>
               <Text className="text-blue-700">
-                2. Configure os passos de personalização
+                2. Configure o tipo de preço do produto
               </Text>
               <Text className="text-blue-700">
-                3. Adicione os produtos disponíveis em cada passo
+                3. Configure os passos de personalização com nomes e descrições
+              </Text>
+              <Text className="text-blue-700">
+                4. Adicione os produtos disponíveis em cada passo
               </Text>
             </View>
           </View>
@@ -452,6 +500,126 @@ export function CustomProductFormScreen() {
                 </View>
               </View>
             </FormControl>
+          </View>
+        </SectionCard>
+
+        {/* Configuração de Preço */}
+        <SectionCard
+          title="Configuração de Preço"
+          icon={<Tag size={22} color="#F4511E" />}
+        >
+          <View className="gap-4 flex flex-col py-4">
+            <Text className="text-gray-600 mb-2">
+              Escolha como o preço do produto personalizado será definido:
+            </Text>
+
+            {/* Tipo de Preço */}
+            <FormControl isInvalid={!!form.formState.errors.preco_tipo}>
+              <FormControlLabel>
+                <FormControlLabelText className="text-sm font-medium text-gray-700">
+                  Tipo de Preço
+                </FormControlLabelText>
+              </FormControlLabel>
+              <Controller
+                control={form.control}
+                name="preco_tipo"
+                render={({ field: { value } }) => (
+                  <RadioGroup
+                    value={value}
+                    onChange={handlePriceTypeChange}
+                    className="mt-2 space-y-2"
+                  >
+                    <Radio value="menor" className="mb-2">
+                      <RadioIndicator mr="$2">
+                        <RadioIcon as={CircleIcon} />
+                      </RadioIndicator>
+                      <RadioLabel>
+                        Menor preço entre os produtos selecionados
+                      </RadioLabel>
+                    </Radio>
+                    <Radio value="media" className="mb-2">
+                      <RadioIndicator mr="$2">
+                        <RadioIcon as={CircleIcon} />
+                      </RadioIndicator>
+                      <RadioLabel>
+                        Média dos preços dos produtos selecionados
+                      </RadioLabel>
+                    </Radio>
+                    <Radio value="maior" className="mb-2">
+                      <RadioIndicator mr="$2">
+                        <RadioIcon as={CircleIcon} />
+                      </RadioIndicator>
+                      <RadioLabel>
+                        Maior preço entre os produtos selecionados
+                      </RadioLabel>
+                    </Radio>
+                    <Radio value="unico" className="mb-2">
+                      <RadioIndicator mr="$2">
+                        <RadioIcon as={CircleIcon} />
+                      </RadioIndicator>
+                      <RadioLabel>Preço único definido manualmente</RadioLabel>
+                    </Radio>
+                  </RadioGroup>
+                )}
+              />
+            </FormControl>
+
+            {/* Campo de Preço (visível apenas quando o tipo de preço é "unico") */}
+            {selectedPriceType === "unico" && (
+              <FormControl isInvalid={!!form.formState.errors.preco}>
+                <FormControlLabel>
+                  <FormControlLabelText className="text-sm font-medium text-gray-700">
+                    Preço <Text className="text-red-500">*</Text>
+                  </FormControlLabelText>
+                </FormControlLabel>
+                <Controller
+                  control={form.control}
+                  name="preco"
+                  render={({ field: { onChange, value } }) => (
+                    <Input>
+                      <InputField
+                        placeholder="Digite o preço do produto (ex: 19.90)"
+                        onChangeText={onChange}
+                        value={value ?? ""}
+                        keyboardType="decimal-pad"
+                        className="bg-white"
+                      />
+                    </Input>
+                  )}
+                />
+                {form.formState.errors.preco && (
+                  <FormControlError>
+                    <FormControlErrorText className="text-sm">
+                      {form.formState.errors.preco.message}
+                    </FormControlErrorText>
+                  </FormControlError>
+                )}
+              </FormControl>
+            )}
+
+            {/* Explicação sobre o tipo de preço selecionado */}
+            <View className="bg-gray-50 p-3 rounded-lg mt-2">
+              <View className="flex-row items-center">
+                <Percent
+                  size={18}
+                  color={THEME_COLORS.primary}
+                  className="mr-2"
+                />
+                <Text className="text-gray-700 font-medium">
+                  Como funciona:
+                </Text>
+              </View>
+              <Text className="text-gray-600 mt-1">
+                {selectedPriceType === "menor" &&
+                  "O preço será automaticamente definido como o menor valor entre todos os produtos que o cliente selecionar durante a personalização."}
+                {selectedPriceType === "media" &&
+                  "O preço será calculado como a média dos valores de todos os produtos que o cliente selecionar durante a personalização."}
+                {selectedPriceType === "maior" &&
+                  "O preço será automaticamente definido como o maior valor entre todos os produtos que o cliente selecionar durante a personalização."}
+                {selectedPriceType === "unico" &&
+                  "Você define um preço fixo para este produto personalizado, independente das escolhas do cliente."}
+              </Text>
+            </View>
           </View>
         </SectionCard>
 
