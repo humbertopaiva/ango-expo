@@ -1,14 +1,14 @@
 // Path: src/features/company-page/components/custom-product-card.tsx
 
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Card } from "@gluestack-ui/themed";
-import { Package, Settings, ChevronRight } from "lucide-react-native";
+import { Package, Settings, ChevronRight, Layers } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { CustomProduct } from "../models/custom-product";
 import { router } from "expo-router";
-import { HStack } from "@gluestack-ui/themed";
+import { HStack, VStack } from "@gluestack-ui/themed";
 
 interface CustomProductCardProps {
   product: CustomProduct;
@@ -101,6 +101,40 @@ export function CustomProductCard({ product, style }: CustomProductCardProps) {
                 </Text>
               )}
             </View>
+
+            {/* Etapas de personalização */}
+            <VStack className="mt-2">
+              {product.passos.slice(0, 2).map((step) => (
+                <View
+                  key={`step-${step.passo_numero}`}
+                  className="flex-row items-center mb-1"
+                >
+                  <View
+                    className="w-4 h-4 rounded-full mr-2 items-center justify-center"
+                    style={{ backgroundColor: `${primaryColor}20` }}
+                  >
+                    <Text
+                      className="text-xs font-bold"
+                      style={{ color: primaryColor }}
+                    >
+                      {step.passo_numero}
+                    </Text>
+                  </View>
+                  <Text className="text-xs text-gray-700" numberOfLines={1}>
+                    {step.nome || `Etapa ${step.passo_numero}`}
+                    <Text className="text-gray-500">{` (${
+                      step.qtd_items_step
+                    } ${step.qtd_items_step === 1 ? "item" : "itens"})`}</Text>
+                  </Text>
+                </View>
+              ))}
+
+              {product.passos.length > 2 && (
+                <Text className="text-xs text-gray-500 ml-6">
+                  +{product.passos.length - 2} etapas adicionais
+                </Text>
+              )}
+            </VStack>
 
             {/* Rodapé com ícone de configuração */}
             <HStack className="mt-3 items-center justify-between">

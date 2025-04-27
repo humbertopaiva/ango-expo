@@ -39,13 +39,13 @@ export function useCompanyPageViewModel(
     useQuery({
       queryKey: ["company-custom-products", companySlug],
       queryFn: async () => {
-        // Buscar ID da empresa a partir do profile
         if (!profile) return [];
-        const companyId = profile.id;
+        const companyId = profile.empresa?.id || profile.id;
+
         return customProductService.getCompanyCustomProducts(companyId);
       },
-      enabled: !!profile, // Só busca após carregar o perfil para obter o ID
-      staleTime: 5 * 60 * 1000,
+      enabled: !!profile,
+      staleTime: 0,
     });
 
   // Verificar se deve mostrar informações de delivery
