@@ -55,6 +55,7 @@ import { CategorySelectModal } from "@/components/common/category-select-modal";
 import { CreateProductDTO } from "../models/product";
 import useAuthStore from "@/src/stores/auth";
 import { VariationSelector } from "../components/variation-selector";
+import { ProductVisibilityOptions } from "../components/product-visibility-options";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -95,6 +96,9 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       status: "disponivel",
       variacao: null,
       is_variacao_enabled: false,
+      quantidade_maxima_carrinho: null,
+      exibir_produto: true,
+      exibir_preco: true,
     },
   });
 
@@ -155,9 +159,9 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       form.reset({
         nome: product.nome,
         descricao: product.descricao,
-        preco: product.preco || "", // Convertendo para string vazia caso seja null
+        preco: product.preco || "",
         preco_promocional: product.preco_promocional || "",
-        categoria: categoryId, // Usa o valor correto da categoria
+        categoria: categoryId,
         imagem: product.imagem,
         parcelamento_cartao: product.parcelamento_cartao,
         quantidade_parcelas: product.quantidade_parcelas || "",
@@ -165,6 +169,11 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         status: product.status,
         variacao: variationId,
         is_variacao_enabled: hasVariation,
+
+        // Novos campos
+        quantidade_maxima_carrinho: product.quantidade_maxima_carrinho,
+        exibir_produto: product.exibir_produto !== false, // default true se não definido
+        exibir_preco: product.exibir_preco !== false, // default true se não definido
       });
 
       // Se o produto tem variação, atualize os estados relacionados
@@ -522,6 +531,11 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             </View>
           </SectionCard>
         )}
+
+        <ProductVisibilityOptions
+          control={form.control}
+          isSubmitting={isSubmitting}
+        />
 
         {/* Status do Produto - apenas se não for produto com variação */}
         {!form.watch("is_variacao_enabled") && (

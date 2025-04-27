@@ -30,10 +30,21 @@ export const productFormSchema = z
       .enum(["disponivel", "indisponivel"])
       .default("disponivel")
       .optional(),
-    // Removendo tem_variacao e adicionando variacao
     variacao: z.string().nullable().optional(),
-    // Campo temporário para controle no frontend
     is_variacao_enabled: z.boolean().default(false),
+
+    // Novos campos
+    quantidade_maxima_carrinho: z.preprocess(
+      (val) =>
+        val === null || val === undefined || val === "" ? null : Number(val),
+      z
+        .number()
+        .min(0, "Quantidade máxima não pode ser negativa")
+        .nullable()
+        .optional()
+    ),
+    exibir_produto: z.boolean().default(true),
+    exibir_preco: z.boolean().default(true),
   })
   .refine(
     (data) => {

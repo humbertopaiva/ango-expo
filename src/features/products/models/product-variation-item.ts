@@ -17,6 +17,9 @@ export interface ProductVariationItem {
   imagem?: string;
   descricao?: string;
   disponivel?: boolean;
+  quantidade_maxima_carrinho?: number | null;
+  exibir_produto?: boolean;
+  exibir_preco?: boolean;
 }
 
 export interface CreateProductVariationItemDTO {
@@ -31,6 +34,9 @@ export interface CreateProductVariationItemDTO {
   descricao?: string;
   disponivel?: boolean;
   status?: string;
+  quantidade_maxima_carrinho?: number | null;
+  exibir_produto?: boolean;
+  exibir_preco?: boolean;
 }
 
 export type UpdateProductVariationItemDTO =
