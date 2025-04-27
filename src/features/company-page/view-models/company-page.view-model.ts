@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { companyPageService } from "../services/company-page.service";
 import { ICompanyPageViewModel } from "./company-page.view-model.interface";
 import { customProductService } from "../services/custom-product.service";
+import { useCallback } from "react";
+import { ProductAddonList } from "../models/product-addon-list";
+import { productAddonsService } from "../services/product-addons.service";
 
 export function useCompanyPageViewModel(
   companySlug: string
@@ -56,6 +59,23 @@ export function useCompanyPageViewModel(
         config?.delivery?.mostrar_info_delivery === null)
     );
   };
+
+  const getProductAddonLists = useCallback(
+    async (productId: string): Promise<ProductAddonList[]> => {
+      if (!products || !profile) return [];
+
+      // Encontrar o produto pelo ID
+      const product = products.find((p) => p.id === productId);
+      if (!product || !product.categoria?.id) return [];
+
+      // Buscar listas de adicionais para a categoria do produto
+      return await productAddonsService.getAddonListsByCategory(
+        product.categoria.id,
+        profile.empresa?.id!
+      );
+    },
+    [products, profile]
+  );
 
   // Verificar se o carrinho está habilitado
   const isCartEnabled = () => {
@@ -164,5 +184,6 @@ export function useCompanyPageViewModel(
     shouldShowDeliveryInfo,
     isCartEnabled,
     getGalleryImages,
+    getProductAddonLists,
   };
 }
