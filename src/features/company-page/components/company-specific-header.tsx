@@ -7,12 +7,14 @@ import {
   Image,
   Platform,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
 import { router } from "expo-router";
 import { HStack } from "@gluestack-ui/themed";
 import { Box } from "@/components/ui/box";
+import { useCategoryFilterStore } from "../stores/category-filter.store";
 
 interface CompanySpecificHeaderProps {
   title: string;
@@ -22,10 +24,6 @@ interface CompanySpecificHeaderProps {
   backTo?: string;
 }
 
-/**
- * Header específico para a página da empresa, com fundo branco e texto na cor primária
- * Este componente não afeta outros headers na aplicação
- */
 export function CompanySpecificHeader({
   title,
   subtitle,
@@ -35,6 +33,10 @@ export function CompanySpecificHeader({
 }: CompanySpecificHeaderProps) {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+
+  // Use the category filter store
+  const { categories, selectedCategory, setSelectedCategory, isVisible } =
+    useCategoryFilterStore();
 
   // Handler para voltar
   const handleBack = () => {
@@ -74,6 +76,11 @@ export function CompanySpecificHeader({
             >
               {title}
             </Text>
+            {subtitle && (
+              <Text className="text-xs text-white/80" numberOfLines={1}>
+                {subtitle}
+              </Text>
+            )}
           </View>
         </HStack>
 
@@ -86,16 +93,59 @@ export function CompanySpecificHeader({
           />
         </Box>
       </HStack>
+
+      {/* Show categories when the original filter is not visible */}
+      {!isVisible && categories.length > 0 && (
+        <View
+          className="pb-2"
+          style={{
+            borderTopWidth: 1,
+            borderTopColor: "rgba(255,255,255,0.1)",
+            backgroundColor: primaryColor,
+          }}
+        >
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingVertical: 4,
+            }}
+          >
+            {categories.map((category) => {
+              const isActive = selectedCategory === category;
+
+              return (
+                <TouchableOpacity
+                  key={category}
+                  onPress={() => setSelectedCategory(category)}
+                  style={{
+                    backgroundColor: isActive
+                      ? "#FFFFFF"
+                      : "rgba(255,255,255,0.2)",
+                    marginRight: 10,
+                    borderRadius: 20,
+                    paddingHorizontal: 14,
+                    paddingVertical: 6,
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={{
+                      color: isActive ? primaryColor : "#FFFFFF",
+                      fontWeight: isActive ? "600" : "500",
+                      fontSize: 12,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  shadow: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-});
