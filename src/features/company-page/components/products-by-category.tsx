@@ -30,8 +30,6 @@ import {
   VStack,
 } from "@gluestack-ui/themed";
 import { CategoryProductsList } from "./category-products-list";
-import { SafeMap } from "@/components/common/safe-map";
-import { shouldUseDarkText } from "@/src/utils/color.utils";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
 
 // Constante para a categoria "Todos"
@@ -68,8 +66,6 @@ export function ProductsByCategory({
 
   // Cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
-  const filterBgColor = `${primaryColor}15`;
-  const filterTextColor = primaryColor;
 
   // Iniciar animações quando o componente montar
   useEffect(() => {
@@ -85,6 +81,10 @@ export function ProductsByCategory({
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Set the categories filter to always be hidden in the main component
+    // so it will only appear in the header after scrolling
+    setIsVisible(false);
   }, []);
 
   // Calculate product counts and update store
