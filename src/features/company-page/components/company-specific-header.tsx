@@ -1,18 +1,18 @@
 // Path: src/features/company-page/components/company-specific-header.tsx
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
   Platform,
-  StyleSheet,
   ScrollView,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, Filter } from "lucide-react-native";
 import { router } from "expo-router";
-import { HStack } from "@gluestack-ui/themed";
+import { HStack, VStack } from "@gluestack-ui/themed";
 import { Box } from "@/components/ui/box";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
 
@@ -27,18 +27,25 @@ interface CompanySpecificHeaderProps {
 export function CompanySpecificHeader({
   title,
   subtitle,
-  primaryColor = "#4B5563", // gray-700 default
+  primaryColor = "#F4511E", // Use the primary color as default
   onBackPress,
   backTo,
 }: CompanySpecificHeaderProps) {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-10)).current;
 
   // Use the category filter store
-  const { categories, selectedCategory, setSelectedCategory, isVisible } =
-    useCategoryFilterStore();
+  const {
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    isVisible,
+    productCounts,
+  } = useCategoryFilterStore();
 
-  // Handler para voltar
+  // Handler for back button
   const handleBack = () => {
     if (onBackPress) {
       onBackPress();
@@ -49,27 +56,56 @@ export function CompanySpecificHeader({
     }
   };
 
+  // Animate the categories appearance when visibility changes
+  useEffect(() => {
+    if (!isVisible && categories.length > 0) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      fadeAnim.setValue(0);
+      slideAnim.setValue(-10);
+    }
+  }, [isVisible, categories.length]);
+
+  // Only show categories if there are categories AND they're not visible in the main view
+  const shouldShowCategories = !isVisible && categories.length > 0;
+
+  // Add some console logs for debugging
+  console.log("Header - isVisible:", isVisible);
+  console.log("Header - categories:", categories);
+  console.log("Header - shouldShowCategories:", shouldShowCategories);
+
   return (
     <View
-      className="bg-primary-500"
       style={[
-        isWeb ? { position: "sticky", top: 0, zIndex: 50 } : {},
         {
+          backgroundColor: primaryColor,
           paddingTop: Platform.OS === "ios" ? insets.top : 0,
         },
+        isWeb ? { position: "sticky", top: 0, zIndex: 50 } : {},
       ]}
     >
+      {/* Main header with back button and title */}
       <HStack className="px-4 py-3 justify-between items-center" space="md">
-        {/* Botão voltar e título */}
         <HStack className="items-center flex-1" space="sm">
           <TouchableOpacity
             onPress={handleBack}
-            className="p-2 -ml-2 rounded-full active:bg-gray-100"
+            className="p-2 -ml-2 rounded-full active:bg-white/10"
           >
             <ArrowLeft size={24} color={"#FFFFFF"} />
           </TouchableOpacity>
 
-          <View className="ml-2 flex-1">
+          <VStack className="ml-2 flex-1">
             <Text
               className="text-xl font-semibold text-white"
               numberOfLines={1}
@@ -81,10 +117,10 @@ export function CompanySpecificHeader({
                 {subtitle}
               </Text>
             )}
-          </View>
+          </VStack>
         </HStack>
 
-        {/* Logo da aplicação */}
+        {/* Logo */}
         <Box className="mr-1">
           <Image
             source={require("@/assets/images/logo-white.png")}
@@ -94,15 +130,16 @@ export function CompanySpecificHeader({
         </Box>
       </HStack>
 
-      {/* Show categories when the original filter is not visible */}
-      {!isVisible && categories.length > 0 && (
-        <View
-          className="pb-2"
+      {/* Categories horizontal scroll - only shown when the main filter is not visible */}
+      {shouldShowCategories && (
+        <Animated.View
           style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
             borderTopWidth: 1,
-            borderTopColor: "rgba(255,255,255,0.1)",
-            backgroundColor: primaryColor,
+            borderTopColor: "rgba(255,255,255,0.15)",
           }}
+          className="pb-2 pt-1"
         >
           <ScrollView
             horizontal
@@ -114,6 +151,8 @@ export function CompanySpecificHeader({
           >
             {categories.map((category) => {
               const isActive = selectedCategory === category;
+              // Get the count of products in this category
+              const count = productCounts[category] || 0;
 
               return (
                 <TouchableOpacity
@@ -127,24 +166,56 @@ export function CompanySpecificHeader({
                     borderRadius: 20,
                     paddingHorizontal: 14,
                     paddingVertical: 6,
+                    shadowColor: isActive ? "#000" : "transparent",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: isActive ? 0.2 : 0,
+                    shadowRadius: isActive ? 3 : 0,
+                    elevation: isActive ? 3 : 0,
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text
-                    style={{
-                      color: isActive ? primaryColor : "#FFFFFF",
-                      fontWeight: isActive ? "600" : "500",
-                      fontSize: 12,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {category}
-                  </Text>
+                  <View className="flex-row items-center">
+                    <Text
+                      style={{
+                        color: isActive ? primaryColor : "#FFFFFF",
+                        fontWeight: isActive ? "700" : "500",
+                        fontSize: 13,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {category}
+                    </Text>
+
+                    {/* Only show badge if count is available */}
+                    {count > 0 && (
+                      <View
+                        style={{
+                          backgroundColor: isActive
+                            ? `${primaryColor}20`
+                            : "rgba(255,255,255,0.3)",
+                          borderRadius: 10,
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          marginLeft: 6,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: isActive ? primaryColor : "#FFFFFF",
+                            fontSize: 10,
+                            fontWeight: "600",
+                          }}
+                        >
+                          {count}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
-        </View>
+        </Animated.View>
       )}
     </View>
   );

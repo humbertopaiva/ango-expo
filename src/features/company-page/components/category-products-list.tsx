@@ -60,12 +60,34 @@ export function CategoryProductsList({
         <HStack className="items-center justify-between">
           <HStack className="items-center">
             <Text className="text-xl font-semibold text-gray-800">{title}</Text>
-            <View className="px-2 py-0.5 rounded-full ml-2 bg-gray-100">
-              <Text className="text-xs font-medium text-gray-600">
+            <View
+              className="px-2 py-0.5 rounded-full ml-2"
+              style={{ backgroundColor: `${primaryColor}15` }}
+            >
+              <Text
+                className="text-xs font-medium"
+                style={{ color: primaryColor }}
+              >
                 {products.length}
               </Text>
             </View>
           </HStack>
+
+          {/* Botão "Ver todos" para categorias com muitos produtos */}
+          {products.length > MAX_CATALOG_PRODUCTS && (
+            <TouchableOpacity
+              onPress={handleViewAll}
+              className="flex-row items-center"
+            >
+              <Text
+                className="mr-1 text-sm font-medium"
+                style={{ color: primaryColor }}
+              >
+                Ver todos
+              </Text>
+              <ChevronRight size={16} color={primaryColor} />
+            </TouchableOpacity>
+          )}
         </HStack>
       </View>
 
@@ -122,6 +144,10 @@ export function CategoryProductsList({
             <TouchableOpacity
               onPress={handleViewAll}
               className="mt-4 py-3 border border-gray-200 rounded-lg"
+              style={{
+                borderColor: `${primaryColor}30`,
+                backgroundColor: `${primaryColor}05`,
+              }}
             >
               <Text
                 className="text-center font-medium"

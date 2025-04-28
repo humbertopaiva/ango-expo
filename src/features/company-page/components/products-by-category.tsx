@@ -52,14 +52,16 @@ export function ProductsByCategory({
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
   const { width } = Dimensions.get("window");
+  const hasRunVisibilityCheck = useRef(false);
 
   // Use the category filter store
   const {
-    categories,
+    categories: storeCategories,
     selectedCategory,
     setCategories,
     setSelectedCategory,
     setIsVisible,
+    updateProductCounts,
   } = useCategoryFilterStore();
 
   // Animações
@@ -73,27 +75,58 @@ export function ProductsByCategory({
 
   // Track category filter visibility
   useEffect(() => {
-    const unsubscribe = setupVisibilityTracking();
-    return unsubscribe;
+    if (!hasRunVisibilityCheck.current) {
+      hasRunVisibilityCheck.current = true;
+      const unsubscribe = setupVisibilityTracking();
+      return unsubscribe;
+    }
   }, []);
 
   const setupVisibilityTracking = () => {
-    // Create intersection observer to track visibility
+    // Simplified approach with fewer updates
+    let lastCheckTime = 0;
+
+    // Function to check visibility
     const checkVisibility = () => {
+      const now = Date.now();
+      if (now - lastCheckTime < 200) return; // Throttle checks
+      lastCheckTime = now;
+
       if (categoryFiltersRef.current) {
         categoryFiltersRef.current.measure(
           (x, y, width, height, pageX, pageY) => {
-            // If the top of the element is less than 0, it's scrolled out of view
-            setIsVisible(pageY > 0);
+            // If the filter is at the top of the screen or below, it's not visible
+            const isFilterVisible = pageY > 10;
+            setIsVisible(isFilterVisible);
+
+            // Debug log
+            console.log("Filter position:", pageY, "Visible:", isFilterVisible);
           }
         );
       }
     };
 
-    // Check visibility on scroll
-    const interval = setInterval(checkVisibility, 200);
+    // Add scroll handler
+    const scrollHandler = () => {
+      requestAnimationFrame(checkVisibility);
+    };
 
-    return () => clearInterval(interval);
+    // Add scroll listener to the parent scroll view
+    if (contentScrollRef.current) {
+      contentScrollRef.current?.setNativeProps({
+        onScroll: scrollHandler,
+      });
+    } else {
+      // Fallback to periodic checking if ScrollView ref isn't available
+      const interval = setInterval(checkVisibility, 500);
+      return () => clearInterval(interval);
+    }
+
+    return () => {
+      if (contentScrollRef.current) {
+        contentScrollRef.current.setNativeProps({ onScroll: null });
+      }
+    };
   };
 
   // Iniciar animações quando o componente montar
@@ -111,6 +144,28 @@ export function ProductsByCategory({
       }),
     ]).start();
   }, []);
+
+  // Calculate product counts and update store
+  useEffect(() => {
+    if (!vm.products || vm.products.length === 0) return;
+
+    const counts: Record<string, number> = {};
+
+    // Add the ALL_CATEGORIES count
+    counts[ALL_CATEGORIES] = vm.products.length;
+
+    // Group products by category and count
+    vm.products.forEach((product) => {
+      const category = product.categoria?.nome || "Outros";
+      if (!counts[category]) counts[category] = 0;
+      counts[category]++;
+    });
+
+    // Update store
+    updateProductCounts(counts);
+
+    console.log("Updated product counts:", counts);
+  }, [vm.products, updateProductCounts]);
 
   // Calcular todos os produtos e categorias quando os dados estiverem disponíveis
   useEffect(() => {
@@ -139,7 +194,20 @@ export function ProductsByCategory({
     });
 
     setCategories(sortedCategories);
-  }, [vm.products]);
+    console.log("Categories set:", sortedCategories);
+
+    // Make a few attempts to check visibility after render
+    setTimeout(() => {
+      if (categoryFiltersRef.current) {
+        categoryFiltersRef.current.measure(
+          (x, y, width, height, pageX, pageY) => {
+            console.log("Initial filter position:", pageY);
+            setIsVisible(pageY > 10);
+          }
+        );
+      }
+    }, 500);
+  }, [vm.products, setCategories]);
 
   // Filtrar produtos com base na pesquisa e categoria selecionada
   const getFilteredProducts = useMemo(() => {
@@ -213,6 +281,20 @@ export function ProductsByCategory({
   // Verificar se há categorias para mostrar
   const hasCategories = Object.keys(getFilteredProducts).length > 0;
 
+  // Force measurement after layout
+  const handleLayout = () => {
+    InteractionManager.runAfterInteractions(() => {
+      if (categoryFiltersRef.current) {
+        categoryFiltersRef.current.measure(
+          (x, y, width, height, pageX, pageY) => {
+            console.log("Layout filter position:", pageY);
+            setIsVisible(pageY > 10);
+          }
+        );
+      }
+    });
+  };
+
   if (vm.isLoading) {
     // Skeleton loading state
     return (
@@ -239,7 +321,7 @@ export function ProductsByCategory({
   }
 
   return (
-    <View className="mb-8">
+    <View className="mb-8" onLayout={handleLayout}>
       {/* Header e barra de pesquisa */}
       <View className="px-4 mb-4">
         <HStack className="items-center justify-between mb-6">
@@ -300,8 +382,21 @@ export function ProductsByCategory({
       </View>
 
       {/* Lista horizontal de categorias */}
-      <View ref={categoryFiltersRef} className="mb-4">
-        {categories.length > 0 && (
+      <View
+        ref={categoryFiltersRef}
+        className="mb-4"
+        onLayout={() => {
+          console.log("Category filters layout");
+          if (categoryFiltersRef.current) {
+            categoryFiltersRef.current.measure(
+              (x, y, width, height, pageX, pageY) => {
+                console.log("Filter layout position:", pageY);
+              }
+            );
+          }
+        }}
+      >
+        {storeCategories.length > 0 && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -310,7 +405,7 @@ export function ProductsByCategory({
               paddingVertical: 8,
             }}
           >
-            {categories.map((category) => {
+            {storeCategories.map((category) => {
               const isActive = selectedCategory === category;
 
               return (
@@ -396,6 +491,16 @@ export function ProductsByCategory({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 8 }}
         scrollEnabled={true}
+        onScroll={() => {
+          if (categoryFiltersRef.current) {
+            categoryFiltersRef.current.measure(
+              (x, y, width, height, pageX, pageY) => {
+                console.log("Scroll filter position:", pageY);
+                setIsVisible(pageY > 10);
+              }
+            );
+          }
+        }}
       >
         {hasCategories &&
           Object.entries(getFilteredProducts).map(
