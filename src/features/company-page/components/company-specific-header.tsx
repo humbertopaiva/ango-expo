@@ -1,5 +1,5 @@
 // Path: src/features/company-page/components/company-specific-header.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -31,6 +31,78 @@ interface CompanySpecificHeaderProps {
   scrollPosition?: number;
 }
 
+// Componente de categoria para evitar renderizações desnecessárias
+const CategoryButton = memo(
+  ({
+    category,
+    isActive,
+    count,
+    primaryColor,
+    onSelect,
+  }: {
+    category: string;
+    isActive: boolean;
+    count: number;
+    primaryColor: string;
+    onSelect: () => void;
+  }) => (
+    <TouchableOpacity
+      onPress={onSelect}
+      style={{
+        backgroundColor: isActive ? "#FFFFFF" : "rgba(255,255,255,0.2)",
+        marginRight: 10,
+        borderRadius: 20,
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        shadowColor: isActive ? "#000" : "transparent",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isActive ? 0.2 : 0,
+        shadowRadius: isActive ? 3 : 0,
+        elevation: isActive ? 3 : 0,
+      }}
+      activeOpacity={0.7}
+    >
+      <View className="flex-row items-center">
+        <Text
+          style={{
+            color: isActive ? primaryColor : "#FFFFFF",
+            fontWeight: isActive ? "700" : "500",
+            fontSize: 13,
+          }}
+          numberOfLines={1}
+        >
+          {category}
+        </Text>
+
+        {/* Only show badge if count is available */}
+        {count > 0 && (
+          <View
+            style={{
+              backgroundColor: isActive
+                ? `${primaryColor}20`
+                : "rgba(255,255,255,0.3)",
+              borderRadius: 10,
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              marginLeft: 6,
+            }}
+          >
+            <Text
+              style={{
+                color: isActive ? primaryColor : "#FFFFFF",
+                fontSize: 10,
+                fontWeight: "600",
+              }}
+            >
+              {count}
+            </Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  )
+);
+
 export function CompanySpecificHeader({
   title,
   subtitle,
@@ -53,8 +125,8 @@ export function CompanySpecificHeader({
   // Determine if categories should be shown (after scroll)
   const [showCategories, setShowCategories] = useState(false);
 
-  // Handler for back button
-  const handleBack = () => {
+  // Handler for back button - usando useCallback
+  const handleBack = useCallback(() => {
     if (onBackPress) {
       onBackPress();
     } else if (backTo) {
@@ -62,11 +134,11 @@ export function CompanySpecificHeader({
     } else {
       router.back();
     }
-  };
+  }, [onBackPress, backTo]);
 
-  // Monitor scroll position to show categories
+  // Monitor scroll position to show categories - Alterado para 300px conforme solicitado
   useEffect(() => {
-    if (scrollPosition > 240) {
+    if (scrollPosition > 300) {
       setShowCategories(true);
       categoriesOpacity.value = withTiming(1, { duration: 300 });
       categoriesHeight.value = withTiming(1, { duration: 300 });
@@ -76,7 +148,7 @@ export function CompanySpecificHeader({
 
       // Small delay to hide categories after animation
       const timeout = setTimeout(() => {
-        if (scrollPosition <= 240) {
+        if (scrollPosition <= 300) {
           setShowCategories(false);
         }
       }, 200);
@@ -147,7 +219,7 @@ export function CompanySpecificHeader({
         </Box>
       </HStack>
 
-      {/* Categories horizontal scroll - shown only after scrolling down */}
+      {/* Categories horizontal scroll - shown only after scrolling down 300px */}
       <Animated.View style={animatedCategoriesStyle}>
         {showCategories && categories.length > 0 && (
           <ScrollView
@@ -164,63 +236,14 @@ export function CompanySpecificHeader({
               const count = productCounts[category] || 0;
 
               return (
-                <TouchableOpacity
+                <CategoryButton
                   key={category}
-                  onPress={() => setSelectedCategory(category)}
-                  style={{
-                    backgroundColor: isActive
-                      ? "#FFFFFF"
-                      : "rgba(255,255,255,0.2)",
-                    marginRight: 10,
-                    borderRadius: 20,
-                    paddingHorizontal: 14,
-                    paddingVertical: 6,
-                    shadowColor: isActive ? "#000" : "transparent",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: isActive ? 0.2 : 0,
-                    shadowRadius: isActive ? 3 : 0,
-                    elevation: isActive ? 3 : 0,
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View className="flex-row items-center">
-                    <Text
-                      style={{
-                        color: isActive ? primaryColor : "#FFFFFF",
-                        fontWeight: isActive ? "700" : "500",
-                        fontSize: 13,
-                      }}
-                      numberOfLines={1}
-                    >
-                      {category}
-                    </Text>
-
-                    {/* Only show badge if count is available */}
-                    {count > 0 && (
-                      <View
-                        style={{
-                          backgroundColor: isActive
-                            ? `${primaryColor}20`
-                            : "rgba(255,255,255,0.3)",
-                          borderRadius: 10,
-                          paddingHorizontal: 6,
-                          paddingVertical: 2,
-                          marginLeft: 6,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: isActive ? primaryColor : "#FFFFFF",
-                            fontSize: 10,
-                            fontWeight: "600",
-                          }}
-                        >
-                          {count}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
+                  category={category}
+                  isActive={isActive}
+                  count={count}
+                  primaryColor={primaryColor}
+                  onSelect={() => setSelectedCategory(category)}
+                />
               );
             })}
           </ScrollView>

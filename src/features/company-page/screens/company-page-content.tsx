@@ -1,5 +1,6 @@
 // Path: src/features/company-page/screens/company-page-content.tsx
-import React, { useState, useEffect, useRef } from "react";
+
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   ScrollView,
@@ -17,13 +18,13 @@ import { router } from "expo-router";
 import { CompanyGallery } from "../components/company-gallery";
 import { CustomProductsSection } from "../components/custom-products-section";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  interpolate,
-  Extrapolate,
-} from "react-native-reanimated";
+import { memo } from "react";
+
+// Utilizando memo para evitar renderizações desnecessárias
+const MemoizedFeaturedProductsStrip = memo(FeaturedProductsStrip);
+const MemoizedProductsByCategory = memo(ProductsByCategory);
+const MemoizedCompanyGallery = memo(CompanyGallery);
+const MemoizedCustomProductsSection = memo(CustomProductsSection);
 
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
@@ -31,10 +32,6 @@ export function CompanyPageContent() {
   const [scrollY, setScrollY] = useState(0);
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
-
-  // Use Reanimated shared values for smooth animations
-  const headerOpacity = useSharedValue(1);
-  const headerTranslateY = useSharedValue(0);
 
   // Estado para armazenar informações do header
   const [companyTitle, setCompanyTitle] = useState<string>("");
@@ -53,76 +50,42 @@ export function CompanyPageContent() {
       // Reset filter store when component unmounts
       resetCategoryFilter();
     };
+  }, [resetCategoryFilter]);
+
+  // Use useCallback para evitar recriações desnecessárias de funções
+  const handleOpenInfoModal = useCallback(() => {
+    setInfoModalVisible(true);
   }, []);
 
-  const handleOpenInfoModal = () => {
-    setInfoModalVisible(true);
-  };
-
-  const handleCloseInfoModal = () => {
+  const handleCloseInfoModal = useCallback(() => {
     setInfoModalVisible(false);
-  };
+  }, []);
 
-  // Handle scroll events to trigger header changes
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const currentScrollY = event.nativeEvent.contentOffset.y;
-    setScrollY(currentScrollY);
-
-    // Animate the header based on scroll position
-    // Start fading out at 100px scroll, completely gone by 240px
-    const fadeOutPoint = 100;
-    const disappearPoint = 240;
-
-    if (currentScrollY > fadeOutPoint) {
-      const opacityProgress = Math.max(
-        0,
-        1 - (currentScrollY - fadeOutPoint) / (disappearPoint - fadeOutPoint)
-      );
-
-      // Update opacity with smooth animation
-      headerOpacity.value = withTiming(opacityProgress, { duration: 150 });
-
-      // Update position - move header up as it fades
-      const translateProgress = Math.min(
-        40,
-        (currentScrollY - fadeOutPoint) * 0.2
-      );
-      headerTranslateY.value = withTiming(-translateProgress, {
-        duration: 150,
-      });
-    } else {
-      // Reset when scrolling back up
-      headerOpacity.value = withTiming(1, { duration: 150 });
-      headerTranslateY.value = withTiming(0, { duration: 150 });
-    }
-  };
-
-  // Create animated styles
-  const animatedHeaderStyle = useAnimatedStyle(() => {
-    return {
-      opacity: headerOpacity.value,
-      transform: [{ translateY: headerTranslateY.value }],
-    };
-  });
+  // Handle scroll events to trigger header changes - usando useCallback
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+      setScrollY(currentScrollY);
+    },
+    []
+  );
 
   // Verificar se deve mostrar informações de delivery separadamente
-  const shouldShowDeliveryInfo = () => {
+  const shouldShowDeliveryInfo = useCallback(() => {
     return (
       vm.hasDelivery() &&
       vm.config?.delivery &&
-      // Se app.mostrar_info_delivery for false, não mostrar
-      // Se app não existir ou mostrar_info_delivery for null, mostrar (comportamento padrão)
       !(
         vm.config?.delivery?.mostrar_info_delivery === true ||
         vm.config?.delivery?.mostrar_info_delivery === null
       )
     );
-  };
+  }, [vm]);
 
   // Verificar se o carrinho está habilitado
-  const isCartEnabled = () => {
-    return vm.config?.delivery?.habilitar_carrinho !== false; // Por padrão, se não estiver definido, considera como true
-  };
+  const isCartEnabled = useCallback(() => {
+    return vm.config?.delivery?.habilitar_carrinho !== false;
+  }, [vm.config?.delivery?.habilitar_carrinho]);
 
   // Configurar informações do header quando o perfil estiver disponível
   useEffect(() => {
@@ -132,7 +95,7 @@ export function CompanyPageContent() {
       // Definir subtítulo baseado na categoria, se disponível
       if (vm.profile.empresa?.categoria) {
         setCompanySubtitle(vm.profile.empresa.categoria.nome);
-        setCategorySlug(vm.profile.empresa.categoria.slug); // Salvar o slug da categoria
+        setCategorySlug(vm.profile.empresa.categoria.slug);
       }
 
       // Definir cor primária da empresa ou usar cinza escuro como fallback
@@ -142,15 +105,14 @@ export function CompanyPageContent() {
     }
   }, [vm.profile]);
 
-  // Handler para voltar para a categoria
-  const handleBackPress = () => {
+  // Handler para voltar para a categoria - usando useCallback
+  const handleBackPress = useCallback(() => {
     router.back();
-  };
+  }, []);
 
   if (vm.isLoading) {
     return (
       <View className="flex-1 bg-gray-50 justify-center items-center">
-        {/* Um header vazio para manter o layout consistente durante o carregamento */}
         <CompanySpecificHeader
           title="Carregando..."
           onBackPress={() => router.back()}
@@ -164,7 +126,7 @@ export function CompanyPageContent() {
 
   return (
     <View className="flex-1 bg-gray-50 relative">
-      {/* Header específico da empresa - now with scroll position */}
+      {/* Header específico da empresa com posição de scroll */}
       <CompanySpecificHeader
         title={companyTitle}
         subtitle={companySubtitle}
@@ -180,28 +142,26 @@ export function CompanyPageContent() {
           paddingBottom: 120,
         }}
         showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16} // Important for tracking scroll position
+        scrollEventThrottle={16} // Importante para rastrear a posição de rolagem
         onScroll={handleScroll}
       >
         <View>
-          {/* Cabeçalho da empresa - now with fade and translate animation */}
-          <Animated.View style={animatedHeaderStyle}>
-            <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
-          </Animated.View>
+          {/* Cabeçalho da empresa - Agora fixo, sem animação de desaparecimento */}
+          <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
 
           {/* Galeria de imagens da empresa */}
-          <CompanyGallery />
+          <MemoizedCompanyGallery />
 
           {/* Produtos personalizados */}
-          <CustomProductsSection />
+          <MemoizedCustomProductsSection />
 
           {/* Produtos em destaque (da vitrine) */}
           {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
-            <FeaturedProductsStrip />
+            <MemoizedFeaturedProductsStrip />
           )}
 
           {/* Produtos agrupados por categoria */}
-          <ProductsByCategory title={"Produtos"} />
+          <MemoizedProductsByCategory title={"Produtos"} />
         </View>
       </ScrollView>
 
