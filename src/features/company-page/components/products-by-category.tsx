@@ -1,5 +1,12 @@
 // Path: src/features/company-page/components/products-by-category.tsx
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+} from "react";
 import {
   View,
   Text,
@@ -8,16 +15,8 @@ import {
   FlatList,
   ScrollView,
   Dimensions,
-  Animated,
-  InteractionManager,
 } from "react-native";
-import {
-  Search,
-  Package,
-  X,
-  SlidersHorizontal,
-  Filter,
-} from "lucide-react-native";
+import { Search, Package, X } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import {
   Input,
@@ -27,13 +26,84 @@ import {
   HStack,
   Card,
   Button,
-  VStack,
 } from "@gluestack-ui/themed";
 import { CategoryProductsList } from "./category-products-list";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
 
 // Constante para a categoria "Todos"
 const ALL_CATEGORIES = "Todos";
+
+// Componente otimizado com memo para a lista de produtos por categoria
+const MemoizedCategoryProductsList = memo(CategoryProductsList);
+
+// Componente para o campo de busca
+const SearchField = memo(
+  ({
+    searchText,
+    onChangeText,
+  }: {
+    searchText: string;
+    onChangeText: (text: string) => void;
+  }) => (
+    <Input
+      size="md"
+      className="bg-white border-gray-300 shadow-sm rounded-xl"
+      style={{
+        elevation: 2,
+      }}
+    >
+      <InputSlot pl="$3">
+        <InputIcon as={Search} color="#9CA3AF" />
+      </InputSlot>
+      <InputField
+        placeholder="Buscar produtos..."
+        value={searchText}
+        onChangeText={onChangeText}
+        className="py-2.5 placeholder:font-sans"
+      />
+      {searchText ? (
+        <InputSlot pr="$3">
+          <TouchableOpacity
+            onPress={() => onChangeText("")}
+            className="bg-gray-100 rounded-full p-1"
+          >
+            <X size={14} color="#9CA3AF" />
+          </TouchableOpacity>
+        </InputSlot>
+      ) : null}
+    </Input>
+  )
+);
+
+// Componente para mensagem de nenhum produto encontrado
+const NoProductsMessage = memo(
+  ({
+    searchText,
+    onClearSearch,
+  }: {
+    searchText: string;
+    onClearSearch: () => void;
+  }) => (
+    <Card className="p-8 items-center justify-center border border-gray-100">
+      <Package size={56} color="#9CA3AF" className="mb-3" />
+      <Text className="text-lg font-medium text-gray-800 mb-2 text-center">
+        {searchText ? "Nenhum produto encontrado" : "Nenhum produto disponível"}
+      </Text>
+      <Text className="text-gray-500 text-center mb-4">
+        {searchText
+          ? `Não encontramos resultados para "${searchText}"`
+          : "Esta loja ainda não cadastrou produtos"}
+      </Text>
+      {searchText ? (
+        <Button onPress={onClearSearch} className="mt-2 bg-secondary-500">
+          <Button.Text className="text-secondary-500 font-medium">
+            Limpar busca
+          </Button.Text>
+        </Button>
+      ) : null}
+    </Card>
+  )
+);
 
 interface ProductsByCategoryProps {
   title?: string;
@@ -46,9 +116,6 @@ export function ProductsByCategory({
   const [showFilters, setShowFilters] = useState(false);
   const [searchText, setSearchText] = useState("");
   const contentScrollRef = useRef<ScrollView>(null);
-  const isDeliveryPlan =
-    vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
-  const { width } = Dimensions.get("window");
 
   // Use the category filter store
   const {
@@ -60,32 +127,13 @@ export function ProductsByCategory({
     updateProductCounts,
   } = useCategoryFilterStore();
 
-  // Animações
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-
   // Cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
 
-  // Iniciar animações quando o componente montar
+  // Iniciar uso do store com categories sempre false para o componente principal
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Set the categories filter to always be hidden in the main component
-    // so it will only appear in the header after scrolling
     setIsVisible(false);
-  }, []);
+  }, [setIsVisible]);
 
   // Calculate product counts and update store
   useEffect(() => {
@@ -134,12 +182,19 @@ export function ProductsByCategory({
     });
 
     setCategories(sortedCategories);
+  }, [vm.products, setCategories]);
 
-    // Always set visible to false since categories now live in the header
-    setIsVisible(false);
-  }, [vm.products, setCategories, setIsVisible]);
+  // Função para atualizar o texto de busca - com useCallback
+  const handleSearchTextChange = useCallback((text: string) => {
+    setSearchText(text);
+  }, []);
 
-  // Filtrar produtos com base na pesquisa e categoria selecionada
+  // Função para limpar a busca - com useCallback
+  const handleClearSearch = useCallback(() => {
+    setSearchText("");
+  }, []);
+
+  // Filtrar produtos com base na pesquisa e categoria selecionada - com useMemo
   const getFilteredProducts = useMemo(() => {
     if (!vm.products || vm.products.length === 0) return {};
 
@@ -200,7 +255,7 @@ export function ProductsByCategory({
     return result;
   }, [vm.products, searchText, selectedCategory]);
 
-  // Calcular contagem total de produtos filtrados
+  // Calcular contagem total de produtos filtrados - com useMemo
   const totalFilteredProducts = useMemo(() => {
     return Object.values(getFilteredProducts).reduce(
       (sum, products) => sum + products.length,
@@ -246,33 +301,10 @@ export function ProductsByCategory({
 
         {/* Barra de pesquisa melhorada */}
         <View className="mb-4">
-          <Input
-            size="md"
-            className="bg-white border-gray-300 shadow-sm rounded-xl"
-            style={{
-              elevation: 2,
-            }}
-          >
-            <InputSlot pl="$3">
-              <InputIcon as={Search} color="#9CA3AF" />
-            </InputSlot>
-            <InputField
-              placeholder="Buscar produtos..."
-              value={searchText}
-              onChangeText={setSearchText}
-              className="py-2.5 placeholder:font-sans"
-            />
-            {searchText ? (
-              <InputSlot pr="$3">
-                <TouchableOpacity
-                  onPress={() => setSearchText("")}
-                  className="bg-gray-100 rounded-full p-1"
-                >
-                  <X size={14} color="#9CA3AF" />
-                </TouchableOpacity>
-              </InputSlot>
-            ) : null}
-          </Input>
+          <SearchField
+            searchText={searchText}
+            onChangeText={handleSearchTextChange}
+          />
         </View>
 
         {/* Resultados da busca */}
@@ -288,29 +320,10 @@ export function ProductsByCategory({
       {/* Mensagem de nenhum produto encontrado */}
       {!hasCategories && (
         <View className="px-4">
-          <Card className="p-8 items-center justify-center border border-gray-100">
-            <Package size={56} color="#9CA3AF" className="mb-3" />
-            <Text className="text-lg font-medium text-gray-800 mb-2 text-center">
-              {searchText
-                ? "Nenhum produto encontrado"
-                : "Nenhum produto disponível"}
-            </Text>
-            <Text className="text-gray-500 text-center mb-4">
-              {searchText
-                ? `Não encontramos resultados para "${searchText}"`
-                : "Esta loja ainda não cadastrou produtos"}
-            </Text>
-            {searchText ? (
-              <Button
-                onPress={() => setSearchText("")}
-                className="mt-2 bg-secondary-500"
-              >
-                <Button.Text className="text-secondary-500 font-medium">
-                  Limpar busca
-                </Button.Text>
-              </Button>
-            ) : null}
-          </Card>
+          <NoProductsMessage
+            searchText={searchText}
+            onClearSearch={handleClearSearch}
+          />
         </View>
       )}
 
@@ -326,7 +339,7 @@ export function ProductsByCategory({
           Object.entries(getFilteredProducts).map(
             ([category, products]) =>
               category !== ALL_CATEGORIES && (
-                <CategoryProductsList
+                <MemoizedCategoryProductsList
                   key={`category-${category}`}
                   title={category}
                   products={products}
