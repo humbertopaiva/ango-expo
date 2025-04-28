@@ -17,7 +17,13 @@ import { router } from "expo-router";
 import { CompanyGallery } from "../components/company-gallery";
 import { CustomProductsSection } from "../components/custom-products-section";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
-import { Animated } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  interpolate,
+  Extrapolate,
+} from "react-native-reanimated";
 
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
@@ -26,8 +32,9 @@ export function CompanyPageContent() {
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
 
-  // Animation for fading header
-  const headerOpacity = useRef(new Animated.Value(1)).current;
+  // Use Reanimated shared values for smooth animations
+  const headerOpacity = useSharedValue(1);
+  const headerTranslateY = useSharedValue(0);
 
   // Estado para armazenar informações do header
   const [companyTitle, setCompanyTitle] = useState<string>("");
@@ -61,21 +68,42 @@ export function CompanyPageContent() {
     const currentScrollY = event.nativeEvent.contentOffset.y;
     setScrollY(currentScrollY);
 
-    // Animate the header opacity based on scroll position
-    if (currentScrollY > 100) {
-      Animated.timing(headerOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+    // Animate the header based on scroll position
+    // Start fading out at 100px scroll, completely gone by 240px
+    const fadeOutPoint = 100;
+    const disappearPoint = 240;
+
+    if (currentScrollY > fadeOutPoint) {
+      const opacityProgress = Math.max(
+        0,
+        1 - (currentScrollY - fadeOutPoint) / (disappearPoint - fadeOutPoint)
+      );
+
+      // Update opacity with smooth animation
+      headerOpacity.value = withTiming(opacityProgress, { duration: 150 });
+
+      // Update position - move header up as it fades
+      const translateProgress = Math.min(
+        40,
+        (currentScrollY - fadeOutPoint) * 0.2
+      );
+      headerTranslateY.value = withTiming(-translateProgress, {
+        duration: 150,
+      });
     } else {
-      Animated.timing(headerOpacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      // Reset when scrolling back up
+      headerOpacity.value = withTiming(1, { duration: 150 });
+      headerTranslateY.value = withTiming(0, { duration: 150 });
     }
   };
+
+  // Create animated styles
+  const animatedHeaderStyle = useAnimatedStyle(() => {
+    return {
+      opacity: headerOpacity.value,
+      transform: [{ translateY: headerTranslateY.value }],
+    };
+  });
 
   // Verificar se deve mostrar informações de delivery separadamente
   const shouldShowDeliveryInfo = () => {
@@ -119,20 +147,20 @@ export function CompanyPageContent() {
     router.back();
   };
 
-  // if (vm.isLoading) {
-  //   return (
-  //     <View className="flex-1 bg-gray-50 justify-center items-center">
-  //       {/* Um header vazio para manter o layout consistente durante o carregamento */}
-  //       <CompanySpecificHeader
-  //         title="Carregando..."
-  //         onBackPress={() => router.back()}
-  //       />
-  //       <View className="flex-1 justify-center items-center">
-  //         {/* Aqui você pode adicionar um indicador de carregamento se desejar */}
-  //       </View>
-  //     </View>
-  //   );
-  // }
+  if (vm.isLoading) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center">
+        {/* Um header vazio para manter o layout consistente durante o carregamento */}
+        <CompanySpecificHeader
+          title="Carregando..."
+          onBackPress={() => router.back()}
+        />
+        <View className="flex-1 justify-center items-center">
+          {/* Aqui você pode adicionar um indicador de carregamento se desejar */}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50 relative">
@@ -143,7 +171,6 @@ export function CompanyPageContent() {
         primaryColor={primaryColor}
         onBackPress={handleBackPress}
         scrollPosition={scrollY}
-        onMoreInfoPress={handleOpenInfoModal}
       />
 
       <ScrollView
@@ -157,8 +184,8 @@ export function CompanyPageContent() {
         onScroll={handleScroll}
       >
         <View>
-          {/* Cabeçalho da empresa - now with fade animation */}
-          <Animated.View style={{ opacity: headerOpacity }}>
+          {/* Cabeçalho da empresa - now with fade and translate animation */}
+          <Animated.View style={animatedHeaderStyle}>
             <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
           </Animated.View>
 

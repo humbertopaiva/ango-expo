@@ -1,5 +1,5 @@
 // Path: src/features/company-page/components/company-specific-header.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,22 +7,20 @@ import {
   Image,
   Platform,
   ScrollView,
-  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  ArrowLeft,
-  Filter,
-  ShoppingBag,
-  MessageCircle,
-} from "lucide-react-native";
+import { ArrowLeft } from "lucide-react-native";
 import { router } from "expo-router";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { Box } from "@/components/ui/box";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
-import { useCompanyPageContext } from "../contexts/use-company-page-context";
-import { OpenStatusIndicator } from "@/components/custom/open-status-indicator";
-import { isBusinessOpen } from "@/src/utils/business-hours.utils";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  interpolate,
+  Extrapolate,
+} from "react-native-reanimated";
 
 interface CompanySpecificHeaderProps {
   title: string;
@@ -31,7 +29,6 @@ interface CompanySpecificHeaderProps {
   onBackPress?: () => void;
   backTo?: string;
   scrollPosition?: number;
-  onMoreInfoPress?: () => void;
 }
 
 export function CompanySpecificHeader({
@@ -41,26 +38,20 @@ export function CompanySpecificHeader({
   onBackPress,
   backTo,
   scrollPosition = 0,
-  onMoreInfoPress,
 }: CompanySpecificHeaderProps) {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(-10)).current;
-  const companyFadeAnim = useRef(new Animated.Value(0)).current;
-  const vm = useCompanyPageContext();
+
+  // Using Reanimated shared values
+  const categoriesOpacity = useSharedValue(0);
+  const categoriesHeight = useSharedValue(0);
 
   // Use the category filter store
-  const {
-    categories,
-    selectedCategory,
-    setSelectedCategory,
-    isVisible,
-    productCounts,
-  } = useCategoryFilterStore();
+  const { categories, selectedCategory, setSelectedCategory, productCounts } =
+    useCategoryFilterStore();
 
-  // State to determine if company info should be shown (after scroll)
-  const [showCompanyInfo, setShowCompanyInfo] = useState(false);
+  // Determine if categories should be shown (after scroll)
+  const [showCategories, setShowCategories] = useState(false);
 
   // Handler for back button
   const handleBack = () => {
@@ -73,60 +64,42 @@ export function CompanySpecificHeader({
     }
   };
 
-  // Verify if business is open
-  const isOpen = vm.profile ? isBusinessOpen(vm.profile) : false;
-
-  // Monitor scroll position to show company info
+  // Monitor scroll position to show categories
   useEffect(() => {
-    if (scrollPosition > 100) {
-      setShowCompanyInfo(true);
-      Animated.timing(companyFadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+    if (scrollPosition > 240) {
+      setShowCategories(true);
+      categoriesOpacity.value = withTiming(1, { duration: 300 });
+      categoriesHeight.value = withTiming(1, { duration: 300 });
     } else {
-      Animated.timing(companyFadeAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }).start(() => {
-        setShowCompanyInfo(false);
-      });
-    }
-  }, [scrollPosition, companyFadeAnim]);
+      categoriesOpacity.value = withTiming(0, { duration: 200 });
+      categoriesHeight.value = withTiming(0, { duration: 200 });
 
-  // Animate the categories appearance when visibility changes
-  useEffect(() => {
-    if (!isVisible && categories.length > 0) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      fadeAnim.setValue(0);
-      slideAnim.setValue(-10);
-    }
-  }, [isVisible, categories.length]);
+      // Small delay to hide categories after animation
+      const timeout = setTimeout(() => {
+        if (scrollPosition <= 240) {
+          setShowCategories(false);
+        }
+      }, 200);
 
-  // Only show categories if there are categories AND they're not visible in the main view
-  const shouldShowCategories = !isVisible && categories.length > 0;
-
-  // Handler for WhatsApp contact
-  const handleWhatsAppContact = () => {
-    const whatsappLink = vm.getWhatsAppLink();
-    if (whatsappLink) {
-      window.open(whatsappLink, "_blank");
+      return () => clearTimeout(timeout);
     }
-  };
+  }, [scrollPosition, categoriesOpacity, categoriesHeight]);
+
+  // Create animated styles using Reanimated
+  const animatedCategoriesStyle = useAnimatedStyle(() => {
+    return {
+      opacity: categoriesOpacity.value,
+      maxHeight: interpolate(
+        categoriesHeight.value,
+        [0, 1],
+        [0, 60],
+        Extrapolate.CLAMP
+      ),
+      overflow: "hidden",
+      borderTopWidth: 1,
+      borderTopColor: "rgba(255,255,255,0.15)",
+    };
+  });
 
   return (
     <View
@@ -148,74 +121,20 @@ export function CompanySpecificHeader({
             <ArrowLeft size={24} color={"#FFFFFF"} />
           </TouchableOpacity>
 
-          {/* When scrolled down, show company info */}
-          {showCompanyInfo ? (
-            <Animated.View
-              style={{
-                opacity: companyFadeAnim,
-                flexDirection: "row",
-                alignItems: "center",
-                flex: 1,
-              }}
+          {/* Company title and subtitle */}
+          <VStack className="ml-2 flex-1">
+            <Text
+              className="text-xl font-semibold text-white"
+              numberOfLines={1}
             >
-              <VStack className="ml-2 flex-1">
-                <Text
-                  className="text-xl font-semibold text-white"
-                  numberOfLines={1}
-                >
-                  {title}
-                </Text>
-                <HStack alignItems="center" space="xs">
-                  {isOpen !== undefined && (
-                    <OpenStatusIndicator
-                      isOpen={isOpen}
-                      size="sm"
-                      className="bg-white/10"
-                    />
-                  )}
-                  {subtitle && (
-                    <Text className="text-xs text-white/80" numberOfLines={1}>
-                      {subtitle}
-                    </Text>
-                  )}
-                </HStack>
-              </VStack>
-
-              {/* Action buttons when showing company info */}
-              <HStack space="sm">
-                {vm.profile?.whatsapp && (
-                  <TouchableOpacity
-                    onPress={handleWhatsAppContact}
-                    className="p-2 rounded-full bg-white/20"
-                  >
-                    <MessageCircle size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-                {onMoreInfoPress && (
-                  <TouchableOpacity
-                    onPress={onMoreInfoPress}
-                    className="p-2 rounded-full bg-white/20"
-                  >
-                    <Filter size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-              </HStack>
-            </Animated.View>
-          ) : (
-            <VStack className="ml-2 flex-1">
-              <Text
-                className="text-xl font-semibold text-white"
-                numberOfLines={1}
-              >
-                {title}
+              {title}
+            </Text>
+            {subtitle && (
+              <Text className="text-xs text-white/80" numberOfLines={1}>
+                {subtitle}
               </Text>
-              {subtitle && (
-                <Text className="text-xs text-white/80" numberOfLines={1}>
-                  {subtitle}
-                </Text>
-              )}
-            </VStack>
-          )}
+            )}
+          </VStack>
         </HStack>
 
         {/* Logo */}
@@ -228,23 +147,15 @@ export function CompanySpecificHeader({
         </Box>
       </HStack>
 
-      {/* Categories horizontal scroll - only shown when the main filter is not visible */}
-      {shouldShowCategories && (
-        <Animated.View
-          style={{
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-            borderTopWidth: 1,
-            borderTopColor: "rgba(255,255,255,0.15)",
-          }}
-          className="pb-2 pt-1"
-        >
+      {/* Categories horizontal scroll - shown only after scrolling down */}
+      <Animated.View style={animatedCategoriesStyle}>
+        {showCategories && categories.length > 0 && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
               paddingHorizontal: 16,
-              paddingVertical: 4,
+              paddingVertical: 8,
             }}
           >
             {categories.map((category) => {
@@ -313,8 +224,8 @@ export function CompanySpecificHeader({
               );
             })}
           </ScrollView>
-        </Animated.View>
-      )}
+        )}
+      </Animated.View>
     </View>
   );
 }
