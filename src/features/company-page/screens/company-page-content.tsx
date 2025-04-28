@@ -19,6 +19,8 @@ import { CompanyGallery } from "../components/company-gallery";
 import { CustomProductsSection } from "../components/custom-products-section";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
 import { memo } from "react";
+import { useStatusBarColor } from "@/src/hooks/use-status-bar-color";
+import { StatusBar } from "react-native";
 
 // Utilizando memo para evitar renderizações desnecessárias
 const MemoizedFeaturedProductsStrip = memo(FeaturedProductsStrip);
@@ -126,6 +128,10 @@ export function CompanyPageContent() {
 
   return (
     <View className="flex-1 bg-gray-50 relative">
+      {/* Altera a cor da barra de status para a cor primária da empresa */}
+      <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
+
+      {/* Header da empresa - agora fixo, sem animação de desaparecimento */}
       {/* Header específico da empresa com posição de scroll */}
       <CompanySpecificHeader
         title={companyTitle}
