@@ -46,6 +46,7 @@ export default function CompanyLayout() {
           name="[companySlug]/product/[productId]"
           options={{
             title: "Detalhes do Produto",
+            headerShown: false,
           }}
         />
         <Stack.Screen
