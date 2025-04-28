@@ -1,18 +1,17 @@
 // Path: src/features/company-page/screens/company-page-content.tsx
 import React, { useState, useEffect } from "react";
-import { View } from "react-native";
+import { View, ScrollView } from "react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { FeaturedProductsStrip } from "../components/featured-products-strip";
-import { CompanyDeliveryInfo } from "../components/company-delivery-info";
 import { CompanyHeader } from "../components/company-header";
 import { ProductsByCategory } from "../components/products-by-category";
 import { CompanyActionBar } from "../components/company-action-bar";
 import { CompanyInfoModal } from "../components/company-info-modal";
-import { ScrollView } from "react-native-gesture-handler";
 import { CompanySpecificHeader } from "../components/company-specific-header";
 import { router } from "expo-router";
 import { CompanyGallery } from "../components/company-gallery";
 import { CustomProductsSection } from "../components/custom-products-section";
+import { useCategoryFilterStore } from "../stores/category-filter.store";
 
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
@@ -25,6 +24,16 @@ export function CompanyPageContent() {
   const [companySubtitle, setCompanySubtitle] = useState<string>("");
   const [primaryColor, setPrimaryColor] = useState<string>("#4B5563"); // gray-700 default
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
+
+  // Reset category filter store when unmounting/changing companies
+  const resetCategoryFilter = useCategoryFilterStore((state) => state.reset);
+
+  useEffect(() => {
+    return () => {
+      // Reset filter store when component unmounts
+      resetCategoryFilter();
+    };
+  }, []);
 
   const handleOpenInfoModal = () => {
     setInfoModalVisible(true);
@@ -105,11 +114,14 @@ export function CompanyPageContent() {
         className="flex-1 bg-gray-50"
         contentContainerStyle={{
           paddingBottom: 120,
-          // The space below accounts for the sticky category header
-          // which will be positioned absolutely
         }}
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[1]}
+        scrollEventThrottle={16} // Important for tracking scroll position
+        onScroll={(event) => {
+          // Manual dispatch of scroll event to children
+          const { y } = event.nativeEvent.contentOffset;
+          console.log("Main scroll position:", y);
+        }}
       >
         <View>
           {/* Cabeçalho da empresa */}
