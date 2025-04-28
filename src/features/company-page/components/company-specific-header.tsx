@@ -1,5 +1,5 @@
 // Path: src/features/company-page/components/company-specific-header.tsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -10,11 +10,19 @@ import {
   Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, Filter } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Filter,
+  ShoppingBag,
+  MessageCircle,
+} from "lucide-react-native";
 import { router } from "expo-router";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { Box } from "@/components/ui/box";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
+import { useCompanyPageContext } from "../contexts/use-company-page-context";
+import { OpenStatusIndicator } from "@/components/custom/open-status-indicator";
+import { isBusinessOpen } from "@/src/utils/business-hours.utils";
 
 interface CompanySpecificHeaderProps {
   title: string;
@@ -22,19 +30,25 @@ interface CompanySpecificHeaderProps {
   primaryColor?: string;
   onBackPress?: () => void;
   backTo?: string;
+  scrollPosition?: number;
+  onMoreInfoPress?: () => void;
 }
 
 export function CompanySpecificHeader({
   title,
   subtitle,
-  primaryColor = "#F4511E", // Use the primary color as default
+  primaryColor = "#F4511E",
   onBackPress,
   backTo,
+  scrollPosition = 0,
+  onMoreInfoPress,
 }: CompanySpecificHeaderProps) {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-10)).current;
+  const companyFadeAnim = useRef(new Animated.Value(0)).current;
+  const vm = useCompanyPageContext();
 
   // Use the category filter store
   const {
@@ -44,6 +58,9 @@ export function CompanySpecificHeader({
     isVisible,
     productCounts,
   } = useCategoryFilterStore();
+
+  // State to determine if company info should be shown (after scroll)
+  const [showCompanyInfo, setShowCompanyInfo] = useState(false);
 
   // Handler for back button
   const handleBack = () => {
@@ -55,6 +72,29 @@ export function CompanySpecificHeader({
       router.back();
     }
   };
+
+  // Verify if business is open
+  const isOpen = vm.profile ? isBusinessOpen(vm.profile) : false;
+
+  // Monitor scroll position to show company info
+  useEffect(() => {
+    if (scrollPosition > 100) {
+      setShowCompanyInfo(true);
+      Animated.timing(companyFadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(companyFadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }).start(() => {
+        setShowCompanyInfo(false);
+      });
+    }
+  }, [scrollPosition, companyFadeAnim]);
 
   // Animate the categories appearance when visibility changes
   useEffect(() => {
@@ -80,10 +120,13 @@ export function CompanySpecificHeader({
   // Only show categories if there are categories AND they're not visible in the main view
   const shouldShowCategories = !isVisible && categories.length > 0;
 
-  // Add some console logs for debugging
-  console.log("Header - isVisible:", isVisible);
-  console.log("Header - categories:", categories);
-  console.log("Header - shouldShowCategories:", shouldShowCategories);
+  // Handler for WhatsApp contact
+  const handleWhatsAppContact = () => {
+    const whatsappLink = vm.getWhatsAppLink();
+    if (whatsappLink) {
+      window.open(whatsappLink, "_blank");
+    }
+  };
 
   return (
     <View
@@ -105,19 +148,74 @@ export function CompanySpecificHeader({
             <ArrowLeft size={24} color={"#FFFFFF"} />
           </TouchableOpacity>
 
-          <VStack className="ml-2 flex-1">
-            <Text
-              className="text-xl font-semibold text-white"
-              numberOfLines={1}
+          {/* When scrolled down, show company info */}
+          {showCompanyInfo ? (
+            <Animated.View
+              style={{
+                opacity: companyFadeAnim,
+                flexDirection: "row",
+                alignItems: "center",
+                flex: 1,
+              }}
             >
-              {title}
-            </Text>
-            {subtitle && (
-              <Text className="text-xs text-white/80" numberOfLines={1}>
-                {subtitle}
+              <VStack className="ml-2 flex-1">
+                <Text
+                  className="text-xl font-semibold text-white"
+                  numberOfLines={1}
+                >
+                  {title}
+                </Text>
+                <HStack alignItems="center" space="xs">
+                  {isOpen !== undefined && (
+                    <OpenStatusIndicator
+                      isOpen={isOpen}
+                      size="sm"
+                      className="bg-white/10"
+                    />
+                  )}
+                  {subtitle && (
+                    <Text className="text-xs text-white/80" numberOfLines={1}>
+                      {subtitle}
+                    </Text>
+                  )}
+                </HStack>
+              </VStack>
+
+              {/* Action buttons when showing company info */}
+              <HStack space="sm">
+                {vm.profile?.whatsapp && (
+                  <TouchableOpacity
+                    onPress={handleWhatsAppContact}
+                    className="p-2 rounded-full bg-white/20"
+                  >
+                    <MessageCircle size={20} color="#FFFFFF" />
+                  </TouchableOpacity>
+                )}
+                {onMoreInfoPress && (
+                  <TouchableOpacity
+                    onPress={onMoreInfoPress}
+                    className="p-2 rounded-full bg-white/20"
+                  >
+                    <Filter size={20} color="#FFFFFF" />
+                  </TouchableOpacity>
+                )}
+              </HStack>
+            </Animated.View>
+          ) : (
+            <VStack className="ml-2 flex-1">
+              <Text
+                className="text-xl font-semibold text-white"
+                numberOfLines={1}
+              >
+                {title}
               </Text>
-            )}
-          </VStack>
+              {subtitle && (
+                <Text className="text-xs text-white/80" numberOfLines={1}>
+                  {subtitle}
+                </Text>
+              )}
+            </VStack>
+          )}
         </HStack>
 
         {/* Logo */}

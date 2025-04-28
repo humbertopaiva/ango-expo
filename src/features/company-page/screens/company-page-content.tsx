@@ -1,6 +1,11 @@
 // Path: src/features/company-page/screens/company-page-content.tsx
-import React, { useState, useEffect } from "react";
-import { View, ScrollView } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { FeaturedProductsStrip } from "../components/featured-products-strip";
 import { CompanyHeader } from "../components/company-header";
@@ -12,18 +17,26 @@ import { router } from "expo-router";
 import { CompanyGallery } from "../components/company-gallery";
 import { CustomProductsSection } from "../components/custom-products-section";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
+import { Animated } from "react-native";
 
 export function CompanyPageContent() {
   const vm = useCompanyPageContext();
   const [isInfoModalVisible, setInfoModalVisible] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
+
+  // Animation for fading header
+  const headerOpacity = useRef(new Animated.Value(1)).current;
 
   // Estado para armazenar informações do header
   const [companyTitle, setCompanyTitle] = useState<string>("");
   const [companySubtitle, setCompanySubtitle] = useState<string>("");
   const [primaryColor, setPrimaryColor] = useState<string>("#4B5563"); // gray-700 default
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
+
+  // Scroll position reference for header animations
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Reset category filter store when unmounting/changing companies
   const resetCategoryFilter = useCategoryFilterStore((state) => state.reset);
@@ -41,6 +54,27 @@ export function CompanyPageContent() {
 
   const handleCloseInfoModal = () => {
     setInfoModalVisible(false);
+  };
+
+  // Handle scroll events to trigger header changes
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    setScrollY(currentScrollY);
+
+    // Animate the header opacity based on scroll position
+    if (currentScrollY > 100) {
+      Animated.timing(headerOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
   };
 
   // Verificar se deve mostrar informações de delivery separadamente
@@ -85,47 +119,48 @@ export function CompanyPageContent() {
     router.back();
   };
 
-  if (vm.isLoading) {
-    return (
-      <View className="flex-1 bg-gray-50 justify-center items-center">
-        {/* Um header vazio para manter o layout consistente durante o carregamento */}
-        <CompanySpecificHeader
-          title="Carregando..."
-          onBackPress={() => router.back()}
-        />
-        <View className="flex-1 justify-center items-center">
-          {/* Aqui você pode adicionar um indicador de carregamento se desejar */}
-        </View>
-      </View>
-    );
-  }
+  // if (vm.isLoading) {
+  //   return (
+  //     <View className="flex-1 bg-gray-50 justify-center items-center">
+  //       {/* Um header vazio para manter o layout consistente durante o carregamento */}
+  //       <CompanySpecificHeader
+  //         title="Carregando..."
+  //         onBackPress={() => router.back()}
+  //       />
+  //       <View className="flex-1 justify-center items-center">
+  //         {/* Aqui você pode adicionar um indicador de carregamento se desejar */}
+  //       </View>
+  //     </View>
+  //   );
+  // }
 
   return (
     <View className="flex-1 bg-gray-50 relative">
-      {/* Header específico da empresa */}
+      {/* Header específico da empresa - now with scroll position */}
       <CompanySpecificHeader
         title={companyTitle}
         subtitle={companySubtitle}
         primaryColor={primaryColor}
         onBackPress={handleBackPress}
+        scrollPosition={scrollY}
+        onMoreInfoPress={handleOpenInfoModal}
       />
 
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1 bg-gray-50"
         contentContainerStyle={{
           paddingBottom: 120,
         }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16} // Important for tracking scroll position
-        onScroll={(event) => {
-          // Manual dispatch of scroll event to children
-          const { y } = event.nativeEvent.contentOffset;
-          console.log("Main scroll position:", y);
-        }}
+        onScroll={handleScroll}
       >
         <View>
-          {/* Cabeçalho da empresa */}
-          <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
+          {/* Cabeçalho da empresa - now with fade animation */}
+          <Animated.View style={{ opacity: headerOpacity }}>
+            <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
+          </Animated.View>
 
           {/* Galeria de imagens da empresa */}
           <CompanyGallery />
