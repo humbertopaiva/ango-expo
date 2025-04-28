@@ -7,6 +7,7 @@ import {
   Image,
   Platform,
   ScrollView,
+  StyleSheet,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
@@ -18,8 +19,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  interpolate,
-  Extrapolate,
+  Easing,
+  FadeIn,
+  FadeOut,
 } from "react-native-reanimated";
 
 interface CompanySpecificHeaderProps {
@@ -48,18 +50,17 @@ const CategoryButton = memo(
   }) => (
     <TouchableOpacity
       onPress={onSelect}
-      style={{
-        backgroundColor: isActive ? "#FFFFFF" : "rgba(255,255,255,0.2)",
-        marginRight: 10,
-        borderRadius: 20,
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-        shadowColor: isActive ? "#000" : "transparent",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isActive ? 0.2 : 0,
-        shadowRadius: isActive ? 3 : 0,
-        elevation: isActive ? 3 : 0,
-      }}
+      style={[
+        styles.categoryButton,
+        {
+          backgroundColor: isActive ? "#FFFFFF" : "rgba(255,255,255,0.2)",
+          shadowColor: isActive ? "#000" : "transparent",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isActive ? 0.2 : 0,
+          shadowRadius: isActive ? 3 : 0,
+          elevation: isActive ? 3 : 0,
+        },
+      ]}
       activeOpacity={0.7}
     >
       <View className="flex-row items-center">
@@ -77,15 +78,14 @@ const CategoryButton = memo(
         {/* Only show badge if count is available */}
         {count > 0 && (
           <View
-            style={{
-              backgroundColor: isActive
-                ? `${primaryColor}20`
-                : "rgba(255,255,255,0.3)",
-              borderRadius: 10,
-              paddingHorizontal: 6,
-              paddingVertical: 2,
-              marginLeft: 6,
-            }}
+            style={[
+              styles.countBadge,
+              {
+                backgroundColor: isActive
+                  ? `${primaryColor}20`
+                  : "rgba(255,255,255,0.3)",
+              },
+            ]}
           >
             <Text
               style={{
@@ -114,8 +114,7 @@ export function CompanySpecificHeader({
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
 
-  // Using Reanimated shared values
-  const categoriesOpacity = useSharedValue(0);
+  // Use a altura real como um valor animado
   const categoriesHeight = useSharedValue(0);
 
   // Use the category filter store
@@ -136,39 +135,46 @@ export function CompanySpecificHeader({
     }
   }, [onBackPress, backTo]);
 
-  // Monitor scroll position to show categories - Alterado para 300px conforme solicitado
-  useEffect(() => {
-    if (scrollPosition > 300) {
-      setShowCategories(true);
-      categoriesOpacity.value = withTiming(1, { duration: 300 });
-      categoriesHeight.value = withTiming(1, { duration: 300 });
-    } else {
-      categoriesOpacity.value = withTiming(0, { duration: 200 });
-      categoriesHeight.value = withTiming(0, { duration: 200 });
+  // Altura máxima da seção de categorias
+  const CATEGORIES_SECTION_HEIGHT = 60;
 
-      // Small delay to hide categories after animation
+  // Monitor scroll position to show categories com transição suave
+  useEffect(() => {
+    // Adicionamos um "threshold" para evitar mudanças na visualização com pequenas oscilações
+    const THRESHOLD = 10;
+    const SCROLL_TRIGGER = 300;
+
+    if (scrollPosition > SCROLL_TRIGGER + THRESHOLD) {
+      // Animação para mostrar as categorias
+      setShowCategories(true);
+      categoriesHeight.value = withTiming(CATEGORIES_SECTION_HEIGHT, {
+        duration: 300,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
+    } else if (scrollPosition < SCROLL_TRIGGER - THRESHOLD) {
+      // Animação para esconder as categorias
+      categoriesHeight.value = withTiming(0, {
+        duration: 300,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
+
+      // Esconde os elementos depois que a animação termina
       const timeout = setTimeout(() => {
-        if (scrollPosition <= 300) {
+        if (scrollPosition < SCROLL_TRIGGER - THRESHOLD) {
           setShowCategories(false);
         }
-      }, 200);
+      }, 300);
 
       return () => clearTimeout(timeout);
     }
-  }, [scrollPosition, categoriesOpacity, categoriesHeight]);
+  }, [scrollPosition, categoriesHeight]);
 
-  // Create animated styles using Reanimated
-  const animatedCategoriesStyle = useAnimatedStyle(() => {
+  // Create animated styles usando a altura diretamente
+  const animatedContainerStyle = useAnimatedStyle(() => {
     return {
-      opacity: categoriesOpacity.value,
-      maxHeight: interpolate(
-        categoriesHeight.value,
-        [0, 1],
-        [0, 60],
-        Extrapolate.CLAMP
-      ),
+      height: categoriesHeight.value,
       overflow: "hidden",
-      borderTopWidth: 1,
+      borderTopWidth: categoriesHeight.value > 0 ? 1 : 0,
       borderTopColor: "rgba(255,255,255,0.15)",
     };
   });
@@ -176,6 +182,7 @@ export function CompanySpecificHeader({
   return (
     <View
       style={[
+        styles.headerContainer,
         {
           backgroundColor: primaryColor,
           paddingTop: Platform.OS === "ios" ? insets.top : 0,
@@ -219,36 +226,73 @@ export function CompanySpecificHeader({
         </Box>
       </HStack>
 
-      {/* Categories horizontal scroll - shown only after scrolling down 300px */}
-      <Animated.View style={animatedCategoriesStyle}>
+      {/* Categoria container com altura animada */}
+      <Animated.View style={animatedContainerStyle}>
         {showCategories && categories.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-            }}
+          <Animated.View
+            style={styles.categoriesContent}
+            entering={FadeIn.duration(300)}
+            exiting={FadeOut.duration(300)}
           >
-            {categories.map((category) => {
-              const isActive = selectedCategory === category;
-              // Get the count of products in this category
-              const count = productCounts[category] || 0;
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+            >
+              {categories.map((category, index) => {
+                const isActive = selectedCategory === category;
+                // Get the count of products in this category
+                const count = productCounts[category] || 0;
 
-              return (
-                <CategoryButton
-                  key={category}
-                  category={category}
-                  isActive={isActive}
-                  count={count}
-                  primaryColor={primaryColor}
-                  onSelect={() => setSelectedCategory(category)}
-                />
-              );
-            })}
-          </ScrollView>
+                return (
+                  <Animated.View
+                    key={category}
+                    entering={FadeIn.duration(400).delay(
+                      30 * Math.min(index, 5)
+                    )}
+                  >
+                    <CategoryButton
+                      category={category}
+                      isActive={isActive}
+                      count={count}
+                      primaryColor={primaryColor}
+                      onSelect={() => setSelectedCategory(category)}
+                    />
+                  </Animated.View>
+                );
+              })}
+            </ScrollView>
+          </Animated.View>
         )}
       </Animated.View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  headerContainer: {
+    width: "100%",
+    zIndex: 10,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  categoriesContent: {
+    height: "100%",
+    justifyContent: "center",
+  },
+  categoryButton: {
+    marginRight: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+  },
+  countBadge: {
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+});
