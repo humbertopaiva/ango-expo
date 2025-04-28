@@ -5,6 +5,12 @@ import { CompanyConfig } from "../models/company-config";
 import { CustomProduct } from "../models/custom-product";
 import { ProductAddonList } from "../models/product-addon-list";
 
+export interface CategoryFilterData {
+  categories: string[];
+  selectedCategory: string | null;
+  setSelectedCategory: (category: string | null) => void;
+}
+
 export interface ICompanyPageViewModel {
   profile: CompanyProfile | null;
   products: CompanyProduct[];
@@ -26,4 +32,11 @@ export interface ICompanyPageViewModel {
 
   customProducts: CustomProduct[];
   getProductAddonLists: (productId: string) => Promise<ProductAddonList[]>;
+
+  isCategoryFilterVisible: boolean;
+  categoryFilterData: CategoryFilterData | null;
+  setCategoryFilterVisible: (
+    visible: boolean,
+    data: CategoryFilterData
+  ) => void;
 }

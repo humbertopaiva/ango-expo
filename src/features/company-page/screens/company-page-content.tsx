@@ -103,8 +103,13 @@ export function CompanyPageContent() {
 
       <ScrollView
         className="flex-1 bg-gray-50"
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{
+          paddingBottom: 120,
+          // The space below accounts for the sticky category header
+          // which will be positioned absolutely
+        }}
         showsVerticalScrollIndicator={false}
+        stickyHeaderIndices={[1]}
       >
         <View>
           {/* Cabeçalho da empresa */}

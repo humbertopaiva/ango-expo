@@ -1,15 +1,23 @@
 // src/features/company-page/view-models/company-page.view-model.ts
 import { useQuery } from "@tanstack/react-query";
 import { companyPageService } from "../services/company-page.service";
-import { ICompanyPageViewModel } from "./company-page.view-model.interface";
+import {
+  CategoryFilterData,
+  ICompanyPageViewModel,
+} from "./company-page.view-model.interface";
 import { customProductService } from "../services/custom-product.service";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { ProductAddonList } from "../models/product-addon-list";
 import { productAddonsService } from "../services/product-addons.service";
 
 export function useCompanyPageViewModel(
   companySlug: string
 ): ICompanyPageViewModel {
+  // Existing state
+  const [isCategoryFilterVisible, setIsCategoryFilterVisible] = useState(true);
+  const [categoryFilterData, setCategoryFilterData] =
+    useState<CategoryFilterData | null>(null);
+
   const { data: profile = null, isLoading: isLoadingProfile } = useQuery({
     queryKey: ["company-profile", companySlug],
     queryFn: () => companyPageService.getCompanyProfile(companySlug),
@@ -59,6 +67,14 @@ export function useCompanyPageViewModel(
         config?.delivery?.mostrar_info_delivery === null)
     );
   };
+
+  const setCategoryFilterVisible = useCallback(
+    (visible: boolean, data: CategoryFilterData) => {
+      setIsCategoryFilterVisible(visible);
+      setCategoryFilterData(data);
+    },
+    []
+  );
 
   const getProductAddonLists = useCallback(
     async (productId: string): Promise<ProductAddonList[]> => {
@@ -177,6 +193,8 @@ export function useCompanyPageViewModel(
       isLoadingShowcase,
     primaryColor: profile?.cor_primaria ?? "#F4511E", // Cor primária padrão do projeto
     secondaryColor: profile?.cor_secundaria ?? "#FFFFFF",
+    isCategoryFilterVisible,
+    categoryFilterData,
     getFormattedAddress,
     getFormattedWorkingHours,
     getWhatsAppLink,
@@ -185,5 +203,6 @@ export function useCompanyPageViewModel(
     isCartEnabled,
     getGalleryImages,
     getProductAddonLists,
+    setCategoryFilterVisible,
   };
 }

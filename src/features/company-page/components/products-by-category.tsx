@@ -9,6 +9,7 @@ import {
   ScrollView,
   Dimensions,
   Animated,
+  InteractionManager,
 } from "react-native";
 import {
   Search,
@@ -31,6 +32,7 @@ import {
 import { CategoryProductsList } from "./category-products-list";
 import { SafeMap } from "@/components/common/safe-map";
 import { shouldUseDarkText } from "@/src/utils/color.utils";
+import { useCategoryFilterStore } from "../stores/category-filter.store";
 
 // Constante para a categoria "Todos"
 const ALL_CATEGORIES = "Todos";
@@ -44,26 +46,55 @@ export function ProductsByCategory({
 }: ProductsByCategoryProps) {
   const vm = useCompanyPageContext();
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    ALL_CATEGORIES
-  );
   const [searchText, setSearchText] = useState("");
   const contentScrollRef = useRef<ScrollView>(null);
+  const categoryFiltersRef = useRef<View>(null);
   const isDeliveryPlan =
     vm.profile?.empresa.plano?.nome?.toLowerCase() === "delivery";
   const { width } = Dimensions.get("window");
+
+  // Use the category filter store
+  const {
+    categories,
+    selectedCategory,
+    setCategories,
+    setSelectedCategory,
+    setIsVisible,
+  } = useCategoryFilterStore();
 
   // Animações
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
-  // Estado para armazenar todas as categorias
-  const [categories, setCategories] = useState<string[]>([]);
-
   // Cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
   const filterBgColor = `${primaryColor}15`;
   const filterTextColor = primaryColor;
+
+  // Track category filter visibility
+  useEffect(() => {
+    const unsubscribe = setupVisibilityTracking();
+    return unsubscribe;
+  }, []);
+
+  const setupVisibilityTracking = () => {
+    // Create intersection observer to track visibility
+    const checkVisibility = () => {
+      if (categoryFiltersRef.current) {
+        categoryFiltersRef.current.measure(
+          (x, y, width, height, pageX, pageY) => {
+            // If the top of the element is less than 0, it's scrolled out of view
+            setIsVisible(pageY > 0);
+          }
+        );
+      }
+    };
+
+    // Check visibility on scroll
+    const interval = setInterval(checkVisibility, 200);
+
+    return () => clearInterval(interval);
+  };
 
   // Iniciar animações quando o componente montar
   useEffect(() => {
@@ -208,7 +239,7 @@ export function ProductsByCategory({
   }
 
   return (
-    <View className="mb-8 ">
+    <View className="mb-8">
       {/* Header e barra de pesquisa */}
       <View className="px-4 mb-4">
         <HStack className="items-center justify-between mb-6">
@@ -246,7 +277,7 @@ export function ProductsByCategory({
           </Input>
         </View>
 
-        {/* Cabeçalho de Categorias Melhorado */}
+        {/* Cabeçalho de Categorias */}
         <Animated.View
           style={{
             opacity: fadeAnim,
@@ -268,26 +299,26 @@ export function ProductsByCategory({
         </Animated.View>
       </View>
 
-      {/* Lista horizontal de categorias melhorada */}
-      <Animated.View
-        style={{
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-          marginBottom: 12,
-        }}
-      >
+      {/* Lista horizontal de categorias */}
+      <View ref={categoryFiltersRef} className="mb-4">
         {categories.length > 0 && (
-          <FlatList
-            data={categories}
-            renderItem={({ item }) => {
-              const isActive = selectedCategory === item;
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+            }}
+          >
+            {categories.map((category) => {
+              const isActive = selectedCategory === category;
 
               return (
                 <TouchableOpacity
-                  onPress={() => setSelectedCategory(item)}
+                  key={category}
+                  onPress={() => setSelectedCategory(category)}
                   style={{
                     backgroundColor: isActive ? primaryColor : "#FFFFFF",
-
                     borderWidth: isActive ? 0 : 1,
                     borderColor: "rgba(229, 231, 235, 0.8)",
                     marginRight: 10,
@@ -311,20 +342,14 @@ export function ProductsByCategory({
                     numberOfLines={1}
                     className="font-semibold"
                   >
-                    {item}
+                    {category}
                   </Text>
                 </TouchableOpacity>
               );
-            }}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-            }}
-          />
+            })}
+          </ScrollView>
         )}
-      </Animated.View>
+      </View>
 
       {/* Resultados da busca */}
       {searchText && (
@@ -369,7 +394,8 @@ export function ProductsByCategory({
         ref={contentScrollRef}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
+        contentContainerStyle={{ paddingTop: 8 }}
+        scrollEnabled={true}
       >
         {hasCategories &&
           Object.entries(getFilteredProducts).map(
