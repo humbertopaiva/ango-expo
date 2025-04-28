@@ -21,10 +21,7 @@ export function ProductHeaderOverlay({
   topInset,
 }: ProductHeaderOverlayProps) {
   return (
-    <View
-      className="absolute top-0 left-0 right-0 z-10"
-      style={{ paddingTop: topInset || 10 }}
-    >
+    <View className="absolute top-0 left-0 right-0 z-10">
       <LinearGradient
         colors={["rgba(0,0,0,0.7)", "rgba(0,0,0,0.3)", "transparent"]}
         style={{ height: 60 + (topInset || 0) }}
@@ -41,17 +38,6 @@ export function ProductHeaderOverlay({
           </TouchableOpacity>
 
           <View className="flex-row">
-            <TouchableOpacity
-              onPress={onToggleFavorite}
-              className="w-10 h-10 rounded-full bg-black/30 items-center justify-center mr-3"
-            >
-              <Heart
-                size={20}
-                color="#FFFFFF"
-                fill={isFavorite ? "#FFFFFF" : "none"}
-              />
-            </TouchableOpacity>
-
             <TouchableOpacity
               onPress={onShare}
               className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
