@@ -1,22 +1,18 @@
 // Path: src/features/category-page/screens/category-page-content.tsx
-
-import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TextInput } from "react-native";
+import React, { useState } from "react";
+import { View, ScrollView } from "react-native";
 import { useCategoryPageContext } from "../contexts/use-category-page-context";
 import { SubcategoriesTabs } from "../components/subcategories-tabs";
 import { CompanyList } from "../components/company-list";
 import { Section } from "@/components/custom/section";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search } from "lucide-react-native";
 import { ModalFilter } from "../components/modal-filter";
-import { CategoryBreadcrumb } from "../components/category-breadcrumb";
-import { CategoryTabs } from "../components/category-tabs";
-import { CategoryVitrinesSection } from "../components/category-vitrines-section";
 import { EmptyCategory } from "../components/empty-category";
 import { Box } from "@/components/ui/box";
 import { CategoryHeader } from "../components/category-header";
 import { useCategoryDetails } from "../hooks/use-category-details";
 import { useLocalSearchParams } from "expo-router";
+import { ActiveFilters } from "../components/active-filters";
 
 interface CategoryPageContentProps {
   showFilterModal: boolean;
@@ -43,15 +39,11 @@ export function CategoryPageContent({
     company.perfil.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Verificar se há vitrines disponíveis
-  const hasVitrines = vm.companiesWithVitrine.length > 0;
-
-  // Ajustar a aba ativa quando não houver vitrines
-  useEffect(() => {
-    if (!hasVitrines && vm.activeTab === "highlights") {
-      vm.setActiveTab("companies");
-    }
-  }, [hasVitrines, vm.activeTab]);
+  // Nome da subcategoria selecionada (para mostrar no filtro ativo)
+  const selectedSubcategoryName = vm.selectedSubcategory
+    ? vm.subcategories.find((sub) => sub.slug === vm.selectedSubcategory)
+        ?.nome || null
+    : null;
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={["bottom"]}>
@@ -79,28 +71,18 @@ export function CategoryPageContent({
             />
           </Box>
 
-          {/* Tabs para alternar entre Destaques e Empresas - só mostra se houver vitrines */}
-          <View className="px-4 mt-6">
-            <CategoryTabs
-              activeTab={vm.activeTab}
-              onTabChange={vm.setActiveTab}
-              companyCount={filteredCompanies.length}
-              highlightCount={vm.showcaseProducts.length}
-              hasVitrines={hasVitrines}
-              vitrinesCount={vm.companiesWithVitrine.length} // Adicionando a contagem de empresas com vitrine
-            />
-          </View>
+          {/* Exibição dos filtros ativos */}
+          <ActiveFilters
+            selectedSubcategory={vm.selectedSubcategory}
+            subcategoryName={selectedSubcategoryName}
+            onClearFilter={() => handleSelectSubcategory(null)}
+          />
 
-          {/* Conteúdo baseado na tab ativa */}
-          {vm.activeTab === "highlights" && hasVitrines && (
-            <CategoryVitrinesSection
-              companiesWithVitrine={vm.companiesWithVitrine}
-              isLoading={vm.isLoadingVitrine}
-              categoryName={vm.categoryName}
-            />
-          )}
           {filteredCompanies.length === 0 && !vm.isLoading ? (
-            <EmptyCategory categoryName={vm.categoryName} />
+            <EmptyCategory
+              categoryName={vm.categoryName}
+              subcategoryName={selectedSubcategoryName || undefined}
+            />
           ) : (
             <View className="px-4">
               <CompanyList

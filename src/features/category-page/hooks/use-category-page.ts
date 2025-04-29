@@ -8,10 +8,6 @@ export function useCategoryPage(categorySlug: string) {
     null
   );
 
-  const [activeTab, setActiveTab] = useState<"highlights" | "companies">(
-    "highlights"
-  );
-
   // Busca subcategorias usando a rota correta
   const { data: subcategories = [], isLoading: isLoadingSubcategories } =
     useQuery({
@@ -27,14 +23,6 @@ export function useCategoryPage(categorySlug: string) {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Busca produtos da vitrine
-  const { data: showcaseProducts = [], isLoading: isLoadingShowcase } =
-    useQuery({
-      queryKey: ["category-page", "showcase", categorySlug],
-      queryFn: () => categoryPageService.getCategoryShowcase(categorySlug),
-      staleTime: 5 * 60 * 1000,
-    });
-
   // Filtra empresas baseado na subcategoria selecionada
   const filteredCompanies = useMemo(() => {
     if (!selectedSubcategory) return companies;
@@ -46,34 +34,11 @@ export function useCategoryPage(categorySlug: string) {
     );
   }, [companies, selectedSubcategory]);
 
-  // Filtra produtos baseado nas empresas filtradas
-  const filteredShowcaseProducts = useMemo(() => {
-    if (!selectedSubcategory) return showcaseProducts;
-
-    const filteredCompanySlugs = filteredCompanies.map(
-      (company) => company.perfil
-    );
-
-    return showcaseProducts.filter((product) => {
-      // Adaptação para lidar com diferentes estruturas de dados
-      const companySlug =
-        typeof product.empresa === "string"
-          ? product.empresa
-          : (product.empresa as any)?.slug;
-
-      return filteredCompanySlugs.includes(companySlug);
-    });
-  }, [showcaseProducts, filteredCompanies, selectedSubcategory]);
-
   return {
     subcategories,
     companies: filteredCompanies,
-    showcaseProducts: filteredShowcaseProducts,
     selectedSubcategory,
     setSelectedSubcategory,
-    isLoading:
-      isLoadingSubcategories || isLoadingCompanies || isLoadingShowcase,
-    activeTab,
-    setActiveTab,
+    isLoading: isLoadingSubcategories || isLoadingCompanies,
   };
 }
