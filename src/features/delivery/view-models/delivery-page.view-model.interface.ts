@@ -21,4 +21,6 @@ export interface IDeliveryViewModel {
   companiesWithShowcaseMapped: CompanyWithShowcase[];
   totalShowcaseItems: number;
   vitrinesCount: number;
+  openCompanies: DeliveryProfile[];
+  getShowcaseItemsBySlug: (slug: string) => DeliveryShowcaseItem[];
 }

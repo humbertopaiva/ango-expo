@@ -65,8 +65,6 @@ export function DeliveryCompanyShowcaseCard({
   const textColorClass = isDarkBackground ? "text-white" : "text-gray-800";
   const backgroundColor = company?.cor_primaria || THEME_COLORS.primary;
 
-  console.log("LOOOGA", company);
-
   return (
     <View
       className="md:mb-8 md:rounded-xl overflow-hidden shadow-md elevation-2 py-6"
