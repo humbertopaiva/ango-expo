@@ -11,6 +11,7 @@ interface CustomProductStepItemProps {
   isSelected: boolean;
   primaryColor: string;
   onSelect: () => void;
+  showPrice: boolean;
 }
 
 export function CustomProductStepItem({
@@ -18,7 +19,30 @@ export function CustomProductStepItem({
   isSelected,
   primaryColor,
   onSelect,
+  showPrice,
 }: CustomProductStepItemProps) {
+  // Função para formatar preço
+  const formatCurrency = (value: string | null | undefined) => {
+    if (!value) return "";
+
+    try {
+      const numericValue = parseFloat(value.replace(",", "."));
+      if (isNaN(numericValue)) return "";
+
+      return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(numericValue);
+    } catch (error) {
+      console.error("Erro ao formatar valor monetário:", error);
+      return "";
+    }
+  };
+
+  // Pegar o preço do item (promocional ou normal)
+  const itemPrice =
+    item.produto_detalhes.preco_promocional || item.produto_detalhes.preco;
+
   return (
     <TouchableOpacity
       onPress={onSelect}
@@ -41,18 +65,30 @@ export function CustomProductStepItem({
         </View>
 
         {/* Conteúdo */}
-        <View className="flex-1 p-3 justify-center">
-          <Text
-            className="font-medium text-gray-800 text-base mb-1"
-            numberOfLines={1}
-          >
-            {item.produto_detalhes.nome}
-          </Text>
-          {item.produto_detalhes.descricao ? (
-            <Text className="text-gray-600 text-sm" numberOfLines={2}>
-              {item.produto_detalhes.descricao}
+        <View className="flex-1 p-3 justify-between">
+          <View>
+            <Text
+              className="font-medium text-gray-800 text-base mb-1"
+              numberOfLines={1}
+            >
+              {item.produto_detalhes.nome}
             </Text>
-          ) : null}
+            {item.produto_detalhes.descricao ? (
+              <Text className="text-gray-600 text-sm" numberOfLines={2}>
+                {item.produto_detalhes.descricao}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* Preço (mostrado apenas quando showPrice é true) */}
+          {showPrice && itemPrice && (
+            <Text
+              className="text-base font-medium mt-1"
+              style={{ color: primaryColor }}
+            >
+              {formatCurrency(itemPrice)}
+            </Text>
+          )}
         </View>
 
         {/* Indicador de seleção */}

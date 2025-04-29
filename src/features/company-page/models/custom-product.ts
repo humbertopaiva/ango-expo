@@ -19,6 +19,7 @@ export interface CustomProductStep {
   nome?: string;
   descricao?: string;
   produtos: CustomProductItem[];
+  quantidade_minima_itens?: number | null;
 }
 
 export interface CustomProductItem {

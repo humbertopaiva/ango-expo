@@ -25,7 +25,9 @@ export interface CustomProductDetailViewModel {
   isItemSelected: (stepNumber: number, itemId: string) => boolean;
   isStepComplete: (stepNumber: number) => boolean;
   getRequiredSelectionsForStep: (stepNumber: number) => number;
+  getMinimumSelectionsForStep: (stepNumber: number) => number;
   getCurrentSelectionsForStep: (stepNumber: number) => number;
+  canAddToCart: () => boolean;
   addToCart: () => void;
   getFormattedPrice: () => string;
 }
@@ -82,19 +84,30 @@ export function useCustomProductDetailViewModel(
 
     let total = 0;
 
-    // Sum up prices from all selected items
-    selections.forEach((selection) => {
-      selection.selectedItems.forEach((item) => {
-        const price = parseFloat(
-          item.produto_detalhes.preco_promocional ||
-            item.produto_detalhes.preco ||
-            "0"
-        );
-        if (!isNaN(price)) {
-          total += price;
-        }
+    // Para preço tipo "soma", somamos o preço de todos os itens selecionados
+    if (product.preco_tipo === "soma") {
+      selections.forEach((selection) => {
+        selection.selectedItems.forEach((item) => {
+          const price = parseFloat(
+            item.produto_detalhes.preco_promocional ||
+              item.produto_detalhes.preco ||
+              "0"
+          );
+          if (!isNaN(price)) {
+            total += price;
+          }
+        });
       });
-    });
+    }
+    // Para preço tipo "menor", pegamos o menor preço (não implementado ainda)
+    else if (product.preco_tipo === "menor") {
+      // Implementação futura
+      total = 0;
+    }
+    // Se tiver um preço fixo definido no produto
+    else if (product.preco) {
+      total = parseFloat(product.preco);
+    }
 
     setTotalPrice(total);
   }, [selections, product]);
@@ -128,7 +141,10 @@ export function useCustomProductDetailViewModel(
           const maxSelections = productStep?.qtd_items_step || 0;
 
           // Add item if not exceeding limit
-          if (step.selectedItems.length < maxSelections) {
+          if (
+            maxSelections === 0 ||
+            step.selectedItems.length < maxSelections
+          ) {
             step.selectedItems = [...step.selectedItems, item];
           } else {
             // Replace the first item if max reached
@@ -162,23 +178,30 @@ export function useCustomProductDetailViewModel(
     [selections]
   );
 
+  // Get minimum required selections for a step
+  const getMinimumSelectionsForStep = useCallback(
+    (stepNumber: number) => {
+      const step = product?.passos.find((s) => s.passo_numero === stepNumber);
+      // Se quantidade_minima_itens não estiver definida, for 0 ou null, não é obrigatório selecionar nada
+      return step?.quantidade_minima_itens || 0;
+    },
+    [product]
+  );
+
   // Check if a step is complete
   const isStepComplete = useCallback(
     (stepNumber: number) => {
       const stepSelection = selections.find((s) => s.stepNumber === stepNumber);
       if (!stepSelection) return false;
 
-      const productStep = product?.passos.find(
-        (s) => s.passo_numero === stepNumber
-      );
-      const requiredSelections = productStep?.qtd_items_step || 0;
+      const minimumSelections = getMinimumSelectionsForStep(stepNumber);
 
-      return stepSelection.selectedItems.length >= requiredSelections;
+      return stepSelection.selectedItems.length >= minimumSelections;
     },
-    [selections, product]
+    [selections, getMinimumSelectionsForStep]
   );
 
-  // Get required selections for a step
+  // Get maximum selections allowed for a step
   const getRequiredSelectionsForStep = useCallback(
     (stepNumber: number) => {
       const step = product?.passos.find((s) => s.passo_numero === stepNumber);
@@ -204,19 +227,29 @@ export function useCustomProductDetailViewModel(
     }).format(totalPrice);
   }, [totalPrice]);
 
+  // Check if can add to cart (all required steps are complete)
+  const canAddToCart = useCallback(() => {
+    if (!product) return false;
+
+    // Verifica se todos os passos obrigatórios (com quantidade_minima_itens > 0) estão completos
+    return product.passos.every((step) => {
+      const minimumRequired = step.quantidade_minima_itens || 0;
+      if (minimumRequired === 0) return true; // Passo não obrigatório
+
+      const currentSelections = getCurrentSelectionsForStep(step.passo_numero);
+      return currentSelections >= minimumRequired;
+    });
+  }, [product, getCurrentSelectionsForStep]);
+
   // Add to cart function
   const addToCart = useCallback(() => {
     if (!product || !vm.profile) return;
 
-    // Check if all steps are complete
-    const allStepsComplete = product.passos.every((step) =>
-      isStepComplete(step.passo_numero)
-    );
-
-    if (!allStepsComplete) {
+    // Check if all required steps are complete
+    if (!canAddToCart()) {
       toastUtils.warning(
         toast,
-        "Por favor, complete todas as etapas antes de adicionar ao carrinho."
+        "Por favor, complete todos os passos obrigatórios antes de adicionar ao carrinho."
       );
       return;
     }
@@ -246,7 +279,7 @@ export function useCustomProductDetailViewModel(
     vm.profile,
     selections,
     totalPrice,
-    isStepComplete,
+    canAddToCart,
     cartVm,
     toast,
   ]);
@@ -261,7 +294,9 @@ export function useCustomProductDetailViewModel(
     isItemSelected,
     isStepComplete,
     getRequiredSelectionsForStep,
+    getMinimumSelectionsForStep,
     getCurrentSelectionsForStep,
+    canAddToCart,
     addToCart,
     getFormattedPrice,
   };

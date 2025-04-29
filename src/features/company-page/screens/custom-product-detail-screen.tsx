@@ -66,15 +66,6 @@ export function CustomProductDetailScreen() {
     }));
   }, []);
 
-  // Check if all steps are complete
-  const allStepsComplete = useMemo(() => {
-    if (!vm.product) return false;
-
-    return vm.product.passos.every((step) =>
-      vm.isStepComplete(step.passo_numero)
-    );
-  }, [vm.product, vm.isStepComplete]);
-
   // Handle back
   const handleBack = () => {
     router.back();
@@ -118,6 +109,14 @@ export function CustomProductDetailScreen() {
   const primaryColor =
     vm.product?.preco_tipo === "menor" ? "#F4511E" : "#F4511E";
   const contrastTextColor = getContrastColor(primaryColor);
+
+  // Verificar se há passos obrigatórios pendentes
+  const hasRequiredIncompleteSteps = vm.product.passos.some((step) => {
+    const minRequired = step.quantidade_minima_itens || 0;
+    if (minRequired === 0) return false; // Passo não é obrigatório
+
+    return !vm.isStepComplete(step.passo_numero);
+  });
 
   return (
     <View className="flex-1 bg-white">
@@ -184,36 +183,23 @@ export function CustomProductDetailScreen() {
             </Text>
           )}
 
-          {/* Steps indicator */}
+          {/* Price type info */}
           <View className="mb-4 p-4 bg-gray-50 rounded-lg">
             <Text className="text-gray-700 font-medium mb-2">
-              Este produto possui {vm.product.passos.length} etapas de
-              personalização
+              Preço baseado em:{" "}
+              {vm.product.preco_tipo === "soma"
+                ? "Soma dos itens selecionados"
+                : "Configuração personalizada"}
             </Text>
-            <View className="flex-row">
-              {vm.product.passos.map((step) => (
-                <View
-                  key={step.passo_numero}
-                  className="flex-row items-center mr-4"
-                >
-                  <View
-                    className={`w-8 h-8 rounded-full items-center justify-center ${
-                      vm.isStepComplete(step.passo_numero)
-                        ? "bg-green-500"
-                        : "bg-gray-300"
-                    }`}
-                  >
-                    <Text className="text-white font-bold">
-                      {step.passo_numero}
-                    </Text>
-                  </View>
-                  <Text className="ml-1 text-sm text-gray-600">
-                    {vm.getCurrentSelectionsForStep(step.passo_numero)}/
-                    {vm.getRequiredSelectionsForStep(step.passo_numero)}
-                  </Text>
-                </View>
-              ))}
-            </View>
+            <Text className="text-gray-600 text-sm">
+              Este produto personalizado possui {vm.product.passos.length}{" "}
+              etapas de seleção.
+              {vm.product.passos.some(
+                (step) => (step.quantidade_minima_itens || 0) > 0
+              )
+                ? " Algumas etapas são obrigatórias."
+                : " Todas as etapas são opcionais."}
+            </Text>
           </View>
         </Animated.View>
 
@@ -230,9 +216,10 @@ export function CustomProductDetailScreen() {
               expanded={!!expandedSteps[step.passo_numero]}
               onToggleExpand={() => toggleStepExpansion(step.passo_numero)}
               isComplete={vm.isStepComplete(step.passo_numero)}
-              requiredSelections={vm.getRequiredSelectionsForStep(
+              minimumSelections={vm.getMinimumSelectionsForStep(
                 step.passo_numero
               )}
+              maxSelections={vm.getRequiredSelectionsForStep(step.passo_numero)}
               currentSelections={vm.getCurrentSelectionsForStep(
                 step.passo_numero
               )}
@@ -243,6 +230,7 @@ export function CustomProductDetailScreen() {
                 vm.toggleItemSelection(step.passo_numero, item)
               }
               primaryColor={primaryColor}
+              showPrices={vm.product?.preco_tipo === "soma"}
             />
           ))}
         </View>
@@ -271,11 +259,11 @@ export function CustomProductDetailScreen() {
           </View>
 
           <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
-            {!allStepsComplete ? (
+            {hasRequiredIncompleteSteps ? (
               <View className="flex-row items-center">
                 <AlertTriangle size={20} color="#F59E0B" className="mr-2" />
                 <Text className="text-amber-600 font-medium">
-                  Complete todas as etapas
+                  Complete etapas obrigatórias
                 </Text>
               </View>
             ) : (
