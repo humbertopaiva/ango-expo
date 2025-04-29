@@ -84,7 +84,9 @@ export function DeliveryCategoriesHorizontal({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Categorias</Text>
+      <Text className="text-xl font-semibold text-primary-500 px-4 mb-8">
+        Categorias
+      </Text>
       <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -116,8 +118,8 @@ export function DeliveryCategoriesHorizontal({
                 {item.imagem ? (
                   <ImagePreview
                     uri={item.imagem}
-                    width={60}
-                    height={60}
+                    width={70}
+                    height={70}
                     resizeMode="cover"
                     containerClassName="rounded-full"
                   />
@@ -163,8 +165,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 16,
+    marginBottom: 24,
     paddingHorizontal: 16,
     color: "#1F2937",
   },
@@ -178,10 +179,10 @@ const styles = StyleSheet.create({
     width: 80,
   },
   imageContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "#F3F4F6",
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    backgroundColor: "#e9eaeb",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,

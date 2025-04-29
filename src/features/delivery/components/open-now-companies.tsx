@@ -52,10 +52,9 @@ export function OpenNowCompanies({
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>Abertos Agora</Text>
-        <Text style={styles.count}>{openCompanies.length}</Text>
-      </View>
+      <Text className="text-xl font-semibold text-primary-500 px-4 mb-8">
+        Abertos agora
+      </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

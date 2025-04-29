@@ -124,18 +124,8 @@ export function DeliveryScreenContent() {
             <PromotionalBanner imageUrl="https://ywxeaxheqzpogiztqvzk.supabase.co/storage/v1/object/public/images/admin-panel/banner-telas/delivery.jpg" />
           </View>
 
-          {/* Badge estilizada igual ao comércio local */}
-          <HStack className="items-center justify-center mb-4 mt-6">
-            <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2">
-              <Truck size={18} color={THEME_COLORS.primary} />
-              <Text className="text-sm font-medium text-primary-600">
-                Delivery
-              </Text>
-            </HStack>
-          </HStack>
-
           {/* Título estilizado igual ao comércio local */}
-          <VStack className="items-center justify-center w-full gap-1 mb-4">
+          <VStack className="px-4 w-full gap-1 mb-4">
             <Text className="text-3xl font-gothic text-secondary-500">
               PEÇA SEM SAIR
             </Text>
@@ -145,7 +135,7 @@ export function DeliveryScreenContent() {
           </VStack>
 
           {/* Texto descritivo igual ao comércio local */}
-          <Text className="text-gray-600 font-sans text-center mb-6">
+          <Text className="text-gray-600 font-sans px-4  mb-6">
             Encontre os melhores restaurantes e estabelecimentos com entrega na
             sua região
           </Text>
@@ -163,6 +153,10 @@ export function DeliveryScreenContent() {
           </Section>
         )}
 
+        <Text className="text-xl font-semibold text-primary-500 px-4 mb-4">
+          Estabelecimentos
+        </Text>
+
         {/* Seção "Abertos Agora" (só aparece se tiver empresas abertas) */}
         {openCompanies.length > 0 && (
           <Section className="mb-4" paddingX={0}>
@@ -173,13 +167,6 @@ export function DeliveryScreenContent() {
         {/* Contador de resultados */}
         <Section className="mb-4">
           <View className="flex-row justify-between items-center">
-            <Text className="text-gray-600 font-medium">
-              {filteredProfiles.length}{" "}
-              {filteredProfiles.length === 1
-                ? "estabelecimento encontrado"
-                : "estabelecimentos encontrados"}
-            </Text>
-
             {/* Badge para subcategorias selecionadas */}
             {selectedSubcategories.length > 0 && (
               <View className="flex-row items-center bg-primary-100 rounded-full px-3 py-1">
