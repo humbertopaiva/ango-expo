@@ -13,7 +13,7 @@ import { THEME_COLORS } from "@/src/styles/colors";
 
 interface EmptyCategoryProps {
   categoryName: string;
-  subcategoryName?: string; // Novo parâmetro opcional
+  subcategoryName?: string;
 }
 
 export function EmptyCategory({
@@ -32,7 +32,7 @@ export function EmptyCategory({
 
   // Texto adaptado com base na presença de subcategoria
   const titleText = subcategoryName
-    ? "Seja o primeiro nesta subcategoria!"
+    ? `Seja o primeiro em ${subcategoryName}!`
     : "Seja o primeiro!";
 
   const descriptionText = subcategoryName
@@ -40,7 +40,7 @@ export function EmptyCategory({
     : `Não encontramos estabelecimentos na categoria ${categoryName.toLowerCase()}. Que tal ser o primeiro a aparecer aqui?`;
 
   return (
-    <View className="bg-white rounded-xl shadow-md border border-gray-100 p-6 my-4">
+    <View className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mx-4 my-4">
       <View className="items-center mb-4">
         <View className="w-20 h-20 rounded-full bg-primary-50 items-center justify-center mb-4">
           <Store size={32} color={THEME_COLORS.primary} />
@@ -58,7 +58,7 @@ export function EmptyCategory({
           style={styles.patternBackground}
           className="w-full bg-primary-50 rounded-xl p-4 mb-6"
         >
-          <Text className="text-primary-500 font-medium text-center mb-2">
+          <Text className="text-primary-600 font-medium text-center mb-2">
             Vantagens para seu negócio
           </Text>
 

@@ -84,9 +84,9 @@ export function CompanyCard({ company }: CompanyCardProps) {
                   {topSubcategories.map((subcategory, index) => (
                     <View
                       key={subcategory.id}
-                      className={`bg-primary-50 px-2 py-0.5 rounded-full mr-1 mb-1`}
+                      className={`bg-gray-100 px-2 py-0.5 rounded-full mr-1 mb-1`}
                     >
-                      <Text className="text-xs text-primary-500">
+                      <Text className="text-xs text-gray-700">
                         {subcategory.nome}
                       </Text>
                     </View>

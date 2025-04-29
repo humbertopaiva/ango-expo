@@ -1,3 +1,4 @@
+// Path: src/features/category-page/components/subcategories-tabs.tsx
 import React from "react";
 import {
   View,
@@ -6,9 +7,8 @@ import {
   FlatList,
   Platform,
   ActivityIndicator,
-  Image,
 } from "react-native";
-import { Grid, SlidersHorizontal, Sparkles } from "lucide-react-native";
+import { Grid, SlidersHorizontal } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { Subcategory } from "../models/subcategory";
 import { THEME_COLORS } from "@/src/styles/colors";
