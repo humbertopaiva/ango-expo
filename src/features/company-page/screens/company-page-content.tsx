@@ -123,13 +123,13 @@ export function CompanyPageContent() {
       <View className="flex-1 bg-gray-50 relative">
         {/* Header da empresa - agora fixo, sem animação de desaparecimento */}
         {/* Header específico da empresa com posição de scroll */}
-        {/* <CompanySpecificHeader
+        <CompanySpecificHeader
           title={companyTitle}
           subtitle={companySubtitle}
           primaryColor={primaryColor}
           onBackPress={handleBackPress}
           scrollPosition={scrollY}
-        /> */}
+        />
 
         <ScrollView
           ref={scrollViewRef}
