@@ -72,11 +72,26 @@ export function AdaptiveProductCard({
 
   // Navegar para a página de detalhes do produto
   const handleProductPress = () => {
-    router.push({
-      pathname:
-        `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}` as any,
-      params: { productId: product.id },
-    });
+    if (!vm.profile?.empresa.slug) return;
+
+    // Apply a slight delay for the animation to be visible
+    setTimeout(() => {
+      // Navigate to product variation screen if product has variations
+      if (product.tem_variacao) {
+        router.push({
+          pathname:
+            `/(drawer)/empresa/${vm.profile?.empresa.slug}/product-variation/${product.id}` as any,
+          params: { productId: product.id },
+        });
+      } else {
+        // Navigate to standard product screen
+        router.push({
+          pathname:
+            `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}` as any,
+          params: { productId: product.id },
+        });
+      }
+    }, 150);
   };
 
   // Adicionar ao carrinho diretamente
