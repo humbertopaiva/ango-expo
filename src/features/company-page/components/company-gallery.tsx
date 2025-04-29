@@ -57,9 +57,8 @@ export function CompanyGallery() {
     return null;
   }
 
-  // Tamanho de cada imagem na galeria horizontal
-  const imageWidth = width * 0.65; // Reduzindo para 65% da largura da tela
-  const imageHeight = imageWidth * 0.75; // Proporção 4:3
+  // Tamanho de cada imagem na galeria horizontal - agora quadrado
+  const imageSize = width * 0.35; // 65% da largura da tela para ambas dimensões
 
   // Abrir visualizador de carrossel
   const handleImagePress = (index: number) => {
@@ -90,7 +89,7 @@ export function CompanyGallery() {
         <View
           style={[
             styles.imageContainer,
-            { width: imageWidth, height: imageHeight },
+            { width: imageSize, height: imageSize },
           ]}
         >
           <ImagePreview
@@ -153,12 +152,12 @@ export function CompanyGallery() {
           horizontal
           showsHorizontalScrollIndicator={false}
           pagingEnabled
-          snapToInterval={imageWidth + 8} // Largura da imagem + padding
+          snapToInterval={imageSize + 8} // Tamanho da imagem + padding
           decelerationRate="fast"
           contentContainerStyle={styles.listContent}
           onScroll={(event) => {
             const offsetX = event.nativeEvent.contentOffset.x;
-            const newIndex = Math.round(offsetX / (imageWidth + 8));
+            const newIndex = Math.round(offsetX / (imageSize + 8));
             if (newIndex !== currentIndex) {
               setCurrentIndex(newIndex);
             }
