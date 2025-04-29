@@ -21,6 +21,7 @@ export function CustomProductStepItem({
   onSelect,
   showPrice,
 }: CustomProductStepItemProps) {
+  console.log("item", item);
   // Função para formatar preço
   const formatCurrency = (value: string | null | undefined) => {
     if (!value) return "";
