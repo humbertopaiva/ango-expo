@@ -75,7 +75,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
   };
 
   const itemWidth = calculateItemWidth();
-  const itemHeight = itemWidth * (4 / 3);
+  const itemHeight = itemWidth * (4 / 4);
 
   // Função para preparar as imagens do encarte
   const prepareLeafletImages = (leaflet: ExtendedLeaflet) => {
@@ -170,49 +170,6 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
     }
   };
 
-  if (isLoading) {
-    return (
-      <View>
-        <View className="mb-6">
-          <View className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full">
-            <HStack className="bg-secondary-100">
-              <FileText size={20} color={THEME_COLORS.secondary} />
-              <Text className="text-sm font-medium text-secondary-600">
-                Encartes Promocionais
-              </Text>
-            </HStack>
-          </View>
-
-          <Text className="text-3xl font-semibold mb-2 text-secondary-600 text-center">
-            Ofertas Imperdíveis
-          </Text>
-
-          <Text className="text-gray-600 mb-6 text-center">
-            Confira os melhores preços e promoções dos estabelecimentos da sua
-            região
-          </Text>
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View className="flex-row gap-4 py-2">
-            {[1, 2, 3].map((i) => (
-              <View
-                key={i}
-                style={{
-                  width: itemWidth,
-                  height: itemHeight,
-                  marginRight: 16,
-                }}
-              >
-                <Card className="w-full h-full animate-pulse bg-gray-200" />
-              </View>
-            ))}
-          </View>
-        </ScrollView>
-      </View>
-    );
-  }
-
   if (leaflets.length === 0) {
     return (
       <View className="items-center justify-center p-8">
@@ -225,24 +182,28 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
 
   return (
     <View>
-      <View className="mb-6 px-4">
-        <View className="inline-flex items-center mb-2">
-          <HStack className="bg-secondary-100 gap-2 mb-4 px-4 py-2 rounded-full">
-            <FileText size={20} color={THEME_COLORS.secondary} />
-            <Text className="text-sm font-medium text-secondary-600">
-              Encartes Promocionais
-            </Text>
-          </HStack>
-        </View>
+      <View className="mb-4 px-4">
+        <HStack className="justify-between items-center mb-2">
+          <Text className="text-xl font-gothic mb-2 text-primary-500 ">
+            ENCARTES
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push("/(drawer)/(tabs)/encartes")}
+            className="ml-auto"
+          >
+            <HStack className="gap-2" alignItems="center">
+              <FileText
+                size={16}
+                color={THEME_COLORS.primary}
+                style={{ marginLeft: 4, marginTop: 2 }}
+              />
 
-        <Text className="text-3xl font-semibold mb-2 text-secondary-600 text-center">
-          Ofertas Imperdíveis
-        </Text>
-
-        <Text className="text-gray-600 font-sans text-center">
-          Confira os melhores preços e promoções dos estabelecimentos da sua
-          região
-        </Text>
+              <Text className="text-md font-semibold text-primary-500">
+                Ver todos
+              </Text>
+            </HStack>
+          </TouchableOpacity>
+        </HStack>
       </View>
 
       <ScrollView
@@ -264,16 +225,7 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
                 onPress={() => handleOpenEncarte(extendedLeaflet)}
                 activeOpacity={0.8}
               >
-                <Card
-                  className="w-full overflow-hidden border border-gray-200 rounded-xl"
-                  style={{
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 3,
-                    elevation: 2,
-                  }}
-                >
+                <Card className="w-full overflow-hidden rounded-xl bg-white">
                   <View
                     style={{
                       width: itemWidth,
@@ -341,17 +293,6 @@ export function LeafletCarousel({ leaflets, isLoading }: LeafletCarouselProps) {
           })}
         </View>
       </ScrollView>
-
-      <TouchableOpacity
-        className="self-center mt-6 bg-secondary-500 px-6 py-4 rounded-full flex-row items-center font-bold"
-        onPress={() => router.push("/(drawer)/(tabs)/encartes")}
-        activeOpacity={0.8}
-      >
-        <Text className="text-white font-medium mr-2">
-          Ver todos os encartes
-        </Text>
-        <ChevronRight size={16} color="white" />
-      </TouchableOpacity>
 
       {/* Visualizador Modal */}
       {selectedLeaflet && viewerVisible && (

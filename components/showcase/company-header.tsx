@@ -1,7 +1,12 @@
 // Path: src/features/commerce/components/enhanced-vitrine/CompanyHeader.tsx
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Store, ArrowRight } from "lucide-react-native";
+import {
+  Store,
+  ArrowRight,
+  ArrowRightToLine,
+  SquareArrowOutUpRight,
+} from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 
 import { StatusBadge } from "@/components/custom/status-badge";
@@ -30,17 +35,12 @@ export function CompanyHeader({ company, onViewAll }: CompanyHeaderProps) {
   const isDarkBackground = company.cor_primaria
     ? !getTextColor(company.cor_primaria)
     : false;
-  const textColorClass = isDarkBackground ? "text-white" : "text-gray-800";
+  const textColorClass = "text-gray-800";
 
   return (
-    <View
-      className="p-4 rounded-t-xl flex-row items-center justify-between"
-      style={{
-        backgroundColor: company.cor_primaria || THEME_COLORS.primary,
-      }}
-    >
+    <View className="p-4 rounded-t-xl flex-row items-center justify-between">
       <View className="flex-row items-center gap-3 flex-1">
-        <View className="h-16 w-16 rounded-xl bg-white/20 items-center justify-center overflow-hidden">
+        <View className="h-16 w-16 rounded-xl bg-gray-100 items-center border border-gray-300 justify-center overflow-hidden">
           {company.logo ? (
             <ImagePreview
               uri={company.logo}
@@ -49,12 +49,12 @@ export function CompanyHeader({ company, onViewAll }: CompanyHeaderProps) {
               resizeMode="cover"
             />
           ) : (
-            <Store size={24} color={isDarkBackground ? "#ffffff" : "#374151"} />
+            <Store size={24} color={"#374151"} />
           )}
         </View>
 
         <View className="flex-1">
-          <Text className={`font-semibold text-lg ${textColorClass}`}>
+          <Text className={`font-bold text-lg ${textColorClass}`}>
             {company.nome}
           </Text>
 
@@ -68,9 +68,7 @@ export function CompanyHeader({ company, onViewAll }: CompanyHeaderProps) {
                     className="mr-1"
                   >
                     <Text
-                      className={`font-medium text-xs rounded-full px-2 py-0.5  ${
-                        isDarkBackground ? "bg-white/20" : "bg-black/10"
-                      } ${textColorClass}`}
+                      className={`font-medium text-xs rounded-full px-2 py-0.5 bg-gray-100  } ${textColorClass}`}
                     >
                       {sub.subcategorias_empresas_id.nome}
                     </Text>
@@ -90,15 +88,9 @@ export function CompanyHeader({ company, onViewAll }: CompanyHeaderProps) {
 
       <TouchableOpacity
         onPress={onViewAll}
-        className={`flex-row items-center py-1 px-3 rounded-full ${
-          isDarkBackground ? "bg-white/20" : "bg-black/10"
-        }`}
+        className={`flex-row items-center py-1 px-3 rounded-full bg-primary-50 aspect-square`}
       >
-        <Text className={`mr-1 text-sm ${textColorClass}`}>Ver empresa</Text>
-        <ArrowRight
-          size={14}
-          color={isDarkBackground ? "#ffffff" : "#374151"}
-        />
+        <SquareArrowOutUpRight size={16} color={THEME_COLORS.primary} />
       </TouchableOpacity>
     </View>
   );

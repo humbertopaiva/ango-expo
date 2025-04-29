@@ -16,7 +16,7 @@ export function CommerceScreenContent() {
   const vm = useCommerceContext();
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 80 }}
@@ -37,7 +37,7 @@ export function CommerceScreenContent() {
         </Section>
 
         {/* Últimos Encartes */}
-        <Section className="my-6 bg-secondary-50 py-10">
+        <Section className="my-6 bg-primary-50 py-10">
           <LeafletCarousel
             leaflets={vm.latestLeaflets}
             isLoading={vm.isLoading}

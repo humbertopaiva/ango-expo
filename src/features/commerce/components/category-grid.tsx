@@ -1,4 +1,3 @@
-// Path: src/features/commerce/components/category-grid.tsx
 import React, { useMemo } from "react";
 import {
   View,
@@ -8,10 +7,10 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Category } from "../models/category";
-import { Sparkles, Store } from "lucide-react-native";
+import { Store } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { router } from "expo-router";
-import { HStack, VStack } from "@gluestack-ui/themed";
+import { HStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 interface CategoryGridProps {
@@ -48,12 +47,7 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
       activeOpacity={0.8}
       style={{ marginRight: 12 }}
     >
-      <View
-        style={{
-          width: 100,
-          alignItems: "center",
-        }}
-      >
+      <View style={{ width: 100, alignItems: "center" }}>
         <View
           style={{
             width: 64,
@@ -96,25 +90,26 @@ export function CategoryGrid({ categories, isLoading }: CategoryGridProps) {
 
   return (
     <View>
-      <View className="px-4 mb-4">
-        <HStack className="inline-flex items-center justify-center mb-4">
-          <HStack className="bg-primary-100/60 px-4 py-2 rounded-full flex items-center gap-2">
-            <Sparkles size={18} color={THEME_COLORS.primary} />
-            <Text className="text-sm font-medium text-primary-500">
-              Categorias em Destaque
+      <HStack
+        className="px-4 mb-8"
+        style={{ justifyContent: "space-between", alignItems: "center" }}
+      >
+        <Text className="text-xl font-gothic text-primary-500">CATEGORIAS</Text>
+        <TouchableOpacity
+        // onPress={() => router.push("/(drawer)/(tabs)/categorias")}
+        >
+          <HStack className="gap-2" alignItems="center">
+            <Store
+              size={16}
+              color={THEME_COLORS.primary}
+              style={{ marginLeft: 4, marginTop: 2 }}
+            />
+            <Text className="text-md font-semibold text-primary-500">
+              Ver todas
             </Text>
           </HStack>
-        </HStack>
-
-        <VStack className="items-center justify-center w-full gap-1 mb-2">
-          <Text className="text-2xl font-gothic text-secondary-500">
-            EXPLORE O
-          </Text>
-          <Text className="text-2xl font-gothic text-primary-500">
-            COMÉRCIO LOCAL
-          </Text>
-        </VStack>
-      </View>
+        </TouchableOpacity>
+      </HStack>
 
       {isLoading ? (
         <FlatList
