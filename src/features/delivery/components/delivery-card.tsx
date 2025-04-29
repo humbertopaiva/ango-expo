@@ -1,156 +1,123 @@
-// Path: src/features/delivery/components/premium-delivery-card.tsx
+// Path: src/features/delivery/components/enhanced-delivery-card.tsx
 import React from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  Linking,
-  Platform,
   StyleSheet,
+  Image,
+  Dimensions,
 } from "react-native";
-import {
-  MessageCircle,
-  Phone,
-  MapPin,
-  Clock,
-  ChevronRight,
-  Store,
-} from "lucide-react-native";
-import { ResilientImage } from "@/components/common/resilient-image";
-import { DeliveryProfile } from "../models/delivery-profile";
-import { router } from "expo-router";
 import { StatusBadge } from "@/components/custom/status-badge";
+import { DeliveryProfile } from "../models/delivery-profile";
+import { DeliveryShowcaseItem } from "../models/delivery-showcase-item";
+import { ImagePreview } from "@/components/custom/image-preview";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { router } from "expo-router";
 import { checkIfOpen } from "../hooks/use-delivery-page";
+import {
+  Store,
+  MapPin,
+  Phone,
+  MessageCircle,
+  Clock,
+  ArrowRight,
+} from "lucide-react-native";
+import { Linking, Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface DeliveryCardProps {
   profile: DeliveryProfile;
+  showcaseItems?: DeliveryShowcaseItem[];
+  index: number;
 }
 
-export function DeliveryCard({ profile }: DeliveryCardProps) {
-  // Verificação de segurança para garantir que o profile existe
-  if (!profile) {
-    return null;
-  }
+const { width } = Dimensions.get("window");
+const cardWidth = width > 500 ? width / 2 - 24 : width - 32;
 
-  // Função para verificar se está aberto de forma segura
-  const isOpen = React.useMemo(() => {
-    try {
-      return checkIfOpen(profile);
-    } catch (error) {
-      console.error("Error checking if open:", error);
-      return false; // Em caso de erro, considera fechado
-    }
-  }, [profile]);
+export function DeliveryCard({
+  profile,
+  showcaseItems = [],
+  index,
+}: DeliveryCardProps) {
+  const isOpen = checkIfOpen(profile);
+  const hasShowcase = showcaseItems && showcaseItems.length > 0;
 
-  // Extrair subcategorias com segurança
-  const subcategories = React.useMemo(() => {
-    if (!profile.empresa || !profile.empresa.subcategorias) {
-      return [];
-    }
+  // Formatar preço
+  const formatCurrency = (price: string) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(parseFloat(price.replace(",", ".")));
+  };
 
-    if (!Array.isArray(profile.empresa.subcategorias)) {
-      return [];
-    }
-
-    return profile.empresa.subcategorias.filter(
-      (sub) => sub && sub.subcategorias_empresas_id
-    );
-  }, [profile]);
-
-  // Manipuladores de eventos
+  // Função para abrir WhatsApp
   const handleWhatsAppClick = () => {
-    try {
-      if (!profile.whatsapp) return;
+    if (!profile.whatsapp) return;
 
-      const phoneNumber = profile.whatsapp.replace(/\D/g, "");
-      const whatsappUrl = `https://wa.me/${phoneNumber}`;
+    const phoneNumber = profile.whatsapp.replace(/\D/g, "");
+    const whatsappUrl = `https://wa.me/${phoneNumber}`;
 
-      if (Platform.OS === "web") {
-        window.open(whatsappUrl, "_blank");
-      } else {
-        Linking.openURL(whatsappUrl);
-      }
-    } catch (error) {
-      console.error("Error opening WhatsApp:", error);
-    }
+    Linking.openURL(whatsappUrl).catch((err) => {
+      console.error("Erro ao abrir WhatsApp:", err);
+    });
   };
 
+  // Função para fazer ligação
   const handlePhoneClick = () => {
-    try {
-      if (!profile.whatsapp) return;
+    if (!profile.whatsapp) return;
 
-      const phoneNumber = profile.whatsapp.replace(/\D/g, "");
-      const telUrl = `tel:${phoneNumber}`;
+    const phoneNumber = profile.whatsapp.replace(/\D/g, "");
+    const telUrl = `tel:${phoneNumber}`;
 
-      if (Platform.OS === "web") {
-        window.open(telUrl, "_blank");
-      } else {
-        Linking.openURL(telUrl);
-      }
-    } catch (error) {
-      console.error("Error making phone call:", error);
-    }
+    Linking.openURL(telUrl).catch((err) => {
+      console.error("Erro ao fazer ligação:", err);
+    });
   };
 
+  // Navegar para empresa
   const navigateToCompany = () => {
-    try {
-      if (!profile.empresa || !profile.empresa.slug) return;
-      router.push(`/(drawer)/empresa/${profile.empresa.slug}`);
-    } catch (error) {
-      console.error("Error navigating to company:", error);
-    }
+    if (!profile.empresa?.slug) return;
+    router.push(`/(drawer)/empresa/${profile.empresa.slug}`);
   };
 
-  // Background color for the card (use primary color or default)
-  // Substitui preto por um tom mais suave
-  let backgroundColor = profile.cor_primaria || THEME_COLORS.primary;
-  if (backgroundColor === "#000000" || backgroundColor === "#000") {
-    backgroundColor = "#2a2a2a";
-  }
+  // Determinar cor de fundo baseada na cor primária da empresa
+  const backgroundColor = profile.cor_primaria || THEME_COLORS.primary;
 
   return (
-    <TouchableOpacity
-      onPress={navigateToCompany}
-      activeOpacity={0.9}
-      style={[styles.container, { shadowColor: backgroundColor }]}
+    <Animated.View
+      entering={FadeInDown.delay(index * 100).duration(400)}
+      style={[styles.container, { width: cardWidth }]}
     >
-      {/* Banner Background with Overlay */}
-      <View style={styles.bannerContainer}>
-        {profile.banner ? (
-          <>
-            <ResilientImage
-              source={profile.banner}
+      {/* Banner e overlay */}
+      <TouchableOpacity activeOpacity={0.9} onPress={navigateToCompany}>
+        <View style={styles.bannerContainer}>
+          {profile.banner ? (
+            <Image
+              source={{ uri: profile.banner }}
               style={styles.bannerImage}
               resizeMode="cover"
             />
-            <LinearGradient
-              colors={["rgba(40,40,40,0.2)", "rgba(30,30,30,0.75)"]}
-              style={styles.gradientOverlay}
-            />
-          </>
-        ) : (
-          <View style={[styles.fallbackBanner, { backgroundColor }]}>
-            <LinearGradient
-              colors={[`${backgroundColor}`, `#2a2a2aCC`]}
-              style={styles.gradientOverlay}
-            />
-          </View>
-        )}
-      </View>
+          ) : (
+            <View style={[styles.fallbackBanner, { backgroundColor }]} />
+          )}
+          <LinearGradient
+            colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.7)"]}
+            style={styles.gradientOverlay}
+          />
+        </View>
 
-      {/* Content Container */}
-      <View style={styles.contentContainer}>
-        {/* Top Section with Logo and Status */}
-        <View style={styles.topSection}>
-          {/* Logo */}
-          <View style={styles.logoContainer}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <View style={styles.logoWrapper}>
             {profile.logo ? (
-              <ResilientImage
-                source={profile.logo}
-                style={styles.logoImage}
+              <ImagePreview
+                uri={profile.logo}
+                width="100%"
+                height="100%"
                 resizeMode="cover"
+                containerClassName="rounded-xl"
               />
             ) : (
               <View style={[styles.fallbackLogo, { backgroundColor }]}>
@@ -168,107 +135,211 @@ export function DeliveryCard({ profile }: DeliveryCardProps) {
           />
         </View>
 
-        {/* Main Info */}
-        <View style={styles.mainInfo}>
-          <Text style={styles.title} numberOfLines={1}>
+        {/* Informações da empresa */}
+        <View style={styles.companyInfoContainer}>
+          <Text style={styles.companyName} numberOfLines={1}>
             {profile.nome}
           </Text>
 
-          {/* Categories */}
-          {subcategories.length > 0 && (
+          {/* Categorias */}
+          {profile.empresa?.subcategorias && (
             <View style={styles.categoriesContainer}>
-              {subcategories.slice(0, 2).map((sub, index) => {
-                if (!sub || !sub.subcategorias_empresas_id) return null;
-
-                return (
-                  <View
-                    key={sub.subcategorias_empresas_id.id || `cat-${index}`}
-                    style={styles.categoryBadge}
-                  >
-                    <Text style={styles.categoryText}>
-                      {sub.subcategorias_empresas_id.nome}
-                    </Text>
-                  </View>
-                );
-              })}
-
-              {subcategories.length > 2 && (
+              {profile.empresa.subcategorias.slice(0, 2).map((sub) => (
+                <View
+                  key={sub.subcategorias_empresas_id.id + `-${index}`}
+                  style={styles.categoryBadge}
+                >
+                  <Text style={styles.categoryName}>
+                    {sub.subcategorias_empresas_id.nome}
+                  </Text>
+                </View>
+              ))}
+              {profile.empresa.subcategorias.length > 2 && (
                 <Text style={styles.moreCategories}>
-                  +{subcategories.length - 2}
+                  +{profile.empresa.subcategorias.length - 2}
                 </Text>
               )}
             </View>
           )}
 
-          {/* Address */}
+          {/* Endereço */}
           {profile.endereco && (
-            <View style={styles.addressContainer}>
-              <MapPin size={14} color="white" />
-              <Text style={styles.addressText} numberOfLines={1}>
+            <View style={styles.infoRow}>
+              <MapPin size={14} color="#6B7280" />
+              <Text style={styles.infoText} numberOfLines={1}>
                 {profile.endereco}
               </Text>
             </View>
           )}
 
-          {/* Opening hours */}
-          <View style={styles.addressContainer}>
-            <Clock size={14} color="white" />
-            <Text style={styles.addressText}>
+          {/* Horário */}
+          <View style={styles.infoRow}>
+            <Clock size={14} color={isOpen ? "#10B981" : "#6B7280"} />
+            <Text
+              style={[
+                styles.infoText,
+                isOpen && { color: "#10B981", fontWeight: "500" },
+              ]}
+            >
               {isOpen ? "Aberto agora" : "Fechado no momento"}
             </Text>
           </View>
         </View>
+      </TouchableOpacity>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          {/* View Menu Button */}
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={navigateToCompany}
+      {/* Vitrine de produtos se existir */}
+      {hasShowcase && (
+        <View style={styles.showcaseContainer}>
+          <Text style={styles.showcaseTitle}>Em destaque</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.showcaseScroll}
+            contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
           >
-            <Text style={styles.primaryButtonText}>Ver cardápio</Text>
-            <ChevronRight size={16} color="white" />
-          </TouchableOpacity>
-
-          {/* Contact Buttons */}
-          {profile.whatsapp && (
-            <View style={styles.contactButtons}>
+            {showcaseItems.slice(0, 5).map((item) => (
               <TouchableOpacity
-                style={styles.phoneButton}
-                onPress={handlePhoneClick}
+                key={item.id}
+                style={styles.productCard}
+                onPress={navigateToCompany}
               >
-                <Phone size={18} color="white" />
-              </TouchableOpacity>
+                <View style={styles.productImageContainer}>
+                  {item.imagem ? (
+                    <ImagePreview
+                      uri={item.imagem}
+                      width="100%"
+                      height="100%"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.fallbackProductImage}>
+                      <Package size={24} color="#9CA3AF" />
+                    </View>
+                  )}
 
-              <TouchableOpacity
-                style={styles.whatsappButton}
-                onPress={handleWhatsAppClick}
-              >
-                <MessageCircle size={18} color="white" />
+                  {/* Badge de promoção */}
+                  {item.preco_promocional && (
+                    <View style={styles.discountBadge}>
+                      <Text style={styles.discountText}>
+                        {Math.round(
+                          ((parseFloat(item.preco.replace(",", ".")) -
+                            parseFloat(
+                              item.preco_promocional.replace(",", ".")
+                            )) /
+                            parseFloat(item.preco.replace(",", "."))) *
+                            100
+                        )}
+                        % OFF
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Badge de indisponível */}
+                  {!item.disponivel && (
+                    <View style={styles.unavailableOverlay}>
+                      <Text style={styles.unavailableText}>Indisponível</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.productInfo}>
+                  <Text style={styles.productName} numberOfLines={1}>
+                    {item.nome}
+                  </Text>
+
+                  {/* Preço */}
+                  <View style={styles.priceContainer}>
+                    {item.preco_promocional ? (
+                      <>
+                        <Text style={styles.promoPrice}>
+                          {formatCurrency(item.preco_promocional)}
+                        </Text>
+                        <Text style={styles.originalPrice}>
+                          {formatCurrency(item.preco)}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text style={styles.price}>
+                        {formatCurrency(item.preco)}
+                      </Text>
+                    )}
+                  </View>
+                </View>
               </TouchableOpacity>
-            </View>
-          )}
+            ))}
+
+            {/* Card "Ver Mais" */}
+            {showcaseItems.length > 5 && (
+              <TouchableOpacity
+                style={styles.viewMoreCard}
+                onPress={navigateToCompany}
+              >
+                <View style={styles.viewMoreContent}>
+                  <View style={styles.viewMoreIconContainer}>
+                    <ArrowRight size={24} color={THEME_COLORS.primary} />
+                  </View>
+                  <Text style={styles.viewMoreText}>
+                    Ver mais {showcaseItems.length - 5} produtos
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
         </View>
+      )}
+
+      {/* Botões de ação */}
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={navigateToCompany}
+        >
+          <Text style={styles.primaryButtonText}>Ver cardápio</Text>
+          <ArrowRight size={16} color="white" />
+        </TouchableOpacity>
+
+        {profile.whatsapp && (
+          <View style={styles.contactButtons}>
+            <TouchableOpacity
+              style={styles.contactButton}
+              onPress={handlePhoneClick}
+            >
+              <Phone size={18} color="#6B7280" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.contactButton, styles.whatsappButton]}
+              onPress={handleWhatsAppClick}
+            >
+              <MessageCircle size={18} color="white" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
-    </TouchableOpacity>
+    </Animated.View>
   );
 }
+
+// Importar o componente Package que faltou
+import { Package } from "lucide-react-native";
+import { ScrollView } from "react-native-gesture-handler";
 
 const styles = StyleSheet.create({
   container: {
     borderRadius: 16,
-    overflow: "hidden",
+    backgroundColor: "white",
     marginBottom: 16,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    backgroundColor: "#1a1a1a", // Tom mais suave de preto
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: "hidden",
   },
   bannerContainer: {
-    position: "absolute",
+    height: 150,
     width: "100%",
-    height: "100%",
+    position: "relative",
   },
   bannerImage: {
     width: "100%",
@@ -277,134 +348,242 @@ const styles = StyleSheet.create({
   fallbackBanner: {
     width: "100%",
     height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#2a2a2a", // Fundo mais suave quando não há banner
   },
   gradientOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: "rgba(24, 24, 24, 0.4)", // Base adicional para suavizar
-  },
-  contentContainer: {
-    padding: 16,
-    paddingTop: 20,
-    paddingBottom: 20,
-  },
-  topSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 12,
+    ...StyleSheet.absoluteFillObject,
   },
   logoContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "white",
-    borderWidth: 2,
-    borderColor: "white",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginTop: -24,
+    marginBottom: 8,
   },
-  logoImage: {
-    width: "100%",
-    height: "100%",
+  logoWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: "white",
+    padding: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 3,
+    overflow: "hidden",
   },
   fallbackLogo: {
     width: "100%",
     height: "100%",
-    justifyContent: "center",
+    borderRadius: 10,
     alignItems: "center",
-    borderRadius: 12,
+    justifyContent: "center",
   },
-  mainInfo: {
-    marginBottom: 16,
+  companyInfoContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "white",
+  companyName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1F2937",
     marginBottom: 8,
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   categoriesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   categoryBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: `${THEME_COLORS.primary}15`,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    marginRight: 6,
-    marginBottom: 6,
+    marginRight: 8,
+    marginBottom: 8,
   },
-  categoryText: {
-    color: "white",
+  categoryName: {
     fontSize: 12,
+    color: THEME_COLORS.primary,
     fontWeight: "500",
   },
   moreCategories: {
-    color: "rgba(255, 255, 255, 0.8)",
     fontSize: 12,
-    marginLeft: 4,
+    color: "#6B7280",
     alignSelf: "center",
   },
-  addressContainer: {
+  infoRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 4,
   },
-  addressText: {
-    marginLeft: 6,
-    color: "rgba(255, 255, 255, 0.9)",
+  infoText: {
     fontSize: 13,
+    color: "#6B7280",
+    marginLeft: 8,
   },
-  actionButtons: {
-    flexDirection: "row",
+  showcaseContainer: {
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  showcaseTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1F2937",
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  showcaseScroll: {
+    flexGrow: 0,
+  },
+  productCard: {
+    width: 140,
+    marginRight: 12,
+    borderRadius: 12,
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    overflow: "hidden",
+  },
+  productImageContainer: {
+    height: 100,
+    width: "100%",
+    position: "relative",
+  },
+  fallbackProductImage: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#F9FAFB",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
+  },
+  discountBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  discountText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  unavailableOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  unavailableText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  productInfo: {
+    padding: 10,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#1F2937",
+    marginBottom: 4,
+  },
+  priceContainer: {
+    flexDirection: "column",
+  },
+  price: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: THEME_COLORS.primary,
+  },
+  promoPrice: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: THEME_COLORS.primary,
+  },
+  originalPrice: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    textDecorationLine: "line-through",
+  },
+  viewMoreCard: {
+    width: 120,
+    height: 172,
+    marginRight: 12,
+    borderRadius: 12,
+    backgroundColor: "#F9FAFB",
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+  },
+  viewMoreContent: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewMoreIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: `${THEME_COLORS.primary}15`,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  viewMoreText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#1F2937",
+    textAlign: "center",
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    padding: 16,
+    paddingTop: 0,
+    alignItems: "center",
   },
   primaryButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    flex: 1,
+    backgroundColor: THEME_COLORS.primary,
     borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
-    flex: 1,
-    marginRight: 8,
     justifyContent: "center",
+    marginRight: 12,
   },
   primaryButtonText: {
     color: "white",
     fontWeight: "600",
-    marginRight: 4,
+    fontSize: 14,
+    marginRight: 6,
   },
   contactButtons: {
     flexDirection: "row",
   },
-  phoneButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
-    width: 38,
-    height: 38,
+  contactButton: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    justifyContent: "center",
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
-    marginRight: 8,
+    justifyContent: "center",
+    marginLeft: 8,
   },
   whatsappButton: {
-    backgroundColor: "#25D36680",
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#25D366",
   },
 });

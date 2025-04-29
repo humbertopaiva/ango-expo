@@ -7,7 +7,7 @@ import { DeliveryProvider } from "../contexts/delivery-page-provider";
 
 export function DeliveryScreen() {
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-white">
       <DeliveryProvider>
         <DeliveryScreenContent />
       </DeliveryProvider>

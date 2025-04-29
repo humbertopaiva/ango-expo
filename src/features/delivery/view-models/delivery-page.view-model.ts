@@ -1,8 +1,9 @@
 // Path: src/features/delivery/view-models/delivery-page.view-model.ts
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDeliveryPage } from "../hooks/use-delivery-page";
 import { IDeliveryViewModel } from "./delivery-page.view-model.interface";
 import { useDeliveryShowcases } from "../hooks/use-delivery-showcases";
+import { checkIfOpen } from "../hooks/use-delivery-page";
 
 export function useDeliveryViewModel(): IDeliveryViewModel {
   const {
@@ -21,8 +22,9 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
   const {
     showcases,
     isLoading: isLoadingShowcases,
+    getShowcaseItemsBySlug,
     companiesWithShowcases,
-    companiesWithShowcaseMapped, // Nome corrigido
+    companiesWithShowcaseMapped,
   } = useDeliveryShowcases(filteredProfiles);
 
   // Cálculo do total de itens em destaque
@@ -33,6 +35,11 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
 
   // Contagem de vitrines (empresas com destaque)
   const vitrinesCount = companiesWithShowcases.length;
+
+  // Empresas abertas no momento
+  const openCompanies = useMemo(() => {
+    return filteredProfiles.filter((profile) => checkIfOpen(profile));
+  }, [filteredProfiles]);
 
   useEffect(() => {
     console.log("DeliveryViewModel initialized");
@@ -64,5 +71,7 @@ export function useDeliveryViewModel(): IDeliveryViewModel {
     companiesWithShowcaseMapped,
     totalShowcaseItems,
     vitrinesCount,
+    openCompanies,
+    getShowcaseItemsBySlug,
   };
 }
