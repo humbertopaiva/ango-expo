@@ -7,10 +7,6 @@ import { Pressable } from "@gluestack-ui/themed";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function CategoryLayout() {
-  // Definir a barra de status para a cor primária
-  StatusBar.setBackgroundColor(THEME_COLORS.primary);
-  StatusBar.setBarStyle("light-content");
-
   const router = useRouter();
 
   return (
