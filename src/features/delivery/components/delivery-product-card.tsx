@@ -1,10 +1,11 @@
 // Path: src/features/delivery/components/delivery-product-card.tsx
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Card } from "@gluestack-ui/themed";
 import { Package } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { DeliveryShowcaseItem } from "../models/delivery-showcase-item";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface DeliveryProductCardProps {
   product: DeliveryShowcaseItem;
@@ -19,7 +20,7 @@ export function DeliveryProductCard({
 }: DeliveryProductCardProps) {
   // Formatação de moeda
   const formatCurrency = (value: string) => {
-    const numericValue = parseFloat(value);
+    const numericValue = parseFloat(value.replace(",", "."));
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -35,11 +36,17 @@ export function DeliveryProductCard({
     );
   };
 
+  const textColor = isDarkBackground ? "#ffffff" : "#1F2937";
+
   return (
-    <TouchableOpacity onPress={onPress} className="w-64 flex-shrink-0 mr-4">
-      <Card className="border border-gray-200 rounded-xl overflow-hidden h-96">
-        {/* Seção da imagem com proporção fixa */}
-        <View className="relative" style={{ height: "50%" }}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.container}
+      activeOpacity={0.9}
+    >
+      <Card style={styles.card}>
+        {/* Seção da imagem com proporção fixa - AUMENTADA */}
+        <View style={styles.imageContainer}>
           {product.imagem ? (
             <ImagePreview
               uri={product.imagem}
@@ -48,14 +55,14 @@ export function DeliveryProductCard({
               resizeMode="cover"
             />
           ) : (
-            <View className="w-full h-full items-center justify-center bg-gray-100">
+            <View style={styles.fallbackImage}>
               <Package size={48} color="#6B7280" />
             </View>
           )}
 
           {product.preco_promocional && (
-            <View className="absolute top-2 right-2 bg-red-500 px-2 py-1 rounded-full">
-              <Text className="text-white text-xs font-bold">
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>
                 {calculateDiscount(product.preco, product.preco_promocional)}%
                 OFF
               </Text>
@@ -63,49 +70,49 @@ export function DeliveryProductCard({
           )}
 
           {!product.disponivel && (
-            <View className="absolute inset-0 bg-black/60 items-center justify-center">
-              <Text className="text-white font-bold">Indisponível</Text>
+            <View style={styles.unavailableOverlay}>
+              <Text style={styles.unavailableText}>Indisponível</Text>
             </View>
           )}
         </View>
 
-        {/* Seção do conteúdo com altura fixa e scroll interno se necessário */}
-        <View className="p-4 flex-1 justify-between">
-          <View>
-            {/* Título com altura máxima fixa - estilo padronizado */}
+        {/* Seção do conteúdo */}
+        <View style={styles.contentContainer}>
+          <View style={styles.textContainer}>
+            {/* Título com corte de texto */}
             <Text
-              className="text-lg font-semibold text-gray-800"
+              style={[styles.title, { color: textColor }]}
               numberOfLines={2}
               ellipsizeMode="tail"
             >
               {product.nome}
             </Text>
 
-            {/* Descrição com altura máxima fixa - estilo padronizado */}
-            <Text
-              className="text-sm text-gray-600 mt-1"
-              numberOfLines={2}
-              ellipsizeMode="tail"
-            >
-              {product.descricao}
-            </Text>
+            {/* Descrição com corte de texto */}
+            {product.descricao && (
+              <Text
+                style={styles.description}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {product.descricao}
+              </Text>
+            )}
           </View>
 
-          {/* Seção de preço com posicionamento fixo na parte inferior - estilo padronizado */}
-          <View className="mt-auto">
+          {/* Seção de preço */}
+          <View style={styles.priceContainer}>
             {product.preco_promocional ? (
               <>
-                <Text className="text-lg font-bold text-primary-500">
+                <Text style={styles.promotionalPrice}>
                   {formatCurrency(product.preco_promocional)}
                 </Text>
-                <Text className="text-sm text-gray-500 line-through">
+                <Text style={styles.originalPrice}>
                   {formatCurrency(product.preco)}
                 </Text>
               </>
             ) : (
-              <Text className="text-lg font-bold text-primary-500">
-                {formatCurrency(product.preco)}
-              </Text>
+              <Text style={styles.price}>{formatCurrency(product.preco)}</Text>
             )}
           </View>
         </View>
@@ -113,3 +120,95 @@ export function DeliveryProductCard({
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: 280, // Aumentado de 240px
+    marginRight: 16,
+  },
+  card: {
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "white",
+    height: 420, // Aumentado de 360px
+  },
+  imageContainer: {
+    height: 240, // Aumentado de 180px
+    width: "100%",
+    position: "relative",
+  },
+  fallbackImage: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#F9FAFB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  discountBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  discountText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  unavailableOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  unavailableText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  contentContainer: {
+    padding: 16,
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 18, // Aumentado de 16px
+    fontWeight: "600",
+    marginBottom: 8,
+    lineHeight: 24,
+  },
+  description: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 12,
+    lineHeight: 20,
+    flex: 1,
+  },
+  priceContainer: {
+    marginTop: "auto",
+  },
+  price: {
+    fontSize: 20, // Aumentado de 18px
+    fontWeight: "700",
+    color: THEME_COLORS.primary,
+  },
+  promotionalPrice: {
+    fontSize: 20, // Aumentado de 18px
+    fontWeight: "700",
+    color: THEME_COLORS.primary,
+  },
+  originalPrice: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    textDecorationLine: "line-through",
+    marginTop: 4,
+  },
+});

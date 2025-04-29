@@ -326,7 +326,7 @@ import { ScrollView } from "react-native-gesture-handler";
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: 8,
     backgroundColor: "white",
     marginBottom: 16,
     shadowColor: "#000",
@@ -441,8 +441,9 @@ const styles = StyleSheet.create({
   },
   productCard: {
     width: 140,
+    height: 200,
     marginRight: 12,
-    borderRadius: 12,
+    borderRadius: 8,
     backgroundColor: "white",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -497,7 +498,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#1F2937",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   priceContainer: {
     flexDirection: "column",
@@ -551,7 +552,7 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: "row",
     padding: 16,
-    paddingTop: 0,
+    paddingTop: 8,
     alignItems: "center",
   },
   primaryButton: {
