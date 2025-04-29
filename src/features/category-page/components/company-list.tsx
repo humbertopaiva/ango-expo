@@ -85,7 +85,7 @@ export function CompanyList({
     count: number;
     isOpen: boolean;
   }) => (
-    <View className="mb-3 pb-1 border-b border-gray-100">
+    <View className="mb-3 pb-1  px-4">
       <View className="flex-row items-center">
         <View
           className={`w-3 h-3 mr-2 rounded-full ${

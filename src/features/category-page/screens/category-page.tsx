@@ -7,12 +7,11 @@ import { useLocalSearchParams } from "expo-router";
 import { useCategoryDetails } from "../hooks/use-category-details";
 
 import { CategoryHeader } from "../components/category-header";
+import { AnimatedPageTransition } from "@/components/animations/animated-page-transition";
 
 export function CategoryPage() {
   const { categorySlug } = useLocalSearchParams<{ categorySlug: string }>();
-  const { categoryName, categoryImage, isLoading } = useCategoryDetails(
-    categorySlug as string
-  );
+
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   if (!categorySlug) {
@@ -20,21 +19,17 @@ export function CategoryPage() {
   }
 
   return (
-    <View className="flex-1 bg-white">
-      {/* Header simplificado sem margens */}
-      <CategoryHeader
-        categoryName={categoryName}
-        categoryImage={categoryImage}
-        isLoading={isLoading}
-        onFilterPress={() => setShowFilterModal(true)}
-      />
+    <AnimatedPageTransition animation="slide" duration={600}>
+      <View className="flex-1 bg-white">
+        {/* Header simplificado sem margens */}
 
-      <CategoryPageProvider categorySlug={categorySlug as string}>
-        <CategoryPageContent
-          showFilterModal={showFilterModal}
-          setShowFilterModal={setShowFilterModal}
-        />
-      </CategoryPageProvider>
-    </View>
+        <CategoryPageProvider categorySlug={categorySlug as string}>
+          <CategoryPageContent
+            showFilterModal={showFilterModal}
+            setShowFilterModal={setShowFilterModal}
+          />
+        </CategoryPageProvider>
+      </View>
+    </AnimatedPageTransition>
   );
 }
