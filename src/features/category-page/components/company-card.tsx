@@ -4,7 +4,12 @@ import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { CategoryCompany } from "../models/category-company";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { router } from "expo-router";
-import { Store, Clock, ChevronRight } from "lucide-react-native";
+import {
+  Store,
+  Clock,
+  ChevronRight,
+  SquareArrowOutUpRight,
+} from "lucide-react-native";
 import { HStack, VStack } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { isBusinessOpen, formatBusinessHours } from "../utils/business-hours";
@@ -39,7 +44,7 @@ export function CompanyCard({ company }: CompanyCardProps) {
         },
       ]}
     >
-      <View className="bg-white rounded-xl shadow-sm border border-gray-100 mb-3 overflow-hidden">
+      <View className="mb-3 overflow-hidden">
         <View className="p-4">
           <HStack space="md" className="justify-between">
             <HStack space="md" className="flex-1">
@@ -69,16 +74,10 @@ export function CompanyCard({ company }: CompanyCardProps) {
               </View>
 
               {/* Company Info */}
-              <VStack space="xs" className="flex-1 ml-2">
+              <VStack space="xs" className="flex-1 ml-2 justify-center">
                 <Text className="text-lg font-semibold text-gray-800">
                   {company.perfil.nome}
                 </Text>
-
-                {/* Hours */}
-                <HStack space="xs" className="items-center">
-                  <Clock size={12} color="#6B7280" />
-                  <Text className="text-xs text-gray-500">{businessHours}</Text>
-                </HStack>
 
                 {/* Categories */}
                 <HStack className="flex-wrap mt-1">
@@ -87,7 +86,7 @@ export function CompanyCard({ company }: CompanyCardProps) {
                       key={subcategory.id}
                       className={`bg-primary-50 px-2 py-0.5 rounded-full mr-1 mb-1`}
                     >
-                      <Text className="text-xs text-primary-700">
+                      <Text className="text-xs text-primary-500">
                         {subcategory.nome}
                       </Text>
                     </View>
@@ -103,11 +102,11 @@ export function CompanyCard({ company }: CompanyCardProps) {
 
             {/* Ver perfil button - Minimalista */}
             <Pressable onPress={navigateToCompany} className="self-center pl-2">
-              <HStack space="xs" className="items-center">
-                <Text className="text-sm text-primary-600 font-medium">
-                  Ver perfil
-                </Text>
-                <ChevronRight size={16} color={THEME_COLORS.primary} />
+              <HStack
+                space="xs"
+                className="items-center bg-primary-50 p-2 rounded-full"
+              >
+                <SquareArrowOutUpRight size={20} color={THEME_COLORS.primary} />
               </HStack>
             </Pressable>
           </HStack>

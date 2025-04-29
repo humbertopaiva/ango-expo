@@ -82,7 +82,7 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
     <TouchableOpacity onPress={onPress} className="w-64 flex-shrink-0 mr-4">
       {/* Fixed height Card */}
       <Card
-        className={`border border-gray-200 rounded-xl overflow-hidden h-96 ${
+        className={` rounded-xl overflow-hidden h-96 ${
           !isAvailable ? "opacity-70" : ""
         }`}
       >
@@ -153,12 +153,12 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
                   {formatCurrency(productPrice || "0")}
                 </Text>
               </>
-            ) : productPrice ? (
-              <Text className="text-xl font-bold text-primary-600">
-                {formatCurrency(productPrice)}
-              </Text>
             ) : (
-              <Text className="text-sm text-red-500">Preço não definido</Text>
+              productPrice && (
+                <Text className="text-xl font-bold text-primary-600">
+                  {formatCurrency(productPrice)}
+                </Text>
+              )
             )}
 
             {product.parcelamento_cartao &&
