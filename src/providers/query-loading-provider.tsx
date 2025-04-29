@@ -41,15 +41,15 @@ export function QueryLoadingProvider({
   const isMutating = useIsMutating();
 
   // Combinar os estados para determinar se algo está carregando
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(
-        isFetching > 0 || isMutating > 0 || manualLoading || isNavigating
-      );
-    }, 100);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setIsLoading(
+  //       isFetching > 0 || isMutating > 0 || manualLoading || isNavigating
+  //     );
+  //   }, 100);
 
-    return () => clearTimeout(timer);
-  }, [isFetching, isMutating, manualLoading, isNavigating]);
+  //   return () => clearTimeout(timer);
+  // }, [isFetching, isMutating, manualLoading, isNavigating]);
 
   const showManualLoader = () => setManualLoading(true);
   const hideManualLoader = () => setManualLoading(false);

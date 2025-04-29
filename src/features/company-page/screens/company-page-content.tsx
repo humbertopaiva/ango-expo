@@ -21,6 +21,8 @@ import { useCategoryFilterStore } from "../stores/category-filter.store";
 import { memo } from "react";
 import { useStatusBarColor } from "@/src/hooks/use-status-bar-color";
 import { StatusBar } from "react-native";
+import { AnimatedPageTransition } from "@/components/animations/animated-page-transition";
+import { Loader } from "@/components/common/loader";
 
 // Utilizando memo para evitar renderizações desnecessárias
 const MemoizedFeaturedProductsStrip = memo(FeaturedProductsStrip);
@@ -113,72 +115,64 @@ export function CompanyPageContent() {
   }, []);
 
   if (vm.isLoading) {
-    return (
-      <View className="flex-1 bg-gray-50 justify-center items-center">
-        <CompanySpecificHeader
-          title="Carregando..."
-          onBackPress={() => router.back()}
-        />
-        <View className="flex-1 justify-center items-center">
-          {/* Aqui você pode adicionar um indicador de carregamento se desejar */}
-        </View>
-      </View>
-    );
+    return <Loader />;
   }
 
   return (
-    <View className="flex-1 bg-gray-50 relative">
-      {/* Altera a cor da barra de status para a cor primária da empresa */}
-      <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
+    <AnimatedPageTransition animation="slide" duration={600}>
+      <View className="flex-1 bg-gray-50 relative">
+        {/* Altera a cor da barra de status para a cor primária da empresa */}
+        <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
 
-      {/* Header da empresa - agora fixo, sem animação de desaparecimento */}
-      {/* Header específico da empresa com posição de scroll */}
-      <CompanySpecificHeader
-        title={companyTitle}
-        subtitle={companySubtitle}
-        primaryColor={primaryColor}
-        onBackPress={handleBackPress}
-        scrollPosition={scrollY}
-      />
+        {/* Header da empresa - agora fixo, sem animação de desaparecimento */}
+        {/* Header específico da empresa com posição de scroll */}
+        <CompanySpecificHeader
+          title={companyTitle}
+          subtitle={companySubtitle}
+          primaryColor={primaryColor}
+          onBackPress={handleBackPress}
+          scrollPosition={scrollY}
+        />
 
-      <ScrollView
-        ref={scrollViewRef}
-        className="flex-1 bg-gray-50"
-        contentContainerStyle={{
-          paddingBottom: 120,
-        }}
-        showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16} // Importante para rastrear a posição de rolagem
-        onScroll={handleScroll}
-      >
-        <View>
-          {/* Cabeçalho da empresa - Agora fixo, sem animação de desaparecimento */}
-          <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
+        <ScrollView
+          ref={scrollViewRef}
+          className="flex-1 bg-gray-50"
+          contentContainerStyle={{
+            paddingBottom: 120,
+          }}
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16} // Importante para rastrear a posição de rolagem
+          onScroll={handleScroll}
+        >
+          <View>
+            {/* Cabeçalho da empresa - Agora fixo, sem animação de desaparecimento */}
+            <CompanyHeader onMoreInfoPress={handleOpenInfoModal} />
 
-          {/* Galeria de imagens da empresa */}
-          <MemoizedCompanyGallery />
+            {/* Galeria de imagens da empresa */}
+            <MemoizedCompanyGallery />
 
-          {/* Produtos personalizados */}
-          <MemoizedCustomProductsSection />
+            {/* Produtos personalizados */}
+            <MemoizedCustomProductsSection />
 
-          {/* Produtos em destaque (da vitrine) */}
-          {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
-            <MemoizedFeaturedProductsStrip />
-          )}
+            {/* Produtos em destaque (da vitrine) */}
+            {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
+              <MemoizedFeaturedProductsStrip />
+            )}
 
-          {/* Produtos agrupados por categoria */}
-          <MemoizedProductsByCategory title={"Produtos"} />
-        </View>
-      </ScrollView>
+            {/* Produtos agrupados por categoria */}
+            <MemoizedProductsByCategory title={"Produtos"} />
+          </View>
+        </ScrollView>
 
-      {/* Barra de ações fixa no rodapé (apenas se o carrinho estiver habilitado) */}
-      {isCartEnabled() && <CompanyActionBar />}
+        {/* Barra de ações fixa no rodapé (apenas se o carrinho estiver habilitado) */}
+        {isCartEnabled() && <CompanyActionBar />}
 
-      {/* Modal com informações detalhadas da empresa */}
-      <CompanyInfoModal
-        isVisible={isInfoModalVisible}
-        onClose={handleCloseInfoModal}
-      />
-    </View>
+        {/* Modal com informações detalhadas da empresa */}
+        <CompanyInfoModal
+          isVisible={isInfoModalVisible}
+          onClose={handleCloseInfoModal}
+        />
+      </View>
+    </AnimatedPageTransition>
   );
 }
