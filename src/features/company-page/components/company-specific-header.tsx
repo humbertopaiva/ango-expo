@@ -114,15 +114,13 @@ export function CompanySpecificHeader({
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
 
-  // Use a altura real como um valor animado
-  const categoriesHeight = useSharedValue(0);
+  // Use the header opacity as an animated value
+  const headerOpacity = useSharedValue(0);
+  const headerHeight = useSharedValue(0);
 
   // Use the category filter store
   const { categories, selectedCategory, setSelectedCategory, productCounts } =
     useCategoryFilterStore();
-
-  // Determine if categories should be shown (after scroll)
-  const [showCategories, setShowCategories] = useState(false);
 
   // Handler for back button - usando useCallback
   const handleBack = useCallback(() => {
@@ -135,100 +133,100 @@ export function CompanySpecificHeader({
     }
   }, [onBackPress, backTo]);
 
-  // Altura máxima da seção de categorias
+  // Altura máxima do header quando expandido (incluindo categorias)
+  const HEADER_BASE_HEIGHT = Platform.OS === "ios" ? insets.top + 56 : 56;
   const CATEGORIES_SECTION_HEIGHT = 60;
+  const HEADER_EXPANDED_HEIGHT = HEADER_BASE_HEIGHT + CATEGORIES_SECTION_HEIGHT;
 
-  // Monitor scroll position to show categories com transição suave
+  // Monitor scroll position to show/hide header with smooth transition
   useEffect(() => {
-    // Adicionamos um "threshold" para evitar mudanças na visualização com pequenas oscilações
+    // Add a threshold to avoid changes with small oscillations
     const THRESHOLD = 10;
     const SCROLL_TRIGGER = 300;
 
     if (scrollPosition > SCROLL_TRIGGER + THRESHOLD) {
-      // Animação para mostrar as categorias
-      setShowCategories(true);
-      categoriesHeight.value = withTiming(CATEGORIES_SECTION_HEIGHT, {
+      // Animation to show the header
+      headerOpacity.value = withTiming(1, {
+        duration: 300,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
+      headerHeight.value = withTiming(HEADER_EXPANDED_HEIGHT, {
         duration: 300,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       });
     } else if (scrollPosition < SCROLL_TRIGGER - THRESHOLD) {
-      // Animação para esconder as categorias
-      categoriesHeight.value = withTiming(0, {
+      // Animation to hide the header
+      headerOpacity.value = withTiming(0, {
         duration: 300,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       });
-
-      // Esconde os elementos depois que a animação termina
-      const timeout = setTimeout(() => {
-        if (scrollPosition < SCROLL_TRIGGER - THRESHOLD) {
-          setShowCategories(false);
-        }
-      }, 300);
-
-      return () => clearTimeout(timeout);
+      headerHeight.value = withTiming(0, {
+        duration: 300,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
     }
-  }, [scrollPosition, categoriesHeight]);
+  }, [scrollPosition, headerOpacity, headerHeight, HEADER_EXPANDED_HEIGHT]);
 
-  // Create animated styles usando a altura diretamente
-  const animatedContainerStyle = useAnimatedStyle(() => {
+  // Create animated styles using the opacity and height
+  const animatedHeaderStyle = useAnimatedStyle(() => {
     return {
-      height: categoriesHeight.value,
+      opacity: headerOpacity.value,
+      height: headerHeight.value,
       overflow: "hidden",
-      borderTopWidth: categoriesHeight.value > 0 ? 1 : 0,
-      borderTopColor: "rgba(255,255,255,0.15)",
     };
   });
 
+  // Render the animated header
   return (
-    <View
+    <Animated.View
       style={[
         styles.headerContainer,
-        {
-          backgroundColor: primaryColor,
-          paddingTop: Platform.OS === "ios" ? insets.top : 0,
-        },
+        { backgroundColor: primaryColor },
+        animatedHeaderStyle,
         isWeb ? { position: "sticky", top: 0, zIndex: 50 } : {},
       ]}
     >
       {/* Main header with back button and title */}
-      <HStack className="px-4 py-3 justify-between items-center" space="md">
-        <HStack className="items-center flex-1" space="sm">
-          <TouchableOpacity
-            onPress={handleBack}
-            className="p-2 -ml-2 rounded-full active:bg-white/10"
-          >
-            <ArrowLeft size={24} color={"#FFFFFF"} />
-          </TouchableOpacity>
-
-          {/* Company title and subtitle */}
-          <VStack className="ml-2 flex-1">
-            <Text
-              className="text-xl font-semibold text-white"
-              numberOfLines={1}
+      <View style={{ height: HEADER_BASE_HEIGHT, justifyContent: "flex-end" }}>
+        <HStack className="px-4 py-3 justify-between items-center" space="md">
+          <HStack className="items-center flex-1" space="sm">
+            <TouchableOpacity
+              onPress={handleBack}
+              className="p-2 -ml-2 rounded-full active:bg-white/10"
             >
-              {title}
-            </Text>
-            {subtitle && (
-              <Text className="text-xs text-white/80" numberOfLines={1}>
-                {subtitle}
+              <ArrowLeft size={24} color={"#FFFFFF"} />
+            </TouchableOpacity>
+
+            {/* Company title and subtitle */}
+            <VStack className="ml-2 flex-1">
+              <Text
+                className="text-xl font-semibold text-white"
+                numberOfLines={1}
+              >
+                {title}
               </Text>
-            )}
-          </VStack>
+              {subtitle && (
+                <Text className="text-xs text-white/80" numberOfLines={1}>
+                  {subtitle}
+                </Text>
+              )}
+            </VStack>
+          </HStack>
+
+          {/* Logo */}
+          <Box className="mr-1">
+            <Image
+              source={require("@/assets/images/logo-white.png")}
+              className="h-8 w-16"
+              resizeMode="contain"
+            />
+          </Box>
         </HStack>
+      </View>
 
-        {/* Logo */}
-        <Box className="mr-1">
-          <Image
-            source={require("@/assets/images/logo-white.png")}
-            className="h-8 w-16"
-            resizeMode="contain"
-          />
-        </Box>
-      </HStack>
-
-      {/* Categoria container com altura animada */}
-      <Animated.View style={animatedContainerStyle}>
-        {showCategories && categories.length > 0 && (
+      {/* Categories section */}
+      <View style={{ height: CATEGORIES_SECTION_HEIGHT }}>
+        {categories.length > 0 && (
           <Animated.View
             style={styles.categoriesContent}
             entering={FadeIn.duration(300)}
@@ -264,8 +262,8 @@ export function CompanySpecificHeader({
             </ScrollView>
           </Animated.View>
         )}
-      </Animated.View>
-    </View>
+      </View>
+    </Animated.View>
   );
 }
 
