@@ -1,20 +1,20 @@
 // Path: src/features/company-page/components/company-header.tsx
 import React from "react";
-import { View, Text, TouchableOpacity, Linking, Platform } from "react-native";
+import { View, Text, TouchableOpacity, Linking } from "react-native";
 import {
   Info,
   Store,
-  MessageCircle,
   Clock,
   Truck,
   DollarSign,
+  ChevronRight,
+  InfoIcon,
 } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
-import { Card, HStack, VStack } from "@gluestack-ui/themed";
+import { Box, HStack, VStack } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { OpenStatusIndicator } from "@/components/custom/open-status-indicator";
 import { isBusinessOpen } from "@/src/utils/business-hours.utils";
 
 interface CompanyHeaderProps {
@@ -27,29 +27,20 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
 
   if (!vm.profile) return null;
 
-  // Handler para WhatsApp
-  const handleWhatsApp = async () => {
-    const whatsappLink = vm.getWhatsAppLink();
-    if (whatsappLink) {
-      await Linking.openURL(whatsappLink);
-    }
-  };
-
   // Verificar se o estabelecimento está aberto
   const open = isBusinessOpen(vm.profile);
 
   // Definir estilos baseados na cor primária da empresa
   const primaryColor = vm.primaryColor || "#F4511E";
+  const statusColor = open ? "#22c55e" : "#ef4444"; // Verde ou vermelho
+  const statusText = open ? "Aberto" : "Fechado";
 
   // Verificar se deve mostrar informações de delivery
-  const shouldShowDeliveryInfo = () => {
-    return (
-      vm.hasDelivery() &&
-      vm.config?.delivery &&
-      (vm.config?.delivery?.mostrar_info_delivery === true ||
-        vm.config?.delivery?.mostrar_info_delivery === null)
-    );
-  };
+  const shouldShowDeliveryInfo = () =>
+    vm.hasDelivery() &&
+    vm.config?.delivery &&
+    (vm.config?.delivery?.mostrar_info_delivery === true ||
+      vm.config?.delivery?.mostrar_info_delivery === null);
 
   // Formatar valores monetários
   const formatCurrency = (value: string) => {
@@ -66,7 +57,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
   return (
     <View className="relative mb-4">
       {/* Banner */}
-      <View className="w-full relative overflow-hidden" style={{ height: 180 }}>
+      <View className="w-full relative overflow-hidden" style={{ height: 140 }}>
         <ImagePreview
           uri={vm.profile.banner}
           fallbackIcon={Store}
@@ -76,8 +67,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
           containerClassName={vm.profile.banner ? "" : "bg-gray-100"}
           rounded={false}
         />
-
-        {/* Gradiente para melhorar legibilidade do conteúdo */}
+        {/* Gradiente para melhorar legibilidade */}
         <LinearGradient
           colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
           style={{
@@ -90,138 +80,129 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
         />
       </View>
 
-      {/* Indicador de aberto/fechado */}
-      <View className="absolute top-4 right-4">
-        <OpenStatusIndicator isOpen={open} />
-      </View>
-
       {/* Conteúdo principal */}
-      <View className="px-4 -mt-16 relative z-10">
-        <Card className="p-4 rounded-xl">
-          <HStack space="lg" alignItems="flex-start">
-            {/* Logo */}
-            <View className="w-20 h-20 rounded-xl border-2 border-white overflow-hidden bg-white">
-              <ImagePreview
-                uri={vm.profile.logo}
-                fallbackIcon={Store}
-                width="100%"
-                height="100%"
-                containerClassName="bg-gray-100"
-              />
-            </View>
-
-            {/* Informações da empresa */}
-            <VStack className="flex-1">
-              <Text className="text-xl font-semibold text-gray-800">
+      <View className="px-4 relative z-10">
+        <Box className="mt-4">
+          {/* Cabeçalho: Nome, Categorias, Logo e Status */}
+          <HStack
+            justifyContent="space-between"
+            alignItems="flex-start"
+            className="mb-4 w-full"
+          >
+            {/* Informações do estabelecimento */}
+            <VStack className="flex-1 pr-2">
+              <Text className="text-2xl tracking-tight font-bold text-gray-800">
                 {vm.profile.nome}
               </Text>
-
-              {vm.profile.empresa?.categoria && (
-                <Text className="text-sm text-gray-600 mb-1 font-sans">
-                  {vm.profile.empresa.categoria.nome}
-                </Text>
-              )}
-
               <View className="flex-row flex-wrap gap-1 mt-1">
                 {vm.profile.empresa?.subcategorias?.map((sub) => (
                   <View
                     key={sub.subcategorias_empresas_id.id}
-                    className="px-2 py-0.5 bg-gray-100 rounded-full"
+                    className="px-2 py-0.5 bg-gray-200 rounded-full"
                   >
-                    <Text className="text-xs text-gray-700 font-sans">
+                    <Text className="text-xs text-gray-700">
                       {sub.subcategorias_empresas_id.nome}
                     </Text>
                   </View>
                 ))}
               </View>
             </VStack>
+
+            {/* Logo e Status */}
+            <VStack alignItems="center" className="-mt-16">
+              <View
+                className="w-24 h-24 rounded-lg border-2 overflow-hidden bg-white"
+                style={{ borderColor: statusColor }}
+              >
+                <ImagePreview
+                  uri={vm.profile.logo}
+                  fallbackIcon={Store}
+                  width="100%"
+                  height="100%"
+                  containerClassName="bg-gray-100"
+                />
+              </View>
+              <View className="mt-1">
+                <Text
+                  className="text-sm font-medium"
+                  style={{ color: statusColor }}
+                >
+                  {statusText}
+                </Text>
+              </View>
+            </VStack>
           </HStack>
 
-          {/* INÍCIO: Seção de Informações de Delivery */}
+          {/* Informações de entrega integradas */}
           {shouldShowDeliveryInfo() && vm.config?.delivery && (
-            <View className="mt-4 pt-4 border-t border-gray-100">
-              {/* Informações do Delivery */}
-              <View className="flex-row justify-between items-center">
-                {/* Tempo estimado */}
-                {vm.config.delivery.tempo_estimado_entrega && (
-                  <View className="flex-1 items-center border-r border-gray-100 pr-2">
-                    <View
-                      className="w-8 h-8 rounded-full items-center justify-center mb-1"
-                      style={{ backgroundColor: `${primaryColor}10` }}
-                    >
-                      <Clock size={16} color={primaryColor} />
-                    </View>
-                    <Text className="text-xs text-gray-500">
-                      Tempo Estimado
-                    </Text>
-                    <Text className="text-sm font-medium text-gray-800">
-                      {vm.config.delivery.tempo_estimado_entrega} min
-                    </Text>
-                  </View>
-                )}
-
-                {/* Taxa de entrega */}
-                <View className="flex-1 items-center px-2">
-                  <View
-                    className="w-8 h-8 rounded-full items-center justify-center mb-1"
-                    style={{ backgroundColor: `${primaryColor}10` }}
-                  >
-                    <DollarSign size={16} color={primaryColor} />
-                  </View>
-                  <Text className="text-xs text-gray-500">Taxa de Entrega</Text>
-                  <Text className="text-sm font-medium text-gray-800">
-                    {formatCurrency(vm.config.delivery.taxa_entrega || "0")}
-                  </Text>
-                </View>
-
-                {/* Pedido mínimo, se existir */}
-                {vm.config.delivery.pedido_minimo && (
-                  <View className="flex-1 items-center border-l border-gray-100 pl-2">
-                    <View
-                      className="w-8 h-8 rounded-full items-center justify-center mb-1"
-                      style={{ backgroundColor: `${primaryColor}10` }}
-                    >
-                      <DollarSign size={16} color={primaryColor} />
-                    </View>
-                    <Text className="text-xs text-gray-500">Pedido Mínimo</Text>
-                    <Text className="text-sm font-medium text-gray-800">
-                      {formatCurrency(vm.config.delivery.pedido_minimo)}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-          {/* FIM: Seção de Informações de Delivery */}
-
-          {/* Botões de ação */}
-          <View className="flex-row mt-4 gap-2">
-            {/* WhatsApp (apenas se disponível) */}
-            {vm.profile.whatsapp && (
-              <TouchableOpacity
-                onPress={handleWhatsApp}
-                className="flex-1 py-3 bg-green-500 rounded-lg flex-row justify-center items-center"
-              >
-                <MessageCircle size={18} color="white" />
-                <Text className="ml-2 font-semibold text-white">WhatsApp</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Mais informações */}
             <TouchableOpacity
               onPress={onMoreInfoPress}
-              className="flex-1 py-3 bg-gray-100 rounded-lg flex-row justify-center items-center"
+              className="mt-3 py-2 border-t border-gray-100 w-full"
             >
-              <Info size={18} color={primaryColor} />
-              <Text
-                className="ml-2 font-semibold"
-                style={{ color: primaryColor }}
-              >
-                Informações
-              </Text>
+              <View className="w-full px-2 rounded-md">
+                <HStack className="w-full justify-between">
+                  {/* Tempo estimado */}
+                  {vm.config.delivery.tempo_estimado_entrega && (
+                    <VStack alignItems="center" space="xs" className="mb-1">
+                      <HStack space="xs" className="items-center">
+                        <Clock size={14} color={primaryColor} />
+                        <Text className="text-sm font-semibold text-gray-800">
+                          {vm.config.delivery.tempo_estimado_entrega} min
+                        </Text>
+                      </HStack>
+
+                      <Text className="text-xs font-medium text-gray-500 ml-1">
+                        Tempo estimado
+                      </Text>
+                    </VStack>
+                  )}
+
+                  {/* Taxa de entrega */}
+                  <VStack alignItems="center" space="xs" className="mb-1">
+                    <Text className="text-sm font-semibold text-gray-800">
+                      <Text
+                        className="text-sm font-semibold"
+                        style={{ color: primaryColor }}
+                      >
+                        R$
+                      </Text>
+                      {formatCurrency(
+                        vm.config.delivery.taxa_entrega || "0"
+                      ).replace("R$", "")}
+                    </Text>
+                    <Text className="text-xs font-medium text-gray-500 ml-1">
+                      Taxa de Entrega
+                    </Text>
+                  </VStack>
+
+                  {/* Pedido mínimo */}
+                  {vm.config.delivery.pedido_minimo && (
+                    <VStack alignItems="center" space="xs" className="mb-1">
+                      <HStack space="xs" className="items-center">
+                        <Truck size={14} color={primaryColor} />
+                        <Text className="text-sm font-semibold text-gray-800">
+                          {formatCurrency(vm.config.delivery.pedido_minimo)}
+                        </Text>
+                      </HStack>
+
+                      <Text className="text-xs font-medium text-gray-500 ml-1">
+                        Pedido mínimo
+                      </Text>
+                    </VStack>
+                  )}
+
+                  {/* Botão de Informações */}
+                  <TouchableOpacity
+                    onPress={onMoreInfoPress}
+                    className="py-3 flex-col justify-center items-center aspect-square"
+                  >
+                    <Info size={28} color={primaryColor} />
+                  </TouchableOpacity>
+                </HStack>
+              </View>
             </TouchableOpacity>
-          </View>
-        </Card>
+          )}
+        </Box>
       </View>
     </View>
   );

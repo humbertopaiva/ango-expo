@@ -121,18 +121,15 @@ export function CompanyPageContent() {
   return (
     <AnimatedPageTransition animation="slide" duration={600}>
       <View className="flex-1 bg-gray-50 relative">
-        {/* Altera a cor da barra de status para a cor primária da empresa */}
-        <StatusBar backgroundColor={primaryColor} barStyle="light-content" />
-
         {/* Header da empresa - agora fixo, sem animação de desaparecimento */}
         {/* Header específico da empresa com posição de scroll */}
-        <CompanySpecificHeader
+        {/* <CompanySpecificHeader
           title={companyTitle}
           subtitle={companySubtitle}
           primaryColor={primaryColor}
           onBackPress={handleBackPress}
           scrollPosition={scrollY}
-        />
+        /> */}
 
         <ScrollView
           ref={scrollViewRef}

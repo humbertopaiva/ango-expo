@@ -143,18 +143,6 @@ export function CompanyGallery() {
 
   return (
     <View style={styles.container}>
-      {/* Cabeçalho da galeria */}
-      <View className="px-4 mb-4">
-        <HStack className="items-center justify-between">
-          <HStack className="items-center">
-            <Camera size={24} color={primaryColor} />
-            <Text className="text-md font-semibold text-gray-800 ml-2">
-              Galeria
-            </Text>
-          </HStack>
-        </HStack>
-      </View>
-
       {/* Galeria horizontal */}
       <View>
         <FlatList
@@ -205,7 +193,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   imageContainer: {
-    borderRadius: 12,
+    borderRadius: 8,
     overflow: "hidden",
     backgroundColor: "#f3f4f6",
   },
