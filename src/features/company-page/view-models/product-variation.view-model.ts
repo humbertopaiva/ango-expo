@@ -96,8 +96,8 @@ export function useProductVariationViewModel(
         }
 
         // If product has variations, fetch them
-        if (foundProduct.tem_variacao && foundProduct.variacao?.id) {
-          fetchVariationOptions(foundProduct.variacao.id);
+        if (foundProduct.tem_variacao) {
+          fetchVariationOptions(foundProduct.id);
         }
       }
       setIsLoading(false);
@@ -105,60 +105,38 @@ export function useProductVariationViewModel(
   }, [productId, vm.products, isCartEnabled]);
 
   // Fetch variation options - CORRECTED ENDPOINT
-  const fetchVariationOptions = async (variationId: string) => {
-    console.log("VARIATION ID:", variationId);
-    if (!variationId) return;
+  const fetchVariationOptions = async (productId: string) => {
+    if (!productId) return;
 
     setLoadingVariations(true);
     setVariationError(null);
 
     try {
-      // Using the correct API endpoint for variation items
-      const response = await api.get(
-        `/api/products/variation-items/${variationId}`
-      );
+      // Using the correct API endpoint for variations
+      const response = await api.get(`/api/products/${productId}/variations`);
 
       if (response.data?.data) {
-        // Handle a single variation item response
-        if (!Array.isArray(response.data.data)) {
-          const item = response.data.data;
-          const option: VariationOption = {
-            id: item.id,
-            name: item.valor_variacao || "Opção",
-            price: item.preco || "0",
-            promotional_price: item.preco_promocional || null,
-            description: item.descricao || null,
-            image: item.imagem || null,
-            available: item.disponivel !== false,
-          };
+        const variations = Array.isArray(response.data.data)
+          ? response.data.data
+          : [response.data.data];
 
-          setVariationOptions([option]);
+        const options: VariationOption[] = variations.map((item: any) => ({
+          id: item.id,
+          name: item.valor_variacao || "Opção",
+          price: item.preco || "0",
+          promotional_price: item.preco_promocional || null,
+          description: item.descricao || null,
+          image: item.imagem || null,
+          available: item.disponivel !== false,
+        }));
 
-          if (option.available) {
-            setSelectedVariation(option);
-          }
-        }
-        // Handle an array of variation items
-        else {
-          const options: VariationOption[] = response.data.data.map(
-            (item: any) => ({
-              id: item.id,
-              name: item.valor_variacao || "Opção",
-              price: item.preco || "0",
-              promotional_price: item.preco_promocional || null,
-              description: item.descricao || null,
-              image: item.imagem || null,
-              available: item.disponivel !== false,
-            })
-          );
+        const availableOptions = options.filter((option) => option.available);
+        setVariationOptions(availableOptions);
 
-          setVariationOptions(options.filter((option) => option.available));
-
-          // Select the first available option by default
-          const firstAvailable = options.find((option) => option.available);
-          if (firstAvailable) {
-            setSelectedVariation(firstAvailable);
-          }
+        // Select the first available option by default
+        const firstAvailable = availableOptions[0];
+        if (firstAvailable) {
+          setSelectedVariation(firstAvailable);
         }
       }
     } catch (error) {
