@@ -8,14 +8,20 @@ import { useCategoryDetails } from "../hooks/use-category-details";
 
 import { CategoryHeader } from "../components/category-header";
 import { AnimatedPageTransition } from "@/components/animations/animated-page-transition";
+import { Loader } from "@/components/common/loader";
 
 export function CategoryPage() {
   const { categorySlug } = useLocalSearchParams<{ categorySlug: string }>();
+  const { isLoading } = useCategoryDetails(categorySlug as string);
 
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   if (!categorySlug) {
     return null;
+  }
+
+  if (isLoading) {
+    return <Loader />;
   }
 
   return (
