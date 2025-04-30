@@ -19,8 +19,7 @@ import { CompanyGallery } from "../components/company-gallery";
 import { CustomProductsSection } from "../components/custom-products-section";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
 import { memo } from "react";
-import { useStatusBarColor } from "@/src/hooks/use-status-bar-color";
-import { StatusBar } from "react-native";
+
 import { AnimatedPageTransition } from "@/components/animations/animated-page-transition";
 import { Loader } from "@/components/common/loader";
 
