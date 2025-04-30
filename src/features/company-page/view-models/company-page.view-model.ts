@@ -9,6 +9,7 @@ import { customProductService } from "../services/custom-product.service";
 import { useCallback, useState } from "react";
 import { ProductAddonList } from "../models/product-addon-list";
 import { productAddonsService } from "../services/product-addons.service";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 export function useCompanyPageViewModel(
   companySlug: string
@@ -191,7 +192,7 @@ export function useCompanyPageViewModel(
       isLoadingProducts ||
       isLoadingConfig ||
       isLoadingShowcase,
-    primaryColor: profile?.cor_primaria ?? "#F4511E", // Cor primária padrão do projeto
+    primaryColor: THEME_COLORS.primary,
     secondaryColor: profile?.cor_secundaria ?? "#FFFFFF",
     isCategoryFilterVisible,
     categoryFilterData,

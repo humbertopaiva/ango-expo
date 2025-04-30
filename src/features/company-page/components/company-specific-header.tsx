@@ -205,11 +205,6 @@ export function CompanySpecificHeader({
               >
                 {title}
               </Text>
-              {subtitle && (
-                <Text className="text-xs text-white/80" numberOfLines={1}>
-                  {subtitle}
-                </Text>
-              )}
             </VStack>
           </HStack>
 

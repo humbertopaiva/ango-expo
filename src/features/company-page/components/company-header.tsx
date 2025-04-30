@@ -1,6 +1,6 @@
 // Path: src/features/company-page/components/company-header.tsx
 import React from "react";
-import { View, Text, TouchableOpacity, Linking } from "react-native";
+import { View, Text, TouchableOpacity, Linking, Image } from "react-native";
 import {
   Info,
   Store,
@@ -9,6 +9,7 @@ import {
   DollarSign,
   ChevronRight,
   InfoIcon,
+  ArrowLeft,
 } from "lucide-react-native";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { Box, HStack, VStack } from "@gluestack-ui/themed";
@@ -16,6 +17,7 @@ import { ImagePreview } from "@/components/custom/image-preview";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isBusinessOpen } from "@/src/utils/business-hours.utils";
+import { router } from "expo-router";
 
 interface CompanyHeaderProps {
   onMoreInfoPress?: () => void;
@@ -54,6 +56,11 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
         });
   };
 
+  // Handler para botão de voltar
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
     <View className="relative mb-4">
       {/* Banner */}
@@ -69,7 +76,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
         />
         {/* Gradiente para melhorar legibilidade */}
         <LinearGradient
-          colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
+          colors={["rgba(0,0,0,0.7)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
           style={{
             position: "absolute",
             left: 0,
@@ -78,6 +85,43 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
             bottom: 0,
           }}
         />
+
+        {/* Header actions - Back button and Logo */}
+        <View
+          style={{
+            position: "absolute",
+            top: insets.top || 16,
+            left: 0,
+            right: 0,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingHorizontal: 16,
+            zIndex: 10,
+          }}
+        >
+          {/* Back button */}
+          <TouchableOpacity
+            onPress={handleBack}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <ArrowLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          {/* App logo */}
+          <Image
+            source={require("@/assets/images/logo-white.png")}
+            style={{ height: 32, width: 64 }}
+            resizeMode="contain"
+          />
+        </View>
       </View>
 
       {/* Conteúdo principal */}
