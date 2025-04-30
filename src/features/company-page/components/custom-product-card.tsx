@@ -70,9 +70,9 @@ export function CustomProductCard({ product }: CustomProductCardProps) {
         </View>
 
         {/* Informações do produto */}
-        <View className="flex-1 px-3 justify-between py-3">
-          <HStack>
-            <View className="">
+        <View className="flex-1 px-3 justify-between py-3 w-full">
+          <HStack className=" grid-cols-2 h-full">
+            <View className="flex-1">
               <Text className="font-semibold text-gray-800 line-clamp-1 text-lg">
                 {product.nome}
               </Text>
@@ -85,7 +85,8 @@ export function CustomProductCard({ product }: CustomProductCardProps) {
               )}
             </View>
             {/* Botão de adicionar ao carrinho - mesmo estilo do AdaptiveProductCard */}
-            <View>
+            {/* Botao no fim do componente, inferiro direito */}
+            <View className="self-end ml-4">
               {isCartEnabled && (
                 <TouchableOpacity
                   onPress={handleAddToCart}
