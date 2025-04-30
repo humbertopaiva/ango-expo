@@ -23,6 +23,7 @@ import Animated, {
   FadeIn,
   FadeOut,
 } from "react-native-reanimated";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface CompanySpecificHeaderProps {
   title: string;
@@ -106,7 +107,7 @@ const CategoryButton = memo(
 export function CompanySpecificHeader({
   title,
   subtitle,
-  primaryColor = "#F4511E",
+  primaryColor = THEME_COLORS.primary,
   onBackPress,
   backTo,
   scrollPosition = 0,
@@ -181,7 +182,6 @@ export function CompanySpecificHeader({
     <Animated.View
       style={[
         styles.headerContainer,
-        { backgroundColor: primaryColor },
         animatedHeaderStyle,
         isWeb ? { position: "sticky", top: 0, zIndex: 50 } : {},
       ]}
@@ -248,7 +248,7 @@ export function CompanySpecificHeader({
                       category={category}
                       isActive={isActive}
                       count={count}
-                      primaryColor={primaryColor}
+                      primaryColor={THEME_COLORS.primary}
                       onSelect={() => setSelectedCategory(category)}
                     />
                   </Animated.View>

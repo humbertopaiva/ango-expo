@@ -55,7 +55,7 @@ export function ModalFilter({
 
           {/* Header do Modal */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Filtrar por Categoria</Text>
+            <Text style={styles.modalTitle}>Filtrar por Subcategoria</Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={onClose}

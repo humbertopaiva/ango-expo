@@ -41,6 +41,20 @@ export function CatalogProductCard({
   // Verificar se o carrinho está habilitado
   const isCartEnabled = vm.config?.delivery?.habilitar_carrinho !== false;
 
+  // Verificar se o produto tem variação
+  const hasVariation = product.tem_variacao === true;
+
+  // Determinar se deve exibir o preço - modificado para nunca mostrar preço de produtos com variação
+  const shouldShowPrice =
+    !hasVariation && product.exibir_preco && product.preco;
+
+  // Texto para produtos com variação - modificado para mostrar variações disponíveis
+  const variationText = hasVariation
+    ? `${product.variacao?.nome || "Opções"}: ${
+        product.variacao?.variacao?.join(", ") || "Variações disponíveis"
+      }`
+    : null;
+
   // Animações
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -85,11 +99,19 @@ export function CatalogProductCard({
 
     // Aplique um pequeno atraso para que a animação seja visível antes da navegação
     setTimeout(() => {
-      router.push({
-        pathname:
-          `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}` as any,
-        params: { productId: product.id },
-      });
+      if (hasVariation) {
+        router.push({
+          pathname:
+            `/(drawer)/empresa/${vm.profile?.empresa.slug}/product-variation/${product.id}` as any,
+          params: { productId: product.id },
+        });
+      } else {
+        router.push({
+          pathname:
+            `/(drawer)/empresa/${vm.profile?.empresa.slug}/product/${product.id}` as any,
+          params: { productId: product.id },
+        });
+      }
     }, 150);
   };
 
@@ -110,22 +132,6 @@ export function CatalogProductCard({
 
   // Cor primária da empresa ou valor default
   const primaryColor = vm.primaryColor || "#F4511E";
-
-  // Verificar se o produto tem variação
-  const hasVariation = product.tem_variacao === true;
-
-  // Determinar se deve exibir o preço
-  const shouldShowPrice =
-    !hasVariation || (product.exibir_preco && product.preco);
-
-  // Badge para produtos com variação
-  const variationBadge = hasVariation ? (
-    <View className="absolute top-4 left-4 bg-purple-500 px-2 py-1 rounded-full shadow-sm">
-      <Text className="text-white text-xs font-bold">
-        {product.variacao?.variacao?.length || 0} opções
-      </Text>
-    </View>
-  ) : null;
 
   return (
     <Animated.View
@@ -156,7 +162,13 @@ export function CatalogProductCard({
 
             {/* Badges */}
             <View className="absolute top-0 left-0 right-0 p-2 flex-row justify-between">
-              {product.preco_promocional && (
+              {hasVariation ? (
+                <View className="bg-purple-500 px-2 py-1 rounded-full shadow-sm">
+                  <Text className="text-white text-xs font-bold">
+                    {product.variacao?.variacao?.length || 0} opções
+                  </Text>
+                </View>
+              ) : product.preco_promocional && shouldShowPrice ? (
                 <View className="bg-red-500 px-2 py-1 rounded-full shadow-sm">
                   <Text className="text-white text-xs font-bold">
                     {calculateDiscount(
@@ -166,13 +178,15 @@ export function CatalogProductCard({
                     % OFF
                   </Text>
                 </View>
-              )}
+              ) : showFeaturedBadge ? (
+                <View className="bg-amber-500 rounded-full p-1.5 shadow-sm">
+                  <Star size={14} color="#FFFFFF" />
+                </View>
+              ) : null}
             </View>
 
-            {variationBadge}
-
-            {/* Botão Adicionar ao Carrinho */}
-            {isCartEnabled && (
+            {/* Botão Adicionar ao Carrinho - apenas para produtos sem variação e com preço */}
+            {isCartEnabled && !hasVariation && shouldShowPrice && (
               <TouchableOpacity
                 onPress={handleAddToCart}
                 className="absolute bottom-3 right-3 rounded-full p-2 shadow-md"
@@ -193,11 +207,16 @@ export function CatalogProductCard({
                 {product.nome}
               </Text>
 
-              {product.descricao && (
+              {/* Descrição ou informação de variação */}
+              {hasVariation ? (
+                <Text className="text-xs text-gray-500 mb-2" numberOfLines={2}>
+                  {variationText}
+                </Text>
+              ) : product.descricao ? (
                 <Text className="text-xs text-gray-500 mb-2" numberOfLines={2}>
                   {product.descricao}
                 </Text>
-              )}
+              ) : null}
             </View>
 
             <View className="pt-2 border-t border-gray-100">
@@ -224,21 +243,38 @@ export function CatalogProductCard({
                     </Text>
                   )}
 
-                  {/* Parcelamento e outros detalhes permanecem iguais */}
+                  {/* Parcelamento e outros detalhes */}
+                  {product.parcelamento_cartao &&
+                    product.quantidade_parcelas && (
+                      <Text className="text-xs text-gray-600 mt-1">
+                        ou {product.quantidade_parcelas}x de{" "}
+                        {formatCurrency(
+                          (
+                            parseFloat(
+                              product.preco_promocional || product.preco
+                            ) / parseInt(product.quantidade_parcelas)
+                          ).toString()
+                        )}
+                        {product.parcelas_sem_juros ? " sem juros" : ""}
+                      </Text>
+                    )}
                 </>
+              ) : // Mensagem para produtos com variação ou sem preço
+              hasVariation ? (
+                <View className="bg-gray-50/80 rounded-lg py-2 px-3">
+                  <Text className="text-sm text-gray-700 font-medium">
+                    {product.variacao?.nome || "Produto com variações"}
+                  </Text>
+                  <Text className="text-xs text-gray-500 mt-1">
+                    {product.variacao?.variacao?.length || 0} opções disponíveis
+                  </Text>
+                </View>
               ) : (
-                // Mensagem para produtos com variação
-                hasVariation && (
-                  <View className="bg-gray-50/80 rounded-lg py-2 px-3">
-                    <Text className="text-sm text-gray-700 font-medium">
-                      {product.variacao?.nome || "Produto com variações"}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-1">
-                      {product.variacao?.variacao?.length || 0} opções
-                      disponíveis
-                    </Text>
-                  </View>
-                )
+                <View className="bg-gray-50/80 rounded-lg py-2 px-3">
+                  <Text className="text-sm text-gray-700 font-medium">
+                    Consultar preço
+                  </Text>
+                </View>
               )}
             </View>
           </View>

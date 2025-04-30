@@ -22,9 +22,9 @@ export function ProductPriceDisplay({
   // Verificar se o produto tem variação
   const hasVariation = product.tem_variacao === true;
 
-  // Determinar se deve exibir o preço
+  // Determinar se deve exibir o preço - modificado para nunca mostrar preço de produtos com variação
   const shouldShowPrice =
-    !hasVariation || (product.exibir_preco && product.preco);
+    !hasVariation && product.exibir_preco && product.preco;
 
   // Formatar preço
   const formatCurrency = (value: string | null | undefined) => {
@@ -66,6 +66,7 @@ export function ProductPriceDisplay({
     },
   };
 
+  // Para produtos com variação, mostrar as opções disponíveis em vez do preço
   if (!shouldShowPrice) {
     if (hasVariation) {
       return (
@@ -75,6 +76,14 @@ export function ProductPriceDisplay({
           </Text>
           <Text className="text-xs text-gray-500 mt-1">
             {product.variacao?.variacao?.length || 0} opções disponíveis
+          </Text>
+        </View>
+      );
+    } else if (!product.preco) {
+      return (
+        <View className="bg-gray-50 rounded-lg py-2 px-3">
+          <Text className="text-sm text-gray-700 font-medium">
+            Consultar preço
           </Text>
         </View>
       );
