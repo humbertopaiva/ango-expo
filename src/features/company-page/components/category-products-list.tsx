@@ -84,7 +84,7 @@ export function CategoryProductsList({
 
       {isDeliveryPlan ? (
         /* Lista vertical para delivery */
-        <View className="px-4 space-y-3">
+        <View className="px-4 gap-2">
           <SafeMap
             data={limitedProducts}
             renderItem={(product, index) => (

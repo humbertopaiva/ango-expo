@@ -70,32 +70,36 @@ export function CustomProductCard({ product }: CustomProductCardProps) {
         </View>
 
         {/* Informações do produto */}
-        <View className="flex-1 px-3 justify-between py-3">
-          <View>
-            <Text className="font-semibold text-gray-800 line-clamp-1 text-lg">
-              {product.nome}
-            </Text>
-
-            {/* Descrição */}
-            {product.descricao && (
-              <Text className="text-gray-600 text-sm line-clamp-2 mt-1">
-                {product.descricao}
+        <View className="flex-1 px-3 justify-between py-3 w-full">
+          <HStack className=" grid-cols-2 h-full">
+            <View className="flex-1">
+              <Text className="font-semibold text-gray-800 line-clamp-1 text-lg">
+                {product.nome}
               </Text>
-            )}
-          </View>
 
-          {/* Botão de adicionar ao carrinho - mesmo estilo do AdaptiveProductCard */}
-          {isCartEnabled && (
-            <TouchableOpacity
-              onPress={handleAddToCart}
-              className="rounded-full p-2 mt-2 self-end"
-              style={{
-                backgroundColor: primaryColor,
-              }}
-            >
-              <ShoppingBag size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
+              {/* Descrição */}
+              {product.descricao && (
+                <Text className="text-gray-600 text-sm line-clamp-2 mt-1">
+                  {product.descricao}
+                </Text>
+              )}
+            </View>
+            {/* Botão de adicionar ao carrinho - mesmo estilo do AdaptiveProductCard */}
+            {/* Botao no fim do componente, inferiro direito */}
+            <View className="self-end ml-4">
+              {isCartEnabled && (
+                <TouchableOpacity
+                  onPress={handleAddToCart}
+                  className="rounded-full p-2 mt-2 self-end"
+                  style={{
+                    backgroundColor: primaryColor,
+                  }}
+                >
+                  <ShoppingBag size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </HStack>
         </View>
       </Box>
     </TouchableOpacity>
