@@ -3,9 +3,6 @@ import React from "react";
 import { Stack } from "expo-router";
 import { CompanyPageProvider } from "@/src/features/company-page/contexts/company-page-provider";
 import { useLocalSearchParams } from "expo-router";
-import { TouchableOpacity } from "react-native";
-import { router } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
 
 /**
  * Layout compartilhado para todas as páginas dentro do caminho /(drawer)/empresa/
@@ -25,14 +22,17 @@ export default function CompanyLayout() {
           headerBackVisible: true, // Mostra o botão de voltar (Android/iOS)
 
           // Opcional: Customizar a cor do botão de voltar
-          headerTintColor: "#F4511E", // Usar sua cor primária aqui
+          headerTintColor: "#FFFFFF",
+
+          // Usar sua cor primária aqui
 
           // Opcional: Estilizar o header
           headerStyle: {
-            backgroundColor: "white",
+            backgroundColor: "#F4511E",
           },
           headerTitleStyle: {
-            fontWeight: "600",
+            fontFamily: "JakartaSans_700Bold",
+            fontSize: 18,
           },
         }}
       >
@@ -46,7 +46,21 @@ export default function CompanyLayout() {
           name="[companySlug]/product/[productId]"
           options={{
             title: "Detalhes do Produto",
-            headerShown: false,
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="[companySlug]/custom-product/[productId]"
+          options={{
+            title: "Personalize seu Produto",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="[companySlug]/product-variation/[productId]"
+          options={{
+            title: "Detalhes do Produto",
+            headerShown: true,
           }}
         />
         <Stack.Screen

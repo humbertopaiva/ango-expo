@@ -1,6 +1,7 @@
 // Path: src/features/company-page/view-models/product-details.view-model.ts
 
-import { useState, useEffect } from "react";
+// Adicionando novas funcionalidades para adicionais
+import { useState, useEffect, useCallback } from "react";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { CompanyProduct } from "../models/company-product";
 import { Platform, Share } from "react-native";
@@ -8,8 +9,14 @@ import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-
 import { useToast } from "@gluestack-ui/themed";
 import { toastUtils } from "@/src/utils/toast.utils";
 
+// Interface para adicionais selecionados
+interface SelectedAddon {
+  product: CompanyProduct;
+  quantity: number;
+}
+
 export interface ProductDetailsViewModel {
-  // State
+  // State existente...
   product: CompanyProduct | null;
   isLoading: boolean;
   quantity: number;
@@ -18,6 +25,9 @@ export interface ProductDetailsViewModel {
   showObservationInput: boolean;
   isImageViewerVisible: boolean;
 
+  // Novo estado para adicionais
+  selectedAddons: SelectedAddon[];
+
   // Calculated properties
   hasVariation: boolean;
   maxQuantity: number;
@@ -25,7 +35,7 @@ export interface ProductDetailsViewModel {
   formattedTotal: string;
   primaryColor: string;
 
-  // Actions
+  // Actions existentes...
   increaseQuantity: () => void;
   decreaseQuantity: () => void;
   toggleFavorite: () => void;
@@ -35,6 +45,11 @@ export interface ProductDetailsViewModel {
   handleShareProduct: () => Promise<void>;
   handleOpenImageViewer: () => void;
   handleCloseImageViewer: () => void;
+
+  // Novas ações para adicionais
+  addAddonToCart: (addon: CompanyProduct, quantity: number) => void;
+  getAddonQuantity: (addonId: string) => number;
+  removeAddonFromCart: (addonId: string) => void;
 }
 
 export function useProductDetailsViewModel(
@@ -53,13 +68,14 @@ export function useProductDetailsViewModel(
   const [showObservationInput, setShowObservationInput] = useState(false);
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
 
+  // Novo estado para adicionais selecionados
+  const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+
   // Buscar produto
   useEffect(() => {
     if (!productId || !vm.products) return;
 
     setIsLoading(true);
-
-    // Path: src/features/company-page/view-models/product-details.view-model.ts (continuação)
 
     // Simulando carregamento para melhor experiência
     setTimeout(() => {
@@ -96,12 +112,23 @@ export function useProductDetailsViewModel(
     return Math.round(((originalPrice - discountPrice) / originalPrice) * 100);
   };
 
-  // Calcular preço total com base na quantidade
+  // Calcular preço total com base na quantidade e adicionais
   const calculateTotal = (): string => {
     if (!product) return formatCurrency("0");
 
-    const price = parseFloat(product.preco_promocional || product.preco);
-    return formatCurrency((price * quantity).toString());
+    // Preço base do produto
+    const basePrice = parseFloat(product.preco_promocional || product.preco);
+    let totalPrice = basePrice * quantity;
+
+    // Adicionar preço de adicionais
+    selectedAddons.forEach((addon) => {
+      const addonPrice = parseFloat(
+        addon.product.preco_promocional || addon.product.preco
+      );
+      totalPrice += addonPrice * addon.quantity;
+    });
+
+    return formatCurrency(totalPrice.toString());
   };
 
   // Verificar se o produto tem variação
@@ -135,6 +162,7 @@ export function useProductDetailsViewModel(
     setShowObservationInput((prev) => !prev);
   };
 
+  // Adicionar produto ao carrinho com adicionais
   const addToCart = () => {
     if (!product || !vm.profile) return;
 
@@ -150,9 +178,68 @@ export function useProductDetailsViewModel(
       observation.trim()
     );
 
+    // Adicionar os adicionais também
+    selectedAddons.forEach((addon) => {
+      if (addon.quantity > 0) {
+        cartVm.addToCartWithObservation(
+          addon.product,
+          companySlug,
+          companyName,
+          addon.quantity,
+          `Adicional para: ${product.nome}`
+        );
+      }
+    });
+
     // Mostrar toast de sucesso
     toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
   };
+
+  // Adicionar ou atualizar adicional no carrinho
+  const addAddonToCart = useCallback(
+    (addon: CompanyProduct, quantity: number) => {
+      setSelectedAddons((prev) => {
+        // Verificar se o adicional já existe
+        const existingIndex = prev.findIndex(
+          (item) => item.product.id === addon.id
+        );
+
+        if (existingIndex >= 0) {
+          // Se quantidade for 0, remover o item
+          if (quantity === 0) {
+            return prev.filter((item) => item.product.id !== addon.id);
+          }
+
+          // Atualizar quantidade
+          const newAddons = [...prev];
+          newAddons[existingIndex].quantity = quantity;
+          return newAddons;
+        } else if (quantity > 0) {
+          // Adicionar novo item se quantidade > 0
+          return [...prev, { product: addon, quantity }];
+        }
+
+        return prev;
+      });
+    },
+    []
+  );
+
+  // Obter quantidade de um adicional específico
+  const getAddonQuantity = useCallback(
+    (addonId: string) => {
+      const addon = selectedAddons.find((item) => item.product.id === addonId);
+      return addon ? addon.quantity : 0;
+    },
+    [selectedAddons]
+  );
+
+  // Remover adicional do carrinho
+  const removeAddonFromCart = useCallback((addonId: string) => {
+    setSelectedAddons((prev) =>
+      prev.filter((item) => item.product.id !== addonId)
+    );
+  }, []);
 
   // Compartilhar o produto
   const handleShareProduct = async () => {
@@ -200,6 +287,7 @@ export function useProductDetailsViewModel(
     isFavorite,
     showObservationInput,
     isImageViewerVisible,
+    selectedAddons,
 
     // Calculated properties
     hasVariation,
@@ -218,5 +306,8 @@ export function useProductDetailsViewModel(
     handleShareProduct,
     handleOpenImageViewer,
     handleCloseImageViewer,
+    addAddonToCart,
+    getAddonQuantity,
+    removeAddonFromCart,
   };
 }

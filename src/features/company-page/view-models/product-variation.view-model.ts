@@ -1,5 +1,5 @@
 // Path: src/features/company-page/view-models/product-variation.view-model.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import {
   CompanyProduct,
@@ -21,6 +21,12 @@ interface VariationOption {
   available: boolean;
 }
 
+// Interface para adicionais selecionados
+interface SelectedAddon {
+  product: CompanyProduct;
+  quantity: number;
+}
+
 export interface ProductVariationViewModel {
   // State
   product: CompanyProduct | null;
@@ -33,6 +39,7 @@ export interface ProductVariationViewModel {
   selectedVariation: VariationOption | null;
   loadingVariations: boolean;
   variationError: string | null;
+  selectedAddons: SelectedAddon[]; // Nova propriedade para adicionais selecionados
 
   // Calculated properties
   maxQuantity: number;
@@ -51,6 +58,11 @@ export interface ProductVariationViewModel {
   handleShareProduct: () => Promise<void>;
   handleOpenImageViewer: () => void;
   handleCloseImageViewer: () => void;
+
+  // Novas ações para adicionais
+  addAddonToCart: (addon: CompanyProduct, quantity: number) => void;
+  getAddonQuantity: (addonId: string) => number;
+  removeAddonFromCart: (addonId: string) => void;
 }
 
 export function useProductVariationViewModel(
@@ -76,6 +88,9 @@ export function useProductVariationViewModel(
     useState<VariationOption | null>(null);
   const [loadingVariations, setLoadingVariations] = useState(false);
   const [variationError, setVariationError] = useState<string | null>(null);
+
+  // Estado para adicionais selecionados
+  const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
 
   // Fetch product
   useEffect(() => {
@@ -173,7 +188,7 @@ export function useProductVariationViewModel(
     return Math.round(((originalPrice - discountPrice) / originalPrice) * 100);
   };
 
-  // Calculate total price based on quantity and selected variation
+  // Calculate total price based on quantity, selected variation, and adicionais
   const calculateTotal = (): string => {
     if (!selectedVariation && !product) return formatCurrency("0");
 
@@ -186,7 +201,18 @@ export function useProductVariationViewModel(
       price = parseFloat(product.preco_promocional || product.preco);
     }
 
-    return formatCurrency((price * quantity).toString());
+    // Base price of the product * quantity
+    let totalPrice = price * quantity;
+
+    // Add price of addons
+    selectedAddons.forEach((addon) => {
+      const addonPrice = parseFloat(
+        addon.product.preco_promocional || addon.product.preco
+      );
+      totalPrice += addonPrice * addon.quantity;
+    });
+
+    return formatCurrency(totalPrice.toString());
   };
 
   // Get the current image to display
@@ -228,6 +254,52 @@ export function useProductVariationViewModel(
     setSelectedVariation(option);
   };
 
+  // Adicionar ou atualizar adicional no carrinho
+  const addAddonToCart = useCallback(
+    (addon: CompanyProduct, quantity: number) => {
+      setSelectedAddons((prev) => {
+        // Verificar se o adicional já existe
+        const existingIndex = prev.findIndex(
+          (item) => item.product.id === addon.id
+        );
+
+        if (existingIndex >= 0) {
+          // Se quantidade for 0, remover o item
+          if (quantity === 0) {
+            return prev.filter((item) => item.product.id !== addon.id);
+          }
+
+          // Atualizar quantidade
+          const newAddons = [...prev];
+          newAddons[existingIndex].quantity = quantity;
+          return newAddons;
+        } else if (quantity > 0) {
+          // Adicionar novo item se quantidade > 0
+          return [...prev, { product: addon, quantity }];
+        }
+
+        return prev;
+      });
+    },
+    []
+  );
+
+  // Obter quantidade de um adicional específico
+  const getAddonQuantity = useCallback(
+    (addonId: string) => {
+      const addon = selectedAddons.find((item) => item.product.id === addonId);
+      return addon ? addon.quantity : 0;
+    },
+    [selectedAddons]
+  );
+
+  // Remover adicional do carrinho
+  const removeAddonFromCart = useCallback((addonId: string) => {
+    setSelectedAddons((prev) =>
+      prev.filter((item) => item.product.id !== addonId)
+    );
+  }, []);
+
   const addToCart = () => {
     if (!product || !vm.profile || !selectedVariation) return;
 
@@ -256,6 +328,19 @@ export function useProductVariationViewModel(
       quantity,
       observation.trim()
     );
+
+    // Adicionar os adicionais selecionados
+    selectedAddons.forEach((addon) => {
+      if (addon.quantity > 0) {
+        cartVm.addToCartWithObservation(
+          addon.product,
+          companySlug,
+          companyName,
+          addon.quantity,
+          `Adicional para: ${product.nome} (${selectedVariation.name})`
+        );
+      }
+    });
 
     // Show success toast
     toastUtils.success(
@@ -316,6 +401,7 @@ export function useProductVariationViewModel(
     selectedVariation,
     loadingVariations,
     variationError,
+    selectedAddons,
 
     // Calculated properties
     maxQuantity,
@@ -334,5 +420,8 @@ export function useProductVariationViewModel(
     handleShareProduct,
     handleOpenImageViewer,
     handleCloseImageViewer,
+    addAddonToCart,
+    getAddonQuantity,
+    removeAddonFromCart,
   };
 }

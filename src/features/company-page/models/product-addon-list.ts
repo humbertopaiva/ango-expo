@@ -41,6 +41,7 @@ export interface AddonProduct {
     exibir_produto: boolean;
     quantidade_maxima_carrinho: number | null;
   };
+  quantidade?: number;
 }
 
 export interface AddonCategory {
