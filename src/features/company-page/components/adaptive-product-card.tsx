@@ -114,8 +114,10 @@ export function AdaptiveProductCard({
   const hasVariation = product.tem_variacao === true;
 
   // Determinar se deve exibir o preço - modificado para nunca mostrar preço de produtos com variação
-  const shouldShowPrice =
-    !hasVariation && product.exibir_preco && product.preco;
+  // const shouldShowPrice =
+  //   !hasVariation && product.exibir_preco && product.preco;
+
+  const shouldShowPrice = product.preco;
 
   // Texto para produtos com variação
   const variationText = hasVariation
@@ -128,134 +130,124 @@ export function AdaptiveProductCard({
 
   // Layout destacado (para vitrine)
   if (isHighlighted) {
-    const cardWidth = isWeb ? (width > 768 ? 380 : width * 0.85) : width * 0.85;
-    const cardHeight = cardWidth * 0.9;
+    const cardWidth = isWeb ? (width > 768 ? 380 : width * 0.85) : width * 0.6;
+    const cardHeight = cardWidth * 1.3; // Adjusted for taller card with content below image
 
     return (
       <TouchableOpacity
         onPress={handleProductPress}
-        className="relative"
+        className="relative border border-gray-100 shadow-sm"
         activeOpacity={0.8}
         style={[
           style,
           {
+            width: cardWidth,
             height: cardHeight,
             borderRadius: 16,
             overflow: "hidden",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 4,
+            backgroundColor: "#FFFFFF",
           },
         ]}
       >
         <View className="w-full h-full">
-          {/* Imagem de fundo com gradiente */}
-          <View className="absolute w-full h-full">
-            <ImagePreview
-              uri={product.imagem}
-              fallbackIcon={Package}
-              width="100%"
-              height="100%"
-              resizeMode="cover"
-            />
-            <LinearGradient
-              colors={[
-                "rgba(0,0,0,0.1)",
-                "rgba(0,0,0,0.4)",
-                "rgba(0,0,0,0.85)",
-              ]}
-              style={{ position: "absolute", height: "100%", width: "100%" }}
-            />
+          {/* Image section */}
+          <View className="w-full" style={{ height: cardWidth * 0.75 }}>
+            <View className="">
+              <ImagePreview
+                uri={product.imagem}
+                fallbackIcon={Package}
+                width="100%"
+                height="100%"
+                resizeMode="cover"
+                containerClassName="rounded-lg"
+              />
+            </View>
+
+            {/* Badges positioned on the image */}
+            {hasVariation && (
+              <View className="absolute top-4 left-4 bg-purple-500 px-2 py-1 rounded-full shadow-sm z-10">
+                <Text className="text-white text-xs font-bold">
+                  {product.variacao?.variacao?.length || 0} opções
+                </Text>
+              </View>
+            )}
+
+            {showFeaturedBadge && (
+              <View className="absolute top-4 left-4 bg-amber-500 rounded-full p-1.5 shadow-sm z-10">
+                <Star size={14} color="#fff" />
+              </View>
+            )}
+
+            {product.preco_promocional && shouldShowPrice && (
+              <View className="absolute top-4 right-4 bg-red-500 px-2 py-1 rounded-full shadow-sm z-10">
+                <Text className="text-white text-xs font-bold">
+                  {calculateDiscount(product.preco, product.preco_promocional)}%
+                  OFF
+                </Text>
+              </View>
+            )}
           </View>
 
-          {/* Botão de adicionar ao carrinho */}
-          {isCartEnabled && (
-            <TouchableOpacity
-              onPress={handleAddToCart}
-              className="absolute bottom-4 right-4 rounded-full p-3 z-10"
-              style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
-            >
-              <ShoppingBag size={24} color={contrastTextColor} />
-            </TouchableOpacity>
-          )}
-
-          {/* Badge de variação */}
-          {hasVariation && (
-            <View className="absolute top-4 left-4 bg-purple-500 px-2 py-1 rounded-full shadow-sm z-10">
-              <Text className="text-white text-xs font-bold">
-                {product.variacao?.variacao?.length || 0} opções
-              </Text>
-            </View>
-          )}
-
-          {showFeaturedBadge && (
-            <View className="absolute top-4 left-4 bg-amber-500 rounded-full p-1.5 shadow-sm z-10">
-              <Star size={14} color="#fff" />
-            </View>
-          )}
-
-          {product.preco_promocional && shouldShowPrice && (
-            <View className="absolute top-4 right-4 bg-red-500 px-2 py-1 rounded-full shadow-sm z-10">
-              <Text className="text-white text-xs font-bold">
-                {calculateDiscount(product.preco, product.preco_promocional)}%
-                OFF
-              </Text>
-            </View>
-          )}
-
-          {/* Conteúdo do card */}
-          <View className="flex-1 justify-end p-5">
-            {/* Nome do produto */}
+          {/* Content section */}
+          <View className="p-4 flex-1">
+            {/* Product name */}
             <Text
-              className="text-white font-sans text-2xl mb-2"
+              className="text-gray-800 font-semibold text-lg"
               numberOfLines={2}
             >
               {product.nome}
             </Text>
 
-            {/* Descrição ou informação de variação */}
+            {/* Description or variation info */}
             {hasVariation ? (
-              <View className="bg-black/30 rounded-lg px-3 py-2 mb-3">
-                <View className="flex-row items-center mb-1">
-                  <Tag size={12} color="#ffffff" />
-                  <Text className="text-white/90 ml-1.5 font-medium text-xs">
+              <View className="mt-1 mb-2 bg-gray-50 rounded-lg px-3 py-2">
+                <HStack space="xs" alignItems="center" className="mb-1">
+                  <Tag size={12} color={vm.primaryColor || "#F4511E"} />
+                  <Text className="text-gray-700 font-medium text-xs">
                     Variações disponíveis
                   </Text>
-                </View>
-                <Text className="text-white/80 text-sm" numberOfLines={2}>
+                </HStack>
+                <Text className="text-gray-600 text-xs" numberOfLines={1}>
                   {variationText}
                 </Text>
               </View>
             ) : product.descricao ? (
-              <Text className="text-white/80 text-sm mb-3" numberOfLines={2}>
+              <Text
+                className="text-gray-600 text-sm mt-1 mb-2"
+                numberOfLines={2}
+              >
                 {product.descricao}
               </Text>
             ) : null}
 
-            {/* Preço - só mostra se não for produto com variação */}
-            {shouldShowPrice ? (
-              <View className="flex-row items-center">
+            {/* Price section */}
+            <HStack className="justify-between items-center mt-auto">
+              {shouldShowPrice ? (
                 <View className="flex-1">
                   {product.preco_promocional ? (
                     <View>
-                      <Text className="text-white/80 text-sm line-through">
+                      <Text className="text-gray-400 text-xs line-through">
                         {formatCurrency(product.preco)}
                       </Text>
-                      <Text className="text-white font-bold text-3xl">
+                      <Text
+                        className="text-xl font-bold"
+                        style={{ color: vm.primaryColor || "#F4511E" }}
+                      >
                         {formatCurrency(product.preco_promocional)}
                       </Text>
                     </View>
                   ) : (
-                    <Text className="text-white font-semibold text-xl">
+                    <Text
+                      className="text-xl font-bold"
+                      style={{ color: vm.primaryColor || "#F4511E" }}
+                    >
                       {formatCurrency(product.preco)}
                     </Text>
                   )}
 
                   {product.parcelamento_cartao &&
                     product.quantidade_parcelas && (
-                      <Text className="text-white text-sm mt-1">
+                      <Text className="text-gray-600 text-xs mt-1">
                         {product.parcelas_sem_juros ? (
                           <>
                             ou {product.quantidade_parcelas}x de{" "}
@@ -283,19 +275,41 @@ export function AdaptiveProductCard({
                       </Text>
                     )}
                 </View>
-              </View>
-            ) : (
-              hasVariation && (
-                <View className="flex-row items-center">
-                  <HStack space="xs" alignItems="center">
-                    <ExternalLink size={14} color="#FFFFFF" strokeWidth={2} />
-                    <Text className="text-white font-medium">
+              ) : (
+                hasVariation && (
+                  <View className="flex-1">
+                    <Text
+                      className="text-md font-medium"
+                      style={{ color: vm.primaryColor || "#F4511E" }}
+                    >
                       Ver opções e preços
                     </Text>
-                  </HStack>
-                </View>
-              )
-            )}
+                  </View>
+                )
+              )}
+
+              {/* Add to cart button */}
+              {isCartEnabled && (
+                <TouchableOpacity
+                  onPress={handleAddToCart}
+                  className="rounded-full p-3 self-end"
+                  style={{
+                    backgroundColor: hasVariation
+                      ? `${vm.primaryColor || "#F4511E"}20`
+                      : vm.primaryColor || "#F4511E",
+                  }}
+                >
+                  <ShoppingBag
+                    size={20}
+                    color={
+                      hasVariation
+                        ? vm.primaryColor || "#F4511E"
+                        : contrastTextColor
+                    }
+                  />
+                </TouchableOpacity>
+              )}
+            </HStack>
           </View>
         </View>
       </TouchableOpacity>

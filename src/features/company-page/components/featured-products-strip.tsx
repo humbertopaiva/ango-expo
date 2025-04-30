@@ -88,7 +88,6 @@ export function FeaturedProductsStrip() {
                 <View
                   key={`showcase-${product.id}-${index}`}
                   style={{
-                    width: getCardWidth(),
                     marginRight: 16,
                   }}
                   className="py-2"
@@ -105,7 +104,7 @@ export function FeaturedProductsStrip() {
           </ScrollView>
 
           {/* Botões de navegação - só exibe se houver mais de 2 produtos */}
-          {vm.showcaseProducts.length > 2 && (
+          {/* {vm.showcaseProducts.length > 2 && (
             <View className="absolute top-1/2 left-0 right-0 flex-row justify-between px-4 -translate-y-10 pointer-events-none">
               <TouchableOpacity
                 onPress={handleScrollLeft}
@@ -123,7 +122,7 @@ export function FeaturedProductsStrip() {
                 <ChevronRight size={24} color="#374151" />
               </TouchableOpacity>
             </View>
-          )}
+          )} */}
         </View>
       </View>
     </View>

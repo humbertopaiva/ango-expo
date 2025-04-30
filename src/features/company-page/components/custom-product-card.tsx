@@ -71,31 +71,34 @@ export function CustomProductCard({ product }: CustomProductCardProps) {
 
         {/* Informações do produto */}
         <View className="flex-1 px-3 justify-between py-3">
-          <View>
-            <Text className="font-semibold text-gray-800 line-clamp-1 text-lg">
-              {product.nome}
-            </Text>
-
-            {/* Descrição */}
-            {product.descricao && (
-              <Text className="text-gray-600 text-sm line-clamp-2 mt-1">
-                {product.descricao}
+          <HStack>
+            <View className="">
+              <Text className="font-semibold text-gray-800 line-clamp-1 text-lg">
+                {product.nome}
               </Text>
-            )}
-          </View>
 
-          {/* Botão de adicionar ao carrinho - mesmo estilo do AdaptiveProductCard */}
-          {isCartEnabled && (
-            <TouchableOpacity
-              onPress={handleAddToCart}
-              className="rounded-full p-2 mt-2 self-end"
-              style={{
-                backgroundColor: primaryColor,
-              }}
-            >
-              <ShoppingBag size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
+              {/* Descrição */}
+              {product.descricao && (
+                <Text className="text-gray-600 text-sm line-clamp-2 mt-1">
+                  {product.descricao}
+                </Text>
+              )}
+            </View>
+            {/* Botão de adicionar ao carrinho - mesmo estilo do AdaptiveProductCard */}
+            <View>
+              {isCartEnabled && (
+                <TouchableOpacity
+                  onPress={handleAddToCart}
+                  className="rounded-full p-2 mt-2 self-end"
+                  style={{
+                    backgroundColor: primaryColor,
+                  }}
+                >
+                  <ShoppingBag size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </HStack>
         </View>
       </Box>
     </TouchableOpacity>
