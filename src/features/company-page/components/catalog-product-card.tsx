@@ -9,13 +9,12 @@ import {
   Animated,
   Dimensions,
 } from "react-native";
-import { Card } from "@gluestack-ui/themed";
-import { Package, Star, ShoppingBag } from "lucide-react-native";
+import { Card, HStack, VStack } from "@gluestack-ui/themed";
+import { Package, Star, ShoppingBag, ExternalLink } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { CompanyProduct } from "../models/company-product";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { router } from "expo-router";
-import { HStack } from "@gluestack-ui/themed";
 import { Eye } from "lucide-react-native";
 import { animationUtils } from "@/src/utils/animations.utils";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
@@ -40,20 +39,6 @@ export function CatalogProductCard({
 
   // Verificar se o carrinho está habilitado
   const isCartEnabled = vm.config?.delivery?.habilitar_carrinho !== false;
-
-  // Verificar se o produto tem variação
-  const hasVariation = product.tem_variacao === true;
-
-  // Determinar se deve exibir o preço - modificado para nunca mostrar preço de produtos com variação
-  const shouldShowPrice =
-    !hasVariation && product.exibir_preco && product.preco;
-
-  // Texto para produtos com variação - modificado para mostrar variações disponíveis
-  const variationText = hasVariation
-    ? `${product.variacao?.nome || "Opções"}: ${
-        product.variacao?.variacao?.join(", ") || "Variações disponíveis"
-      }`
-    : null;
 
   // Animações
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -130,6 +115,20 @@ export function CatalogProductCard({
     toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
   };
 
+  // Verificar se o produto tem variação
+  const hasVariation = product.tem_variacao === true;
+
+  // Determinar se deve exibir o preço
+  const shouldShowPrice =
+    !hasVariation && product.exibir_preco && product.preco;
+
+  // Texto para produtos com variação
+  const variationText = hasVariation
+    ? `${product.variacao?.nome || "Opções"}: ${
+        product.variacao?.variacao?.join(", ") || "Variações disponíveis"
+      }`
+    : null;
+
   // Cor primária da empresa ou valor default
   const primaryColor = vm.primaryColor || "#F4511E";
 
@@ -151,7 +150,7 @@ export function CatalogProductCard({
       >
         <Card className="overflow-hidden rounded-xl border border-gray-100 shadow-sm h-full">
           {/* Imagem do produto */}
-          <View style={styles.imageContainer}>
+          <View style={styles.imageContainer} className="relative">
             <ImagePreview
               uri={product.imagem}
               fallbackIcon={Package}
@@ -160,45 +159,29 @@ export function CatalogProductCard({
               resizeMode="cover"
             />
 
-            {/* Badges */}
-            <View className="absolute top-0 left-0 right-0 p-2 flex-row justify-between">
-              {hasVariation ? (
-                <View className="bg-purple-500 px-2 py-1 rounded-full shadow-sm">
-                  <Text className="text-white text-xs font-bold">
-                    {product.variacao?.variacao?.length || 0} opções
-                  </Text>
-                </View>
-              ) : product.preco_promocional && shouldShowPrice ? (
-                <View className="bg-red-500 px-2 py-1 rounded-full shadow-sm">
-                  <Text className="text-white text-xs font-bold">
-                    {calculateDiscount(
-                      product.preco,
-                      product.preco_promocional
-                    )}
-                    % OFF
-                  </Text>
-                </View>
-              ) : showFeaturedBadge ? (
-                <View className="bg-amber-500 rounded-full p-1.5 shadow-sm">
-                  <Star size={14} color="#FFFFFF" />
-                </View>
-              ) : null}
-            </View>
-
-            {/* Botão Adicionar ao Carrinho - apenas para produtos sem variação e com preço */}
-            {isCartEnabled && !hasVariation && shouldShowPrice && (
-              <TouchableOpacity
-                onPress={handleAddToCart}
-                className="absolute bottom-3 right-3 rounded-full p-2 shadow-md"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <ShoppingBag size={16} color="#FFFFFF" />
-              </TouchableOpacity>
-            )}
+            {/* Badge no canto superior */}
+            {hasVariation ? (
+              <View className="absolute top-2 left-2 bg-purple-500 px-2 py-0.5 rounded-full shadow-sm">
+                <Text className="text-white text-xs font-medium">
+                  {product.variacao?.variacao?.length || 0} opções
+                </Text>
+              </View>
+            ) : product.preco_promocional && shouldShowPrice ? (
+              <View className="absolute top-2 left-2 bg-red-500 px-2 py-0.5 rounded-full shadow-sm">
+                <Text className="text-white text-xs font-medium">
+                  {calculateDiscount(product.preco, product.preco_promocional)}%
+                  OFF
+                </Text>
+              </View>
+            ) : showFeaturedBadge ? (
+              <View className="absolute top-2 left-2 bg-amber-500 rounded-full p-1 shadow-sm">
+                <Star size={12} color="#FFFFFF" />
+              </View>
+            ) : null}
           </View>
 
           {/* Informações do produto */}
-          <View className="p-3 flex-1 justify-between">
+          <VStack className="p-3 flex-1 justify-between">
             <View>
               <Text
                 className="font-medium text-gray-800 text-base mb-1"
@@ -207,7 +190,7 @@ export function CatalogProductCard({
                 {product.nome}
               </Text>
 
-              {/* Descrição ou informação de variação */}
+              {/* Descrição ou variações */}
               {hasVariation ? (
                 <Text className="text-xs text-gray-500 mb-2" numberOfLines={2}>
                   {variationText}
@@ -219,13 +202,14 @@ export function CatalogProductCard({
               ) : null}
             </View>
 
-            <View className="pt-2 border-t border-gray-100">
+            {/* Área de preço e botão */}
+            <HStack className="justify-between items-center mt-auto pt-2 border-t border-gray-100">
               {shouldShowPrice ? (
-                <>
+                <View>
                   {product.preco_promocional ? (
-                    <View className="flex-row items-baseline gap-2">
+                    <VStack space="xs">
                       <Text
-                        className="text-base font-bold text-white"
+                        className="text-base font-bold"
                         style={{ color: primaryColor }}
                       >
                         {formatCurrency(product.preco_promocional)}
@@ -233,7 +217,7 @@ export function CatalogProductCard({
                       <Text className="text-xs text-gray-400 line-through">
                         {formatCurrency(product.preco)}
                       </Text>
-                    </View>
+                    </VStack>
                   ) : (
                     <Text
                       className="text-base font-bold"
@@ -242,52 +226,44 @@ export function CatalogProductCard({
                       {formatCurrency(product.preco)}
                     </Text>
                   )}
-
-                  {/* Parcelamento e outros detalhes */}
-                  {product.parcelamento_cartao &&
-                    product.quantidade_parcelas && (
-                      <Text className="text-xs text-gray-600 mt-1">
-                        ou {product.quantidade_parcelas}x de{" "}
-                        {formatCurrency(
-                          (
-                            parseFloat(
-                              product.preco_promocional || product.preco
-                            ) / parseInt(product.quantidade_parcelas)
-                          ).toString()
-                        )}
-                        {product.parcelas_sem_juros ? " sem juros" : ""}
-                      </Text>
-                    )}
-                </>
-              ) : // Mensagem para produtos com variação ou sem preço
-              hasVariation ? (
-                <View className="bg-gray-50/80 rounded-lg py-2 px-3">
-                  <Text className="text-sm text-gray-700 font-medium">
-                    {product.variacao?.nome || "Produto com variações"}
-                  </Text>
-                  <Text className="text-xs text-gray-500 mt-1">
-                    {product.variacao?.variacao?.length || 0} opções disponíveis
-                  </Text>
                 </View>
               ) : (
-                <View className="bg-gray-50/80 rounded-lg py-2 px-3">
-                  <Text className="text-sm text-gray-700 font-medium">
-                    Consultar preço
-                  </Text>
-                </View>
+                <Text className="text-sm text-gray-600 font-medium">
+                  {hasVariation ? "Ver opções" : "Consultar"}
+                </Text>
               )}
-            </View>
-          </View>
 
-          {/* Botão "Ver detalhes" */}
-          <View className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/50 to-transparent">
-            <HStack space="xs" className="items-center">
-              <Eye size={14} color="white" />
-              <Text className="text-white text-xs font-medium">
-                Ver detalhes
-              </Text>
+              {/* Botão de adicionar ao carrinho */}
+              {isCartEnabled && (
+                <TouchableOpacity
+                  onPress={handleAddToCart}
+                  className="rounded-full p-2"
+                  style={{
+                    backgroundColor: hasVariation
+                      ? `${primaryColor}20`
+                      : primaryColor,
+                  }}
+                >
+                  <ShoppingBag
+                    size={16}
+                    color={hasVariation ? primaryColor : "#FFFFFF"}
+                  />
+                </TouchableOpacity>
+              )}
             </HStack>
-          </View>
+          </VStack>
+
+          {/* Indicador de "Ver detalhes" */}
+          {hasVariation && (
+            <View className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/50 to-transparent">
+              <HStack space="xs" className="items-center">
+                <ExternalLink size={14} color="white" />
+                <Text className="text-white text-xs font-medium">
+                  Ver detalhes e opções
+                </Text>
+              </HStack>
+            </View>
+          )}
         </Card>
       </TouchableOpacity>
     </Animated.View>

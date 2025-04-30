@@ -48,7 +48,11 @@ export const ResilientImage: React.FC<ResilientImageProps> = ({
 
   if (isLoading) {
     return (
-      <View style={[{ justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[
+          { justifyContent: "center", alignItems: "center", display: "flex" },
+        ]}
+      >
         <ActivityIndicator size="small" />
       </View>
     );
