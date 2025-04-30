@@ -29,6 +29,7 @@ import {
 } from "@gluestack-ui/themed";
 import { CategoryProductsList } from "./category-products-list";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
+import { FeaturedProductsStrip } from "./featured-products-strip";
 
 // Constante para a categoria "Todos"
 const ALL_CATEGORIES = "Todos";
@@ -56,7 +57,7 @@ const SearchField = memo(
         <InputIcon as={Search} color="#9CA3AF" />
       </InputSlot>
       <InputField
-        placeholder="Buscar produtos..."
+        placeholder="Buscar produtos2..."
         value={searchText}
         onChangeText={onChangeText}
         className="py-2.5 placeholder:font-sans"
@@ -266,6 +267,8 @@ export function ProductsByCategory({
   // Verificar se há categorias para mostrar
   const hasCategories = Object.keys(getFilteredProducts).length > 0;
 
+  const MemoizedFeaturedProductsStrip = memo(FeaturedProductsStrip);
+
   if (vm.isLoading) {
     // Skeleton loading state
     return (
@@ -292,10 +295,10 @@ export function ProductsByCategory({
   }
 
   return (
-    <View className="mb-8">
+    <View className="my-8">
       {/* Header e barra de pesquisa */}
       <View className="px-4 mb-4">
-        <HStack className="items-center justify-between mb-6">
+        <HStack className="items-center justify-between mb-4">
           <Text className="text-2xl font-semibold text-gray-800">{title}</Text>
         </HStack>
 
@@ -316,6 +319,11 @@ export function ProductsByCategory({
           </View>
         )}
       </View>
+
+      {/* Produtos em destaque (da vitrine) */}
+      {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
+        <MemoizedFeaturedProductsStrip />
+      )}
 
       {/* Mensagem de nenhum produto encontrado */}
       {!hasCategories && (

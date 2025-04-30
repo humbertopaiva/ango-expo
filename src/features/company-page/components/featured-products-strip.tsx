@@ -1,5 +1,5 @@
 // Path: src/features/company-page/components/featured-products-strip.tsx
-import React, { useRef } from "react";
+import React, { memo, useRef } from "react";
 import {
   View,
   Text,
@@ -58,16 +58,13 @@ export function FeaturedProductsStrip() {
     return width * 0.7; // 70% da largura em dispositivos móveis para uma aparência mais quadrada
   };
 
-  // Cor primária da empresa ou cor padrão
-  const primaryColor = vm.primaryColor || "#F4511E";
-
   return (
     <View className="">
       {/* Container com fundo colorido baseado na cor primária da empresa */}
-      <View className="pt-8 pb-8 overflow-hidden">
+      <View className="pb-8 overflow-hidden">
         {/* Cabeçalho com textos */}
         <View className="px-4 mb-4">
-          <Text className={`text-2xl font-semibold text-gray-800`}>
+          <Text className={`text-xl font-semibold text-gray-800`}>
             Produtos em Destaque
           </Text>
         </View>
