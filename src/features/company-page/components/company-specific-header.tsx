@@ -95,7 +95,7 @@ const CategoryButton = memo(
                 fontWeight: "600",
               }}
             >
-              {count}
+              {count.toString()}
             </Text>
           </View>
         )}
