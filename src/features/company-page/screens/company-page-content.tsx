@@ -120,7 +120,7 @@ export function CompanyPageContent() {
 
   return (
     <AnimatedPageTransition animation="slide" duration={600}>
-      <View className="flex-1 bg-gray-50 relative">
+      <View className="flex-1 relative">
         {/* Header da empresa - agora fixo, sem animação de desaparecimento */}
         {/* Header específico da empresa com posição de scroll */}
         <CompanySpecificHeader
@@ -133,7 +133,7 @@ export function CompanyPageContent() {
 
         <ScrollView
           ref={scrollViewRef}
-          className="flex-1 bg-gray-50"
+          className="flex-1 bg-white"
           contentContainerStyle={{
             paddingBottom: 120,
           }}
@@ -150,11 +150,6 @@ export function CompanyPageContent() {
 
             {/* Produtos personalizados */}
             <MemoizedCustomProductsSection />
-
-            {/* Produtos em destaque (da vitrine) */}
-            {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
-              <MemoizedFeaturedProductsStrip />
-            )}
 
             {/* Produtos agrupados por categoria */}
             <MemoizedProductsByCategory title={"Produtos"} />

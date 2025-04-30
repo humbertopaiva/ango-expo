@@ -22,24 +22,7 @@ export function CustomProductsSection() {
   const primaryColor = vm.primaryColor || "#F4511E";
 
   return (
-    <View className="mb-6">
-      {/* Cabeçalho da seção */}
-      <View className="px-4 mb-4">
-        <HStack className="items-center mb-2">
-          <Layers size={20} color={primaryColor} className="mr-2" />
-          <Text
-            className="text-xl font-semibold"
-            style={{ color: primaryColor }}
-          >
-            Produtos Personalizados
-          </Text>
-        </HStack>
-
-        <Text className="text-gray-600 text-sm">
-          Monte seu próprio produto selecionando as opções em cada etapa
-        </Text>
-      </View>
-
+    <View className="mt-8">
       {/* Lista de produtos personalizados */}
       <View className="px-4">
         {customProducts.map((product) => (

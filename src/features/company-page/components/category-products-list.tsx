@@ -58,19 +58,10 @@ export function CategoryProductsList({
       {/* Cabeçalho da categoria com contagem e botão Ver Todos */}
       <View className="px-4 mb-3">
         <HStack className="items-center justify-between">
-          <HStack className="items-center">
-            <Text className="text-xl font-semibold text-gray-800">{title}</Text>
-            <View
-              className="px-2 py-0.5 rounded-full ml-2"
-              style={{ backgroundColor: `${primaryColor}15` }}
-            >
-              <Text
-                className="text-xs font-medium"
-                style={{ color: primaryColor }}
-              >
-                {products.length}
-              </Text>
-            </View>
+          <HStack className="items-center w-full">
+            <Text className="text-xl font-semibold text-gray-700 bg-gray-50 w-full px-2 py-2 rounded-sm text-center">
+              {title}
+            </Text>
           </HStack>
 
           {/* Botão "Ver todos" para categorias com muitos produtos */}

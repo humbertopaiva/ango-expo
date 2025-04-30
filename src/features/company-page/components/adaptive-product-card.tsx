@@ -8,7 +8,7 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { Card, HStack, useToast } from "@gluestack-ui/themed";
+import { Box, Card, HStack, useToast, VStack } from "@gluestack-ui/themed";
 import { Package, Star, ShoppingBag } from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { CompanyProduct } from "../models/company-product";
@@ -303,7 +303,7 @@ export function AdaptiveProductCard({
         activeOpacity={0.7}
         style={style}
       >
-        <Card className="flex-row border border-gray-100 rounded-xl overflow-hidden h-32 mb-3 shadow-sm">
+        <Box className="flex-row  overflow-hidden max-h-40 mb-3 px-2 py-4 rounded-md bg-white">
           {/* Imagem do produto */}
           <ImagePreview
             uri={product.imagem}
@@ -311,41 +311,38 @@ export function AdaptiveProductCard({
             width="180px"
             height="100%"
             resizeMode="cover"
-            containerClassName="aspect-square"
+            containerClassName="aspect-square rounded-md overflow-hidden"
           />
 
           {/* Informações do produto */}
-          <View className="flex-1 p-3 justify-between">
-            <View>
-              <Text
-                className="font-semibold text-gray-800 line-clamp-1 text-lg"
-                numberOfLines={1}
-              >
+          <View className="flex-1 px-3 justify-between">
+            <VStack>
+              <Text className="font-semibold text-gray-800 line-clamp-1 text-lg pb-0 mb-1">
                 {product.nome}
               </Text>
 
-              {hasVariation && (
-                <View className="bg-gray-100 rounded-md px-2 py-1 mt-1 self-start">
-                  <Text className="text-xs text-gray-700">
-                    {product.variacao?.variacao?.length || 0} opções
-                  </Text>
-                </View>
+              {/* Descricao */}
+              {!hasVariation && product.descricao && (
+                <Text className="text-gray-600 text-sm line-clamp-1 ">
+                  {product.descricao}
+                </Text>
               )}
-            </View>
+            </VStack>
 
+            {/* Preços */}
             <View className="flex-row justify-between items-center">
               {shouldShowPrice ? (
                 <View>
                   {product.preco_promocional ? (
                     <View>
-                      <Text className="text-xs text-gray-400 line-through">
-                        {formatCurrency(product.preco)}
-                      </Text>
                       <Text
                         className="text-lg font-bold"
                         style={{ color: vm.primaryColor || "#F4511E" }}
                       >
                         {formatCurrency(product.preco_promocional)}
+                      </Text>
+                      <Text className="text-xs text-gray-400 line-through">
+                        {formatCurrency(product.preco)}
                       </Text>
                     </View>
                   ) : (
@@ -365,20 +362,18 @@ export function AdaptiveProductCard({
                 </View>
               )}
 
-              {isCartEnabled && !hasVariation && (
-                <TouchableOpacity
-                  onPress={handleAddToCart}
-                  className="rounded-full p-2"
-                  style={{
-                    backgroundColor: `${vm.primaryColor || "#F4511E"}20`,
-                  }}
-                >
-                  <ShoppingBag size={20} color={vm.primaryColor || "#F4511E"} />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                onPress={handleAddToCart}
+                className="rounded-full p-2"
+                style={{
+                  backgroundColor: `${vm.primaryColor || "#F4511E"}20`,
+                }}
+              >
+                <ShoppingBag size={20} color={vm.primaryColor || "#F4511E"} />
+              </TouchableOpacity>
             </View>
           </View>
-        </Card>
+        </Box>
       </TouchableOpacity>
     );
   }
@@ -405,7 +400,7 @@ export function AdaptiveProductCard({
       activeOpacity={0.7}
       style={style}
     >
-      <Card className="overflow-hidden rounded-xl border border-gray-100 shadow-sm transition-transform duration-200 hover:shadow-md">
+      <Card className="rounded-xl border border-gray-100 shadow-sm transition-transform duration-200 hover:shadow-md">
         {/* Imagem do produto */}
         <View className="aspect-square relative">
           <ImagePreview
