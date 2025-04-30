@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, ViewStyle, StyleProp, DimensionValue } from "react-native";
 import { Image as ImageIcon } from "lucide-react-native";
 import { ResilientImage } from "@/components/common/resilient-image";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface ImagePreviewProps {
   uri?: string | null;
@@ -31,7 +32,7 @@ export function ImagePreview({
   if (!uri) {
     return (
       <View
-        className={`border bg-gray-100 items-center justify-center ${containerClassName}`}
+        className={`bg-gray-100 items-center justify-center ${containerClassName}`}
         style={[
           {
             width: width as DimensionValue,
@@ -41,7 +42,7 @@ export function ImagePreview({
           style,
         ]}
       >
-        <Icon size={32} color="#6B7280" />
+        <Icon size={32} color={THEME_COLORS.primary} />
       </View>
     );
   }
