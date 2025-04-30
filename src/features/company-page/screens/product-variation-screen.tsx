@@ -113,15 +113,6 @@ export function ProductVariationScreen() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
       <View className="flex-1 bg-white">
-        {/* Fixed header overlay */}
-        <ProductHeaderOverlay
-          onBack={handleBack}
-          onShare={vm.handleShareProduct}
-          onToggleFavorite={() => {}}
-          isFavorite={false}
-          topInset={insets.top}
-        />
-
         {/* Full screen image viewer */}
         <ProductImageViewer
           isVisible={vm.isImageViewerVisible}
@@ -176,7 +167,7 @@ export function ProductVariationScreen() {
             )}
 
             {/* Zoom and share buttons */}
-            <View className="absolute bottom-4 right-4 flex-row space-x-2">
+            <View className="absolute bottom-4 right-4 flex-row gap-2">
               <TouchableOpacity
                 onPress={vm.handleOpenImageViewer}
                 className="bg-black/50 rounded-full p-3"
@@ -200,31 +191,6 @@ export function ProductVariationScreen() {
             }}
             className="px-5 pt-6 bg-white"
           >
-            {/* Category (if available) */}
-            {vm.product.categoria?.nome && (
-              <TouchableOpacity
-                className="flex-row items-center mb-2"
-                activeOpacity={0.7}
-              >
-                <View
-                  className="px-3 py-1 rounded-full"
-                  style={{ backgroundColor: `${vm.primaryColor}15` }}
-                >
-                  <Text
-                    className="text-xs font-medium"
-                    style={{ color: vm.primaryColor }}
-                  >
-                    {vm.product.categoria.nome}
-                  </Text>
-                </View>
-                <ChevronRight
-                  size={16}
-                  color={vm.primaryColor}
-                  style={{ marginLeft: 4 }}
-                />
-              </TouchableOpacity>
-            )}
-
             {/* Product name */}
             <Text className="text-2xl font-bold text-gray-800 mb-2">
               {vm.product.nome}
