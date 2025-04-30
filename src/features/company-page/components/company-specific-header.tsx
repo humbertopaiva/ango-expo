@@ -1,4 +1,5 @@
 // Path: src/features/company-page/components/company-specific-header.tsx
+
 import React, { useEffect, useState, useCallback, memo } from "react";
 import {
   View,
@@ -24,6 +25,7 @@ import Animated, {
   FadeOut,
 } from "react-native-reanimated";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { useCompanyPageContext } from "../contexts/use-company-page-context";
 
 interface CompanySpecificHeaderProps {
   title: string;
@@ -107,13 +109,18 @@ const CategoryButton = memo(
 export function CompanySpecificHeader({
   title,
   subtitle,
-  primaryColor = THEME_COLORS.primary,
+  primaryColor: propPrimaryColor,
   onBackPress,
   backTo,
   scrollPosition = 0,
 }: CompanySpecificHeaderProps) {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const vm = useCompanyPageContext();
+
+  // Usar a cor primária da empresa do contexto, ou a passada por prop, ou a cor padrão do tema
+  const primaryColor =
+    vm.primaryColor || propPrimaryColor || THEME_COLORS.primary;
 
   // Use the header opacity as an animated value
   const headerOpacity = useSharedValue(0);
@@ -174,6 +181,7 @@ export function CompanySpecificHeader({
       opacity: headerOpacity.value,
       height: headerHeight.value,
       overflow: "hidden",
+      backgroundColor: primaryColor, // Use a cor primária aqui
     };
   });
 
@@ -183,6 +191,7 @@ export function CompanySpecificHeader({
       style={[
         styles.headerContainer,
         animatedHeaderStyle,
+        { backgroundColor: primaryColor }, // Defina a cor de fundo aqui também para garantir
         isWeb ? { position: "sticky", top: 0, zIndex: 50 } : {},
       ]}
     >
@@ -248,7 +257,7 @@ export function CompanySpecificHeader({
                       category={category}
                       isActive={isActive}
                       count={count}
-                      primaryColor={THEME_COLORS.primary}
+                      primaryColor={primaryColor}
                       onSelect={() => setSelectedCategory(category)}
                     />
                   </Animated.View>
@@ -266,6 +275,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     width: "100%",
     zIndex: 10,
+    // Não defina backgroundColor aqui, pois será definido no estilo animado
   },
   scrollContent: {
     paddingHorizontal: 16,

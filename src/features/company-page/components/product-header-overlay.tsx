@@ -21,7 +21,7 @@ export function ProductHeaderOverlay({
   topInset,
 }: ProductHeaderOverlayProps) {
   return (
-    <View className="absolute top-0 left-0 right-0 z-10">
+    <View className="z-10">
       <LinearGradient
         colors={["rgba(0,0,0,0.7)", "rgba(0,0,0,0.3)", "transparent"]}
         style={{ height: 60 + (topInset || 0) }}

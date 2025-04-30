@@ -114,15 +114,6 @@ export function ProductDetailsScreen() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
       <View className="flex-1 bg-white">
-        {/* Header fixo em overlay */}
-        <ProductHeaderOverlay
-          onBack={handleBack}
-          onShare={vm.handleShareProduct}
-          onToggleFavorite={vm.toggleFavorite}
-          isFavorite={vm.isFavorite}
-          topInset={insets.top}
-        />
-
         {/* Visualizador de imagem em tela cheia */}
         <ProductImageViewer
           isVisible={vm.isImageViewerVisible}
@@ -175,7 +166,7 @@ export function ProductDetailsScreen() {
             )}
 
             {/* Botões de ampliar e compartilhar lado a lado */}
-            <View className="absolute bottom-4 right-4 flex-row space-x-2">
+            <View className="absolute bottom-4 right-4 flex-row gap-2">
               <TouchableOpacity
                 onPress={vm.handleOpenImageViewer}
                 className="bg-black/50 rounded-full p-3"
@@ -199,31 +190,6 @@ export function ProductDetailsScreen() {
             }}
             className="px-5 pt-6 bg-white"
           >
-            {/* Categoria (se disponível) */}
-            {vm.product.categoria?.nome && (
-              <TouchableOpacity
-                className="flex-row items-center mb-2"
-                activeOpacity={0.7}
-              >
-                <View
-                  className="px-3 py-1 rounded-full"
-                  style={{ backgroundColor: `${vm.primaryColor}15` }}
-                >
-                  <Text
-                    className="text-xs font-medium"
-                    style={{ color: vm.primaryColor }}
-                  >
-                    {vm.product.categoria.nome}
-                  </Text>
-                </View>
-                <ChevronRight
-                  size={16}
-                  color={vm.primaryColor}
-                  style={{ marginLeft: 4 }}
-                />
-              </TouchableOpacity>
-            )}
-
             {/* Nome do produto */}
             <Text className="text-2xl font-bold text-gray-800 mb-2">
               {vm.product.nome}
