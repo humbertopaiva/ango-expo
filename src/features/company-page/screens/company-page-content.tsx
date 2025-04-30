@@ -23,6 +23,7 @@ import { memo } from "react";
 import { AnimatedPageTransition } from "@/components/animations/animated-page-transition";
 import { Loader } from "@/components/common/loader";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { CompanyTabBar } from "../components/company-tab-bar";
 
 // Utilizando memo para evitar renderizações desnecessárias
 const MemoizedFeaturedProductsStrip = memo(FeaturedProductsStrip);
@@ -157,7 +158,7 @@ export function CompanyPageContent() {
         </ScrollView>
 
         {/* Barra de ações fixa no rodapé (apenas se o carrinho estiver habilitado) */}
-        {isCartEnabled() && <CompanyActionBar />}
+        <CompanyTabBar activeTab="home" />
 
         {/* Modal com informações detalhadas da empresa */}
         <CompanyInfoModal
