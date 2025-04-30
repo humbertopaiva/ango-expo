@@ -104,6 +104,20 @@ export function AdaptiveProductCard({
     toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
   };
 
+  // Verificar se o produto tem variação
+  const hasVariation = product.tem_variacao === true;
+
+  // Determinar se deve exibir o preço - modificado para nunca mostrar preço de produtos com variação
+  const shouldShowPrice =
+    !hasVariation && product.exibir_preco && product.preco;
+
+  // Texto para produtos com variação - modificado para mostrar as variações disponíveis
+  const variationText = hasVariation
+    ? `${product.variacao?.nome || "Opções"}: ${
+        product.variacao?.variacao?.join(", ") || "Variações disponíveis"
+      }`
+    : null;
+
   const contrastTextColor = getContrastColor(vm.primaryColor || "#F4511E");
 
   // Se o card for destacado (usado em vitrines/destaques), usar o design mais visual
@@ -111,13 +125,6 @@ export function AdaptiveProductCard({
     // Proporção mais quadrada (ajustada para 4:4.5 - quase quadrada)
     const cardWidth = isWeb ? (width > 768 ? 380 : width * 0.85) : width * 0.85;
     const cardHeight = cardWidth * 0.9; // Proporção ajustada para ficar mais quadrada
-
-    // Verificar se o produto tem variação
-    const hasVariation = product.tem_variacao === true;
-
-    // Determinar se deve exibir o preço
-    const shouldShowPrice =
-      !hasVariation || (product.exibir_preco && product.preco);
 
     return (
       <TouchableOpacity
@@ -149,13 +156,13 @@ export function AdaptiveProductCard({
               resizeMode="cover"
             />
             <LinearGradient
-              colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.7)"]}
+              colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
               style={{ position: "absolute", height: "100%", width: "100%" }}
             />
           </View>
 
           {/* Botão de adicionar ao carrinho no canto inferior direito */}
-          {isCartEnabled && !hasVariation && (
+          {isCartEnabled && !hasVariation && shouldShowPrice && (
             <TouchableOpacity
               onPress={handleAddToCart}
               className="absolute bottom-4 right-4 rounded-full p-3 z-10"
@@ -193,15 +200,26 @@ export function AdaptiveProductCard({
 
           {/* Conteúdo do card */}
           <View className="flex-1 justify-end p-5">
-            {/* Nome do produto (sem descrição para esse layout) */}
+            {/* Nome do produto */}
             <Text
-              className="text-white font-sans text-2xl mb-3"
+              className="text-white font-sans text-2xl mb-2"
               numberOfLines={2}
             >
               {product.nome}
             </Text>
 
-            {/* Preço */}
+            {/* Descrição ou informação de variação */}
+            {hasVariation ? (
+              <Text className="text-white/80 text-sm mb-3" numberOfLines={2}>
+                {variationText}
+              </Text>
+            ) : product.descricao ? (
+              <Text className="text-white/80 text-sm mb-3" numberOfLines={2}>
+                {product.descricao}
+              </Text>
+            ) : null}
+
+            {/* Preço - só mostra se não for produto com variação */}
             <View className="flex-row items-center">
               <View className="flex-1">
                 {shouldShowPrice ? (
@@ -271,10 +289,7 @@ export function AdaptiveProductCard({
                   hasVariation && (
                     <View className="bg-black/40 rounded-lg py-2 px-3">
                       <Text className="text-white font-medium">
-                        {product.variacao?.nome || "Produto com variações"}
-                      </Text>
-                      <Text className="text-white/80 text-xs mt-1">
-                        Clique para ver as opções
+                        Ver opções disponíveis
                       </Text>
                     </View>
                   )
@@ -289,13 +304,6 @@ export function AdaptiveProductCard({
 
   // Layout horizontal para delivery
   if (isDeliveryPlan) {
-    // Verificar se o produto tem variação
-    const hasVariation = product.tem_variacao === true;
-
-    // Determinar se deve exibir o preço
-    const shouldShowPrice =
-      !hasVariation || (product.exibir_preco && product.preco);
-
     return (
       <TouchableOpacity
         onPress={handleProductPress}
@@ -321,12 +329,16 @@ export function AdaptiveProductCard({
                 {product.nome}
               </Text>
 
-              {/* Descricao */}
-              {!hasVariation && product.descricao && (
-                <Text className="text-gray-600 text-sm line-clamp-1 ">
+              {/* Descrição ou informação de variação */}
+              {hasVariation ? (
+                <Text className="text-gray-600 text-sm line-clamp-1">
+                  {variationText}
+                </Text>
+              ) : product.descricao ? (
+                <Text className="text-gray-600 text-sm line-clamp-1">
                   {product.descricao}
                 </Text>
-              )}
+              ) : null}
             </VStack>
 
             {/* Preços */}
@@ -356,41 +368,36 @@ export function AdaptiveProductCard({
                 </View>
               ) : (
                 <View>
-                  <Text className="text-sm text-gray-700 font-medium">
-                    {product.variacao?.nome || "Produto com variações"}
-                  </Text>
+                  {hasVariation ? (
+                    <Text className="text-sm text-gray-700 font-medium">
+                      {product.variacao?.nome || "Ver opções disponíveis"}
+                    </Text>
+                  ) : (
+                    <Text className="text-sm text-gray-700 font-medium">
+                      Consultar preço
+                    </Text>
+                  )}
                 </View>
               )}
 
-              <TouchableOpacity
-                onPress={handleAddToCart}
-                className="rounded-full p-2"
-                style={{
-                  backgroundColor: `${vm.primaryColor || "#F4511E"}20`,
-                }}
-              >
-                <ShoppingBag size={20} color={vm.primaryColor || "#F4511E"} />
-              </TouchableOpacity>
+              {/* Botão de adicionar ao carrinho */}
+              {isCartEnabled && !hasVariation && shouldShowPrice && (
+                <TouchableOpacity
+                  onPress={handleAddToCart}
+                  className="rounded-full p-2"
+                  style={{
+                    backgroundColor: `${vm.primaryColor || "#F4511E"}20`,
+                  }}
+                >
+                  <ShoppingBag size={20} color={vm.primaryColor || "#F4511E"} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </Box>
       </TouchableOpacity>
     );
   }
-
-  // Verificar se o produto tem variação
-  const hasVariation = product.tem_variacao === true;
-
-  // Determinar se deve exibir o preço
-  const shouldShowPrice =
-    !hasVariation || (product.exibir_preco && product.preco);
-
-  // Texto adicional para produtos com variação
-  const variationText = hasVariation
-    ? product.variacao?.nome
-      ? `Opções: ${product.variacao.nome}`
-      : "Produto com variações"
-    : null;
 
   // Layout vertical padrão para catálogo
   return (
@@ -437,8 +444,8 @@ export function AdaptiveProductCard({
             )}
           </View>
 
-          {/* Quick-add button - somente mostrado se não for produto com variação */}
-          {isCartEnabled && !hasVariation && (
+          {/* Quick-add button - apenas para produtos sem variação e com preço */}
+          {isCartEnabled && !hasVariation && shouldShowPrice && (
             <TouchableOpacity
               onPress={handleAddToCart}
               className="absolute bottom-3 right-3 rounded-full p-2 shadow-md"
@@ -458,14 +465,16 @@ export function AdaptiveProductCard({
             {product.nome}
           </Text>
 
-          {product.descricao && !hasVariation && (
-            <Text
-              className="text-xs text-gray-500 mt-1 line-clamp-2"
-              numberOfLines={2}
-            >
+          {/* Descrição ou informação de variação */}
+          {hasVariation ? (
+            <Text className="text-xs text-gray-500 mt-1" numberOfLines={2}>
+              {variationText}
+            </Text>
+          ) : product.descricao ? (
+            <Text className="text-xs text-gray-500 mt-1" numberOfLines={2}>
               {product.descricao}
             </Text>
-          )}
+          ) : null}
 
           <View className="mt-2 pt-2 border-t border-gray-100">
             {shouldShowPrice ? (
@@ -532,18 +541,22 @@ export function AdaptiveProductCard({
                   </Text>
                 )}
               </>
+            ) : // Informação de produtos com variação ou sem preço
+            hasVariation ? (
+              <View className="bg-gray-50 rounded-lg py-2 px-3">
+                <Text className="text-sm text-gray-700 font-medium">
+                  {product.variacao?.nome || "Produto com variações"}
+                </Text>
+                <Text className="text-xs text-gray-500 mt-1">
+                  {product.variacao?.variacao?.length || 0} opções disponíveis
+                </Text>
+              </View>
             ) : (
-              // Mensagem para produtos com variação
-              hasVariation && (
-                <View className="bg-gray-50 rounded-lg py-2 px-3">
-                  <Text className="text-sm text-gray-700 font-medium">
-                    {product.variacao?.nome || "Produto com variações"}
-                  </Text>
-                  <Text className="text-xs text-gray-500 mt-1">
-                    {product.variacao?.variacao?.length || 0} opções disponíveis
-                  </Text>
-                </View>
-              )
+              <View className="bg-gray-50 rounded-lg py-2 px-3">
+                <Text className="text-sm text-gray-700 font-medium">
+                  Consultar preço
+                </Text>
+              </View>
             )}
           </View>
         </View>

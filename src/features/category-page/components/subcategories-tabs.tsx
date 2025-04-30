@@ -43,7 +43,7 @@ export function SubcategoriesTabs({
       <View className="mb-6">
         <HStack className="mb-4">
           <Text className="text-sm font-medium text-primary-500">
-            Filtrar por Categoria
+            Filtrar por Subcategoria
           </Text>
         </HStack>
         <ActivityIndicator size="large" color={THEME_COLORS.primary} />
@@ -58,7 +58,7 @@ export function SubcategoriesTabs({
         style={{ justifyContent: "space-between", alignItems: "center" }}
       >
         <Text className="text-lg font-medium text-primary-500">
-          Filtrar por Categoria
+          Filtrar por Subcategoria
         </Text>
       </HStack>
 

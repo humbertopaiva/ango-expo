@@ -22,6 +22,7 @@ import { memo } from "react";
 
 import { AnimatedPageTransition } from "@/components/animations/animated-page-transition";
 import { Loader } from "@/components/common/loader";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 // Utilizando memo para evitar renderizações desnecessárias
 const MemoizedFeaturedProductsStrip = memo(FeaturedProductsStrip);
@@ -125,7 +126,7 @@ export function CompanyPageContent() {
         <CompanySpecificHeader
           title={companyTitle}
           subtitle={companySubtitle}
-          primaryColor={primaryColor}
+          primaryColor={THEME_COLORS.primary}
           onBackPress={handleBackPress}
           scrollPosition={scrollY}
         />
