@@ -1,3 +1,5 @@
+// Path: src/features/company-page/components/company-tab-bar.tsx
+
 import React from "react";
 import {
   View,
@@ -87,9 +89,11 @@ export function CompanyTabBar({ activeTab = "home" }: CompanyTabBarProps) {
           />
 
           {/* Badge indicator for cart */}
-          {badge && badge > 0 && (
+          {typeof badge === "number" && badge > 0 && (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{badge > 99 ? "99+" : badge}</Text>
+              <Text style={styles.badgeText}>
+                {badge > 99 ? "99+" : badge.toString()}
+              </Text>
             </View>
           )}
         </View>

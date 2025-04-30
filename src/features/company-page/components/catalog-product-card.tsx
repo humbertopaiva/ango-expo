@@ -169,8 +169,11 @@ export function CatalogProductCard({
             ) : product.preco_promocional && shouldShowPrice ? (
               <View className="absolute top-2 left-2 bg-red-500 px-2 py-0.5 rounded-full shadow-sm">
                 <Text className="text-white text-xs font-medium">
-                  {calculateDiscount(product.preco, product.preco_promocional)}%
-                  OFF
+                  {calculateDiscount(
+                    product.preco,
+                    product.preco_promocional
+                  ).toString()}
+                  % OFF
                 </Text>
               </View>
             ) : showFeaturedBadge ? (
