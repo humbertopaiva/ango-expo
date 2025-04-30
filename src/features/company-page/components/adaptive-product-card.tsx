@@ -9,7 +9,13 @@ import {
   Platform,
 } from "react-native";
 import { Box, Card, HStack, useToast, VStack } from "@gluestack-ui/themed";
-import { Package, Star, ShoppingBag } from "lucide-react-native";
+import {
+  Package,
+  Star,
+  ShoppingBag,
+  Tag,
+  ExternalLink,
+} from "lucide-react-native";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { CompanyProduct } from "../models/company-product";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
@@ -111,7 +117,7 @@ export function AdaptiveProductCard({
   const shouldShowPrice =
     !hasVariation && product.exibir_preco && product.preco;
 
-  // Texto para produtos com variação - modificado para mostrar as variações disponíveis
+  // Texto para produtos com variação
   const variationText = hasVariation
     ? `${product.variacao?.nome || "Opções"}: ${
         product.variacao?.variacao?.join(", ") || "Variações disponíveis"
@@ -120,11 +126,10 @@ export function AdaptiveProductCard({
 
   const contrastTextColor = getContrastColor(vm.primaryColor || "#F4511E");
 
-  // Se o card for destacado (usado em vitrines/destaques), usar o design mais visual
+  // Layout destacado (para vitrine)
   if (isHighlighted) {
-    // Proporção mais quadrada (ajustada para 4:4.5 - quase quadrada)
     const cardWidth = isWeb ? (width > 768 ? 380 : width * 0.85) : width * 0.85;
-    const cardHeight = cardWidth * 0.9; // Proporção ajustada para ficar mais quadrada
+    const cardHeight = cardWidth * 0.9;
 
     return (
       <TouchableOpacity
@@ -156,13 +161,17 @@ export function AdaptiveProductCard({
               resizeMode="cover"
             />
             <LinearGradient
-              colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)"]}
+              colors={[
+                "rgba(0,0,0,0.1)",
+                "rgba(0,0,0,0.4)",
+                "rgba(0,0,0,0.85)",
+              ]}
               style={{ position: "absolute", height: "100%", width: "100%" }}
             />
           </View>
 
-          {/* Botão de adicionar ao carrinho no canto inferior direito */}
-          {isCartEnabled && !hasVariation && shouldShowPrice && (
+          {/* Botão de adicionar ao carrinho */}
+          {isCartEnabled && (
             <TouchableOpacity
               onPress={handleAddToCart}
               className="absolute bottom-4 right-4 rounded-full p-3 z-10"
@@ -172,7 +181,7 @@ export function AdaptiveProductCard({
             </TouchableOpacity>
           )}
 
-          {/* Badge de variação (se aplicável) */}
+          {/* Badge de variação */}
           {hasVariation && (
             <View className="absolute top-4 left-4 bg-purple-500 px-2 py-1 rounded-full shadow-sm z-10">
               <Text className="text-white text-xs font-bold">
@@ -181,14 +190,12 @@ export function AdaptiveProductCard({
             </View>
           )}
 
-          {/* Badge de destaque (se habilitado) */}
-          {showFeaturedBadge && !hasVariation && (
+          {showFeaturedBadge && (
             <View className="absolute top-4 left-4 bg-amber-500 rounded-full p-1.5 shadow-sm z-10">
               <Star size={14} color="#fff" />
             </View>
           )}
 
-          {/* Badge de desconto (se aplicável) */}
           {product.preco_promocional && shouldShowPrice && (
             <View className="absolute top-4 right-4 bg-red-500 px-2 py-1 rounded-full shadow-sm z-10">
               <Text className="text-white text-xs font-bold">
@@ -210,9 +217,17 @@ export function AdaptiveProductCard({
 
             {/* Descrição ou informação de variação */}
             {hasVariation ? (
-              <Text className="text-white/80 text-sm mb-3" numberOfLines={2}>
-                {variationText}
-              </Text>
+              <View className="bg-black/30 rounded-lg px-3 py-2 mb-3">
+                <View className="flex-row items-center mb-1">
+                  <Tag size={12} color="#ffffff" />
+                  <Text className="text-white/90 ml-1.5 font-medium text-xs">
+                    Variações disponíveis
+                  </Text>
+                </View>
+                <Text className="text-white/80 text-sm" numberOfLines={2}>
+                  {variationText}
+                </Text>
+              </View>
             ) : product.descricao ? (
               <Text className="text-white/80 text-sm mb-3" numberOfLines={2}>
                 {product.descricao}
@@ -220,89 +235,74 @@ export function AdaptiveProductCard({
             ) : null}
 
             {/* Preço - só mostra se não for produto com variação */}
-            <View className="flex-row items-center">
-              <View className="flex-1">
-                {shouldShowPrice ? (
-                  <>
-                    {product.preco_promocional ? (
-                      <View>
-                        <Text className="text-white/80 text-sm line-through">
-                          {formatCurrency(product.preco)}
-                        </Text>
-                        <Text className="text-white font-bold text-3xl">
-                          {formatCurrency(product.preco_promocional)}
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text className="text-white font-semibold text-xl">
+            {shouldShowPrice ? (
+              <View className="flex-row items-center">
+                <View className="flex-1">
+                  {product.preco_promocional ? (
+                    <View>
+                      <Text className="text-white/80 text-sm line-through">
                         {formatCurrency(product.preco)}
                       </Text>
-                    )}
-
-                    {/* Informações de parcelamento */}
-                    {product.parcelamento_cartao &&
-                      product.quantidade_parcelas && (
-                        <Text className="text-white text-sm mt-1">
-                          {product.parcelas_sem_juros ? (
-                            <>
-                              ou {product.quantidade_parcelas}x de{" "}
-                              {formatCurrency(
-                                (
-                                  parseFloat(
-                                    product.preco_promocional || product.preco
-                                  ) / parseInt(product.quantidade_parcelas)
-                                ).toString()
-                              )}{" "}
-                              sem juros
-                            </>
-                          ) : (
-                            <>
-                              ou {product.quantidade_parcelas}x de{" "}
-                              {formatCurrency(
-                                (
-                                  parseFloat(
-                                    product.preco_promocional || product.preco
-                                  ) / parseInt(product.quantidade_parcelas)
-                                ).toString()
-                              )}
-                            </>
-                          )}
-                        </Text>
-                      )}
-
-                    {/* Preço à vista */}
-                    {product.desconto_avista && (
-                      <Text className="text-green-300 text-sm font-medium mt-1">
-                        {formatCurrency(
-                          (
-                            parseFloat(
-                              product.preco_promocional || product.preco
-                            ) *
-                            (1 - product.desconto_avista / 100)
-                          ).toFixed(2)
-                        )}{" "}
-                        à vista ({product.desconto_avista}% off)
-                      </Text>
-                    )}
-                  </>
-                ) : (
-                  hasVariation && (
-                    <View className="bg-black/40 rounded-lg py-2 px-3">
-                      <Text className="text-white font-medium">
-                        Ver opções disponíveis
+                      <Text className="text-white font-bold text-3xl">
+                        {formatCurrency(product.preco_promocional)}
                       </Text>
                     </View>
-                  )
-                )}
+                  ) : (
+                    <Text className="text-white font-semibold text-xl">
+                      {formatCurrency(product.preco)}
+                    </Text>
+                  )}
+
+                  {product.parcelamento_cartao &&
+                    product.quantidade_parcelas && (
+                      <Text className="text-white text-sm mt-1">
+                        {product.parcelas_sem_juros ? (
+                          <>
+                            ou {product.quantidade_parcelas}x de{" "}
+                            {formatCurrency(
+                              (
+                                parseFloat(
+                                  product.preco_promocional || product.preco
+                                ) / parseInt(product.quantidade_parcelas)
+                              ).toString()
+                            )}{" "}
+                            sem juros
+                          </>
+                        ) : (
+                          <>
+                            ou {product.quantidade_parcelas}x de{" "}
+                            {formatCurrency(
+                              (
+                                parseFloat(
+                                  product.preco_promocional || product.preco
+                                ) / parseInt(product.quantidade_parcelas)
+                              ).toString()
+                            )}
+                          </>
+                        )}
+                      </Text>
+                    )}
+                </View>
               </View>
-            </View>
+            ) : (
+              hasVariation && (
+                <View className="flex-row items-center">
+                  <HStack space="xs" alignItems="center">
+                    <ExternalLink size={14} color="#FFFFFF" strokeWidth={2} />
+                    <Text className="text-white font-medium">
+                      Ver opções e preços
+                    </Text>
+                  </HStack>
+                </View>
+              )
+            )}
           </View>
         </View>
       </TouchableOpacity>
     );
   }
 
-  // Layout horizontal para delivery
+  // Layout para delivery com design mais moderno
   if (isDeliveryPlan) {
     return (
       <TouchableOpacity
@@ -311,44 +311,62 @@ export function AdaptiveProductCard({
         activeOpacity={0.7}
         style={style}
       >
-        <Box className="flex-row  overflow-hidden max-h-40 mb-3 px-2 py-4 rounded-md bg-white">
+        <Box className="flex-row overflow-hidden max-h-40 mb-3 rounded-xl bg-white shadow-sm border border-gray-100">
           {/* Imagem do produto */}
-          <ImagePreview
-            uri={product.imagem}
-            fallbackIcon={Package}
-            width="180px"
-            height="100%"
-            resizeMode="cover"
-            containerClassName="aspect-square rounded-md overflow-hidden"
-          />
+          <View className="w-32 h-32 relative">
+            <ImagePreview
+              uri={product.imagem}
+              fallbackIcon={Package}
+              width="100%"
+              height="100%"
+              resizeMode="cover"
+            />
+
+            {/* Badge de variações ou desconto */}
+            {hasVariation ? (
+              <View className="absolute top-1 left-1 bg-purple-500 px-2 py-0.5 rounded-full">
+                <Text className="text-white text-xs font-medium">
+                  {product.variacao?.variacao?.length || 0} opções
+                </Text>
+              </View>
+            ) : product.preco_promocional && shouldShowPrice ? (
+              <View className="absolute top-1 left-1 bg-red-500 px-2 py-0.5 rounded-full">
+                <Text className="text-white text-xs font-medium">
+                  {calculateDiscount(product.preco, product.preco_promocional)}%
+                  OFF
+                </Text>
+              </View>
+            ) : null}
+          </View>
 
           {/* Informações do produto */}
-          <View className="flex-1 px-3 justify-between">
-            <VStack>
-              <Text className="font-semibold text-gray-800 line-clamp-1 text-lg pb-0 mb-1">
+          <View className="flex-1 p-3 justify-between">
+            <VStack space="xs">
+              <Text className="font-semibold text-gray-800 line-clamp-1 text-base">
                 {product.nome}
               </Text>
 
-              {/* Descrição ou informação de variação */}
+              {/* Descrição ou variações */}
               {hasVariation ? (
-                <Text className="text-gray-600 text-sm line-clamp-1">
-                  {variationText}
+                <Text className="text-gray-600 text-xs line-clamp-2">
+                  <Text className="font-medium">Variações:</Text>{" "}
+                  {product.variacao?.variacao?.join(", ") || "Múltiplas opções"}
                 </Text>
               ) : product.descricao ? (
-                <Text className="text-gray-600 text-sm line-clamp-1">
+                <Text className="text-gray-600 text-xs line-clamp-2">
                   {product.descricao}
                 </Text>
               ) : null}
             </VStack>
 
-            {/* Preços */}
-            <View className="flex-row justify-between items-center">
+            {/* Botão e preço */}
+            <HStack className="justify-between items-center mt-auto pt-1">
               {shouldShowPrice ? (
                 <View>
                   {product.preco_promocional ? (
                     <View>
                       <Text
-                        className="text-lg font-bold"
+                        className="text-base font-bold"
                         style={{ color: vm.primaryColor || "#F4511E" }}
                       >
                         {formatCurrency(product.preco_promocional)}
@@ -367,39 +385,31 @@ export function AdaptiveProductCard({
                   )}
                 </View>
               ) : (
-                <View>
-                  {hasVariation ? (
-                    <Text className="text-sm text-gray-700 font-medium">
-                      {product.variacao?.nome || "Ver opções disponíveis"}
-                    </Text>
-                  ) : (
-                    <Text className="text-sm text-gray-700 font-medium">
-                      Consultar preço
-                    </Text>
-                  )}
-                </View>
+                <Text className="text-sm text-gray-700 font-medium">
+                  {hasVariation ? "Ver opções" : "Consultar preço"}
+                </Text>
               )}
 
               {/* Botão de adicionar ao carrinho */}
-              {isCartEnabled && !hasVariation && shouldShowPrice && (
+              {isCartEnabled && (
                 <TouchableOpacity
                   onPress={handleAddToCart}
                   className="rounded-full p-2"
                   style={{
-                    backgroundColor: `${vm.primaryColor || "#F4511E"}20`,
+                    backgroundColor: vm.primaryColor || "#F4511E",
                   }}
                 >
-                  <ShoppingBag size={20} color={vm.primaryColor || "#F4511E"} />
+                  <ShoppingBag size={16} color="#FFFFFF" />
                 </TouchableOpacity>
               )}
-            </View>
+            </HStack>
           </View>
         </Box>
       </TouchableOpacity>
     );
   }
 
-  // Layout vertical padrão para catálogo
+  // Layout de catálogo padrão com design modernizado
   return (
     <TouchableOpacity
       onPress={handleProductPress}
@@ -407,7 +417,7 @@ export function AdaptiveProductCard({
       activeOpacity={0.7}
       style={style}
     >
-      <Card className="rounded-xl border border-gray-100 shadow-sm transition-transform duration-200 hover:shadow-md">
+      <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Imagem do produto */}
         <View className="aspect-square relative">
           <ImagePreview
@@ -418,7 +428,7 @@ export function AdaptiveProductCard({
             resizeMode="cover"
           />
 
-          {/* Badges */}
+          {/* Badges no canto superior */}
           <View className="absolute top-0 left-0 right-0 p-2 flex-row justify-between">
             {hasVariation ? (
               <View className="bg-purple-500 px-2 py-1 rounded-full shadow-sm">
@@ -443,121 +453,79 @@ export function AdaptiveProductCard({
               </View>
             )}
           </View>
-
-          {/* Quick-add button - apenas para produtos sem variação e com preço */}
-          {isCartEnabled && !hasVariation && shouldShowPrice && (
-            <TouchableOpacity
-              onPress={handleAddToCart}
-              className="absolute bottom-3 right-3 rounded-full p-2 shadow-md"
-              style={{ backgroundColor: vm.primaryColor || "#F4511E" }}
-            >
-              <ShoppingBag size={16} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Informações do produto */}
         <View className="p-3">
+          {/* Título */}
           <Text
-            className="font-medium text-gray-800 line-clamp-2 text-base"
+            className="font-medium text-gray-800 text-base"
             numberOfLines={2}
           >
             {product.nome}
           </Text>
 
-          {/* Descrição ou informação de variação */}
+          {/* Descrição ou variações */}
           {hasVariation ? (
-            <Text className="text-xs text-gray-500 mt-1" numberOfLines={2}>
-              {variationText}
-            </Text>
+            <View className="mt-1 mb-2">
+              <Text className="text-xs text-gray-500" numberOfLines={2}>
+                {variationText}
+              </Text>
+            </View>
           ) : product.descricao ? (
-            <Text className="text-xs text-gray-500 mt-1" numberOfLines={2}>
+            <Text className="text-xs text-gray-500 mt-1 mb-2" numberOfLines={2}>
               {product.descricao}
             </Text>
           ) : null}
 
-          <View className="mt-2 pt-2 border-t border-gray-100">
-            {shouldShowPrice ? (
-              <>
-                {product.preco_promocional ? (
-                  <View className="flex-row items-baseline gap-2">
+          {/* Linha divisória */}
+          <View className="border-t border-gray-100 pt-2 mt-1">
+            {/* Preço e botão */}
+            <HStack className="justify-between items-center">
+              {shouldShowPrice ? (
+                <View>
+                  {product.preco_promocional ? (
+                    <View>
+                      <Text
+                        className="text-base font-bold"
+                        style={{ color: vm.primaryColor || "#F4511E" }}
+                      >
+                        {formatCurrency(product.preco_promocional)}
+                      </Text>
+                      <Text className="text-xs text-gray-400 line-through">
+                        {formatCurrency(product.preco)}
+                      </Text>
+                    </View>
+                  ) : (
                     <Text
                       className="text-base font-bold"
                       style={{ color: vm.primaryColor || "#F4511E" }}
                     >
-                      {formatCurrency(product.preco_promocional)}
-                    </Text>
-                    <Text className="text-xs text-gray-400 line-through">
                       {formatCurrency(product.preco)}
                     </Text>
-                  </View>
-                ) : (
-                  <Text
-                    className="text-base font-bold"
-                    style={{ color: vm.primaryColor || "#F4511E" }}
-                  >
-                    {formatCurrency(product.preco)}
+                  )}
+                </View>
+              ) : (
+                <View className="py-1 px-2 rounded-lg bg-gray-50">
+                  <Text className="text-sm text-gray-700">
+                    {hasVariation ? "Ver opções" : "Consultar"}
                   </Text>
-                )}
+                </View>
+              )}
 
-                {product.parcelamento_cartao && product.quantidade_parcelas && (
-                  <Text className="text-xs text-gray-600 mt-1">
-                    {product.parcelas_sem_juros ? (
-                      <>
-                        ou {product.quantidade_parcelas}x de{" "}
-                        {formatCurrency(
-                          (
-                            parseFloat(
-                              product.preco_promocional || product.preco
-                            ) / parseInt(product.quantidade_parcelas)
-                          ).toString()
-                        )}{" "}
-                        sem juros
-                      </>
-                    ) : (
-                      <>
-                        ou {product.quantidade_parcelas}x de{" "}
-                        {formatCurrency(
-                          (
-                            parseFloat(
-                              product.preco_promocional || product.preco
-                            ) / parseInt(product.quantidade_parcelas)
-                          ).toString()
-                        )}
-                      </>
-                    )}
-                  </Text>
-                )}
-
-                {product.desconto_avista && (
-                  <Text className="text-xs text-green-600 font-medium mt-1">
-                    {formatCurrency(
-                      (
-                        parseFloat(product.preco_promocional || product.preco) *
-                        (1 - product.desconto_avista / 100)
-                      ).toFixed(2)
-                    )}{" "}
-                    à vista ({product.desconto_avista}% de desconto)
-                  </Text>
-                )}
-              </>
-            ) : // Informação de produtos com variação ou sem preço
-            hasVariation ? (
-              <View className="bg-gray-50 rounded-lg py-2 px-3">
-                <Text className="text-sm text-gray-700 font-medium">
-                  {product.variacao?.nome || "Produto com variações"}
-                </Text>
-                <Text className="text-xs text-gray-500 mt-1">
-                  {product.variacao?.variacao?.length || 0} opções disponíveis
-                </Text>
-              </View>
-            ) : (
-              <View className="bg-gray-50 rounded-lg py-2 px-3">
-                <Text className="text-sm text-gray-700 font-medium">
-                  Consultar preço
-                </Text>
-              </View>
-            )}
+              {/* Botão de adicionar ao carrinho */}
+              {isCartEnabled && (
+                <TouchableOpacity
+                  onPress={handleAddToCart}
+                  className="p-2 rounded-full"
+                  style={{
+                    backgroundColor: `${vm.primaryColor || "#F4511E"}20`,
+                  }}
+                >
+                  <ShoppingBag size={18} color={vm.primaryColor || "#F4511E"} />
+                </TouchableOpacity>
+              )}
+            </HStack>
           </View>
         </View>
       </Card>
