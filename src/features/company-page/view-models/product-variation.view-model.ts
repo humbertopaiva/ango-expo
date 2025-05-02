@@ -40,6 +40,8 @@ export interface ProductVariationViewModel {
   loadingVariations: boolean;
   variationError: string | null;
   selectedAddons: SelectedAddon[]; // Nova propriedade para adicionais selecionados
+  isConfirmationVisible: boolean;
+  lastAddedItem: any;
 
   // Calculated properties
   maxQuantity: number;
@@ -58,6 +60,8 @@ export interface ProductVariationViewModel {
   handleShareProduct: () => Promise<void>;
   handleOpenImageViewer: () => void;
   handleCloseImageViewer: () => void;
+  showConfirmation: () => void;
+  hideConfirmation: () => void;
 
   // Novas ações para adicionais
   addAddonToCart: (addon: CompanyProduct, quantity: number) => void;
@@ -91,6 +95,10 @@ export function useProductVariationViewModel(
 
   // Estado para adicionais selecionados
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+
+  // Estado para o modal de confirmação
+  const [isConfirmationVisible, setIsConfirmationVisible] = useState(false);
+  const [lastAddedItem, setLastAddedItem] = useState<any>(null);
 
   // Fetch product
   useEffect(() => {
@@ -163,8 +171,8 @@ export function useProductVariationViewModel(
   };
 
   // Currency formatting
-  const formatCurrency = (value: string) => {
-    const numericValue = parseFloat(value);
+  const formatCurrency = (value: string | number) => {
+    const numericValue = typeof value === "string" ? parseFloat(value) : value;
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -190,7 +198,7 @@ export function useProductVariationViewModel(
 
   // Calculate total price based on quantity, selected variation, and adicionais
   const calculateTotal = (): string => {
-    if (!selectedVariation && !product) return formatCurrency("0");
+    if (!selectedVariation && !product) return formatCurrency(0);
 
     let price = 0;
     if (selectedVariation) {
@@ -212,7 +220,7 @@ export function useProductVariationViewModel(
       totalPrice += addonPrice * addon.quantity;
     });
 
-    return formatCurrency(totalPrice.toString());
+    return formatCurrency(totalPrice);
   };
 
   // Get the current image to display
@@ -228,6 +236,15 @@ export function useProductVariationViewModel(
 
   // Check maximum quantity limit
   const maxQuantity = product?.quantidade_maxima_carrinho || 999;
+
+  // Funções para o modal de confirmação
+  const showConfirmation = useCallback(() => {
+    setIsConfirmationVisible(true);
+  }, []);
+
+  const hideConfirmation = useCallback(() => {
+    setIsConfirmationVisible(false);
+  }, []);
 
   // Actions
   const increaseQuantity = () => {
@@ -300,31 +317,33 @@ export function useProductVariationViewModel(
     );
   }, []);
 
-  const addToCart = () => {
+  const addToCart = useCallback(() => {
     if (!product || !vm.profile || !selectedVariation) return;
+
+    // Gerar timestamp único para este item
+    const timestamp = Date.now();
+    const uniqueItemId = `${product.id}_${selectedVariation.id}_${timestamp}`;
+
+    // Formatar adicionais para exibição na confirmação
+    const selectedAddonItems = selectedAddons.map((addon) => ({
+      name: addon.product.nome,
+      quantity: addon.quantity,
+    }));
 
     const companySlug = vm.profile.empresa.slug;
     const companyName = vm.profile.nome;
 
-    // Create a product with variation to add to cart
-    const productWithVariation: ProductWithVariation = {
-      ...product,
-      produto_variado: {
-        id: selectedVariation.id,
-        valor_variacao: selectedVariation.name,
-        preco: selectedVariation.price,
-        preco_promocional: selectedVariation.promotional_price ?? undefined,
-        descricao: selectedVariation.description ?? undefined,
-        imagem: selectedVariation.image,
-        disponivel: true,
-      },
-    };
-
-    // Add item to company's cart
-    cartVm.addToCartWithObservation(
-      productWithVariation,
+    // Criar um produto com variação para adicionar ao carrinho
+    cartVm.addProductWithVariation(
+      product,
       companySlug,
       companyName,
+      selectedVariation.id,
+      selectedVariation.name,
+      parseFloat(
+        selectedVariation.promotional_price || selectedVariation.price
+      ),
+      selectedVariation.description ?? undefined,
       quantity,
       observation.trim()
     );
@@ -332,22 +351,45 @@ export function useProductVariationViewModel(
     // Adicionar os adicionais selecionados
     selectedAddons.forEach((addon) => {
       if (addon.quantity > 0) {
-        cartVm.addToCartWithObservation(
+        cartVm.addAddonToCart(
           addon.product,
           companySlug,
           companyName,
+          uniqueItemId,
           addon.quantity,
-          `Adicional para: ${product.nome} (${selectedVariation.name})`
+          `${product.nome} (${selectedVariation.name})`
         );
       }
     });
 
-    // Show success toast
-    toastUtils.success(
-      toast,
-      `${product.nome} (${selectedVariation.name}) adicionado ao carrinho!`
+    // Calcular o valor total para exibição
+    const variationPrice = parseFloat(
+      selectedVariation.promotional_price || selectedVariation.price
     );
-  };
+    const totalAmount = variationPrice * quantity;
+
+    // Salvar informações do item para o modal de confirmação
+    setLastAddedItem({
+      productName: product.nome,
+      quantity,
+      totalPrice: formatCurrency(totalAmount),
+      variationName: selectedVariation.name,
+      addonItems: selectedAddonItems,
+      observation: observation.trim(),
+    });
+
+    // Mostrar modal de confirmação
+    showConfirmation();
+  }, [
+    product,
+    vm.profile,
+    selectedVariation,
+    quantity,
+    selectedAddons,
+    observation,
+    cartVm,
+    showConfirmation,
+  ]);
 
   // Share product
   const handleShareProduct = async () => {
@@ -402,6 +444,8 @@ export function useProductVariationViewModel(
     loadingVariations,
     variationError,
     selectedAddons,
+    isConfirmationVisible,
+    lastAddedItem,
 
     // Calculated properties
     maxQuantity,
@@ -423,5 +467,7 @@ export function useProductVariationViewModel(
     addAddonToCart,
     getAddonQuantity,
     removeAddonFromCart,
+    showConfirmation,
+    hideConfirmation,
   };
 }

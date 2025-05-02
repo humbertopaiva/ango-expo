@@ -35,6 +35,7 @@ import { ProductAddonsSection } from "../components/product-addons-section";
 import { useProductVariationViewModel } from "../view-models/product-variation.view-model";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { toastUtils } from "@/src/utils/toast.utils";
+import { AddToCartConfirmationModal } from "../components/add-to-cart-confirmation-modal";
 
 export function ProductVariationScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -83,43 +84,8 @@ export function ProductVariationScreen() {
 
     animationUtils.createPulseAnimation(buttonScaleAnim)();
 
-    const companySlug = vm.product.empresa.slug;
-    const companyName = vm.product.empresa.nome;
-
-    // Usar a nova função addProductWithVariation
-    cartVm.addProductWithVariation(
-      vm.product,
-      companySlug,
-      companyName,
-      vm.selectedVariation.id,
-      vm.selectedVariation.name,
-      parseFloat(
-        vm.selectedVariation.promotional_price || vm.selectedVariation.price
-      ),
-      vm.selectedVariation.description,
-      vm.quantity,
-      vm.observation
-    );
-
-    // Adicionar os adicionais selecionados se houver
-    vm.selectedAddons.forEach((addon) => {
-      if (addon.quantity > 0) {
-        cartVm.addAddonToCart(
-          addon.product,
-          companySlug,
-          companyName,
-          vm.selectedVariation.id, // ID da variação como parentItemId
-          addon.quantity,
-          `${vm.product.nome} (${vm.selectedVariation.name})`
-        );
-      }
-    });
-
-    // Show success toast
-    toastUtils.success(
-      toast,
-      `${vm.product.nome} (${vm.selectedVariation.name}) adicionado ao carrinho!`
-    );
+    // Use the view model's addToCart function which handles confirmation
+    vm.addToCart();
   };
 
   // Handler for back
@@ -166,6 +132,20 @@ export function ProductVariationScreen() {
             vm.selectedVariation?.description || vm.product.descricao
           }
           onShare={vm.handleShareProduct}
+        />
+
+        {/* Confirmation Modal */}
+        <AddToCartConfirmationModal
+          isVisible={vm.isConfirmationVisible}
+          onClose={vm.hideConfirmation}
+          productName={vm.lastAddedItem?.productName || ""}
+          quantity={vm.lastAddedItem?.quantity || 0}
+          totalPrice={vm.lastAddedItem?.totalPrice || ""}
+          companySlug={vm.product?.empresa.slug || ""}
+          variationName={vm.lastAddedItem?.variationName}
+          addonItems={vm.lastAddedItem?.addonItems}
+          observation={vm.lastAddedItem?.observation}
+          primaryColor={vm.primaryColor}
         />
 
         <Animated.ScrollView

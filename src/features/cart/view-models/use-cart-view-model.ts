@@ -208,7 +208,7 @@ export function useCartViewModel(): CartViewModel {
     quantity: number = 1,
     observation?: string
   ) => {
-    // Gera um ID único para o item do carrinho
+    // Gera um ID único para o item do carrinho internamente
     const itemId = `custom_${product.id}_${Date.now()}`;
 
     // Mapear as seleções para o formato do carrinho

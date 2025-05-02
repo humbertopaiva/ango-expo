@@ -28,6 +28,12 @@ export interface ProductDetailsViewModel {
   // Novo estado para adicionais
   selectedAddons: SelectedAddon[];
 
+  // Novo estado para o modal de confirmação
+  isConfirmationVisible: boolean;
+  lastAddedItem: any;
+  showConfirmation: () => void;
+  hideConfirmation: () => void;
+
   // Calculated properties
   hasVariation: boolean;
   maxQuantity: number;
@@ -71,6 +77,10 @@ export function useProductDetailsViewModel(
   // Novo estado para adicionais selecionados
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
 
+  // Novo estado para o modal de confirmação
+  const [isConfirmationVisible, setIsConfirmationVisible] = useState(false);
+  const [lastAddedItem, setLastAddedItem] = useState<any>(null);
+
   // Buscar produto
   useEffect(() => {
     if (!productId || !vm.products) return;
@@ -95,8 +105,8 @@ export function useProductDetailsViewModel(
   }, [productId, vm.products, isCartEnabled]);
 
   // Formatação de moeda
-  const formatCurrency = (value: string) => {
-    const numericValue = parseFloat(value);
+  const formatCurrency = (value: string | number) => {
+    const numericValue = typeof value === "string" ? parseFloat(value) : value;
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -114,7 +124,7 @@ export function useProductDetailsViewModel(
 
   // Calcular preço total com base na quantidade e adicionais
   const calculateTotal = (): string => {
-    if (!product) return formatCurrency("0");
+    if (!product) return formatCurrency(0);
 
     // Preço base do produto
     const basePrice = parseFloat(product.preco_promocional || product.preco);
@@ -128,7 +138,7 @@ export function useProductDetailsViewModel(
       totalPrice += addonPrice * addon.quantity;
     });
 
-    return formatCurrency(totalPrice.toString());
+    return formatCurrency(totalPrice);
   };
 
   // Verificar se o produto tem variação
@@ -136,6 +146,15 @@ export function useProductDetailsViewModel(
 
   // Verificar limite máximo de quantidade
   const maxQuantity = product?.quantidade_maxima_carrinho || 999;
+
+  // Funções para o modal de confirmação
+  const showConfirmation = useCallback(() => {
+    setIsConfirmationVisible(true);
+  }, []);
+
+  const hideConfirmation = useCallback(() => {
+    setIsConfirmationVisible(false);
+  }, []);
 
   // Actions
   const increaseQuantity = () => {
@@ -160,39 +179,6 @@ export function useProductDetailsViewModel(
 
   const toggleObservationInput = () => {
     setShowObservationInput((prev) => !prev);
-  };
-
-  // Adicionar produto ao carrinho com adicionais
-  const addToCart = () => {
-    if (!product || !vm.profile) return;
-
-    const companySlug = vm.profile.empresa.slug;
-    const companyName = vm.profile.nome;
-
-    // Adiciona o item ao carrinho da empresa
-    cartVm.addToCartWithObservation(
-      product,
-      companySlug,
-      companyName,
-      quantity,
-      observation.trim()
-    );
-
-    // Adicionar os adicionais também
-    selectedAddons.forEach((addon) => {
-      if (addon.quantity > 0) {
-        cartVm.addToCartWithObservation(
-          addon.product,
-          companySlug,
-          companyName,
-          addon.quantity,
-          `Adicional para: ${product.nome}`
-        );
-      }
-    });
-
-    // Mostrar toast de sucesso
-    toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
   };
 
   // Adicionar ou atualizar adicional no carrinho
@@ -241,6 +227,70 @@ export function useProductDetailsViewModel(
     );
   }, []);
 
+  // Adicionar produto ao carrinho com adicionais
+  const addToCart = useCallback(() => {
+    if (!product || !vm.profile) return;
+
+    // Gerar timestamp único para este item
+    const timestamp = Date.now();
+    const uniqueItemId = `${product.id}_${timestamp}`;
+
+    // Formatar adicionais para exibição na confirmação
+    const selectedAddonItems = selectedAddons.map((addon) => ({
+      name: addon.product.nome,
+      quantity: addon.quantity,
+    }));
+
+    const companySlug = product.empresa.slug;
+    const companyName = product.empresa.nome;
+
+    // Adiciona o item principal ao carrinho
+    cartVm.addToCartWithObservation(
+      product,
+      companySlug,
+      companyName,
+      quantity,
+      observation.trim()
+    );
+
+    // Adicionar os adicionais também
+    selectedAddons.forEach((addon) => {
+      if (addon.quantity > 0) {
+        cartVm.addAddonToCart(
+          addon.product,
+          companySlug,
+          companyName,
+          uniqueItemId,
+          addon.quantity,
+          product.nome
+        );
+      }
+    });
+
+    // Salvar informações do item para o modal de confirmação
+    const totalAmount =
+      parseFloat(product.preco_promocional || product.preco) * quantity;
+
+    setLastAddedItem({
+      productName: product.nome,
+      quantity,
+      totalPrice: formatCurrency(totalAmount),
+      addonItems: selectedAddonItems,
+      observation: observation.trim(),
+    });
+
+    // Mostrar modal de confirmação
+    showConfirmation();
+  }, [
+    product,
+    vm.profile,
+    quantity,
+    selectedAddons,
+    observation,
+    cartVm,
+    showConfirmation,
+  ]);
+
   // Compartilhar o produto
   const handleShareProduct = async () => {
     if (!product || !vm.profile) return;
@@ -288,6 +338,8 @@ export function useProductDetailsViewModel(
     showObservationInput,
     isImageViewerVisible,
     selectedAddons,
+    isConfirmationVisible,
+    lastAddedItem,
 
     // Calculated properties
     hasVariation,
@@ -309,5 +361,7 @@ export function useProductDetailsViewModel(
     addAddonToCart,
     getAddonQuantity,
     removeAddonFromCart,
+    showConfirmation,
+    hideConfirmation,
   };
 }
