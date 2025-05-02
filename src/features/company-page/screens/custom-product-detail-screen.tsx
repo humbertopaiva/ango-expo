@@ -19,6 +19,7 @@ import { CustomProductStep } from "../components/custom-product-step";
 import { useCustomProductDetailViewModel } from "../view-models/custom-product-detail.view-model";
 import { getContrastColor } from "@/src/utils/color.utils";
 import { HStack } from "@gluestack-ui/themed";
+import { ProductObservationInput } from "../components/product-observation-input";
 
 export function CustomProductDetailScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -102,7 +103,7 @@ export function CustomProductDetailScreen() {
   });
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white pb-20">
       <Animated.ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -163,7 +164,7 @@ export function CustomProductDetailScreen() {
         </Animated.View>
 
         {/* Steps section - All steps always expanded */}
-        <View className="px-4 pb-24">
+        <View className="px-4 pb-8">
           <Text className="text-xl font-bold text-gray-800 mb-2">
             Selecione os itens
           </Text>
@@ -192,6 +193,15 @@ export function CustomProductDetailScreen() {
               showPrices={vm.product?.preco_tipo === "soma"}
             />
           ))}
+
+          {/* Adicionar o componente de observação */}
+          <ProductObservationInput
+            observation={vm.observation}
+            showInput={vm.showObservationInput}
+            onToggleInput={vm.toggleObservationInput}
+            onChangeText={vm.setObservation}
+            primaryColor={primaryColor}
+          />
         </View>
       </Animated.ScrollView>
 

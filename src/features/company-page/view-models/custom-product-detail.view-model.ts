@@ -13,14 +13,13 @@ import {
 import { customProductService } from "../services/custom-product.service";
 
 export interface CustomProductDetailViewModel {
-  // State
   product: CustomProductDetail | null;
   isLoading: boolean;
   error: Error | null;
   selections: CustomProductSelection[];
   totalPrice: number;
-
-  // Actions
+  observation: string;
+  showObservationInput: boolean;
   toggleItemSelection: (stepNumber: number, item: CustomProductItem) => void;
   isItemSelected: (stepNumber: number, itemId: string) => boolean;
   isStepComplete: (stepNumber: number) => boolean;
@@ -30,6 +29,10 @@ export interface CustomProductDetailViewModel {
   canAddToCart: () => boolean;
   addToCart: () => void;
   getFormattedPrice: () => string;
+
+  // Novos métodos para observação
+  setObservation: (text: string) => void;
+  toggleObservationInput: () => void;
 }
 
 export function useCustomProductDetailViewModel(
@@ -44,6 +47,9 @@ export function useCustomProductDetailViewModel(
   const [error, setError] = useState<Error | null>(null);
   const [selections, setSelections] = useState<CustomProductSelection[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
+
+  const [observation, setObservation] = useState("");
+  const [showObservationInput, setShowObservationInput] = useState(false);
 
   const fetchProductDetails = useCallback(async () => {
     if (!productId) return;
@@ -159,6 +165,10 @@ export function useCustomProductDetailViewModel(
     [product]
   );
 
+  const toggleObservationInput = useCallback(() => {
+    setShowObservationInput((prev) => !prev);
+  }, []);
+
   // Check if an item is selected
   const isItemSelected = useCallback(
     (stepNumber: number, itemId: string) => {
@@ -259,6 +269,7 @@ export function useCustomProductDetailViewModel(
       },
       selections: selections,
       isCustomProduct: true,
+      observation: observation.trim(),
     };
 
     // Add to cart
@@ -273,6 +284,7 @@ export function useCustomProductDetailViewModel(
     canAddToCart,
     cartVm,
     toast,
+    observation,
   ]);
 
   return {
@@ -281,6 +293,8 @@ export function useCustomProductDetailViewModel(
     error,
     selections,
     totalPrice,
+    observation,
+    showObservationInput,
     toggleItemSelection,
     isItemSelected,
     isStepComplete,
@@ -290,5 +304,7 @@ export function useCustomProductDetailViewModel(
     canAddToCart,
     addToCart,
     getFormattedPrice,
+    setObservation,
+    toggleObservationInput,
   };
 }
