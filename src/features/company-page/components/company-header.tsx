@@ -131,7 +131,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
           <HStack
             justifyContent="space-between"
             alignItems="flex-start"
-            className="mb-4 w-full"
+            className="mb-2 w-full"
           >
             {/* Informações do estabelecimento */}
             <VStack className="flex-1 pr-2">
@@ -184,7 +184,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
           {shouldShowDeliveryInfo() && vm.config?.delivery && (
             <TouchableOpacity
               onPress={onMoreInfoPress}
-              className="mt-3 py-2 border-t border-gray-100 w-full"
+              className="mt-3 pt-4 border-t border-gray-50 w-full"
             >
               <View className="w-full px-2 rounded-md">
                 <HStack className="w-full justify-between">
@@ -237,14 +237,6 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                       </Text>
                     </VStack>
                   )}
-
-                  {/* Botão de Informações */}
-                  <TouchableOpacity
-                    onPress={onMoreInfoPress}
-                    className="py-3 flex-col justify-center items-center aspect-square"
-                  >
-                    <Info size={28} color={primaryColor} />
-                  </TouchableOpacity>
                 </HStack>
               </View>
             </TouchableOpacity>
