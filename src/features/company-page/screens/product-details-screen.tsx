@@ -36,6 +36,7 @@ import { useProductAddons } from "../hooks/use-product-addons";
 import { ProductAddonsSection } from "../components/product-addons-section";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { toastUtils } from "@/src/utils/toast.utils";
+import { AddToCartConfirmationModal } from "../components/add-to-cart-confirmation-modal";
 
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -78,49 +79,14 @@ export function ProductDetailsScreen() {
   // Adicionais do produto
   const { addonLists, hasAddons } = useProductAddons(productId);
 
-  // Construir timestamp para identificar o item no carrinho
-  const cartTimestampRef = useRef(0);
-
   // Handler para adicionar ao carrinho com animação
   const handleAddToCart = () => {
     if (!vm.product) return;
 
     animationUtils.createPulseAnimation(buttonScaleAnim)();
 
-    // Gerar timestamp antes de adicionar ao carrinho
-    cartTimestampRef.current = Date.now();
-
-    const companySlug = vm.product.empresa.slug;
-    const companyName = vm.product.empresa.nome;
-
-    // Adiciona o item principal ao carrinho
-    cartVm.addToCartWithObservation(
-      vm.product,
-      companySlug,
-      companyName,
-      vm.quantity,
-      vm.observation.trim()
-    );
-
-    // Construir ID estimado do item principal
-    const mainItemId = `${vm.product.id}_${cartTimestampRef.current}`;
-
-    // Adicionar os adicionais selecionados
-    vm.selectedAddons.forEach((addon) => {
-      if (addon.quantity > 0) {
-        cartVm.addAddonToCart(
-          addon.product,
-          companySlug,
-          companyName,
-          mainItemId,
-          addon.quantity,
-          vm.product.nome
-        );
-      }
-    });
-
-    // Mostrar toast de sucesso
-    toastUtils.success(toast, `${vm.product.nome} adicionado ao carrinho!`);
+    // Usar a função addToCart do view model que já inclui a lógica de confirmação
+    vm.addToCart();
   };
 
   // Handler para voltar
@@ -172,6 +138,19 @@ export function ProductDetailsScreen() {
           productName={vm.product.nome}
           productDescription={vm.product.descricao}
           onShare={vm.handleShareProduct}
+        />
+
+        {/* Modal de confirmação */}
+        <AddToCartConfirmationModal
+          isVisible={vm.isConfirmationVisible}
+          onClose={vm.hideConfirmation}
+          productName={vm.lastAddedItem?.productName || ""}
+          quantity={vm.lastAddedItem?.quantity || 0}
+          totalPrice={vm.lastAddedItem?.totalPrice || ""}
+          companySlug={vm.product?.empresa.slug || ""}
+          addonItems={vm.lastAddedItem?.addonItems}
+          observation={vm.lastAddedItem?.observation}
+          primaryColor={vm.primaryColor}
         />
 
         <Animated.ScrollView

@@ -44,6 +44,7 @@ import { getContrastColor } from "@/src/utils/color.utils";
 import { CartItem } from "../models/cart";
 import { useMultiCartStore } from "../stores/cart.store";
 import { toastUtils } from "@/src/utils/toast.utils";
+import { CartItemIdentifierService } from "../services/cart-item-identifier.service";
 
 /**
  * Item individual do carrinho
@@ -55,6 +56,14 @@ interface CartItemProps {
   onUpdateObservation: (itemId: string, observation: string) => void;
   primaryColor: string;
 }
+
+const getDisplayName = (item: CartItem) => {
+  return CartItemIdentifierService.formatProductName(
+    item.name,
+    !!item.hasVariation,
+    item.variationName
+  );
+};
 
 const CartItemComponent: React.FC<CartItemProps> = ({
   item,
@@ -90,7 +99,7 @@ const CartItemComponent: React.FC<CartItemProps> = ({
         {/* Informações do produto */}
         <VStack className="flex-1 justify-between">
           <Text className="font-semibold text-gray-800 text-base">
-            {item.name}
+            {getDisplayName(item)}
           </Text>
 
           {item.description && (

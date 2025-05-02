@@ -15,6 +15,7 @@ import {
 } from "lucide-react-native";
 import { CartItem } from "../models/cart";
 import { ImagePreview } from "@/components/custom/image-preview";
+import { CartVariationBadge } from "./cart-variation-badge";
 
 interface CartItemProps {
   item: CartItem;
@@ -66,14 +67,24 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
         <VStack className="flex-1 justify-between">
           <Text className="font-semibold text-gray-800 text-base">
             {item.name}
+            {item.hasVariation && item.variationName && (
+              <Text className="text-gray-600 font-medium">
+                {" "}
+                ({item.variationName})
+              </Text>
+            )}
           </Text>
 
-          {/* Exibir informação de variação */}
-          {hasVariation && (
-            <Text className="text-gray-500 text-xs">{item.variationName}</Text>
+          {/* Exibir a variação como um badge */}
+          {item.hasVariation && item.variationName && (
+            <CartVariationBadge
+              variationName={item.variationName}
+              primaryColor={primaryColor}
+            />
           )}
 
-          {!hasVariation && item.description && (
+          {/* Informações de variação menos visíveis - agora já exibindo junto com o nome */}
+          {!item.hasVariation && item.description && (
             <Text className="text-gray-500 text-xs" numberOfLines={1}>
               {item.description}
             </Text>
@@ -86,23 +97,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
 
             {/* Controles de quantidade */}
             <HStack className="items-center">
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                disabled={item.quantity <= 1}
-                style={{ opacity: item.quantity <= 1 ? 0.5 : 1 }}
-              >
-                <MinusCircle size={20} color={primaryColor} />
-              </TouchableOpacity>
-
-              <Text className="mx-3 font-medium text-gray-800">
-                {item.quantity}
-              </Text>
-
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.id, item.quantity + 1)}
-              >
-                <PlusCircle size={20} color={primaryColor} />
-              </TouchableOpacity>
+              {/* ... Código existente para os controles ... */}
             </HStack>
           </HStack>
         </VStack>

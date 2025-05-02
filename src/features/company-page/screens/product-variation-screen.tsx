@@ -35,6 +35,7 @@ import { ProductAddonsSection } from "../components/product-addons-section";
 import { useProductVariationViewModel } from "../view-models/product-variation.view-model";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { toastUtils } from "@/src/utils/toast.utils";
+import { AddToCartConfirmationModal } from "../components/add-to-cart-confirmation-modal";
 
 export function ProductVariationScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -86,7 +87,7 @@ export function ProductVariationScreen() {
     const companySlug = vm.product.empresa.slug;
     const companyName = vm.product.empresa.nome;
 
-    // Usar a nova função addProductWithVariation
+    // Usar a função específica para produtos com variação
     cartVm.addProductWithVariation(
       vm.product,
       companySlug,
@@ -104,11 +105,14 @@ export function ProductVariationScreen() {
     // Adicionar os adicionais selecionados se houver
     vm.selectedAddons.forEach((addon) => {
       if (addon.quantity > 0) {
+        // Criar um identificador mais específico para o adicional
+        const uniqueParentId = `${vm.product.id}_${vm.selectedVariation.id}`;
+
         cartVm.addAddonToCart(
           addon.product,
           companySlug,
           companyName,
-          vm.selectedVariation.id, // ID da variação como parentItemId
+          uniqueParentId,
           addon.quantity,
           `${vm.product.nome} (${vm.selectedVariation.name})`
         );
@@ -166,6 +170,20 @@ export function ProductVariationScreen() {
             vm.selectedVariation?.description || vm.product.descricao
           }
           onShare={vm.handleShareProduct}
+        />
+
+        {/* Confirmation Modal */}
+        <AddToCartConfirmationModal
+          isVisible={vm.isConfirmationVisible}
+          onClose={vm.hideConfirmation}
+          productName={vm.lastAddedItem?.productName || ""}
+          quantity={vm.lastAddedItem?.quantity || 0}
+          totalPrice={vm.lastAddedItem?.totalPrice || ""}
+          companySlug={vm.product?.empresa.slug || ""}
+          variationName={vm.lastAddedItem?.variationName}
+          addonItems={vm.lastAddedItem?.addonItems}
+          observation={vm.lastAddedItem?.observation}
+          primaryColor={vm.primaryColor}
         />
 
         <Animated.ScrollView

@@ -13,6 +13,7 @@ import {
 import { customProductService } from "../services/custom-product.service";
 
 export interface CustomProductDetailViewModel {
+  // Estado
   product: CustomProductDetail | null;
   isLoading: boolean;
   error: Error | null;
@@ -20,19 +21,31 @@ export interface CustomProductDetailViewModel {
   totalPrice: number;
   observation: string;
   showObservationInput: boolean;
+  isConfirmationVisible: boolean;
+  lastAddedItem: any;
+
+  // Calculated properties
+  canAddToCart: () => boolean;
+  getFormattedPrice: () => string;
+
+  // Ações para seleções
   toggleItemSelection: (stepNumber: number, item: CustomProductItem) => void;
   isItemSelected: (stepNumber: number, itemId: string) => boolean;
   isStepComplete: (stepNumber: number) => boolean;
   getRequiredSelectionsForStep: (stepNumber: number) => number;
   getMinimumSelectionsForStep: (stepNumber: number) => number;
   getCurrentSelectionsForStep: (stepNumber: number) => number;
-  canAddToCart: () => boolean;
-  addToCart: () => void;
-  getFormattedPrice: () => string;
 
-  // Novos métodos para observação
+  // Ações para o carrinho
+  addToCart: () => void;
+
+  // Ações para observação
   setObservation: (text: string) => void;
   toggleObservationInput: () => void;
+
+  // Ações para confirmação
+  showConfirmation: () => void;
+  hideConfirmation: () => void;
 }
 
 export function useCustomProductDetailViewModel(
@@ -47,9 +60,12 @@ export function useCustomProductDetailViewModel(
   const [error, setError] = useState<Error | null>(null);
   const [selections, setSelections] = useState<CustomProductSelection[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
-
   const [observation, setObservation] = useState("");
   const [showObservationInput, setShowObservationInput] = useState(false);
+
+  // Estados para o modal de confirmação
+  const [isConfirmationVisible, setIsConfirmationVisible] = useState(false);
+  const [lastAddedItem, setLastAddedItem] = useState<any>(null);
 
   const fetchProductDetails = useCallback(async () => {
     if (!productId) return;
@@ -245,9 +261,18 @@ export function useCustomProductDetailViewModel(
     });
   }, [product, getCurrentSelectionsForStep]);
 
+  // Funções para o modal de confirmação
+  const showConfirmation = useCallback(() => {
+    setIsConfirmationVisible(true);
+  }, []);
+
+  const hideConfirmation = useCallback(() => {
+    setIsConfirmationVisible(false);
+  }, []);
+
   // Add to cart function
   const addToCart = useCallback(() => {
-    if (!product || !vm.profile) return;
+    if (!product) return;
 
     // Check if all required steps are complete
     if (!canAddToCart()) {
@@ -255,36 +280,61 @@ export function useCustomProductDetailViewModel(
       return;
     }
 
-    // Create cart item object
-    const cartItem = {
-      id: product.id,
-      nome: product.nome,
-      descricao: product.descricao,
-      imagem: product.imagem,
-      preco: totalPrice.toString(),
-      preco_promocional: null,
-      empresa: {
-        nome: vm.profile.nome,
-        slug: vm.profile.empresa.slug,
+    // Gerar timestamp único para este item
+    const timestamp = Date.now();
+    const uniqueItemId = `custom_${product.id}_${timestamp}`;
+
+    // Preparar os steps para exibição na confirmação
+    const customizationSteps = selections.map((selection) => {
+      const step = product.passos.find(
+        (p) => p.passo_numero === selection.stepNumber
+      );
+      return {
+        name: step?.nome || `Passo ${selection.stepNumber}`,
+        items: selection.selectedItems.map(
+          (item) => item.produto_detalhes.nome
+        ),
+      };
+    });
+
+    const companySlug = product.empresa;
+    const companyName = product.nome;
+
+    // Adicionar ao carrinho usando a função específica
+    // Verificar a assinatura correta do método para não passar argumentos extras
+    cartVm.addCustomProduct(
+      product,
+      companySlug,
+      companyName,
+      selections,
+      totalPrice,
+      1, // Quantidade padrão para produtos customizados
+      observation.trim()
+    );
+
+    // Salvar informações do item para o modal de confirmação
+    setLastAddedItem({
+      productName: product.nome,
+      quantity: 1,
+      totalPrice: getFormattedPrice(),
+      customization: {
+        steps: customizationSteps,
       },
-      selections: selections,
-      isCustomProduct: true,
       observation: observation.trim(),
-    };
+    });
 
-    // Add to cart
-    // cartVm.addCustomProduct(cartItem, vm.profile.empresa.slug, vm.profile.nome);
-
-    toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
+    // Mostrar modal de confirmação
+    showConfirmation();
   }, [
     product,
-    vm.profile,
     selections,
     totalPrice,
-    canAddToCart,
+    observation,
     cartVm,
     toast,
-    observation,
+    canAddToCart,
+    getFormattedPrice,
+    showConfirmation,
   ]);
 
   return {
@@ -306,5 +356,10 @@ export function useCustomProductDetailViewModel(
     getFormattedPrice,
     setObservation,
     toggleObservationInput,
+    // Novos campos para o modal de confirmação
+    isConfirmationVisible,
+    lastAddedItem,
+    showConfirmation,
+    hideConfirmation,
   };
 }
