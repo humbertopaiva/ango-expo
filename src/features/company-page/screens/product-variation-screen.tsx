@@ -20,7 +20,7 @@ import {
   Share2,
   AlertTriangle,
 } from "lucide-react-native";
-import { HStack, VStack, Badge } from "@gluestack-ui/themed";
+import { HStack, VStack, Badge, useToast } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getContrastColor } from "@/src/utils/color.utils";
@@ -33,10 +33,14 @@ import { ProductVariationSelector } from "../components/product-variation-select
 import { useProductAddons } from "../hooks/use-product-addons";
 import { ProductAddonsSection } from "../components/product-addons-section";
 import { useProductVariationViewModel } from "../view-models/product-variation.view-model";
+import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 export function ProductVariationScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const vm = useProductVariationViewModel(productId);
+  const cartVm = useCartViewModel();
+  const toast = useToast();
   const insets = useSafeAreaInsets();
 
   // Animations
@@ -75,8 +79,47 @@ export function ProductVariationScreen() {
 
   // Handler for adding to cart with animation
   const handleAddToCart = () => {
+    if (!vm.product || !vm.selectedVariation) return;
+
     animationUtils.createPulseAnimation(buttonScaleAnim)();
-    vm.addToCart();
+
+    const companySlug = vm.product.empresa.slug;
+    const companyName = vm.product.empresa.nome;
+
+    // Usar a nova função addProductWithVariation
+    cartVm.addProductWithVariation(
+      vm.product,
+      companySlug,
+      companyName,
+      vm.selectedVariation.id,
+      vm.selectedVariation.name,
+      parseFloat(
+        vm.selectedVariation.promotional_price || vm.selectedVariation.price
+      ),
+      vm.selectedVariation.description,
+      vm.quantity,
+      vm.observation
+    );
+
+    // Adicionar os adicionais selecionados se houver
+    vm.selectedAddons.forEach((addon) => {
+      if (addon.quantity > 0) {
+        cartVm.addAddonToCart(
+          addon.product,
+          companySlug,
+          companyName,
+          vm.selectedVariation.id, // ID da variação como parentItemId
+          addon.quantity,
+          `${vm.product.nome} (${vm.selectedVariation.name})`
+        );
+      }
+    });
+
+    // Show success toast
+    toastUtils.success(
+      toast,
+      `${vm.product.nome} (${vm.selectedVariation.name}) adicionado ao carrinho!`
+    );
   };
 
   // Handler for back
@@ -334,8 +377,8 @@ export function ProductVariationScreen() {
           {hasAddons && (
             <ProductAddonsSection
               addonLists={addonLists}
-              onAddAddonToCart={(product) => {
-                // Implement logic to add addon to cart
+              onAddAddonToCart={(product, quantity) => {
+                vm.addAddonToCart(product, quantity);
               }}
             />
           )}
