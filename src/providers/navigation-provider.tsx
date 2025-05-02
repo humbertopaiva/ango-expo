@@ -1,18 +1,29 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { usePathname } from "expo-router";
+// Path: src/providers/navigation-provider.tsx
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import { usePathname, router } from "expo-router";
 import { StatusBar, Platform } from "react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 
-// Interface para o contexto
+// Interface para o contexto com as funções de navegação
 interface NavigationContextType {
   isCompanyPage: boolean;
   currentRoute: string;
+  navigateBack: () => void;
+  navigateTo: (path: string) => void;
 }
 
 // Criação do contexto com valores padrão
 const NavigationContext = createContext<NavigationContextType>({
   isCompanyPage: false,
   currentRoute: "",
+  navigateBack: () => {},
+  navigateTo: () => {},
 });
 
 // Hook para usar o contexto
@@ -25,6 +36,16 @@ interface NavigationProviderProps {
 export function NavigationProvider({ children }: NavigationProviderProps) {
   const pathname = usePathname();
   const [isCompanyPage, setIsCompanyPage] = useState(false);
+
+  // Função para voltar
+  const navigateBack = useCallback(() => {
+    router.back();
+  }, []);
+
+  // Função para navegar para uma rota específica
+  const navigateTo = useCallback((path: string) => {
+    router.push(path as any);
+  }, []);
 
   // Atualização do estado baseado na rota atual
   useEffect(() => {
@@ -51,6 +72,8 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
   const value = {
     isCompanyPage,
     currentRoute: pathname,
+    navigateBack,
+    navigateTo,
   };
 
   return (

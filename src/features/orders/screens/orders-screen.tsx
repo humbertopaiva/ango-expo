@@ -243,7 +243,7 @@ export function OrdersScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScreenHeader
+      {/* <ScreenHeader
         title="Meus Pedidos"
         subtitle={
           companySlug ? `${orders.length} pedidos realizados` : undefined
@@ -257,7 +257,7 @@ export function OrdersScreen() {
             </TouchableOpacity>
           ) : undefined
         }
-      />
+      /> */}
 
       <FlatList
         data={orders}

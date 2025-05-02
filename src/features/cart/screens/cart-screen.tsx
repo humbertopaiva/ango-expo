@@ -327,14 +327,14 @@ export function CartScreen() {
     >
       <View className="flex-1 bg-gray-50">
         {/* Cabeçalho com título e botão de voltar */}
-        <ScreenHeader
+        {/* <ScreenHeader
           title="Carrinho"
           subtitle={
             cartIsEmpty ? undefined : "Revise seus produtos antes de finalizar"
           }
           showBackButton={true}
           onBackPress={handleBackToCompany}
-        />
+        /> */}
 
         {cartIsEmpty ? (
           // Exibe mensagem quando o carrinho está vazio

@@ -16,7 +16,7 @@ interface ScreenHeaderProps {
   title: string;
   subtitle?: string;
   showBackButton?: boolean;
-  backTo?: string; // Opcional agora, usado como fallback
+  backTo?: string; // Usado como rota específica para navegação
   variant?: "primary" | "white";
   onBackPress?: () => void;
   rightContent?: React.ReactNode;
@@ -26,7 +26,7 @@ export default function ScreenHeader({
   title,
   subtitle,
   showBackButton = true,
-  backTo, // Opcional, usado como override
+  backTo,
   variant = "primary",
   onBackPress,
   rightContent,
@@ -35,37 +35,30 @@ export default function ScreenHeader({
   const isWeb = Platform.OS === "web";
 
   // Usando o hook de navegação personalizado
-  const { navigateBack, canGoBack, setCustomBackRoute } = useNavigation();
-
-  // Memoize a função de configurar rota de retorno para evitar chamadas repetidas
-  const setupBackRoute = useCallback(() => {
-    if (backTo) {
-      setCustomBackRoute(backTo);
-    }
-
-    // Note que não limpamos a rota ao desmontar, pois isso causa loop
-    // Isso será gerenciado pelo próprio contexto de navegação
-  }, [backTo, setCustomBackRoute]);
-
-  // Chamamos a configuração apenas uma vez ao montar o componente
-  React.useEffect(() => {
-    setupBackRoute();
-  }, [setupBackRoute]);
+  const { navigateBack } = useNavigation();
 
   const bgColor = variant === "primary" ? THEME_COLORS.primary : "white";
   const textColor = variant === "primary" ? "white" : "#333333";
   const iconColor = variant === "primary" ? "white" : THEME_COLORS.primary;
 
-  // Memoize a função de voltar para evitar re-renderizações
+  // Função de navegação melhorada para resolver problemas de retorno
   const handleBack = useCallback(() => {
     if (onBackPress) {
       // Callback personalizado tem prioridade
       onBackPress();
+    } else if (backTo) {
+      // Se tiver uma rota específica para voltar, use-a
+      router.push(backTo as any);
     } else {
-      // Caso contrário, use a navegação do contexto
-      navigateBack();
+      // Tente usar o sistema de navegação interno, ou volte na história padrão
+      try {
+        navigateBack();
+      } catch (error) {
+        console.log("Erro na navegação interna, tentando router.back()", error);
+        router.back();
+      }
     }
-  }, [onBackPress, navigateBack]);
+  }, [onBackPress, backTo, navigateBack]);
 
   return (
     <SafeAreaView
@@ -91,7 +84,7 @@ export default function ScreenHeader({
           <View>
             {/* Header com botão voltar, título e conteúdo à direita em uma única linha */}
             <View className="flex-row items-center mb-2">
-              {showBackButton && canGoBack && (
+              {showBackButton && (
                 <TouchableOpacity
                   onPress={handleBack}
                   className="p-2 -ml-2 rounded-full active:bg-white/20 mr-2"
@@ -131,7 +124,7 @@ export default function ScreenHeader({
           <View className="w-full container md:px-4 mx-auto">
             <HStack className="items-center justify-between">
               <HStack className="items-center gap-3 flex-1">
-                {showBackButton && canGoBack && (
+                {showBackButton && (
                   <TouchableOpacity
                     onPress={handleBack}
                     className="flex-row items-center p-1 rounded-full hover:bg-white/20"
