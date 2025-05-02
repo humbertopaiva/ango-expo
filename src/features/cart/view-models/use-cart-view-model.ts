@@ -236,7 +236,7 @@ export function useCartViewModel(): CartViewModel {
           id: item.produtos.key,
           name: item.produto_detalhes.nome,
           price: item.produto_detalhes.preco
-            ? parseFloat(item.produto_detalhes.preco)
+            ? parseFloat(item.produto_detalhes.preco.replace(",", "."))
             : 0,
         })),
       }));
@@ -250,8 +250,8 @@ export function useCartViewModel(): CartViewModel {
         imageUrl: product.imagem || undefined,
         description: product.descricao || undefined,
         observation,
-        companyId: companySlug, // Aqui estava o problema: use companySlug como companyId também
-        companySlug, // Garanta que companySlug está definido
+        companyId: product.empresa || "", // Usar o ID da empresa do produto
+        companySlug, // Garantindo que o companySlug está definido
         companyName,
         isCustomProduct: true,
         customProductSteps,

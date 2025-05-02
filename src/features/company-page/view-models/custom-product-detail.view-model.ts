@@ -5,7 +5,7 @@ import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { useToast } from "@gluestack-ui/themed";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import {
   CustomProductDetail,
   CustomProductItem,
@@ -24,6 +24,7 @@ export interface CustomProductDetailViewModel {
   showObservationInput: boolean;
   isConfirmationVisible: boolean;
   lastAddedItem: any;
+  companySlug: string; // Adicionando companySlug para garantir acesso
 
   // Calculated properties
   canAddToCart: () => boolean;
@@ -57,6 +58,11 @@ export function useCustomProductDetailViewModel(
   const toast = useToast();
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
 
+  // Garantir que companySlug seja definido corretamente
+  const [currentCompanySlug, setCurrentCompanySlug] = useState<string>(
+    companySlug || ""
+  );
+
   const [product, setProduct] = useState<CustomProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -68,6 +74,16 @@ export function useCustomProductDetailViewModel(
   // Estados para o modal de confirmação
   const [isConfirmationVisible, setIsConfirmationVisible] = useState(false);
   const [lastAddedItem, setLastAddedItem] = useState<any>(null);
+
+  // Atualizar o companySlug se mudar nos parâmetros
+  useEffect(() => {
+    if (companySlug) {
+      setCurrentCompanySlug(companySlug);
+    } else if (vm.profile?.empresa.slug) {
+      // Fallback para o slug da empresa do contexto, se disponível
+      setCurrentCompanySlug(vm.profile.empresa.slug);
+    }
+  }, [companySlug, vm.profile]);
 
   const fetchProductDetails = useCallback(async () => {
     if (!productId) return;
@@ -130,7 +146,8 @@ export function useCustomProductDetailViewModel(
     }
     // Se tiver um preço fixo definido no produto
     else if (product.preco) {
-      total = parseFloat(product.preco);
+      const preco = product.preco.replace(",", "."); // Corrigindo formatação do preço
+      total = parseFloat(preco);
     }
 
     setTotalPrice(total);
@@ -282,13 +299,10 @@ export function useCustomProductDetailViewModel(
       return;
     }
 
-    console.log("Adding custom product to cart with selections:", selections);
-    console.log("Using companySlug from URL:", companySlug);
-
     // Verificar se temos um slug válido
-    if (!companySlug) {
+    if (!currentCompanySlug) {
       console.error(
-        "CompanySlug não encontrado na URL para o produto customizado"
+        "CompanySlug não disponível para adicionar produto ao carrinho"
       );
       toastUtils.error(
         toast,
@@ -297,13 +311,21 @@ export function useCustomProductDetailViewModel(
       return;
     }
 
-    // Usar o nome da empresa do contexto, caso disponível
-    const companyName = vm.profile?.nome || product.nome;
+    // Usar o nome da empresa do contexto ou do produto
+    const companyName = vm.profile?.nome || "Loja";
 
-    // Adicionar ao carrinho usando a função específica com o slug correto
+    console.log("Adicionando produto customizado com:", {
+      productId: product.id,
+      companySlug: currentCompanySlug,
+      companyName,
+      selections,
+      totalPrice,
+    });
+
+    // Adicionar ao carrinho usando a função específica
     cartVm.addCustomProduct(
       product,
-      companySlug, // Usar o slug da URL
+      currentCompanySlug,
       companyName,
       selections,
       totalPrice,
@@ -350,7 +372,7 @@ export function useCustomProductDetailViewModel(
     canAddToCart,
     getFormattedPrice,
     showConfirmation,
-    companySlug,
+    currentCompanySlug,
     vm.profile,
   ]);
 
@@ -364,6 +386,7 @@ export function useCustomProductDetailViewModel(
     showObservationInput,
     isConfirmationVisible,
     lastAddedItem,
+    companySlug: currentCompanySlug, // Expondo companySlug para usar onde necessário
     toggleItemSelection,
     isItemSelected,
     isStepComplete,
