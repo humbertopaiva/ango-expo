@@ -63,7 +63,31 @@ const recalculateCart = (
   Cart,
   "subtotal" | "subtotalFormatted" | "total" | "totalFormatted"
 > => {
-  const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+  // Extrair itens principais (que não são adicionais ou que não têm parentItemId)
+  const mainItems = items.filter((item) => {
+    return !item.addons || !item.addons.length || !item.addons[0].parentItemId;
+  });
+
+  // Calcular o subtotal apenas dos itens principais e seus adicionais
+  const subtotal = mainItems.reduce((sum, item) => {
+    // Preco do item principal
+    let itemTotal = item.price * item.quantity;
+
+    // Adicionar preço dos adicionais deste item
+    const addons = items.filter(
+      (addon) =>
+        addon.addons &&
+        addon.addons.length &&
+        addon.addons[0].parentItemId === item.id
+    );
+
+    const addonsTotal = addons.reduce(
+      (addonSum, addon) => addonSum + addon.price * addon.quantity,
+      0
+    );
+
+    return sum + itemTotal + addonsTotal;
+  }, 0);
 
   return {
     subtotal,

@@ -39,7 +39,7 @@ export interface CartItem {
     name: string;
     quantity: number;
     price: number;
-    parentItemId?: string; // ID do item principal ao qual este adicional está conectado
+    parentItemId?: string;
   }>;
 }
 export interface Cart {

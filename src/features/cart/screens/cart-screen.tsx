@@ -45,6 +45,7 @@ import { CartItem } from "../models/cart";
 import { useMultiCartStore } from "../stores/cart.store";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { CartItemIdentifierService } from "../services/cart-item-identifier.service";
+import { CartItemWithAddons } from "../components/cart-item-with-addons";
 
 /**
  * Item individual do carrinho
@@ -328,6 +329,38 @@ export function CartScreen() {
     }
   };
 
+  const processCartItems = () => {
+    // Grupo para itens principais
+    const mainItems: CartItem[] = [];
+    // Mapa para adicionais, onde a chave é o ID do item principal
+    const addonMap: Record<string, CartItem[]> = {};
+
+    // Separar itens principais e adicionais
+    cart.items.forEach((item) => {
+      // Verificar se é um adicional
+      if (
+        item.addons &&
+        item.addons.length > 0 &&
+        item.addons[0].parentItemId
+      ) {
+        const parentId = item.addons[0].parentItemId;
+
+        if (!addonMap[parentId]) {
+          addonMap[parentId] = [];
+        }
+
+        addonMap[parentId].push(item);
+      } else {
+        // É um item principal
+        mainItems.push(item);
+      }
+    });
+
+    return { mainItems, addonMap };
+  };
+
+  const { mainItems, addonMap } = processCartItems();
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -388,16 +421,36 @@ export function CartScreen() {
                 {cart.items.length === 1 ? "item" : "itens"})
               </Text>
 
-              {cart.items.map((item) => (
-                <CartItemComponent
-                  key={item.id}
-                  item={item}
-                  onRemove={handleRemoveItemWithToast}
-                  onUpdateQuantity={handleUpdateQuantityWithToast}
-                  onUpdateObservation={cart.updateObservation}
-                  primaryColor={primaryColor}
-                />
-              ))}
+              {mainItems.map((item) => {
+                const itemAddons = addonMap[item.id] || [];
+
+                if (itemAddons.length > 0) {
+                  // Renderizar item com adicionais
+                  return (
+                    <CartItemWithAddons
+                      key={item.id}
+                      item={item}
+                      addons={itemAddons}
+                      onRemove={handleRemoveItemWithToast}
+                      onUpdateQuantity={handleUpdateQuantityWithToast}
+                      onUpdateObservation={cart.updateObservation}
+                      primaryColor={primaryColor}
+                    />
+                  );
+                } else {
+                  // Renderizar item normal
+                  return (
+                    <CartItemComponent
+                      key={item.id}
+                      item={item}
+                      onRemove={handleRemoveItemWithToast}
+                      onUpdateQuantity={handleUpdateQuantityWithToast}
+                      onUpdateObservation={cart.updateObservation}
+                      primaryColor={primaryColor}
+                    />
+                  );
+                }
+              })}
             </View>
 
             {/* Resumo do pedido */}
