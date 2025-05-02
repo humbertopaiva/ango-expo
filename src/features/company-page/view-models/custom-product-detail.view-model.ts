@@ -5,6 +5,7 @@ import { useCompanyPageContext } from "../contexts/use-company-page-context";
 import { useToast } from "@gluestack-ui/themed";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
+import { useLocalSearchParams } from "expo-router";
 import {
   CustomProductDetail,
   CustomProductItem,
@@ -54,6 +55,7 @@ export function useCustomProductDetailViewModel(
   const vm = useCompanyPageContext();
   const cartVm = useCartViewModel();
   const toast = useToast();
+  const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
 
   const [product, setProduct] = useState<CustomProductDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -281,33 +283,33 @@ export function useCustomProductDetailViewModel(
     }
 
     console.log("Adding custom product to cart with selections:", selections);
+    console.log("Using companySlug from URL:", companySlug);
 
-    // Verificar se o contexto da empresa está disponível
-    if (!product.empresa) {
-      console.error("Empresa não encontrada no produto customizado");
+    // Verificar se temos um slug válido
+    if (!companySlug) {
+      console.error(
+        "CompanySlug não encontrado na URL para o produto customizado"
+      );
       toastUtils.error(
         toast,
-        "Erro ao adicionar ao carrinho. Empresa não encontrada."
+        "Erro ao adicionar ao carrinho. Empresa não identificada."
       );
       return;
     }
 
-    const companySlug = product.empresa;
-    const companyName = product.nome;
+    // Usar o nome da empresa do contexto, caso disponível
+    const companyName = vm.profile?.nome || product.nome;
 
-    // Adicionar ao carrinho usando a função específica
+    // Adicionar ao carrinho usando a função específica com o slug correto
     cartVm.addCustomProduct(
       product,
-      companySlug,
+      companySlug, // Usar o slug da URL
       companyName,
       selections,
       totalPrice,
       1, // Quantidade padrão para produtos customizados
       observation.trim()
     );
-
-    // Exibir toast de sucesso
-    toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
 
     // Preparar os steps para exibição na confirmação
     const customizationSteps = selections.map((selection) => {
@@ -333,6 +335,9 @@ export function useCustomProductDetailViewModel(
       observation: observation.trim(),
     });
 
+    // Exibir toast de sucesso
+    toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
+
     // Mostrar modal de confirmação
     showConfirmation();
   }, [
@@ -345,6 +350,8 @@ export function useCustomProductDetailViewModel(
     canAddToCart,
     getFormattedPrice,
     showConfirmation,
+    companySlug,
+    vm.profile,
   ]);
 
   return {
@@ -355,6 +362,8 @@ export function useCustomProductDetailViewModel(
     totalPrice,
     observation,
     showObservationInput,
+    isConfirmationVisible,
+    lastAddedItem,
     toggleItemSelection,
     isItemSelected,
     isStepComplete,
@@ -366,9 +375,6 @@ export function useCustomProductDetailViewModel(
     getFormattedPrice,
     setObservation,
     toggleObservationInput,
-    // Novos campos para o modal de confirmação
-    isConfirmationVisible,
-    lastAddedItem,
     showConfirmation,
     hideConfirmation,
   };

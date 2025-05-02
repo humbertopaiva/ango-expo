@@ -11,6 +11,7 @@ import {
   CustomProductDetail,
   CustomProductSelection,
 } from "@/src/features/company-page/models/custom-product";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 export interface CartViewModel {
   // Estado
@@ -209,15 +210,18 @@ export function useCartViewModel(): CartViewModel {
       quantity: number = 1,
       observation?: string
     ) => {
-      // Registrar o que está sendo enviado para o carrinho
+      // Verificações importantes
+      if (!companySlug) {
+        console.error("Cannot add custom product: companySlug is empty");
+
+        return;
+      }
+
       console.log("Adding custom product to cart:", {
-        product,
+        productId: product.id,
         companySlug,
         companyName,
-        selections,
         totalPrice,
-        quantity,
-        observation,
       });
 
       // Gera um ID único para o item do carrinho
@@ -246,8 +250,8 @@ export function useCartViewModel(): CartViewModel {
         imageUrl: product.imagem || undefined,
         description: product.descricao || undefined,
         observation,
-        companyId: companySlug,
-        companySlug,
+        companyId: companySlug, // Aqui estava o problema: use companySlug como companyId também
+        companySlug, // Garanta que companySlug está definido
         companyName,
         isCustomProduct: true,
         customProductSteps,
