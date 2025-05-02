@@ -1,7 +1,7 @@
 // Path: src/features/company-page/view-models/custom-product-detail.view-model.ts
+
 import { useState, useEffect, useCallback } from "react";
 import { useCompanyPageContext } from "../contexts/use-company-page-context";
-
 import { useToast } from "@gluestack-ui/themed";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
@@ -112,7 +112,7 @@ export function useCustomProductDetailViewModel(
     setTotalPrice(total);
   }, [selections, product]);
 
-  // Toggle item selection for a step
+  // Toggle item selection for a step - Simplified logic without toast
   const toggleItemSelection = useCallback(
     (stepNumber: number, item: CustomProductItem) => {
       setSelections((prev) => {
@@ -147,14 +147,8 @@ export function useCustomProductDetailViewModel(
           ) {
             step.selectedItems = [...step.selectedItems, item];
           } else {
-            // Replace the first item if max reached
+            // Replace the first item if max reached - without toast
             step.selectedItems = [...step.selectedItems.slice(1), item];
-
-            // Show toast about replacing
-            toastUtils.info(
-              toast,
-              `Limite de seleção atingido. Item substituído.`
-            );
           }
         }
 
@@ -162,7 +156,7 @@ export function useCustomProductDetailViewModel(
         return updatedSelections;
       });
     },
-    [product, toast]
+    [product]
   );
 
   // Check if an item is selected
@@ -247,10 +241,7 @@ export function useCustomProductDetailViewModel(
 
     // Check if all required steps are complete
     if (!canAddToCart()) {
-      toastUtils.warning(
-        toast,
-        "Por favor, complete todos os passos obrigatórios antes de adicionar ao carrinho."
-      );
+      toastUtils.warning(toast, "Complete todas as seleções obrigatórias");
       return;
     }
 

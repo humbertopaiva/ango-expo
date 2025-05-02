@@ -1,5 +1,6 @@
 // Path: src/features/company-page/screens/custom-product-detail-screen.tsx
-import React, { useState, useRef, useCallback, useMemo } from "react";
+
+import React, { useRef } from "react";
 import {
   View,
   Text,
@@ -24,11 +25,6 @@ export function CustomProductDetailScreen() {
   const vm = useCustomProductDetailViewModel(productId);
   const insets = useSafeAreaInsets();
 
-  // State for expanded steps
-  const [expandedSteps, setExpandedSteps] = useState<Record<number, boolean>>(
-    {}
-  );
-
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -37,11 +33,6 @@ export function CustomProductDetailScreen() {
   // Start animations when product is loaded
   React.useEffect(() => {
     if (!vm.isLoading && vm.product) {
-      // Initialize first step as expanded
-      if (vm.product.passos.length > 0) {
-        setExpandedSteps({ [vm.product.passos[0].passo_numero]: true });
-      }
-
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -57,14 +48,6 @@ export function CustomProductDetailScreen() {
       ]).start();
     }
   }, [vm.isLoading, vm.product]);
-
-  // Toggle step expansion
-  const toggleStepExpansion = useCallback((stepNumber: number) => {
-    setExpandedSteps((prev) => ({
-      ...prev,
-      [stepNumber]: !prev[stepNumber],
-    }));
-  }, []);
 
   // Handle back
   const handleBack = () => {
@@ -152,7 +135,7 @@ export function CustomProductDetailScreen() {
                 className="text-xs font-medium"
                 style={{ color: primaryColor }}
               >
-                Produto personalizado
+                Monte seu produto
               </Text>
             </View>
           </View>
@@ -164,48 +147,33 @@ export function CustomProductDetailScreen() {
 
           {/* Description */}
           {vm.product.descricao ? (
-            <Text className="text-gray-600 text-base leading-relaxed mb-6">
+            <Text className="text-gray-600 text-base leading-relaxed mb-5">
               {vm.product.descricao}
             </Text>
-          ) : (
-            <Text className="text-gray-500 text-base leading-relaxed mb-6 italic">
-              Monte seu produto personalizado selecionando os itens desejados em
-              cada etapa.
-            </Text>
-          )}
+          ) : null}
 
-          {/* Price type info */}
-          <View className="mb-4 p-4 bg-gray-50 rounded-lg">
-            <Text className="text-gray-700 font-medium mb-2">
-              Preço baseado em:{" "}
-              {vm.product.preco_tipo === "soma"
-                ? "Soma dos itens selecionados"
-                : "Configuração personalizada"}
-            </Text>
-            <Text className="text-gray-600 text-sm">
-              Este produto personalizado possui {vm.product.passos.length}{" "}
-              etapas de seleção.
-              {vm.product.passos.some(
-                (step) => (step.quantidade_minima_itens || 0) > 0
-              )
-                ? " Algumas etapas são obrigatórias."
-                : " Todas as etapas são opcionais."}
-            </Text>
-          </View>
+          {/* Price type info - Simplified */}
+          {vm.product.preco_tipo === "soma" && (
+            <View className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <Text className="text-gray-700 text-sm">
+                Preço calculado com base na soma dos itens selecionados
+              </Text>
+            </View>
+          )}
         </Animated.View>
 
-        {/* Steps section */}
+        {/* Steps section - All steps always expanded */}
         <View className="px-4 pb-24">
-          <Text className="text-xl font-bold text-gray-800 mb-4">
-            Escolha os itens para cada etapa
+          <Text className="text-xl font-bold text-gray-800 mb-2">
+            Selecione os itens
           </Text>
 
           {vm.product.passos.map((step) => (
             <CustomProductStep
               key={step.passo_numero}
               step={step}
-              expanded={!!expandedSteps[step.passo_numero]}
-              onToggleExpand={() => toggleStepExpansion(step.passo_numero)}
+              expanded={true} // Always expanded
+              onToggleExpand={() => {}} // No toggle functionality
               isComplete={vm.isStepComplete(step.passo_numero)}
               minimumSelections={vm.getMinimumSelectionsForStep(
                 step.passo_numero
@@ -254,7 +222,7 @@ export function CustomProductDetailScreen() {
               <View className="flex-row items-center">
                 <AlertTriangle size={20} color="#F59E0B" className="mr-2" />
                 <Text className="text-amber-600 font-medium">
-                  Complete etapas obrigatórias
+                  Complete as seleções obrigatórias
                 </Text>
               </View>
             ) : (
