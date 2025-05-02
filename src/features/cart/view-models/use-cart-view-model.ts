@@ -5,7 +5,7 @@ import {
   ProductWithVariation,
 } from "@/src/features/company-page/models/company-product";
 import { Cart, CartItem, emptyCart } from "../models/cart";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
 import {
   CustomProductDetail,
@@ -199,48 +199,65 @@ export function useCartViewModel(): CartViewModel {
   };
 
   // Adiciona um produto customizado ao carrinho
-  const addCustomProduct = (
-    product: CustomProductDetail,
-    companySlug: string,
-    companyName: string,
-    selections: CustomProductSelection[],
-    totalPrice: number,
-    quantity: number = 1,
-    observation?: string
-  ) => {
-    // Gera um ID único para o item do carrinho internamente
-    const itemId = `custom_${product.id}_${Date.now()}`;
+  const addCustomProduct = useCallback(
+    (
+      product: CustomProductDetail,
+      companySlug: string,
+      companyName: string,
+      selections: CustomProductSelection[],
+      totalPrice: number,
+      quantity: number = 1,
+      observation?: string
+    ) => {
+      // Registrar o que está sendo enviado para o carrinho
+      console.log("Adding custom product to cart:", {
+        product,
+        companySlug,
+        companyName,
+        selections,
+        totalPrice,
+        quantity,
+        observation,
+      });
 
-    // Mapear as seleções para o formato do carrinho
-    const customProductSteps = selections.map((step) => ({
-      stepNumber: step.stepNumber,
-      stepName: product.passos.find((p) => p.passo_numero === step.stepNumber)
-        ?.nome,
-      selectedItems: step.selectedItems.map((item) => ({
-        id: item.produtos.key,
-        name: item.produto_detalhes.nome,
-        price: item.produto_detalhes.preco
-          ? parseFloat(item.produto_detalhes.preco)
-          : undefined,
-      })),
-    }));
+      // Gera um ID único para o item do carrinho
+      const itemId = `custom_${product.id}_${Date.now()}`;
 
-    addItem(companySlug, {
-      id: itemId,
-      productId: product.id,
-      name: product.nome,
-      quantity,
-      price: totalPrice / quantity, // Preço por unidade
-      imageUrl: product.imagem || undefined,
-      description: product.descricao || undefined,
-      observation,
-      companyId: companySlug,
-      companySlug,
-      companyName,
-      isCustomProduct: true,
-      customProductSteps,
-    });
-  };
+      // Mapear as seleções para o formato do carrinho
+      const customProductSteps = selections.map((step) => ({
+        stepNumber: step.stepNumber,
+        stepName: product.passos.find((p) => p.passo_numero === step.stepNumber)
+          ?.nome,
+        selectedItems: step.selectedItems.map((item) => ({
+          id: item.produtos.key,
+          name: item.produto_detalhes.nome,
+          price: item.produto_detalhes.preco
+            ? parseFloat(item.produto_detalhes.preco)
+            : 0,
+        })),
+      }));
+
+      addItem(companySlug, {
+        id: itemId,
+        productId: product.id,
+        name: product.nome,
+        quantity,
+        price: totalPrice / quantity, // Preço por unidade
+        imageUrl: product.imagem || undefined,
+        description: product.descricao || undefined,
+        observation,
+        companyId: companySlug,
+        companySlug,
+        companyName,
+        isCustomProduct: true,
+        customProductSteps,
+      });
+
+      // Verificar se o item foi adicionado corretamente
+      console.log("Cart after adding custom product:", getCart(companySlug));
+    },
+    [addItem, getCart]
+  );
 
   // Adiciona um addon ao carrinho, associado a um item principal
   const addAddonToCart = (

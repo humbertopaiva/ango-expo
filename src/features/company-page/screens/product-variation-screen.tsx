@@ -97,7 +97,7 @@ export function ProductVariationScreen() {
       parseFloat(
         vm.selectedVariation.promotional_price || vm.selectedVariation.price
       ),
-      vm.selectedVariation.description,
+      vm.selectedVariation.description || vm.product.descricao || "",
       vm.quantity,
       vm.observation
     );
@@ -106,7 +106,7 @@ export function ProductVariationScreen() {
     vm.selectedAddons.forEach((addon) => {
       if (addon.quantity > 0) {
         // Criar um identificador mais específico para o adicional
-        const uniqueParentId = `${vm.product.id}_${vm.selectedVariation.id}`;
+        const uniqueParentId = `${vm.product?.id}_${vm.selectedVariation?.id}`;
 
         cartVm.addAddonToCart(
           addon.product,
@@ -114,7 +114,7 @@ export function ProductVariationScreen() {
           companyName,
           uniqueParentId,
           addon.quantity,
-          `${vm.product.nome} (${vm.selectedVariation.name})`
+          `${vm.product?.nome} (${vm.selectedVariation?.name})`
         );
       }
     });

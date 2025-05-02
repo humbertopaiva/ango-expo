@@ -280,9 +280,34 @@ export function useCustomProductDetailViewModel(
       return;
     }
 
-    // Gerar timestamp único para este item
-    const timestamp = Date.now();
-    const uniqueItemId = `custom_${product.id}_${timestamp}`;
+    console.log("Adding custom product to cart with selections:", selections);
+
+    // Verificar se o contexto da empresa está disponível
+    if (!product.empresa) {
+      console.error("Empresa não encontrada no produto customizado");
+      toastUtils.error(
+        toast,
+        "Erro ao adicionar ao carrinho. Empresa não encontrada."
+      );
+      return;
+    }
+
+    const companySlug = product.empresa;
+    const companyName = product.nome;
+
+    // Adicionar ao carrinho usando a função específica
+    cartVm.addCustomProduct(
+      product,
+      companySlug,
+      companyName,
+      selections,
+      totalPrice,
+      1, // Quantidade padrão para produtos customizados
+      observation.trim()
+    );
+
+    // Exibir toast de sucesso
+    toastUtils.success(toast, `${product.nome} adicionado ao carrinho!`);
 
     // Preparar os steps para exibição na confirmação
     const customizationSteps = selections.map((selection) => {
@@ -296,21 +321,6 @@ export function useCustomProductDetailViewModel(
         ),
       };
     });
-
-    const companySlug = product.empresa;
-    const companyName = product.nome;
-
-    // Adicionar ao carrinho usando a função específica
-    // Verificar a assinatura correta do método para não passar argumentos extras
-    cartVm.addCustomProduct(
-      product,
-      companySlug,
-      companyName,
-      selections,
-      totalPrice,
-      1, // Quantidade padrão para produtos customizados
-      observation.trim()
-    );
 
     // Salvar informações do item para o modal de confirmação
     setLastAddedItem({
