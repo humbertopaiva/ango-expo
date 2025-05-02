@@ -67,28 +67,28 @@ export default function CompanyLayout() {
           name="[companySlug]/cart"
           options={{
             title: "Carrinho",
-            headerShown: false,
+            headerShown: true,
           }}
         />
         <Stack.Screen
           name="[companySlug]/checkout"
           options={{
             title: "Finalizar Pedido",
-            headerShown: false,
+            headerShown: true,
           }}
         />
         <Stack.Screen
           name="[companySlug]/orders/index"
           options={{
             title: "Meus Pedidos",
-            headerShown: false,
+            headerShown: true,
           }}
         />
         <Stack.Screen
           name="[companySlug]/orders/[orderId]"
           options={{
             title: "Detalhes do Pedido",
-            headerShown: false,
+            headerShown: true,
           }}
         />
       </Stack>

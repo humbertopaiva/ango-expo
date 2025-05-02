@@ -201,7 +201,7 @@ export function AllOrdersScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScreenHeader
+      {/* <ScreenHeader
         title="Todos os Pedidos"
         subtitle={`${
           orders.length > 0
@@ -217,7 +217,7 @@ export function AllOrdersScreen() {
             </TouchableOpacity>
           ) : undefined
         }
-      />
+      /> */}
 
       <FlatList
         data={orders}

@@ -200,7 +200,7 @@ ${order.items
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScreenHeader
+      {/* <ScreenHeader
         title={`Pedido #${order.id.replace("order_", "").substring(0, 6)}`}
         showBackButton={true}
         onBackPress={() => router.back()}
@@ -209,7 +209,7 @@ ${order.items
             <Share2 size={20} color="white" />
           </TouchableOpacity>
         }
-      />
+      /> */}
 
       <ScrollView
         className="flex-1"
