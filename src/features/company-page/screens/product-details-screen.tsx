@@ -280,8 +280,8 @@ export function ProductDetailsScreen() {
           {hasAddons && (
             <ProductAddonsSection
               addonLists={addonLists}
-              onAddAddonToCart={(product) => {
-                // Implementar lógica para adicionar addon ao carrinho
+              onAddAddonToCart={(product, quantity) => {
+                vm.addAddonToCart(product, quantity);
               }}
             />
           )}

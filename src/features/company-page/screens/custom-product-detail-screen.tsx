@@ -120,15 +120,6 @@ export function CustomProductDetailScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header overlay */}
-      <ProductHeaderOverlay
-        onBack={handleBack}
-        onShare={() => {}}
-        onToggleFavorite={() => {}}
-        isFavorite={false}
-        topInset={insets.top}
-      />
-
       <Animated.ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
