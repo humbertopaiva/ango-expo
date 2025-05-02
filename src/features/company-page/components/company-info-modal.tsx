@@ -476,7 +476,7 @@ export function CompanyInfoModal({
             {profile.opcoes_pagamento &&
               profile.opcoes_pagamento.filter((op) => op.ativo).length > 0 && (
                 <VStack space="md" className="mb-6">
-                  <View className="flex-row flex-wrap gap-3 bg-yellow-400">
+                  <View className="flex-row flex-wrap gap-3">
                     {profile.opcoes_pagamento &&
                       profile.opcoes_pagamento.filter((op) => op.ativo).length >
                         0 && (
@@ -496,35 +496,6 @@ export function CompanyInfoModal({
                   </View>
                 </VStack>
               )}
-            {/* Diferenciais/Adicionais, se houver */}
-            {profile.adicionais && profile.adicionais.length > 0 && (
-              <VStack space="md" className="mb-6">
-                <SectionHeader
-                  icon={ShieldCheck}
-                  title="Diferenciais"
-                  color={primaryColor}
-                />
-
-                <View className="flex-row flex-wrap gap-2">
-                  {profile.adicionais.map((adicional, index) => (
-                    <View
-                      key={index}
-                      className="px-3 py-1.5 rounded-full"
-                      style={{
-                        backgroundColor: `${primaryColor}10`,
-                      }}
-                    >
-                      <Text
-                        style={{ color: primaryColor }}
-                        className="font-medium"
-                      >
-                        {adicional}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </VStack>
-            )}
           </ScrollView>
         </Modal.Body>
       </Modal.Content>
