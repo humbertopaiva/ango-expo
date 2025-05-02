@@ -127,7 +127,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
       {/* Conteúdo principal */}
       <View className="px-4 relative z-10">
         <Box className="mt-4">
-          {/* Cabeçalho: Nome, Categorias, Logo e Status */}
+          {/* Cabeçalho: Nome, Link de Informações, Logo e Status */}
           <HStack
             justifyContent="space-between"
             alignItems="flex-start"
@@ -138,18 +138,21 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
               <Text className="text-2xl tracking-tight font-bold text-gray-800">
                 {vm.profile.nome}
               </Text>
-              <View className="flex-row flex-wrap gap-1 mt-1">
-                {vm.profile.empresa?.subcategorias?.map((sub) => (
-                  <View
-                    key={sub.subcategorias_empresas_id.id}
-                    className="px-2 py-0.5 bg-gray-200 rounded-full"
-                  >
-                    <Text className="text-xs text-gray-700">
-                      {sub.subcategorias_empresas_id.nome}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+
+              {/* Link para Informações da empresa */}
+              <TouchableOpacity
+                onPress={onMoreInfoPress}
+                className="flex-row items-center mt-2 gap-1"
+              >
+                <Info size={16} color={primaryColor} />
+                <Text
+                  className="text-sm font-medium"
+                  style={{ color: primaryColor }}
+                >
+                  Informações
+                </Text>
+                <ChevronRight size={14} color={primaryColor} className="ml-1" />
+              </TouchableOpacity>
             </VStack>
 
             {/* Logo e Status */}
