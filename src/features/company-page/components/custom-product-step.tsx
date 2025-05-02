@@ -1,14 +1,16 @@
 // Path: src/features/company-page/components/custom-product-step.tsx
-import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { ChevronDown, ChevronUp } from "lucide-react-native";
 
-import { CustomProductStepItem } from "./custom-product-step-item";
-import { Card } from "@gluestack-ui/themed";
-import { CustomProductItem } from "../models/custom-product";
+import React from "react";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import { Check, AlertTriangle } from "lucide-react-native";
+import {
+  CustomProductStep as CustomProductStepType,
+  CustomProductItem,
+} from "../models/custom-product";
+import { CustomProductItemCard } from "./custom-product-item-card";
 
 interface CustomProductStepProps {
-  step: any;
+  step: CustomProductStepType;
   expanded: boolean;
   onToggleExpand: () => void;
   isComplete: boolean;
@@ -18,7 +20,7 @@ interface CustomProductStepProps {
   isItemSelected: (itemId: string) => boolean;
   onSelectItem: (item: CustomProductItem) => void;
   primaryColor: string;
-  showPrices: boolean; // Nova propriedade para controlar exibição de preços
+  showPrices: boolean;
 }
 
 export function CustomProductStep({
@@ -34,110 +36,83 @@ export function CustomProductStep({
   primaryColor,
   showPrices,
 }: CustomProductStepProps) {
-  // Determina se a etapa é opcional
-  const isOptionalStep = minimumSelections === 0;
+  // Renderizar o contador de seleções
+  const renderSelectionCounter = () => {
+    // Se não houver limite máximo, não mostrar contador
+    if (maxSelections === 0) return null;
+
+    return (
+      <View className="flex-row items-center">
+        <Text
+          className={`text-sm font-medium ${
+            isComplete
+              ? "text-green-600"
+              : minimumSelections > 0
+              ? "text-amber-600"
+              : "text-gray-500"
+          }`}
+        >
+          {currentSelections}/{maxSelections > 0 ? maxSelections : "∞"}
+        </Text>
+
+        {isComplete ? (
+          <Check size={16} color="#16A34A" className="ml-1" />
+        ) : minimumSelections > 0 && currentSelections < minimumSelections ? (
+          <AlertTriangle size={16} color="#F59E0B" className="ml-1" />
+        ) : null}
+      </View>
+    );
+  };
 
   return (
-    <Card className="mb-4 border border-gray-200 rounded-xl overflow-hidden">
-      {/* Header da etapa */}
-      <TouchableOpacity
-        onPress={onToggleExpand}
-        className="flex-row justify-between items-center p-4"
-        activeOpacity={0.7}
+    <View className="mb-4 bg-white overflow-hidden">
+      {/* Step header - simplified */}
+      <View
+        className="p-3 flex-row justify-between items-center mx-2 rounded-md "
+        style={{ backgroundColor: `${primaryColor}10` }}
       >
-        <View className="flex-row items-center flex-1">
-          {/* Número da etapa */}
-          <View
-            className="w-10 h-10 rounded-full items-center justify-center mr-3"
-            style={{ backgroundColor: primaryColor }}
-          >
-            <Text className="text-white font-bold">{step.passo_numero}</Text>
-          </View>
-
-          {/* Título e subtítulo */}
-          <View className="flex-1">
-            <Text className="text-lg font-semibold text-gray-800">
-              {step.nome || `Etapa ${step.passo_numero}`}
+        <View className="flex-1">
+          <Text className="font-medium text-gray-800">
+            {step.nome || `Passo ${step.passo_numero}`}
+          </Text>
+          {step.descricao && (
+            <Text className="text-xs text-gray-500 mt-0.5">
+              {step.descricao}
             </Text>
-            <Text className="text-sm text-gray-600">
-              {isOptionalStep
-                ? "Escolha opcional"
-                : `Selecione pelo menos ${minimumSelections} ${
-                    minimumSelections === 1 ? "item" : "itens"
-                  }`}
-              {maxSelections > 0 ? ` (máximo ${maxSelections})` : ""}
-              {` • ${currentSelections} ${
-                currentSelections === 1 ? "selecionado" : "selecionados"
-              }`}
-            </Text>
-          </View>
+          )}
         </View>
 
-        {/* Status de completude e botão de expandir */}
-        <View className="flex-row items-center">
-          {isOptionalStep ? (
-            <View className="mr-3 bg-gray-100 px-2 py-1 rounded-full">
-              <Text className="text-gray-600 text-xs font-medium">
-                Opcional
-              </Text>
-            </View>
-          ) : isComplete ? (
-            <View className="mr-3 bg-green-100 px-2 py-1 rounded-full">
-              <Text className="text-green-700 text-xs font-medium">
-                Completo
-              </Text>
-            </View>
-          ) : (
-            <View className="mr-3 bg-yellow-100 px-2 py-1 rounded-full">
-              <Text className="text-yellow-700 text-xs font-medium">
-                Pendente
-              </Text>
-            </View>
-          )}
+        {/* Selection counter */}
+        {renderSelectionCounter()}
+      </View>
 
-          {expanded ? (
-            <ChevronUp size={24} color="#9CA3AF" />
-          ) : (
-            <ChevronDown size={24} color="#9CA3AF" />
-          )}
-        </View>
-      </TouchableOpacity>
+      {/* Step content - always visible */}
+      <View className="p-2">
+        {minimumSelections > 0 && (
+          <Text className="text-xs text-amber-700 mb-2 px-1">
+            {minimumSelections === 1
+              ? "Selecione pelo menos 1 item"
+              : `Selecione pelo menos ${minimumSelections} itens`}
+          </Text>
+        )}
 
-      {/* Conteúdo da etapa (produtos) */}
-      {expanded && (
-        <View className="p-4 bg-gray-50 border-t border-gray-200">
-          {step.descricao ? (
-            <Text className="text-gray-600 mb-4">{step.descricao}</Text>
-          ) : null}
-
-          {/* Aviso sobre preços, quando aplicável */}
-          {showPrices && (
-            <View className="mb-4 bg-blue-50 p-3 rounded-lg">
-              <Text className="text-blue-700 text-sm">
-                Os preços abaixo serão somados ao valor total do produto
-                personalizado.
-              </Text>
-            </View>
-          )}
-
-          {step.produtos.map((item: any) => (
-            <CustomProductStepItem
-              key={item.produtos.key}
+        <FlatList
+          data={step.produtos}
+          keyExtractor={(item) => item.produtos.key}
+          numColumns={1}
+          scrollEnabled={false}
+          renderItem={({ item }) => (
+            <CustomProductItemCard
               item={item}
               isSelected={isItemSelected(item.produtos.key)}
-              primaryColor={primaryColor}
               onSelect={() => onSelectItem(item)}
+              primaryColor={primaryColor}
               showPrice={showPrices}
             />
-          ))}
-
-          {step.produtos.length === 0 && (
-            <Text className="text-gray-500 text-center py-4">
-              Nenhum produto disponível nesta etapa.
-            </Text>
           )}
-        </View>
-      )}
-    </Card>
+          ItemSeparatorComponent={() => <View className="h-1" />}
+        />
+      </View>
+    </View>
   );
 }
