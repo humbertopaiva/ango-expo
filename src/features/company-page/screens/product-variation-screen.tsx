@@ -84,8 +84,46 @@ export function ProductVariationScreen() {
 
     animationUtils.createPulseAnimation(buttonScaleAnim)();
 
-    // Use the view model's addToCart function which handles confirmation
-    vm.addToCart();
+    const companySlug = vm.product.empresa.slug;
+    const companyName = vm.product.empresa.nome;
+
+    // Usar a função específica para produtos com variação
+    cartVm.addProductWithVariation(
+      vm.product,
+      companySlug,
+      companyName,
+      vm.selectedVariation.id,
+      vm.selectedVariation.name,
+      parseFloat(
+        vm.selectedVariation.promotional_price || vm.selectedVariation.price
+      ),
+      vm.selectedVariation.description,
+      vm.quantity,
+      vm.observation
+    );
+
+    // Adicionar os adicionais selecionados se houver
+    vm.selectedAddons.forEach((addon) => {
+      if (addon.quantity > 0) {
+        // Criar um identificador mais específico para o adicional
+        const uniqueParentId = `${vm.product.id}_${vm.selectedVariation.id}`;
+
+        cartVm.addAddonToCart(
+          addon.product,
+          companySlug,
+          companyName,
+          uniqueParentId,
+          addon.quantity,
+          `${vm.product.nome} (${vm.selectedVariation.name})`
+        );
+      }
+    });
+
+    // Show success toast
+    toastUtils.success(
+      toast,
+      `${vm.product.nome} (${vm.selectedVariation.name}) adicionado ao carrinho!`
+    );
   };
 
   // Handler for back

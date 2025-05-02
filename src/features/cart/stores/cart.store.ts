@@ -103,9 +103,18 @@ export const useMultiCartStore = create<MultiCartState>()(
         };
 
         // Verifica se o item já existe no carrinho
-        const existingItemIndex = currentCart.items.findIndex(
-          (i) => i.productId === item.productId
-        );
+        // Para produtos com variação, consideramos o productId + variationId
+        const existingItemIndex = currentCart.items.findIndex((i) => {
+          if (item.hasVariation && i.hasVariation) {
+            // Para produtos com variação, comparamos productId E variationId
+            return (
+              i.productId === item.productId &&
+              i.variationId === item.variationId
+            );
+          }
+          // Para produtos sem variação, mantemos a lógica original
+          return i.productId === item.productId && !i.hasVariation;
+        });
 
         if (existingItemIndex >= 0) {
           // Se já existe, atualiza a quantidade e observação

@@ -283,91 +283,33 @@ ${order.items
                   )}
 
                   <VStack className="flex-1">
-                    <HStack className="justify-between">
-                      <Text className="font-medium text-gray-800">
-                        {item.name}
-                      </Text>
-                      <Text className="text-gray-700">
-                        {formatCurrency(item.totalPrice)}
-                      </Text>
-                    </HStack>
+                    <Text className="font-medium text-gray-800">
+                      {item.name}
+                    </Text>
 
-                    <HStack className="justify-between">
+                    {/* Exibir claramente a variação */}
+                    {item.hasVariation && item.variationName && (
+                      <View
+                        className="px-2 py-0.5 rounded-md mt-1 self-start"
+                        style={{ backgroundColor: `${primaryColor}15` }}
+                      >
+                        <Text
+                          className="text-xs font-medium"
+                          style={{ color: primaryColor }}
+                        >
+                          {item.variationName}
+                        </Text>
+                      </View>
+                    )}
+
+                    <HStack className="justify-between mt-1">
                       <Text className="text-sm text-gray-500">
                         {item.quantity} x {item.priceFormatted}
                       </Text>
+                      <Text className="font-medium text-gray-700">
+                        {formatCurrency(item.totalPrice)}
+                      </Text>
                     </HStack>
-
-                    {/* Exibir variação */}
-                    {item.variationName && (
-                      <View className="mt-1 p-2 bg-gray-50 rounded-md">
-                        <Text className="text-xs font-medium text-gray-700">
-                          Variação: {item.variationName}
-                        </Text>
-                        {item.variationDescription && (
-                          <Text className="text-xs text-gray-600 mt-0.5">
-                            {item.variationDescription}
-                          </Text>
-                        )}
-                      </View>
-                    )}
-
-                    {/* Exibir customização */}
-                    {item.isCustomProduct &&
-                      item.customProductSteps?.length > 0 && (
-                        <View className="mt-1 p-2 bg-gray-50 rounded-md">
-                          <Text className="text-xs font-medium text-gray-700 mb-1">
-                            Personalização:
-                          </Text>
-                          {item.customProductSteps.map((step: any) => (
-                            <View key={step.stepNumber} className="mb-1">
-                              {step.stepName && (
-                                <Text className="text-xs font-medium text-gray-600">
-                                  {step.stepName}:
-                                </Text>
-                              )}
-                              <Text className="text-xs text-gray-600">
-                                {step.selectedItems
-                                  .map((si: any) => si.name)
-                                  .join(", ")}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      )}
-
-                    {/* Exibir adicionais */}
-                    {item.addons?.length > 0 && (
-                      <View className="mt-1 p-2 bg-gray-50 rounded-md">
-                        <Text className="text-xs font-medium text-gray-700 mb-1">
-                          Adicionais:
-                        </Text>
-                        {item.addons.map((addon: any, idx: number) => (
-                          <Text
-                            key={`${addon.id}_${idx}`}
-                            className="text-xs text-gray-600"
-                          >
-                            {addon.quantity}x {addon.name}
-                          </Text>
-                        ))}
-                      </View>
-                    )}
-
-                    {/* Observação do item */}
-                    {item.observation && (
-                      <View className="mt-1 p-2 bg-gray-50 rounded-md">
-                        <HStack className="items-start">
-                          <MessageSquare
-                            size={14}
-                            color="#6B7280"
-                            className="mt-0.5"
-                          />
-                          <Text className="ml-2 text-xs text-gray-600 flex-1">
-                            {item.observation}
-                          </Text>
-                        </HStack>
-                      </View>
-                    )}
                   </VStack>
                 </HStack>
 
