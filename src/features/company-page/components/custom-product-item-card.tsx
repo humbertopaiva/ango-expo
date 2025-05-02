@@ -27,29 +27,30 @@ export function CustomProductItemCard({
     <TouchableOpacity
       onPress={onSelect}
       activeOpacity={0.7}
-      className={`
-        flex-row items-center p-2 rounded-lg
-        ${
-          isSelected
-            ? `border border-${primaryColor}`
-            : "border border-gray-100"
-        }
-        ${isSelected ? `bg-${primaryColor}05` : "bg-white"}
-      `}
+      style={[
+        styles.container,
+        isSelected && {
+          borderColor: primaryColor,
+          backgroundColor: "#F9FAFB",
+        },
+      ]}
     >
-      {/* Selection indicator */}
+      {/* Círculo de seleção */}
       <View
-        className={`
-          w-6 h-6 rounded-full items-center justify-center mr-3
-          ${isSelected ? "bg-" + primaryColor : "bg-gray-100"}
-        `}
+        style={[
+          styles.checkContainer,
+          {
+            backgroundColor: isSelected ? primaryColor : "#ffffff",
+            borderColor: isSelected ? primaryColor : "#E5E7EB",
+          },
+        ]}
       >
-        {isSelected && <Check size={16} color="white" />}
+        {isSelected && <Check size={14} color="white" strokeWidth={3} />}
       </View>
 
-      {/* Product image */}
+      {/* Imagem do produto */}
       {produto.imagem && (
-        <View className="w-12 h-12 rounded-md overflow-hidden mr-3">
+        <View style={styles.imageContainer}>
           <ImagePreview
             uri={produto.imagem}
             width="100%"
@@ -60,22 +61,31 @@ export function CustomProductItemCard({
         </View>
       )}
 
-      {/* Product info */}
-      <View className="flex-1">
-        <Text className="text-gray-800 font-medium">{produto.nome}</Text>
+      {/* Informações do produto */}
+      <View style={styles.infoContainer}>
+        {/* Nome do produto - muda estilo quando selecionado */}
+        <Text
+          style={[
+            styles.productName,
+            isSelected && {
+              color: primaryColor,
+              fontWeight: "600",
+            },
+          ]}
+        >
+          {produto.nome}
+        </Text>
 
+        {/* Descrição */}
         {produto.descricao && (
-          <Text className="text-xs text-gray-500 mt-0.5" numberOfLines={1}>
+          <Text style={styles.description} numberOfLines={1}>
             {produto.descricao}
           </Text>
         )}
 
-        {/* Price information */}
+        {/* Informação de preço */}
         {showPrice && (produto.preco || produto.preco_promocional) && (
-          <Text
-            className="text-sm font-medium mt-1"
-            style={{ color: primaryColor }}
-          >
+          <Text style={[styles.price, { color: primaryColor }]}>
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -88,3 +98,65 @@ export function CustomProductItemCard({
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#EAECF0",
+    backgroundColor: "white",
+    marginVertical: 5,
+    position: "relative",
+    overflow: "hidden",
+  },
+  selectedIndicator: {
+    position: "absolute",
+    left: 0,
+    top: 4,
+    bottom: 4,
+    width: 4,
+    borderRadius: 2,
+  },
+  checkContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+    borderWidth: 2,
+  },
+  imageContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginRight: 14,
+    // Borda sutil para destaque
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  infoContainer: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  productName: {
+    fontSize: 16,
+    color: "#111827",
+    marginBottom: 2,
+    fontWeight: "500",
+  },
+  description: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginBottom: 3,
+  },
+  price: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+});

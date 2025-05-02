@@ -65,11 +65,11 @@ export function CustomProductStep({
   };
 
   return (
-    <View className="mb-4 bg-white border border-gray-100 rounded-lg overflow-hidden">
+    <View className="mb-4 bg-white overflow-hidden">
       {/* Step header - simplified */}
       <View
-        className="p-3 flex-row justify-between items-center border-b border-gray-100"
-        style={{ backgroundColor: `${primaryColor}08` }}
+        className="p-3 flex-row justify-between items-center mx-2 rounded-md "
+        style={{ backgroundColor: `${primaryColor}10` }}
       >
         <View className="flex-1">
           <Text className="font-medium text-gray-800">
