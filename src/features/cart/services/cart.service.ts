@@ -180,4 +180,41 @@ export class CartService {
       ],
     });
   }
+
+  static addAddonToCart(
+    addon: CompanyProduct,
+    companySlug: string,
+    companyName: string,
+    parentItemId: string, // ID do item principal ao qual este adicional está conectado
+    quantity: number = 1,
+    parentItemName: string = "item"
+  ): void {
+    const store = useMultiCartStore.getState();
+
+    // Gera um ID único para o item adicional
+    const itemId = `addon_${addon.id}_${Date.now()}`;
+    const price = parseFloat(addon.preco_promocional || addon.preco);
+
+    store.addItem(companySlug, {
+      id: itemId,
+      productId: addon.id,
+      name: addon.nome,
+      quantity,
+      price,
+      imageUrl: addon.imagem || undefined,
+      description: `Adicional para: ${parentItemName}`,
+      companyId: addon.empresa.slug,
+      companySlug,
+      companyName,
+      addons: [
+        {
+          id: addon.id,
+          name: addon.nome,
+          quantity,
+          price,
+          parentItemId, // Armazenar o ID do item principal
+        },
+      ],
+    });
+  }
 }
