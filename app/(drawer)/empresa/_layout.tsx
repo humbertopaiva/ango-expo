@@ -91,6 +91,13 @@ export default function CompanyLayout() {
             headerShown: true,
           }}
         />
+        <Stack.Screen
+          name="[companySlug]/profile"
+          options={{
+            title: "Meu Perfil",
+            headerShown: true,
+          }}
+        />
       </Stack>
     </CompanyPageProvider>
   );
