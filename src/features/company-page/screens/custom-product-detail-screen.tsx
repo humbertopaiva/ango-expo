@@ -1,5 +1,4 @@
 // Path: src/features/company-page/screens/custom-product-detail-screen.tsx
-
 import React, { useRef } from "react";
 import {
   View,
@@ -11,19 +10,29 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ShoppingBag, Package, AlertTriangle } from "lucide-react-native";
+import {
+  ShoppingBag,
+  Package,
+  AlertTriangle,
+  MessageSquare,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { ProductHeaderOverlay } from "../components/product-header-overlay";
 import { CustomProductStep } from "../components/custom-product-step";
 import { useCustomProductDetailViewModel } from "../view-models/custom-product-detail.view-model";
 import { getContrastColor } from "@/src/utils/color.utils";
-import { HStack } from "@gluestack-ui/themed";
+import { HStack, useToast } from "@gluestack-ui/themed";
 import { ProductObservationInput } from "../components/product-observation-input";
+import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
+import { toastUtils } from "@/src/utils/toast.utils";
+import { TextareaInput } from "@gluestack-ui/themed";
 
 export function CustomProductDetailScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const vm = useCustomProductDetailViewModel(productId);
+  const cartVm = useCartViewModel();
+  const toast = useToast();
   const insets = useSafeAreaInsets();
 
   // Animations
@@ -57,6 +66,9 @@ export function CustomProductDetailScreen() {
 
   // Handle add to cart with animation
   const handleAddToCart = () => {
+    if (!vm.product) return;
+
+    // Animar o botão
     Animated.sequence([
       Animated.timing(buttonScaleAnim, {
         toValue: 0.95,
@@ -70,7 +82,27 @@ export function CustomProductDetailScreen() {
       }),
     ]).start();
 
-    vm.addToCart();
+    // Verificar se pode adicionar ao carrinho
+    if (!vm.canAddToCart()) {
+      toastUtils.warning(toast, "Complete todas as seleções obrigatórias");
+      return;
+    }
+
+    const companySlug = vm.product.empresa?.slug || "";
+    const companyName = vm.product.nome;
+
+    // Usar a função específica para produtos customizados
+    cartVm.addCustomProduct(
+      vm.product,
+      companySlug,
+      companyName,
+      vm.selections,
+      vm.totalPrice,
+      1, // Quantidade padrão para produtos customizados
+      vm.observation.trim()
+    );
+
+    toastUtils.success(toast, `${vm.product.nome} adicionado ao carrinho!`);
   };
 
   if (vm.isLoading) {
@@ -194,14 +226,45 @@ export function CustomProductDetailScreen() {
             />
           ))}
 
-          {/* Adicionar o componente de observação */}
-          <ProductObservationInput
-            observation={vm.observation}
-            showInput={vm.showObservationInput}
-            onToggleInput={vm.toggleObservationInput}
-            onChangeText={vm.setObservation}
-            primaryColor={primaryColor}
-          />
+          {/* Observação */}
+          <View className="mt-4">
+            <TouchableOpacity
+              onPress={vm.toggleObservationInput}
+              className="flex-row items-center justify-between mb-2 bg-gray-50 py-3 px-4 rounded-lg"
+            >
+              <HStack space="md" alignItems="center">
+                <View
+                  className="w-8 h-8 rounded-full items-center justify-center"
+                  style={{ backgroundColor: `${primaryColor}15` }}
+                >
+                  <MessageSquare size={18} color={primaryColor} />
+                </View>
+                <Text
+                  className="font-medium text-base"
+                  style={{ color: primaryColor }}
+                >
+                  {vm.showObservationInput
+                    ? "Ocultar observação"
+                    : "Adicionar observação"}
+                </Text>
+              </HStack>
+            </TouchableOpacity>
+
+            {vm.showObservationInput && (
+              <View className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <TextareaInput
+                  value={vm.observation}
+                  onChangeText={vm.setObservation}
+                  placeholder="Alguma observação? Ex: Gostaria que..."
+                  className="text-gray-700 min-h-24"
+                />
+                <Text className="text-gray-500 text-xs mt-2">
+                  Informe aqui preferências ou instruções especiais para este
+                  produto personalizado.
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </Animated.ScrollView>
 

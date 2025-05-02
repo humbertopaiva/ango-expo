@@ -1,5 +1,4 @@
 // Path: src/features/company-page/screens/product-details-screen.tsx
-
 import React, { useRef } from "react";
 import {
   View,
@@ -21,7 +20,7 @@ import {
   MessageSquare,
   Share2,
 } from "lucide-react-native";
-import { HStack, VStack, Badge } from "@gluestack-ui/themed";
+import { HStack, VStack, Badge, useToast } from "@gluestack-ui/themed";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getContrastColor } from "@/src/utils/color.utils";
@@ -35,10 +34,14 @@ import { ProductObservationInput } from "../components/product-observation-input
 import { ProductHeaderOverlay } from "../components/product-header-overlay";
 import { useProductAddons } from "../hooks/use-product-addons";
 import { ProductAddonsSection } from "../components/product-addons-section";
+import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
+import { toastUtils } from "@/src/utils/toast.utils";
 
 export function ProductDetailsScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const vm = useProductDetailsViewModel(productId);
+  const cartVm = useCartViewModel();
+  const toast = useToast();
   const insets = useSafeAreaInsets();
 
   // Animações
@@ -75,10 +78,49 @@ export function ProductDetailsScreen() {
   // Adicionais do produto
   const { addonLists, hasAddons } = useProductAddons(productId);
 
+  // Construir timestamp para identificar o item no carrinho
+  const cartTimestampRef = useRef(0);
+
   // Handler para adicionar ao carrinho com animação
   const handleAddToCart = () => {
+    if (!vm.product) return;
+
     animationUtils.createPulseAnimation(buttonScaleAnim)();
-    vm.addToCart();
+
+    // Gerar timestamp antes de adicionar ao carrinho
+    cartTimestampRef.current = Date.now();
+
+    const companySlug = vm.product.empresa.slug;
+    const companyName = vm.product.empresa.nome;
+
+    // Adiciona o item principal ao carrinho
+    cartVm.addToCartWithObservation(
+      vm.product,
+      companySlug,
+      companyName,
+      vm.quantity,
+      vm.observation.trim()
+    );
+
+    // Construir ID estimado do item principal
+    const mainItemId = `${vm.product.id}_${cartTimestampRef.current}`;
+
+    // Adicionar os adicionais selecionados
+    vm.selectedAddons.forEach((addon) => {
+      if (addon.quantity > 0) {
+        cartVm.addAddonToCart(
+          addon.product,
+          companySlug,
+          companyName,
+          mainItemId,
+          addon.quantity,
+          vm.product.nome
+        );
+      }
+    });
+
+    // Mostrar toast de sucesso
+    toastUtils.success(toast, `${vm.product.nome} adicionado ao carrinho!`);
   };
 
   // Handler para voltar
@@ -103,6 +145,14 @@ export function ProductDetailsScreen() {
         <Text>Produto não encontrado</Text>
       </View>
     );
+  }
+
+  // Se o produto tem variação, redirecionar para a tela de variação
+  if (vm.hasVariation) {
+    router.replace(
+      `/(drawer)/empresa/${vm.product.empresa.slug}/product-variation/${vm.product.id}`
+    );
+    return null;
   }
 
   const contrastTextColor = getContrastColor(vm.primaryColor);
@@ -131,12 +181,12 @@ export function ProductDetailsScreen() {
             opacity: fadeAnim,
           }}
         >
-          {/* Imagem do produto com tamanho proporcional à tela (agora menor) */}
+          {/* Imagem do produto com tamanho proporcional à tela */}
           <Animated.View
             style={{
               transform: [{ scale: imageScaleAnim }],
             }}
-            className="w-full aspect-[4/3] relative" // Alterado de aspect-square para aspect-[4/3]
+            className="w-full aspect-[4/3] relative"
           >
             <TouchableOpacity
               onPress={vm.handleOpenImageViewer}
@@ -152,7 +202,7 @@ export function ProductDetailsScreen() {
               />
             </TouchableOpacity>
 
-            {/* Badge de desconto REDESENHADO e mais destacado (se houver) */}
+            {/* Badge de desconto (se houver) */}
             {vm.discountPercent && (
               <View
                 className="absolute top-0 right-0 py-3 px-4 rounded-bl-2xl shadow-lg"
@@ -195,7 +245,7 @@ export function ProductDetailsScreen() {
               {vm.product.nome}
             </Text>
 
-            {/* Descrição - agora diretamente após o nome, sem o título "Descrição" */}
+            {/* Descrição */}
             {vm.product.descricao && (
               <Text className="text-gray-600 text-base leading-relaxed mb-6">
                 {vm.product.descricao}
@@ -222,7 +272,7 @@ export function ProductDetailsScreen() {
               primaryColor={vm.primaryColor}
             />
 
-            {/* Observação - agora mostra indicador quando há observação, mesmo minimizada */}
+            {/* Observação */}
             <View className="mb-6">
               <TouchableOpacity
                 onPress={vm.toggleObservationInput}
