@@ -127,29 +127,32 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
       {/* Conteúdo principal */}
       <View className="px-4 relative z-10">
         <Box className="mt-4">
-          {/* Cabeçalho: Nome, Categorias, Logo e Status */}
+          {/* Cabeçalho: Nome, Link de Informações, Logo e Status */}
           <HStack
             justifyContent="space-between"
             alignItems="flex-start"
-            className="mb-4 w-full"
+            className="mb-2 w-full"
           >
             {/* Informações do estabelecimento */}
             <VStack className="flex-1 pr-2">
               <Text className="text-2xl tracking-tight font-bold text-gray-800">
                 {vm.profile.nome}
               </Text>
-              <View className="flex-row flex-wrap gap-1 mt-1">
-                {vm.profile.empresa?.subcategorias?.map((sub) => (
-                  <View
-                    key={sub.subcategorias_empresas_id.id}
-                    className="px-2 py-0.5 bg-gray-200 rounded-full"
-                  >
-                    <Text className="text-xs text-gray-700">
-                      {sub.subcategorias_empresas_id.nome}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+
+              {/* Link para Informações da empresa */}
+              <TouchableOpacity
+                onPress={onMoreInfoPress}
+                className="flex-row items-center mt-2 gap-1"
+              >
+                <Info size={16} color={primaryColor} />
+                <Text
+                  className="text-sm font-medium"
+                  style={{ color: primaryColor }}
+                >
+                  Informações
+                </Text>
+                <ChevronRight size={14} color={primaryColor} className="ml-1" />
+              </TouchableOpacity>
             </VStack>
 
             {/* Logo e Status */}
@@ -181,7 +184,7 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
           {shouldShowDeliveryInfo() && vm.config?.delivery && (
             <TouchableOpacity
               onPress={onMoreInfoPress}
-              className="mt-3 py-2 border-t border-gray-100 w-full"
+              className="mt-3 pt-4 border-t border-gray-50 w-full"
             >
               <View className="w-full px-2 rounded-md">
                 <HStack className="w-full justify-between">
@@ -234,14 +237,6 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                       </Text>
                     </VStack>
                   )}
-
-                  {/* Botão de Informações */}
-                  <TouchableOpacity
-                    onPress={onMoreInfoPress}
-                    className="py-3 flex-col justify-center items-center aspect-square"
-                  >
-                    <Info size={28} color={primaryColor} />
-                  </TouchableOpacity>
                 </HStack>
               </View>
             </TouchableOpacity>
