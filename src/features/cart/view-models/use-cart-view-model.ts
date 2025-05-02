@@ -1,9 +1,16 @@
 // Path: src/features/cart/view-models/use-cart-view-model.ts
 import { useMultiCartStore } from "../stores/cart.store";
-import { CompanyProduct } from "@/src/features/company-page/models/company-product";
+import {
+  CompanyProduct,
+  ProductWithVariation,
+} from "@/src/features/company-page/models/company-product";
 import { Cart, CartItem, emptyCart } from "../models/cart";
 import { useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
+import {
+  CustomProductDetail,
+  CustomProductSelection,
+} from "@/src/features/company-page/models/custom-product";
 
 export interface CartViewModel {
   // Estado
@@ -33,6 +40,36 @@ export interface CartViewModel {
   updateObservation: (itemId: string, observation: string) => void;
   clearCart: () => void;
   isProductInCart: (productId: string) => boolean;
+
+  // Novas ações para diferentes tipos de pedidos
+  addProductWithVariation: (
+    product: CompanyProduct,
+    companySlug: string,
+    companyName: string,
+    variationId: string,
+    variationName: string,
+    variationPrice: number,
+    variationDescription?: string,
+    quantity?: number,
+    observation?: string
+  ) => void;
+  addCustomProduct: (
+    product: CustomProductDetail,
+    companySlug: string,
+    companyName: string,
+    selections: CustomProductSelection[],
+    totalPrice: number,
+    quantity?: number,
+    observation?: string
+  ) => void;
+  addAddonToCart: (
+    addon: CompanyProduct,
+    companySlug: string,
+    companyName: string,
+    parentItemId: string,
+    quantity?: number,
+    parentItemName?: string
+  ) => void;
 }
 
 /**
@@ -127,6 +164,120 @@ export function useCartViewModel(): CartViewModel {
     });
   };
 
+  // Adiciona um produto com variação ao carrinho
+  const addProductWithVariation = (
+    product: CompanyProduct,
+    companySlug: string,
+    companyName: string,
+    variationId: string,
+    variationName: string,
+    variationPrice: number,
+    variationDescription?: string,
+    quantity: number = 1,
+    observation?: string
+  ) => {
+    // Gera um ID único para o item do carrinho
+    const itemId = `${product.id}_${variationId}_${Date.now()}`;
+
+    addItem(companySlug, {
+      id: itemId,
+      productId: product.id,
+      name: product.nome,
+      quantity,
+      price: variationPrice,
+      imageUrl: product.imagem || undefined,
+      description: product.descricao || undefined,
+      observation,
+      companyId: product.empresa.slug,
+      companySlug,
+      companyName,
+      hasVariation: true,
+      variationId,
+      variationName,
+      variationDescription,
+    });
+  };
+
+  // Adiciona um produto customizado ao carrinho
+  const addCustomProduct = (
+    product: CustomProductDetail,
+    companySlug: string,
+    companyName: string,
+    selections: CustomProductSelection[],
+    totalPrice: number,
+    quantity: number = 1,
+    observation?: string
+  ) => {
+    // Gera um ID único para o item do carrinho
+    const itemId = `custom_${product.id}_${Date.now()}`;
+
+    // Mapear as seleções para o formato do carrinho
+    const customProductSteps = selections.map((step) => ({
+      stepNumber: step.stepNumber,
+      stepName: product.passos.find((p) => p.passo_numero === step.stepNumber)
+        ?.nome,
+      selectedItems: step.selectedItems.map((item) => ({
+        id: item.produtos.key,
+        name: item.produto_detalhes.nome,
+        price: item.produto_detalhes.preco
+          ? parseFloat(item.produto_detalhes.preco)
+          : undefined,
+      })),
+    }));
+
+    addItem(companySlug, {
+      id: itemId,
+      productId: product.id,
+      name: product.nome,
+      quantity,
+      price: totalPrice / quantity, // Preço por unidade
+      imageUrl: product.imagem || undefined,
+      description: product.descricao || undefined,
+      observation,
+      companyId: companySlug,
+      companySlug,
+      companyName,
+      isCustomProduct: true,
+      customProductSteps,
+    });
+  };
+
+  // Adiciona um addon ao carrinho, associado a um item principal
+  const addAddonToCart = (
+    addon: CompanyProduct,
+    companySlug: string,
+    companyName: string,
+    parentItemId: string,
+    quantity: number = 1,
+    parentItemName: string = "item"
+  ) => {
+    // Gera um ID único para o item adicional
+    const itemId = `addon_${addon.id}_${Date.now()}`;
+    const price = parseFloat(addon.preco_promocional || addon.preco);
+
+    addItem(companySlug, {
+      id: itemId,
+      productId: addon.id,
+      name: addon.nome,
+      quantity,
+      price,
+      imageUrl: addon.imagem || undefined,
+      description: `Adicional para: ${parentItemName}`,
+      companyId: addon.empresa.slug,
+      companySlug,
+      companyName,
+      addons: [
+        {
+          id: addon.id,
+          name: addon.nome,
+          quantity,
+          price,
+          parentItemId,
+        },
+      ],
+    });
+  };
+
   // Remover item do carrinho ativo
   const removeItem = (itemId: string) => {
     if (currentSlug) {
@@ -177,5 +328,10 @@ export function useCartViewModel(): CartViewModel {
     updateObservation,
     clearCart,
     isProductInCart,
+
+    // Novas funções
+    addProductWithVariation,
+    addCustomProduct,
+    addAddonToCart,
   };
 }

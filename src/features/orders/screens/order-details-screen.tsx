@@ -298,6 +298,61 @@ ${order.items
                       </Text>
                     </HStack>
 
+                    {/* Exibir variação */}
+                    {item.variationName && (
+                      <View className="mt-1 p-2 bg-gray-50 rounded-md">
+                        <Text className="text-xs font-medium text-gray-700">
+                          Variação: {item.variationName}
+                        </Text>
+                        {item.variationDescription && (
+                          <Text className="text-xs text-gray-600 mt-0.5">
+                            {item.variationDescription}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Exibir customização */}
+                    {item.isCustomProduct &&
+                      item.customProductSteps?.length > 0 && (
+                        <View className="mt-1 p-2 bg-gray-50 rounded-md">
+                          <Text className="text-xs font-medium text-gray-700 mb-1">
+                            Personalização:
+                          </Text>
+                          {item.customProductSteps.map((step: any) => (
+                            <View key={step.stepNumber} className="mb-1">
+                              {step.stepName && (
+                                <Text className="text-xs font-medium text-gray-600">
+                                  {step.stepName}:
+                                </Text>
+                              )}
+                              <Text className="text-xs text-gray-600">
+                                {step.selectedItems
+                                  .map((si: any) => si.name)
+                                  .join(", ")}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
+                    {/* Exibir adicionais */}
+                    {item.addons?.length > 0 && (
+                      <View className="mt-1 p-2 bg-gray-50 rounded-md">
+                        <Text className="text-xs font-medium text-gray-700 mb-1">
+                          Adicionais:
+                        </Text>
+                        {item.addons.map((addon: any, idx: number) => (
+                          <Text
+                            key={`${addon.id}_${idx}`}
+                            className="text-xs text-gray-600"
+                          >
+                            {addon.quantity}x {addon.name}
+                          </Text>
+                        ))}
+                      </View>
+                    )}
+
                     {/* Observação do item */}
                     {item.observation && (
                       <View className="mt-1 p-2 bg-gray-50 rounded-md">

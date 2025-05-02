@@ -9,6 +9,8 @@ export enum PaymentMethod {
   CASH = "cash",
 }
 
+export interface OrderItem extends CartItem {}
+
 export interface OrderDeliveryInfo {
   address: string;
   city: string;

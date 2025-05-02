@@ -14,8 +14,34 @@ export interface CartItem {
   companyId: string;
   companySlug: string;
   companyName: string;
-}
 
+  // Campos para variação
+  hasVariation?: boolean;
+  variationId?: string;
+  variationName?: string;
+  variationDescription?: string;
+
+  // Campos para produtos customizados
+  isCustomProduct?: boolean;
+  customProductSteps?: Array<{
+    stepNumber: number;
+    stepName?: string;
+    selectedItems: Array<{
+      id: string;
+      name: string;
+      price?: number;
+    }>;
+  }>;
+
+  // Campos para adicionais
+  addons?: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+    parentItemId?: string; // ID do item principal ao qual este adicional está conectado
+  }>;
+}
 export interface Cart {
   items: CartItem[];
   companyId?: string;
