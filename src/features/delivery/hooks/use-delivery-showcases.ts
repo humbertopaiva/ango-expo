@@ -1,23 +1,33 @@
 // Path: src/features/delivery/hooks/use-delivery-showcases.ts
 import { useQuery } from "@tanstack/react-query";
-import { deliveryShowcaseService } from "../services/delivery-showcase.service";
+import {
+  deliveryShowcaseService,
+  DELIVERY_SHOWCASE_CACHE_KEY,
+} from "../services/delivery-showcase.service";
 import { DeliveryProfile } from "../models/delivery-profile";
 import { DeliveryShowcaseItem } from "../models/delivery-showcase-item";
 import { CompanyWithShowcase } from "../models/company-with-showcase";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 export function useDeliveryShowcases(profiles: DeliveryProfile[]) {
   // Extrair slugs das empresas
-  const companySlugs = profiles
-    .filter((profile) => profile.empresa && profile.empresa.slug)
-    .map((profile) => profile.empresa.slug);
+  const companySlugs = useMemo(
+    () =>
+      profiles
+        .filter((profile) => profile.empresa && profile.empresa.slug)
+        .map((profile) => profile.empresa.slug),
+    [profiles]
+  );
 
   // Buscar vitrines para múltiplas empresas usando slugs
   const { data: showcases = {}, isLoading } = useQuery({
-    queryKey: ["delivery", "showcases", companySlugs],
+    queryKey: [DELIVERY_SHOWCASE_CACHE_KEY, companySlugs],
     queryFn: () => deliveryShowcaseService.getMultipleShowcases(companySlugs),
     enabled: companySlugs.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 15 * 60 * 1000, // 15 minutos
+    retry: 2,
+    refetchOnWindowFocus: true,
   });
 
   // Função para obter itens de vitrine por slug
@@ -55,6 +65,3 @@ export function useDeliveryShowcases(profiles: DeliveryProfile[]) {
     companiesWithShowcaseMapped,
   };
 }
-
-// Adicionar importação faltante
-import { useCallback } from "react";

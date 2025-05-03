@@ -1,7 +1,11 @@
 // Path: src/features/delivery/hooks/use-delivery-page.ts
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { deliveryService } from "../services/delivery.service";
+import {
+  deliveryService,
+  DELIVERY_PROFILES_CACHE_KEY,
+  DELIVERY_SUBCATEGORIES_CACHE_KEY,
+} from "../services/delivery.service";
 import { DeliveryProfile } from "../models/delivery-profile";
 
 // Utilidade para verificar se o estabelecimento está aberto
@@ -59,71 +63,51 @@ export function useDeliveryPage() {
     []
   );
   const queryClient = useQueryClient();
-  const initialized = useRef(false);
 
-  // Referência para os perfis filtrados para evitar recálculos desnecessários
-  const filteredProfilesCache = useRef<DeliveryProfile[] | null>(null);
-  const prevSearchQuery = useRef(searchQuery);
-  const prevSelectedSubcategories = useRef(selectedSubcategories);
-
-  // Buscar subcategorias com staleTime maior e retry melhorado
+  // Buscar subcategorias com configurações melhoradas
   const {
     data: subcategories = [],
     isLoading: isLoadingSubcategories,
     error: subcategoriesError,
     refetch: refetchSubcategories,
   } = useQuery({
-    queryKey: ["delivery", "subcategories"],
+    queryKey: [DELIVERY_SUBCATEGORIES_CACHE_KEY],
     queryFn: deliveryService.getSubcategories,
-    staleTime: 15 * 60 * 1000, // 15 minutos (aumentado para reduzir refetches)
-    gcTime: 30 * 60 * 1000, // 30 minutos para garbage collection
-    retry: 2, // Limite de 2 tentativas em caso de falha
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Backoff exponencial
-    // ⚠️ Importante: Evitar lazy fetch
-    enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 15 * 60 * 1000, // 15 minutos
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+    enabled: true, // Sempre habilitado
   });
 
-  // Buscar perfis com staleTime maior e retry melhorado
+  // Buscar perfis com configurações melhoradas
   const {
     data: profiles = [],
     isLoading: isLoadingProfiles,
     error: profilesError,
     refetch: refetchProfiles,
   } = useQuery({
-    queryKey: ["delivery", "profiles"],
+    queryKey: [DELIVERY_PROFILES_CACHE_KEY],
     queryFn: deliveryService.getProfiles,
-    staleTime: 15 * 60 * 1000, // 15 minutos (aumentado para reduzir refetches)
-    gcTime: 30 * 60 * 1000, // 30 minutos para garbage collection
-    retry: 2, // Limite de 2 tentativas em caso de falha
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Backoff exponencial
-    // ⚠️ Importante: Evitar lazy fetch
-    enabled: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 15 * 60 * 1000, // 15 minutos
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+    enabled: true, // Sempre habilitado
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
-  // Função para verificar se os critérios de filtro mudaram
-  const haveFilterCriteriaChanged = useCallback(() => {
-    const searchQueryChanged = prevSearchQuery.current !== searchQuery;
-    const selectedSubcategoriesChanged =
-      prevSelectedSubcategories.current.length !==
-        selectedSubcategories.length ||
-      prevSelectedSubcategories.current.some(
-        (cat, idx) => cat !== selectedSubcategories[idx]
-      );
-
-    return searchQueryChanged || selectedSubcategoriesChanged;
-  }, [searchQuery, selectedSubcategories]);
-
-  // Calcular perfis filtrados apenas quando necessário
+  // Calcular perfis filtrados
   const getFilteredProfiles = useCallback(() => {
-    // Se os critérios de filtro não mudaram e já temos resultados em cache, use-os
-    if (!haveFilterCriteriaChanged() && filteredProfilesCache.current) {
-      return filteredProfilesCache.current;
+    // Se não houver perfis, retorne uma lista vazia
+    if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
+      console.log("Nenhum perfil disponível para filtrar");
+      return [];
     }
 
-    // Caso contrário, calcule novamente
-    const filtered = (Array.isArray(profiles) ? profiles : [])
+    // Função para filtrar perfis
+    const filtered = profiles
       .filter((profile) => {
         try {
           // Verificações de segurança
@@ -175,11 +159,6 @@ export function useDeliveryPage() {
         }
       });
 
-    // Atualizar cache e referências de estado
-    filteredProfilesCache.current = filtered;
-    prevSearchQuery.current = searchQuery;
-    prevSelectedSubcategories.current = [...selectedSubcategories];
-
     return filtered;
   }, [profiles, searchQuery, selectedSubcategories]);
 
@@ -201,19 +180,15 @@ export function useDeliveryPage() {
     setSelectedSubcategories(slug ? [slug] : []);
   }, []);
 
-  // Função otimizada para refetch apenas quando realmente necessário
+  // Função otimizada para refresh
   const optimizedRefetch = useCallback(async () => {
     console.log("Realizando refetch otimizado");
 
-    // Invalidar o cache local para forçar um recálculo
-    filteredProfilesCache.current = null;
-
-    // Limpar cache do serviço
-    await deliveryService.clearCache();
-
     // Invalidar as queries no React Query para forçar o refetch
-    queryClient.invalidateQueries({ queryKey: ["delivery", "profiles"] });
-    queryClient.invalidateQueries({ queryKey: ["delivery", "subcategories"] });
+    queryClient.invalidateQueries({ queryKey: [DELIVERY_PROFILES_CACHE_KEY] });
+    queryClient.invalidateQueries({
+      queryKey: [DELIVERY_SUBCATEGORIES_CACHE_KEY],
+    });
 
     // Executar o refetch de todas as queries
     await Promise.all([refetchProfiles(), refetchSubcategories()]);
@@ -221,23 +196,15 @@ export function useDeliveryPage() {
     return;
   }, [queryClient, refetchProfiles, refetchSubcategories]);
 
-  // Inicializar uma vez quando o componente monta
-  useEffect(() => {
-    if (!initialized.current) {
-      console.log(
-        "Inicializando hook useDeliveryPage e executando refetch inicial"
-      );
-      // Forçar um refetch inicial para garantir que os dados estejam disponíveis
-      optimizedRefetch();
-      initialized.current = true;
-    }
+  // Calcular empresas abertas
+  const openCompanies = useMemo(() => {
+    return filteredProfiles.filter((profile) => checkIfOpen(profile));
+  }, [filteredProfiles]);
 
-    // Cleanup function
-    return () => {
-      console.log("Desmontando hook useDeliveryPage");
-      // Limpar o cache ao desmontar para evitar problemas de memória
-      filteredProfilesCache.current = null;
-    };
+  // Realizar refetch inicial automaticamente quando o hook montar
+  useEffect(() => {
+    // Força um refetch inicial para garantir dados atuais
+    optimizedRefetch();
   }, [optimizedRefetch]);
 
   return {
@@ -249,6 +216,7 @@ export function useDeliveryPage() {
     subcategories: Array.isArray(subcategories) ? subcategories : [],
     profiles: Array.isArray(profiles) ? profiles : [],
     filteredProfiles,
+    openCompanies,
     isLoading: isLoadingSubcategories || isLoadingProfiles,
     refetchProfiles: optimizedRefetch,
   };

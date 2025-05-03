@@ -227,7 +227,7 @@ export function DeliveryScreenContent() {
             <View className="px-4 flex-row flex-wrap justify-between">
               {filteredProfiles.map((profile, index) => (
                 <DeliveryCard
-                  key={profile.id}
+                  key={profile.id + profile.nome + index}
                   profile={profile}
                   showcaseItems={getShowcaseItemsBySlug(
                     profile.empresa?.slug || ""
