@@ -14,22 +14,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import {
-  ShoppingBag,
-  Trash2,
-  MinusCircle,
-  PlusCircle,
-  ArrowLeft,
-  MessageSquare,
-  Edit3,
-  ChevronRight,
-  Tag,
-  CreditCard,
-  ChevronDown,
-  ChevronUp,
-  Package,
-} from "lucide-react-native";
-import ScreenHeader from "@/components/ui/screen-header";
+import { ShoppingBag, Trash2, CreditCard } from "lucide-react-native";
 import {
   Card,
   Button,
@@ -39,30 +24,23 @@ import {
   useToast,
 } from "@gluestack-ui/themed";
 import { useCartViewModel } from "../view-models/use-cart-view-model";
-import { useOrderViewModel } from "@/src/features/orders/view-models/use-order-view-model";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ImagePreview } from "@/components/custom/image-preview";
 import { CartItem } from "../models/cart";
 import { useMultiCartStore } from "../stores/cart.store";
 import { toastUtils } from "@/src/utils/toast.utils";
-import { CartItemIdentifierService } from "../services/cart-item-identifier.service";
 import { CartItemComponent } from "../components/cart-item";
 import { CartCustomProductComponent } from "../components/cart-custom-product";
-import { CartItemWithAddons } from "../components/cart-item-with-addons";
 
 export function CartScreen() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const multiCartStore = useMultiCartStore();
   const cart = useCartViewModel();
-  const orderViewModel = useOrderViewModel();
   const [isProcessing, setIsProcessing] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [isCouponValid, setIsCouponValid] = useState(false);
   const [showCouponInput, setShowCouponInput] = useState(false);
   const insets = useSafeAreaInsets();
-  const { width } = Dimensions.get("window");
-
   const toast = useToast();
 
   // Efeito para definir o carrinho ativo com base no slug da URL
@@ -185,6 +163,7 @@ export function CartScreen() {
     );
   };
 
+  // Processar itens do carrinho em categorias
   const processCartItems = () => {
     // Separate items into categories
     const mainItems: CartItem[] = [];
@@ -194,18 +173,19 @@ export function CartScreen() {
     // First pass: identify addons by their parentItemId
     cart.items.forEach((item) => {
       if (
-        item.addons &&
-        item.addons.length > 0 &&
-        item.addons[0].parentItemId
+        item.isAddon ||
+        (item.addons && item.addons.length > 0 && item.addons[0].parentItemId)
       ) {
         // It's an addon
-        const parentId = item.addons[0].parentItemId;
+        const parentId =
+          item.parentItemId || (item.addons && item.addons[0].parentItemId);
 
-        if (!addonMap[parentId]) {
-          addonMap[parentId] = [];
+        if (parentId) {
+          if (!addonMap[parentId]) {
+            addonMap[parentId] = [];
+          }
+          addonMap[parentId].push(item);
         }
-
-        addonMap[parentId].push(item);
       } else if (item.isCustomProduct) {
         // It's a custom product
         customItems.push(item);
@@ -214,12 +194,6 @@ export function CartScreen() {
         mainItems.push(item);
       }
     });
-
-    console.log(
-      "Main items:",
-      mainItems.map((item) => item.id)
-    );
-    console.log("Addon map keys:", Object.keys(addonMap));
 
     return { mainItems, customItems, addonMap };
   };
@@ -281,19 +255,21 @@ export function CartScreen() {
 
             {/* Lista de itens do carrinho */}
             <View className="mb-6">
-              <Text className="text-base font-medium text-gray-700 mb-2">
-                Seu pedido ({cart.itemCount}
-                {cart.itemCount === 1 ? "item" : "itens"})
-              </Text>
+              <HStack className="justify-between items-center mb-2">
+                <Text className="text-base font-medium text-gray-700">
+                  Seu pedido ({cart.itemCount}{" "}
+                  {cart.itemCount === 1 ? "item" : "itens"})
+                </Text>
 
-              {/* Botão de limpar carrinho */}
-              <TouchableOpacity
-                onPress={handleClearCart}
-                className="flex-row items-center py-1 px-3 rounded-lg bg-red-50"
-              >
-                <Trash2 size={14} color="#EF4444" className="mr-1" />
-                <Text className="text-red-500 text-sm">Limpar</Text>
-              </TouchableOpacity>
+                {/* Botão de limpar carrinho */}
+                <TouchableOpacity
+                  onPress={handleClearCart}
+                  className="flex-row items-center py-1 px-3 rounded-lg bg-red-50"
+                >
+                  <Trash2 size={14} color="#EF4444" className="mr-1" />
+                  <Text className="text-red-500 text-sm">Limpar</Text>
+                </TouchableOpacity>
+              </HStack>
 
               {/* Render custom products first */}
               {customItems.length > 0 && (
@@ -314,8 +290,8 @@ export function CartScreen() {
               {/* Render normal products */}
               {mainItems.map((item) => {
                 const itemAddons = addonMap[item.id] || [];
-                console.log("Item Addons", itemAddons);
 
+                // Passa os adicionais específicos deste item
                 return (
                   <CartItemComponent
                     key={item.id}
@@ -362,53 +338,12 @@ export function CartScreen() {
                   <Text className="font-semibold text-gray-800">Total</Text>
                   <Text className="font-bold text-lg text-gray-800">
                     {isCouponValid
-                      ? cart.total // Aqui deveria aplicar o desconto
+                      ? cart.total // Aplicar o desconto no cálculo real
                       : cart.total}
                   </Text>
                 </HStack>
               </VStack>
             </Card>
-
-            {/* Opção de cupom */}
-            <View className="mb-6">
-              <TouchableOpacity
-                onPress={() => setShowCouponInput(!showCouponInput)}
-                className="flex-row justify-between items-center mb-2"
-              >
-                <HStack space="sm" alignItems="center">
-                  <Tag size={18} color={primaryColor} />
-                  <Text style={{ color: primaryColor }} className="font-medium">
-                    {showCouponInput
-                      ? "Ocultar cupom"
-                      : "Adicionar cupom de desconto"}
-                  </Text>
-                </HStack>
-                {showCouponInput ? (
-                  <ChevronUp size={18} color={primaryColor} />
-                ) : (
-                  <ChevronDown size={18} color={primaryColor} />
-                )}
-              </TouchableOpacity>
-
-              {showCouponInput && (
-                <HStack space="sm" className="mb-4">
-                  <TextInput
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg"
-                    placeholder="Digite o código do cupom"
-                    value={couponCode}
-                    onChangeText={setCouponCode}
-                    autoCapitalize="characters"
-                  />
-                  <TouchableOpacity
-                    onPress={handleApplyCoupon}
-                    className="px-4 py-2 rounded-lg"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <Text className="text-white font-medium">Aplicar</Text>
-                  </TouchableOpacity>
-                </HStack>
-              )}
-            </View>
           </ScrollView>
         )}
 
