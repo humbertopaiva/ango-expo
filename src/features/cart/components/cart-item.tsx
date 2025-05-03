@@ -54,13 +54,19 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
       total += addon.price * addon.quantity;
     });
 
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(total);
+    return total;
   };
 
+  const totalPrice = calculateTotal();
+  const totalPriceFormatted = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(totalPrice);
+
   const hasAddons = addons.length > 0;
+
+  // Determine if we should show controls based on addons
+  const shouldShowQuantityControls = !hasAddons;
 
   return (
     <Card className="mb-4 overflow-hidden shadow-sm border border-gray-100">
@@ -108,29 +114,38 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
 
           <HStack className="justify-between items-center mt-1">
             <Text className="font-bold" style={{ color: primaryColor }}>
-              {hasAddons ? calculateTotal() : item.priceFormatted}
+              {hasAddons ? totalPriceFormatted : item.priceFormatted}
             </Text>
 
-            {/* Quantity controls */}
-            <HStack className="items-center">
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                disabled={item.quantity <= 1}
-                style={{ opacity: item.quantity <= 1 ? 0.5 : 1 }}
-              >
-                <MinusCircle size={20} color={primaryColor} />
-              </TouchableOpacity>
+            {shouldShowQuantityControls ? (
+              /* Quantity controls - Only for items without addons */
+              <HStack className="items-center">
+                <TouchableOpacity
+                  onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                  disabled={item.quantity <= 1}
+                  style={{ opacity: item.quantity <= 1 ? 0.5 : 1 }}
+                >
+                  <MinusCircle size={20} color={primaryColor} />
+                </TouchableOpacity>
 
-              <Text className="mx-3 font-medium text-gray-800">
-                {item.quantity}
-              </Text>
+                <Text className="mx-3 font-medium text-gray-800">
+                  {item.quantity}
+                </Text>
 
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.id, item.quantity + 1)}
-              >
-                <PlusCircle size={20} color={primaryColor} />
-              </TouchableOpacity>
-            </HStack>
+                <TouchableOpacity
+                  onPress={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                >
+                  <PlusCircle size={20} color={primaryColor} />
+                </TouchableOpacity>
+              </HStack>
+            ) : (
+              /* Fixed quantity display - For items with addons */
+              <View className="px-3 py-1 bg-gray-100 rounded-md">
+                <Text className="font-medium text-gray-800">
+                  Qtd: {item.quantity}
+                </Text>
+              </View>
+            )}
           </HStack>
         </VStack>
       </HStack>
@@ -242,7 +257,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
 
               <TouchableOpacity
                 onPress={() => {
-                  // Remove all addons first
+                  // Remove all addons first (if any)
                   addons.forEach((addon) => onRemove(addon.id));
                   // Then remove the main item
                   onRemove(item.id);
