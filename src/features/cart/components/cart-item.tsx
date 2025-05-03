@@ -84,37 +84,30 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
 
         {/* Product information */}
         <VStack className="flex-1 justify-between">
-          <Text className="font-semibold text-gray-800 text-base">
-            {item.name}
-          </Text>
-
-          {/* Variation badge - includes the variation name */}
-          {item.hasVariation && item.variationName && (
-            <CartVariationBadge
-              variationName={item.variationName}
-              primaryColor={primaryColor}
-            />
-          )}
-
-          {/* Optional description */}
-          {!item.hasVariation && item.description && (
-            <Text className="text-gray-500 text-xs" numberOfLines={1}>
-              {item.description}
+          <HStack alignItems="center" space="xs">
+            <Text className="font-semibold text-gray-800 text-base">
+              {item.name}
             </Text>
-          )}
 
-          {/* Addons indicator */}
+            {/* Variation badge - includes the variation name */}
+            {item.hasVariation && item.variationName && (
+              <CartVariationBadge
+                variationName={item.variationName}
+                primaryColor={primaryColor}
+              />
+            )}
+          </HStack>
+
+          {/* Preco do produto escolhido sem adicionais */}
           {hasAddons && (
-            <Text className="text-xs text-gray-500">
-              {addons.length} {addons.length === 1 ? "adicional" : "adicionais"}{" "}
-              selecionado
-              {addons.length === 1 ? "" : "s"}
-            </Text>
+            <Text className="text-sm text-gray-500">{item.priceFormatted}</Text>
           )}
+
+          {/* Price and quantity controls */}
 
           <HStack className="justify-between items-center mt-1">
             <Text className="font-bold" style={{ color: primaryColor }}>
-              {hasAddons ? totalPriceFormatted : item.priceFormatted}
+              Total: {hasAddons ? totalPriceFormatted : item.priceFormatted}
             </Text>
 
             {shouldShowQuantityControls ? (
