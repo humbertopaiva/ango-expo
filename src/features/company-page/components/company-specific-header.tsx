@@ -77,30 +77,6 @@ const CategoryButton = memo(
         >
           {category}
         </Text>
-
-        {/* Only show badge if count is available */}
-        {count > 0 && (
-          <View
-            style={[
-              styles.countBadge,
-              {
-                backgroundColor: isActive
-                  ? `${primaryColor}20`
-                  : "rgba(255,255,255,0.3)",
-              },
-            ]}
-          >
-            <Text
-              style={{
-                color: isActive ? primaryColor : "#FFFFFF",
-                fontSize: 10,
-                fontWeight: "600",
-              }}
-            >
-              {count.toString()}
-            </Text>
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   )

@@ -62,13 +62,6 @@ export function FeaturedProductsStrip() {
     <View className="">
       {/* Container com fundo colorido baseado na cor primária da empresa */}
       <View className="pb-8 overflow-hidden">
-        {/* Cabeçalho com textos */}
-        <View className="px-4 mb-4">
-          <Text className={`text-xl font-semibold text-gray-800`}>
-            Produtos em Destaque
-          </Text>
-        </View>
-
         {/* Lista horizontal de produtos */}
         <View className="relative">
           <ScrollView
