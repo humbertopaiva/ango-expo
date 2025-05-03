@@ -63,37 +63,31 @@ const recalculateCart = (
   Cart,
   "subtotal" | "subtotalFormatted" | "total" | "totalFormatted"
 > => {
-  // Mapeamento dos itens principais e seus adicionais
+  // Mapping for main items and their addons
   const mainItems: CartItem[] = [];
   const addonsMap: Record<string, CartItem[]> = {};
 
-  // Identificar itens principais e adicionais
+  // First pass: identify addons and their parent items
   items.forEach((item) => {
-    // Verificar se é um adicional
-    const isAddon =
-      item.addons &&
-      item.addons.length > 0 &&
-      item.addons[0].parentItemId !== undefined;
-
-    if (isAddon) {
-      // É um adicional
-      const parentId = item.addons?.[0]?.parentItemId!;
+    // Check if it's an addon
+    if (item.addons && item.addons.length > 0 && item.addons[0].parentItemId) {
+      const parentId = item.addons[0].parentItemId;
       if (!addonsMap[parentId]) {
         addonsMap[parentId] = [];
       }
       addonsMap[parentId].push(item);
     } else {
-      // Item principal (simples ou com variação)
+      // It's a main item (simple or with variation)
       mainItems.push(item);
     }
   });
 
-  // Calcular o subtotal considerando os itens principais e seus adicionais
+  // Calculate subtotal considering main items and their addons
   const subtotal = mainItems.reduce((sum, item) => {
-    // Preço do item principal
+    // Price of the main item
     let itemTotal = item.price * item.quantity;
 
-    // Adicionar preço dos adicionais deste item
+    // Add price of addons for this item
     const addons = addonsMap[item.id] || [];
     const addonsTotal = addons.reduce(
       (addonSum, addon) => addonSum + addon.price * addon.quantity,
@@ -106,7 +100,7 @@ const recalculateCart = (
   return {
     subtotal,
     subtotalFormatted: formatPrice(subtotal),
-    total: subtotal, // Por enquanto sem taxa de entrega
+    total: subtotal, // For now without delivery fee
     totalFormatted: formatPrice(subtotal),
   };
 };

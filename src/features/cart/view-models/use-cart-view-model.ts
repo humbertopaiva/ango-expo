@@ -177,11 +177,11 @@ export function useCartViewModel(): CartViewModel {
     quantity: number = 1,
     observation?: string
   ): string => {
-    // Declara explicitamente que retorna string
-    // Gera um ID único baseado no timestamp atual para garantir que cada adição seja um novo item
+    // Generate a unique ID with timestamp to ensure uniqueness
     const uniqueTimestamp = Date.now();
     const itemId = `${product.id}_var_${variationId}_${uniqueTimestamp}`;
 
+    // Add the item to the cart
     addItem(companySlug, {
       id: itemId,
       productId: product.id,
@@ -189,7 +189,7 @@ export function useCartViewModel(): CartViewModel {
       quantity,
       price: variationPrice,
       imageUrl: product.imagem || undefined,
-      description: product.descricao || undefined,
+      description: variationDescription || product.descricao || undefined,
       observation,
       companyId: product.empresa.slug,
       companySlug,
@@ -200,7 +200,7 @@ export function useCartViewModel(): CartViewModel {
       variationDescription,
     });
 
-    // Retorna o ID explicitamente para uso com adicionais
+    // Important: Return the item ID for use with addons
     return itemId;
   };
 

@@ -40,11 +40,11 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
   );
   const [showAddons, setShowAddons] = useState(false);
 
-  // Calcular o total incluindo adicionais
+  // Calculate total including addons
   const calculateTotal = () => {
     let total = item.price * item.quantity;
 
-    // Adicionar o preço dos adicionais
+    // Add price of addons
     addons.forEach((addon) => {
       total += addon.price * addon.quantity;
     });
@@ -64,17 +64,17 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
   };
 
   const handleRemoveWithAddons = () => {
-    // Primeiro remove os adicionais
+    // First remove addons
     addons.forEach((addon) => onRemove(addon.id));
-    // Depois remove o item principal
+    // Then remove the main item
     onRemove(item.id);
   };
 
   return (
     <View className="mb-4 overflow-hidden shadow-sm rounded-lg border border-gray-100">
-      {/* Cabeçalho do item */}
+      {/* Item header */}
       <HStack space="md" className="p-3 border-b border-gray-100 bg-white">
-        {/* Imagem do produto */}
+        {/* Product image */}
         <View className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
           <ImagePreview
             uri={item.imageUrl}
@@ -85,13 +85,13 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
           />
         </View>
 
-        {/* Informações do produto */}
+        {/* Product information */}
         <VStack className="flex-1 justify-between">
           <Text className="font-semibold text-gray-800 text-base">
             {item.name}
           </Text>
 
-          {/* Exibir o badge de variação */}
+          {/* Display variation badge if product has variation */}
           {item.hasVariation && item.variationName && (
             <CartVariationBadge
               variationName={item.variationName}
@@ -110,7 +110,7 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
               {item.priceFormatted}
             </Text>
 
-            {/* Controles de quantidade */}
+            {/* Quantity controls */}
             <HStack className="items-center">
               <TouchableOpacity
                 onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
@@ -134,7 +134,7 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
         </VStack>
       </HStack>
 
-      {/* Seção de adicionais */}
+      {/* Addons section */}
       {addons.length > 0 && (
         <>
           <TouchableOpacity
@@ -177,7 +177,7 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
         </>
       )}
 
-      {/* Resumo de preço e total */}
+      {/* Price summary and total */}
       <View className="px-3 py-2 bg-gray-50 border-b border-gray-100">
         <HStack className="justify-between items-center">
           <Text className="text-sm font-medium text-gray-700">Total</Text>
@@ -187,7 +187,7 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
         </HStack>
       </View>
 
-      {/* Área de observação */}
+      {/* Observation area */}
       <View className="p-3 bg-gray-50">
         {isEditing ? (
           <VStack space="sm">
