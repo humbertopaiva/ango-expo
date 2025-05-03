@@ -1,5 +1,6 @@
 // Path: src/features/company-page/screens/custom-product-detail-screen.tsx
-import React, { useRef } from "react";
+
+import React, { useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -29,7 +30,11 @@ import { toastUtils } from "@/src/utils/toast.utils";
 import { TextareaInput } from "@gluestack-ui/themed";
 
 export function CustomProductDetailScreen() {
-  const { productId } = useLocalSearchParams<{ productId: string }>();
+  const { productId, companySlug } = useLocalSearchParams<{
+    productId: string;
+    companySlug: string;
+  }>();
+
   const vm = useCustomProductDetailViewModel(productId);
   const cartVm = useCartViewModel();
   const toast = useToast();
@@ -39,6 +44,14 @@ export function CustomProductDetailScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Verificar e imprimir os parâmetros para depuração
+  useEffect(() => {
+    console.log("CustomProductDetailScreen params:", {
+      productId,
+      companySlug,
+    });
+  }, [productId, companySlug]);
 
   // Start animations when product is loaded
   React.useEffect(() => {
@@ -88,21 +101,8 @@ export function CustomProductDetailScreen() {
       return;
     }
 
-    const companySlug = vm.product.empresa?.slug || "";
-    const companyName = vm.product.nome;
-
-    // Usar a função específica para produtos customizados
-    cartVm.addCustomProduct(
-      vm.product,
-      companySlug,
-      companyName,
-      vm.selections,
-      vm.totalPrice,
-      1, // Quantidade padrão para produtos customizados
-      vm.observation.trim()
-    );
-
-    toastUtils.success(toast, `${vm.product.nome} adicionado ao carrinho!`);
+    // Usar a função de adicionar ao carrinho do viewmodel
+    vm.addToCart();
   };
 
   if (vm.isLoading) {

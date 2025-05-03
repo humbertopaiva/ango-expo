@@ -1,4 +1,5 @@
 // Path: app/(drawer)/(tabs)/_layout.tsx
+
 import { Tabs } from "expo-router";
 import { AppBar } from "@/components/navigation/app-bar";
 import { View } from "react-native";
