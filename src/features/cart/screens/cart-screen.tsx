@@ -282,8 +282,8 @@ export function CartScreen() {
             {/* Lista de itens do carrinho */}
             <View className="mb-6">
               <Text className="text-base font-medium text-gray-700 mb-2">
-                Seu pedido ({cart.items.length}{" "}
-                {cart.items.length === 1 ? "item" : "itens"})
+                Seu pedido ({cart.itemCount}
+                {cart.itemCount === 1 ? "item" : "itens"})
               </Text>
 
               {/* Botão de limpar carrinho */}
