@@ -23,7 +23,7 @@ interface CartItemProps {
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onUpdateObservation: (itemId: string, observation: string) => void;
   primaryColor: string;
-  addons?: CartItem[]; // Nova prop para adicionais
+  addons?: CartItem[]; // Adicionais associados a este item
 }
 
 export const CartItemComponent: React.FC<CartItemProps> = ({
@@ -38,18 +38,12 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
   const [tempObservation, setTempObservation] = useState(
     item.observation || ""
   );
-  const [showDetails, setShowDetails] = useState(false);
+  const [showAddons, setShowAddons] = useState(false);
 
   const handleSaveObservation = () => {
     onUpdateObservation(item.id, tempObservation);
     setIsEditing(false);
   };
-
-  const hasVariation = !!item.variationName;
-  const hasCustomization =
-    !!item.isCustomProduct && !!item.customProductSteps?.length;
-  const hasAddons = addons.length > 0;
-  const hasDetails = hasVariation || hasCustomization || hasAddons;
 
   // Calcular o total incluindo adicionais
   const calculateTotal = () => {
@@ -65,6 +59,8 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
       currency: "BRL",
     }).format(total);
   };
+
+  const hasAddons = addons.length > 0;
 
   return (
     <Card className="mb-4 overflow-hidden shadow-sm border border-gray-100">
@@ -84,15 +80,9 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
         <VStack className="flex-1 justify-between">
           <Text className="font-semibold text-gray-800 text-base">
             {item.name}
-            {item.hasVariation && item.variationName && (
-              <Text className="text-gray-600 font-medium">
-                {" "}
-                ({item.variationName})
-              </Text>
-            )}
           </Text>
 
-          {/* Exibir a variação como um badge */}
+          {/* Badge de variação - já inclui o nome da variação */}
           {item.hasVariation && item.variationName && (
             <CartVariationBadge
               variationName={item.variationName}
@@ -100,7 +90,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
             />
           )}
 
-          {/* Informações de variação menos visíveis - agora já exibindo junto com o nome */}
+          {/* Descrição opcional */}
           {!item.hasVariation && item.description && (
             <Text className="text-gray-500 text-xs" numberOfLines={1}>
               {item.description}
@@ -108,10 +98,11 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
           )}
 
           {/* Indicador de adicionais */}
-          {addons.length > 0 && (
+          {hasAddons && (
             <Text className="text-xs text-gray-500">
               {addons.length} {addons.length === 1 ? "adicional" : "adicionais"}{" "}
-              selecionado{addons.length === 1 ? "" : "s"}
+              selecionado
+              {addons.length === 1 ? "" : "s"}
             </Text>
           )}
 
@@ -144,91 +135,47 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
         </VStack>
       </HStack>
 
-      {/* Botão para exibir/ocultar detalhes adicionais */}
-      {hasDetails && (
-        <TouchableOpacity
-          onPress={() => setShowDetails(!showDetails)}
-          className="px-4 py-2 border-b border-gray-100 flex-row justify-between items-center bg-gray-50"
-        >
-          <Text className="text-sm font-medium" style={{ color: primaryColor }}>
-            {showDetails ? "Ocultar detalhes" : "Ver detalhes"}
-          </Text>
-          {showDetails ? (
-            <ChevronUp size={16} color={primaryColor} />
-          ) : (
-            <ChevronDown size={16} color={primaryColor} />
-          )}
-        </TouchableOpacity>
-      )}
-
-      {/* Detalhes expandidos */}
-      {showDetails && (
-        <View className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-          {/* Exibir variação */}
-          {hasVariation && (
-            <View className="mb-2">
-              <Text className="text-xs font-medium text-gray-700 mb-1">
-                Variação selecionada:
+      {/* Seção de adicionais */}
+      {hasAddons && (
+        <>
+          <TouchableOpacity
+            onPress={() => setShowAddons(!showAddons)}
+            className="px-3 py-2 bg-gray-50 border-b border-gray-100"
+          >
+            <HStack className="justify-between items-center">
+              <Text className="text-sm font-medium text-gray-700">
+                {addons.length}{" "}
+                {addons.length === 1 ? "adicional" : "adicionais"} selecionado
+                {addons.length === 1 ? "" : "s"}
               </Text>
-              <View className="bg-white p-2 rounded-md">
-                <Text className="text-sm">{item.variationName}</Text>
-                {item.variationDescription && (
-                  <Text className="text-xs text-gray-500 mt-1">
-                    {item.variationDescription}
-                  </Text>
-                )}
-              </View>
-            </View>
-          )}
+              {showAddons ? (
+                <ChevronUp size={16} color={primaryColor} />
+              ) : (
+                <ChevronDown size={16} color={primaryColor} />
+              )}
+            </HStack>
+          </TouchableOpacity>
 
-          {/* Exibir adicionais */}
-          {hasAddons && (
-            <View className="mb-2">
-              <Text className="text-xs font-medium text-gray-700 mb-1">
-                Itens adicionais:
-              </Text>
+          {showAddons && (
+            <View className="px-3 py-2 bg-gray-50 border-b border-gray-100">
               {addons.map((addon, index) => (
-                <View
-                  key={`${addon.id}_${index}`}
-                  className="bg-white p-2 rounded-md mb-1 flex-row justify-between"
-                >
-                  <Text className="text-sm">
-                    {addon.quantity}x {addon.name}
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    {addon.priceFormatted}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Exibir customização */}
-          {hasCustomization && (
-            <View className="mb-2">
-              <Text className="text-xs font-medium text-gray-700 mb-1">
-                Personalização:
-              </Text>
-              {item.customProductSteps?.map((step) => (
-                <View
-                  key={step.stepNumber}
-                  className="bg-white p-2 rounded-md mb-1"
-                >
-                  {step.stepName && (
-                    <Text className="text-xs font-medium text-gray-600 mb-1">
-                      {step.stepName}:
+                <View key={addon.id} className="mb-2">
+                  <HStack className="justify-between items-center">
+                    <Text className="text-sm text-gray-700">
+                      {addon.quantity}x {addon.name}
                     </Text>
+                    <Text className="text-sm text-gray-700">
+                      {addon.priceFormatted}
+                    </Text>
+                  </HStack>
+                  {index < addons.length - 1 && (
+                    <Divider className="my-2 bg-gray-200" />
                   )}
-                  {step.selectedItems.map((selected, idx) => (
-                    <Text key={`${selected.id}_${idx}`} className="text-sm">
-                      • {selected.name}
-                    </Text>
-                  ))}
                 </View>
               ))}
             </View>
           )}
-        </View>
+        </>
       )}
 
       {/* Área de observação */}
@@ -294,7 +241,12 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => onRemove(item.id)}
+                onPress={() => {
+                  // Remove todos os adicionais primeiro
+                  addons.forEach((addon) => onRemove(addon.id));
+                  // Depois remove o item principal
+                  onRemove(item.id);
+                }}
                 className="p-1 rounded-full"
               >
                 <Trash2 size={16} color="#EF4444" />

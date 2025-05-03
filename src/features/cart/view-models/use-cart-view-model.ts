@@ -200,7 +200,7 @@ export function useCartViewModel(): CartViewModel {
       variationDescription,
     });
 
-    // Retorna o ID do item criado explicitamente
+    // Retorna o ID explicitamente para uso com adicionais
     return itemId;
   };
 

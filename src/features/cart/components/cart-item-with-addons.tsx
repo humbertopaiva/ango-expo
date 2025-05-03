@@ -89,12 +89,6 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
         <VStack className="flex-1 justify-between">
           <Text className="font-semibold text-gray-800 text-base">
             {item.name}
-            {item.hasVariation && item.variationName && (
-              <Text className="text-gray-600 font-medium">
-                {" "}
-                ({item.variationName})
-              </Text>
-            )}
           </Text>
 
           {/* Exibir o badge de variação */}

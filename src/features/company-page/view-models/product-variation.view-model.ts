@@ -374,7 +374,7 @@ export function useProductVariationViewModel(
           addon.product,
           companySlug,
           companyName,
-          itemId,
+          itemId, // Use o ID retornado pela função addProductWithVariation
           addon.quantity,
           `${product.nome} (${selectedVariation.name})`
         );
