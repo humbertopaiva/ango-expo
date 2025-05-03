@@ -17,15 +17,16 @@ import { useLocalSearchParams, router } from "expo-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Linking } from "react-native";
-import { formatCurrency } from "@/src/utils/format.utils";
 import { CartProcessorService } from "../services/cart-processor.service";
 import { userPersistenceService } from "@/src/services/user-persistence.service";
 import { useOrderStore } from "@/src/features/orders/stores/order.store";
-import { api } from "@/src/services/api";
 import { z } from "zod";
+import { api } from "@/src/services/api";
+import { storage } from "@/src/lib/storage";
 
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingUserData, setIsLoadingUserData] = useState(false);
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const cartViewModel = useCartViewModel();
   const toast = useToast();
@@ -39,7 +40,7 @@ export function useCheckoutViewModel() {
     updateDeliveryType,
     updatePersonalInfo,
     updatePaymentInfo,
-    nextStep,
+    nextStep: storeNextStep,
     prevStep,
     goToStep,
     resetCheckout,
@@ -49,19 +50,16 @@ export function useCheckoutViewModel() {
   const getDynamicPersonalInfoSchema = useCallback(() => {
     if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
       // Para retirada, validar apenas nome e whatsapp
-      return personalInfoSchema.omit({
-        address: true,
-        number: true,
-        neighborhood: true,
-        reference: true,
+      return personalInfoSchema.pick({
+        fullName: true,
+        whatsapp: true,
       });
     } else {
-      // Para entrega, validar todos os campos obrigatórios com mensagens mais claras
+      // Para entrega, validar todos os campos obrigatórios
       return personalInfoSchema.extend({
         address: z.string().min(5, "Endereço é obrigatório"),
         number: z.string().min(1, "Número é obrigatório"),
         neighborhood: z.string().min(3, "Bairro é obrigatório"),
-        reference: z.string().optional(),
       });
     }
   }, [checkout.deliveryType]);
@@ -73,20 +71,7 @@ export function useCheckoutViewModel() {
     mode: "onChange", // Validar ao digitar
   });
 
-  // Revalidar ao mudar o tipo de entrega
-  useEffect(() => {
-    personalInfoForm.clearErrors();
-    personalInfoForm.reset(checkout.personalInfo);
-
-    // Trigger de validação para campos de endereço quando for entrega
-    if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
-      setTimeout(() => {
-        personalInfoForm.trigger(["address", "number", "neighborhood"]);
-      }, 100);
-    }
-  }, [checkout.deliveryType]);
-
-  // Form para método de pagamento com validação específica para troco
+  // Form para método de pagamento com validação
   const paymentInfoForm = useForm<PaymentInfo>({
     resolver: zodResolver(
       paymentMethodSchema.refine(
@@ -108,11 +93,31 @@ export function useCheckoutViewModel() {
     mode: "onChange",
   });
 
+  // Revalidar ao mudar o tipo de entrega
+  useEffect(() => {
+    personalInfoForm.clearErrors();
+
+    // Atualizar o resolver com o schema atualizado
+    personalInfoForm.reset(checkout.personalInfo);
+
+    // Resetar os campos de endereço ao mudar para retirada
+    if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
+      setTimeout(() => {
+        personalInfoForm.trigger(["fullName", "whatsapp"]);
+      }, 100);
+    } else {
+      // Trigger de validação para campos de endereço quando for entrega
+      setTimeout(() => {
+        personalInfoForm.trigger();
+      }, 100);
+    }
+  }, [checkout.deliveryType, getDynamicPersonalInfoSchema]);
+
   // Serviço para caching do checkout
   const cacheCheckoutState = useCallback(async () => {
     try {
-      // Usando localStorage para persistir o estado do checkout
-      localStorage.setItem(
+      // Usar o storage em vez de localStorage
+      await storage.setItem(
         "cached_checkout",
         JSON.stringify({
           ...checkout,
@@ -123,10 +128,10 @@ export function useCheckoutViewModel() {
       console.error("Erro ao salvar cache do checkout:", error);
     }
   }, [checkout]);
-
   const getCachedCheckout = useCallback(async () => {
     try {
-      const cachedData = localStorage.getItem("cached_checkout");
+      // Usar o storage em vez de localStorage
+      const cachedData = await storage.getItem("cached_checkout");
       if (!cachedData) return null;
 
       const parsed = JSON.parse(cachedData);
@@ -134,7 +139,7 @@ export function useCheckoutViewModel() {
       // Verificar se o cache é recente (menos de 30 minutos)
       const now = Date.now();
       if (now - parsed.timestamp > 30 * 60 * 1000) {
-        localStorage.removeItem("cached_checkout");
+        await storage.removeItem("cached_checkout");
         return null;
       }
 
@@ -147,6 +152,8 @@ export function useCheckoutViewModel() {
 
   // Inicializar checkout com dados do carrinho e recuperar dados do usuário
   const initialize = useCallback(async () => {
+    setIsLoadingUserData(true);
+
     // Verificar se o carrinho está vazio
     if (cartViewModel.isEmpty || !companySlug) {
       router.replace(`/(drawer)/empresa/${companySlug}`);
@@ -182,6 +189,7 @@ export function useCheckoutViewModel() {
         paymentInfoForm.reset(cachedCheckout.paymentInfo);
       }, 100);
 
+      setIsLoadingUserData(false);
       return;
     }
 
@@ -205,17 +213,23 @@ export function useCheckoutViewModel() {
     // Tenta recuperar os dados do usuário
     try {
       const savedUserData = await userPersistenceService.getUserPersonalInfo();
-      if (savedUserData) {
+      if (savedUserData && savedUserData.fullName && savedUserData.whatsapp) {
         // Atualiza os dados pessoais no checkout
         updatePersonalInfo(savedUserData);
 
         // Reset do formulário com os dados carregados
         setTimeout(() => {
           personalInfoForm.reset(savedUserData);
+          personalInfoForm.trigger();
         }, 100);
+
+        // Mostrar feedback visual de que os dados foram carregados
+        toastUtils.info(toast, "Seus dados foram carregados automaticamente");
       }
     } catch (error) {
       console.error("Erro ao recuperar dados do usuário:", error);
+    } finally {
+      setIsLoadingUserData(false);
     }
   }, [
     cartViewModel,
@@ -254,7 +268,7 @@ export function useCheckoutViewModel() {
             toast,
             "Preencha todos os campos de endereço corretamente"
           );
-          return;
+          return false;
         }
       }
 
@@ -268,10 +282,12 @@ export function useCheckoutViewModel() {
       await userPersistenceService.saveUserPersonalInfo(data);
 
       // Avança para o próximo passo
-      nextStep();
+      storeNextStep();
+      return true;
     } catch (error) {
       console.error("Erro ao salvar dados pessoais:", error);
       toastUtils.error(toast, "Erro ao salvar seus dados");
+      return false;
     }
   };
 
@@ -279,21 +295,32 @@ export function useCheckoutViewModel() {
   const savePaymentInfo = async (data: PaymentInfo) => {
     try {
       // Validação especial para pagamento em dinheiro (cash)
-      if (data.method === CheckoutPaymentMethod.CASH && data.change) {
+      if (data.method === CheckoutPaymentMethod.CASH) {
+        if (!data.change) {
+          toastUtils.error(toast, "Informe um valor para troco");
+          return false;
+        }
+
         // Certifique-se de que o valor de troco é um número válido e maior que o total do pedido
         const changeValue = parseFloat(data.change.replace(",", "."));
 
         if (isNaN(changeValue)) {
           toastUtils.error(toast, "Valor de troco inválido");
-          return;
+          return false;
         }
 
         if (changeValue <= checkout.total) {
           toastUtils.error(
             toast,
-            "Valor para troco deve ser maior que o total do pedido"
+            `Valor para troco deve ser maior que ${checkout.total.toLocaleString(
+              "pt-BR",
+              {
+                style: "currency",
+                currency: "BRL",
+              }
+            )}`
           );
-          return;
+          return false;
         }
       }
 
@@ -302,17 +329,19 @@ export function useCheckoutViewModel() {
       // Salvar no cache
       await cacheCheckoutState();
 
-      nextStep();
+      storeNextStep();
+      return true;
     } catch (error) {
       console.error("Erro ao salvar forma de pagamento:", error);
       toastUtils.error(toast, "Erro ao salvar forma de pagamento");
+      return false;
     }
   };
 
   // Helper para limpar cache
-  const clearCheckoutCache = useCallback(() => {
+  const clearCheckoutCache = useCallback(async () => {
     try {
-      localStorage.removeItem("cached_checkout");
+      await storage.removeItem("cached_checkout");
     } catch (error) {
       console.error("Erro ao limpar cache:", error);
     }
@@ -378,9 +407,11 @@ export function useCheckoutViewModel() {
       router.replace(`/(drawer)/empresa/${companySlug}/orders`);
 
       toastUtils.success(toast, "Pedido enviado com sucesso!");
+      return true;
     } catch (error) {
       console.error("Erro ao finalizar pedido:", error);
       toastUtils.error(toast, "Erro ao enviar pedido");
+      return false;
     } finally {
       setIsProcessing(false);
     }
@@ -408,6 +439,7 @@ export function useCheckoutViewModel() {
         return true;
       }
 
+      toastUtils.error(toast, "Não foi possível abrir o WhatsApp");
       return false;
     } catch (error) {
       console.error("Erro ao abrir WhatsApp:", error);
@@ -425,14 +457,22 @@ export function useCheckoutViewModel() {
         if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
           return !!(
             checkout.personalInfo.fullName &&
+            checkout.personalInfo.fullName.length >= 5 &&
             checkout.personalInfo.whatsapp &&
+            checkout.personalInfo.whatsapp.length >= 11 &&
             checkout.personalInfo.address &&
+            checkout.personalInfo.address.length >= 5 &&
             checkout.personalInfo.number &&
-            checkout.personalInfo.neighborhood
+            checkout.personalInfo.number.length >= 1 &&
+            checkout.personalInfo.neighborhood &&
+            checkout.personalInfo.neighborhood.length >= 3
           );
         }
         return !!(
-          checkout.personalInfo.fullName && checkout.personalInfo.whatsapp
+          checkout.personalInfo.fullName &&
+          checkout.personalInfo.fullName.length >= 5 &&
+          checkout.personalInfo.whatsapp &&
+          checkout.personalInfo.whatsapp.length >= 11
         );
 
       case 2: // Forma de pagamento
@@ -450,22 +490,47 @@ export function useCheckoutViewModel() {
   }, [currentStep, checkout]);
 
   // Verificar se o passo atual está válido antes de avançar
-  const nextStepWithValidation = useCallback(() => {
+  const nextStep = useCallback(() => {
     if (validateCurrentStep()) {
-      nextStep();
+      storeNextStep();
+      return true;
     } else {
-      toastUtils.error(
-        toast,
-        "Por favor, preencha todos os campos obrigatórios"
-      );
+      // Mostrar mensagem de erro específica para cada passo
+      switch (currentStep) {
+        case 0:
+          toastUtils.error(toast, "Seu carrinho está vazio");
+          break;
+        case 1:
+          if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
+            toastUtils.error(
+              toast,
+              "Preencha todos os campos de dados pessoais e endereço"
+            );
+          } else {
+            toastUtils.error(
+              toast,
+              "Preencha seu nome e WhatsApp corretamente"
+            );
+          }
+          break;
+        case 2:
+          if (checkout.paymentInfo.method === CheckoutPaymentMethod.CASH) {
+            toastUtils.error(toast, "Informe um valor válido para troco");
+          } else {
+            toastUtils.error(toast, "Selecione uma forma de pagamento");
+          }
+          break;
+      }
+      return false;
     }
-  }, [nextStep, validateCurrentStep, toast]);
+  }, [currentStep, validateCurrentStep, storeNextStep, checkout, toast]);
 
   return {
     // Estado
     checkout,
     currentStep,
     isProcessing,
+    isLoadingUserData,
 
     // Formulários
     personalInfoForm,
@@ -479,7 +544,7 @@ export function useCheckoutViewModel() {
     finalizeOrder,
     goToStep,
     prevStep,
-    nextStep: nextStepWithValidation,
+    nextStep,
     validateCurrentStep,
   };
 }

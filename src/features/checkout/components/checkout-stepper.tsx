@@ -9,6 +9,7 @@ import {
   User,
   CreditCard,
   CheckCircle,
+  AlertCircle,
 } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { useEffect, useRef } from "react";
@@ -17,12 +18,14 @@ interface CheckoutStepperProps {
   currentStep: number;
   onStepPress?: (step: number) => void;
   allowNavigation?: boolean;
+  stepsValidation?: boolean[];
 }
 
 export function CheckoutStepper({
   currentStep,
   onStepPress,
   allowNavigation = false,
+  stepsValidation = [true, false, false, false],
 }: CheckoutStepperProps) {
   const primaryColor = THEME_COLORS.primary;
 
@@ -47,10 +50,14 @@ export function CheckoutStepper({
   ];
 
   // Verifica se o passo está completo
-  const isCompleted = (step: number) => step < currentStep;
+  const isCompleted = (step: number) =>
+    step < currentStep && stepsValidation[step];
 
   // Verifica se o passo está ativo
   const isActive = (step: number) => step === currentStep;
+
+  // Verifica se o passo está validado
+  const isValid = (step: number) => stepsValidation[step];
 
   return (
     <View className="px-4 py-3 bg-white border-b border-gray-200">
@@ -73,6 +80,19 @@ export function CheckoutStepper({
           const StepIcon = step.icon;
           const completed = isCompleted(index);
           const active = isActive(index);
+          const valid = isValid(index);
+
+          // Determinar a cor do ícone
+          let iconColor = "#9CA3AF"; // Cinza para passos futuros
+          let bgColor = "#f3f4f6"; // Fundo cinza claro para passos futuros
+
+          if (completed) {
+            iconColor = "white";
+            bgColor = primaryColor;
+          } else if (active) {
+            iconColor = valid ? primaryColor : "#F59E0B"; // Amarelo para inválido
+            bgColor = valid ? `${primaryColor}10` : "#FEF3C7"; // Fundo amarelo claro para inválido
+          }
 
           return (
             <TouchableOpacity
@@ -88,29 +108,30 @@ export function CheckoutStepper({
             >
               <View
                 className={`w-8 h-8 rounded-full items-center justify-center mb-1 ${
-                  active ? "border border-primary-500" : ""
+                  active
+                    ? `border ${
+                        valid ? "border-primary-500" : "border-amber-500"
+                      }`
+                    : ""
                 }`}
                 style={{
-                  backgroundColor: completed
-                    ? primaryColor
-                    : active
-                    ? `${primaryColor}10`
-                    : "#f3f4f6",
+                  backgroundColor: bgColor,
                 }}
               >
                 {completed ? (
                   <Check size={16} color="white" />
+                ) : active && !valid ? (
+                  <AlertCircle size={16} color="#F59E0B" />
                 ) : (
-                  <StepIcon
-                    size={16}
-                    color={active ? primaryColor : "#9CA3AF"}
-                  />
+                  <StepIcon size={16} color={iconColor} />
                 )}
               </View>
               <Text
                 className={`text-xs ${
                   active
-                    ? "font-medium text-primary-600"
+                    ? valid
+                      ? "font-medium text-primary-600"
+                      : "font-medium text-amber-600"
                     : completed
                     ? "font-medium text-gray-800"
                     : "text-gray-500"

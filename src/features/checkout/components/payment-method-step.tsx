@@ -20,6 +20,7 @@ import {
   Banknote,
   Smartphone,
   AlertCircle,
+  CheckCircle,
 } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutPaymentMethod, PaymentInfo } from "../models/checkout";
@@ -30,10 +31,12 @@ export function PaymentMethodStep() {
   const { checkout, paymentInfoForm, savePaymentInfo, prevStep } =
     useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
+
   const [showChangeInput, setShowChangeInput] = useState(
     checkout.paymentInfo.method === CheckoutPaymentMethod.CASH
   );
   const [changeError, setChangeError] = useState<string | null>(null);
+  const [isFormValid, setIsFormValid] = useState(false);
 
   const {
     control,
@@ -57,43 +60,65 @@ export function PaymentMethodStep() {
   // Atualizar estado do input de troco quando mudar para/de dinheiro
   useEffect(() => {
     setShowChangeInput(paymentMethod === CheckoutPaymentMethod.CASH);
+
     if (paymentMethod !== CheckoutPaymentMethod.CASH) {
       setValue("change", "");
       setChangeError(null);
+      setIsFormValid(true);
     } else {
-      // Se o método for dinheiro, fazer o campo de troco ser obrigatório
+      // Se o método for dinheiro, validar o campo de troco
       setTimeout(() => {
         trigger("change");
       }, 100);
+
+      // Verifica se já tem um valor de troco válido
+      if (changeValue) {
+        validateChangeValue(changeValue || "");
+      } else {
+        setIsFormValid(false);
+      }
     }
   }, [paymentMethod, setValue, trigger]);
+
+  // Função para validar o valor do troco
+  const validateChangeValue = (value: string) => {
+    if (!value) {
+      setChangeError("Informe um valor para troco");
+      setIsFormValid(false);
+      return false;
+    }
+
+    const parsedValue = parseFloat(value.replace(",", "."));
+
+    if (isNaN(parsedValue)) {
+      setChangeError("Valor de troco inválido");
+      setIsFormValid(false);
+      return false;
+    }
+
+    if (parsedValue <= checkout.total) {
+      setChangeError(
+        `Valor para troco deve ser maior que ${checkout.total.toLocaleString(
+          "pt-BR",
+          {
+            style: "currency",
+            currency: "BRL",
+          }
+        )}`
+      );
+      setIsFormValid(false);
+      return false;
+    }
+
+    setChangeError(null);
+    setIsFormValid(true);
+    return true;
+  };
 
   // Validar valor do troco quando for pagamento em dinheiro
   useEffect(() => {
     if (paymentMethod === CheckoutPaymentMethod.CASH) {
-      if (!changeValue) {
-        setChangeError("Informe um valor para troco");
-        return;
-      }
-
-      const parsedValue = parseFloat(changeValue.replace(",", "."));
-      if (isNaN(parsedValue)) {
-        setChangeError("Valor de troco inválido");
-      } else if (parsedValue <= checkout.total) {
-        setChangeError(
-          `Valor para troco deve ser maior que ${checkout.total.toLocaleString(
-            "pt-BR",
-            {
-              style: "currency",
-              currency: "BRL",
-            }
-          )}`
-        );
-      } else {
-        setChangeError(null);
-      }
-    } else {
-      setChangeError(null);
+      validateChangeValue(changeValue || "");
     }
   }, [changeValue, paymentMethod, checkout.total]);
 
@@ -101,25 +126,7 @@ export function PaymentMethodStep() {
   const handleSavePayment = (data: PaymentInfo) => {
     // Validação extra para troco
     if (data.method === CheckoutPaymentMethod.CASH) {
-      if (!data.change) {
-        setChangeError("Informe um valor para troco");
-        return;
-      }
-
-      const parsedValue = parseFloat(data.change.replace(",", "."));
-      if (isNaN(parsedValue)) {
-        setChangeError("Valor de troco inválido");
-        return;
-      } else if (parsedValue <= checkout.total) {
-        setChangeError(
-          `Valor para troco deve ser maior que ${checkout.total.toLocaleString(
-            "pt-BR",
-            {
-              style: "currency",
-              currency: "BRL",
-            }
-          )}`
-        );
+      if (!validateChangeValue(data.change || "")) {
         return;
       }
     }
@@ -188,6 +195,16 @@ export function PaymentMethodStep() {
     },
   ];
 
+  // Calcular valor do troco
+  const calculateChange = () => {
+    if (!changeValue) return 0;
+
+    const changeAmount = parseFloat(changeValue.replace(",", "."));
+    if (isNaN(changeAmount)) return 0;
+
+    return changeAmount - checkout.total;
+  };
+
   return (
     <ScrollView className="flex-1 p-4">
       <Card className="p-4 mb-4 border border-gray-100">
@@ -224,7 +241,7 @@ export function PaymentMethodStep() {
 
           {showChangeInput && (
             <FormControl isInvalid={!!changeError} isRequired={true}>
-              <HStack alignItems="center">
+              <HStack alignItems="center" className="mb-1">
                 <Banknote size={16} color="#6B7280" />
                 <Text className="ml-2 text-gray-700 font-medium">
                   Troco para quanto?
@@ -244,8 +261,12 @@ export function PaymentMethodStep() {
                         const cleaned = text.replace(/[^\d,]/g, "");
                         onChange(cleaned);
                       }}
-                      onBlur={onBlur}
+                      onBlur={() => {
+                        onBlur();
+                        validateChangeValue(value || "");
+                      }}
                       keyboardType="numeric"
+                      testID="change-input"
                     />
                   </Input>
                 )}
@@ -261,6 +282,44 @@ export function PaymentMethodStep() {
                 O valor deve ser maior que o total do pedido
               </Text>
             </FormControl>
+          )}
+
+          {/* Status de validação */}
+          {paymentMethod === CheckoutPaymentMethod.CASH ? (
+            <View
+              className={`p-3 rounded-lg mt-2 ${
+                isFormValid
+                  ? "bg-green-50 border border-green-100"
+                  : "bg-amber-50 border border-amber-100"
+              }`}
+            >
+              <HStack space="sm" alignItems="center">
+                {isFormValid ? (
+                  <>
+                    <CheckCircle size={18} color="#22C55E" />
+                    <Text className="text-sm text-green-700">
+                      Valor para troco válido
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle size={18} color="#F59E0B" />
+                    <Text className="text-sm text-amber-700">
+                      {changeError || "Informe um valor para troco válido"}
+                    </Text>
+                  </>
+                )}
+              </HStack>
+            </View>
+          ) : (
+            <View className="p-3 rounded-lg mt-2 bg-green-50 border border-green-100">
+              <HStack space="sm" alignItems="center">
+                <CheckCircle size={18} color="#22C55E" />
+                <Text className="text-sm text-green-700">
+                  Método de pagamento selecionado
+                </Text>
+              </HStack>
+            </View>
           )}
 
           {/* Resumo do valor */}
@@ -281,13 +340,10 @@ export function PaymentMethodStep() {
               changeValue &&
               !changeError && (
                 <>
-                  <HStack justifyContent="space-between">
+                  <HStack justifyContent="space-between" className="mt-2">
                     <Text className="text-gray-700">Valor do troco:</Text>
                     <Text className="text-gray-800">
-                      {(
-                        parseFloat(changeValue.replace(",", ".")) -
-                        checkout.total
-                      ).toLocaleString("pt-BR", {
+                      {calculateChange().toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       })}
@@ -326,7 +382,7 @@ export function PaymentMethodStep() {
           className="flex-1"
           isDisabled={
             isSubmitting ||
-            (paymentMethod === CheckoutPaymentMethod.CASH && !!changeError)
+            (paymentMethod === CheckoutPaymentMethod.CASH && !isFormValid)
           }
         >
           {isSubmitting ? (
