@@ -22,6 +22,7 @@ import { CartProcessorService } from "../services/cart-processor.service";
 import { userPersistenceService } from "@/src/services/user-persistence.service";
 import { useOrderStore } from "@/src/features/orders/stores/order.store";
 import { api } from "@/src/services/api";
+import { z } from "zod";
 
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -55,19 +56,136 @@ export function useCheckoutViewModel() {
         reference: true,
       });
     } else {
-      // Para entrega, validar todos os campos
-      return personalInfoSchema;
+      // Para entrega, validar todos os campos obrigatórios com mensagens mais claras
+      return personalInfoSchema.extend({
+        address: z.string().min(5, "Endereço é obrigatório"),
+        number: z.string().min(1, "Número é obrigatório"),
+        neighborhood: z.string().min(3, "Bairro é obrigatório"),
+        reference: z.string().optional(),
+      });
     }
   }, [checkout.deliveryType]);
 
+  // Form para dados pessoais com schema dinâmico
+  const personalInfoForm = useForm<PersonalInfo>({
+    resolver: zodResolver(getDynamicPersonalInfoSchema()),
+    defaultValues: checkout.personalInfo,
+    mode: "onChange", // Validar ao digitar
+  });
+
+  // Revalidar ao mudar o tipo de entrega
+  useEffect(() => {
+    personalInfoForm.clearErrors();
+    personalInfoForm.reset(checkout.personalInfo);
+
+    // Trigger de validação para campos de endereço quando for entrega
+    if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
+      setTimeout(() => {
+        personalInfoForm.trigger(["address", "number", "neighborhood"]);
+      }, 100);
+    }
+  }, [checkout.deliveryType]);
+
+  // Form para método de pagamento com validação específica para troco
+  const paymentInfoForm = useForm<PaymentInfo>({
+    resolver: zodResolver(
+      paymentMethodSchema.refine(
+        (data) => {
+          // Se for pagamento em dinheiro, validar o troco
+          if (data.method === CheckoutPaymentMethod.CASH && data.change) {
+            const changeValue = parseFloat(data.change.replace(",", "."));
+            return !isNaN(changeValue) && changeValue > checkout.total;
+          }
+          return true;
+        },
+        {
+          message: "Valor para troco deve ser maior que o total do pedido",
+          path: ["change"],
+        }
+      )
+    ),
+    defaultValues: checkout.paymentInfo,
+    mode: "onChange",
+  });
+
+  // Serviço para caching do checkout
+  const cacheCheckoutState = useCallback(async () => {
+    try {
+      // Usando localStorage para persistir o estado do checkout
+      localStorage.setItem(
+        "cached_checkout",
+        JSON.stringify({
+          ...checkout,
+          timestamp: Date.now(),
+        })
+      );
+    } catch (error) {
+      console.error("Erro ao salvar cache do checkout:", error);
+    }
+  }, [checkout]);
+
+  const getCachedCheckout = useCallback(async () => {
+    try {
+      const cachedData = localStorage.getItem("cached_checkout");
+      if (!cachedData) return null;
+
+      const parsed = JSON.parse(cachedData);
+
+      // Verificar se o cache é recente (menos de 30 minutos)
+      const now = Date.now();
+      if (now - parsed.timestamp > 30 * 60 * 1000) {
+        localStorage.removeItem("cached_checkout");
+        return null;
+      }
+
+      return parsed;
+    } catch (error) {
+      console.error("Erro ao recuperar cache do checkout:", error);
+      return null;
+    }
+  }, []);
+
   // Inicializar checkout com dados do carrinho e recuperar dados do usuário
   const initialize = useCallback(async () => {
+    // Verificar se o carrinho está vazio
     if (cartViewModel.isEmpty || !companySlug) {
       router.replace(`/(drawer)/empresa/${companySlug}`);
       return;
     }
 
-    // Processa os itens para obter o total real
+    // Tentar recuperar o estado anterior do checkout do cache
+    const cachedCheckout = await getCachedCheckout();
+
+    // Se o checkout é para a mesma empresa e tem dados válidos, use-o
+    if (
+      cachedCheckout &&
+      cachedCheckout.companySlug === companySlug &&
+      cachedCheckout.items.length > 0
+    ) {
+      // Inicializa com os dados em cache
+      initCheckout(
+        cachedCheckout.items,
+        cachedCheckout.companyId,
+        cachedCheckout.companySlug,
+        cachedCheckout.companyName,
+        cachedCheckout.subtotal,
+        cachedCheckout.total
+      );
+
+      // Atualiza os dados pessoais e pagamento
+      updatePersonalInfo(cachedCheckout.personalInfo);
+      updatePaymentInfo(cachedCheckout.paymentInfo);
+
+      // Reset dos formulários com dados do cache
+      setTimeout(() => {
+        personalInfoForm.reset(cachedCheckout.personalInfo);
+        paymentInfoForm.reset(cachedCheckout.paymentInfo);
+      }, 100);
+
+      return;
+    }
+
+    // Se não há cache válido, processa os itens do carrinho
     const totalPrice = CartProcessorService.calculateOrderTotal(
       cartViewModel.items
     );
@@ -92,7 +210,6 @@ export function useCheckoutViewModel() {
         updatePersonalInfo(savedUserData);
 
         // Reset do formulário com os dados carregados
-        // Importante para garantir que o formulário seja preenchido corretamente
         setTimeout(() => {
           personalInfoForm.reset(savedUserData);
         }, 100);
@@ -100,38 +217,54 @@ export function useCheckoutViewModel() {
     } catch (error) {
       console.error("Erro ao recuperar dados do usuário:", error);
     }
-  }, [cartViewModel, companySlug]);
-
-  // Form para dados pessoais com schema dinâmico
-  const personalInfoForm = useForm<PersonalInfo>({
-    resolver: zodResolver(getDynamicPersonalInfoSchema()),
-    defaultValues: checkout.personalInfo,
-    mode: "onChange", // Validar ao digitar
-  });
-
-  useEffect(() => {
-    personalInfoForm.clearErrors();
-    personalInfoForm.reset(checkout.personalInfo);
-  }, [checkout.deliveryType]);
-
-  // Form para método de pagamento
-  const paymentInfoForm = useForm<PaymentInfo>({
-    resolver: zodResolver(paymentMethodSchema),
-    defaultValues: checkout.paymentInfo,
-  });
+  }, [
+    cartViewModel,
+    companySlug,
+    initCheckout,
+    updatePersonalInfo,
+    updatePaymentInfo,
+  ]);
 
   // Atualizar tipo de entrega
   const setDeliveryType = (type: CheckoutDeliveryType) => {
     updateDeliveryType(type);
+
+    // Gravar no cache
+    setTimeout(() => {
+      cacheCheckoutState();
+    }, 100);
   };
 
   // Salvar dados pessoais, persistir localmente e avançar
   const savePersonalInfo = async (data: PersonalInfo) => {
     try {
+      // Validação adicional para entrega
+      if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
+        const addressComplete = !!(
+          data.address &&
+          data.address.trim().length >= 5 &&
+          data.number &&
+          data.number.trim().length >= 1 &&
+          data.neighborhood &&
+          data.neighborhood.trim().length >= 3
+        );
+
+        if (!addressComplete) {
+          toastUtils.error(
+            toast,
+            "Preencha todos os campos de endereço corretamente"
+          );
+          return;
+        }
+      }
+
       // Atualiza no checkout
       updatePersonalInfo(data);
 
-      // Persiste localmente
+      // Salvar no cache
+      await cacheCheckoutState();
+
+      // Persiste localmente para reuso futuro
       await userPersistenceService.saveUserPersonalInfo(data);
 
       // Avança para o próximo passo
@@ -143,7 +276,7 @@ export function useCheckoutViewModel() {
   };
 
   // Salvar método de pagamento e avançar
-  const savePaymentInfo = (data: PaymentInfo) => {
+  const savePaymentInfo = async (data: PaymentInfo) => {
     try {
       // Validação especial para pagamento em dinheiro (cash)
       if (data.method === CheckoutPaymentMethod.CASH && data.change) {
@@ -165,12 +298,25 @@ export function useCheckoutViewModel() {
       }
 
       updatePaymentInfo(data);
+
+      // Salvar no cache
+      await cacheCheckoutState();
+
       nextStep();
     } catch (error) {
       console.error("Erro ao salvar forma de pagamento:", error);
       toastUtils.error(toast, "Erro ao salvar forma de pagamento");
     }
   };
+
+  // Helper para limpar cache
+  const clearCheckoutCache = useCallback(() => {
+    try {
+      localStorage.removeItem("cached_checkout");
+    } catch (error) {
+      console.error("Erro ao limpar cache:", error);
+    }
+  }, []);
 
   // Finalizar o pedido e criar um registro no OrderStore
   const finalizeOrder = async () => {
@@ -182,7 +328,6 @@ export function useCheckoutViewModel() {
 
       try {
         // Implementação depende de como você acessa os dados da empresa
-        // Pode ser via context, API, ou outro mecanismo
         const companyData = await api.get(
           `/api/companies/${checkout.companyId}`
         );
@@ -221,6 +366,9 @@ export function useCheckoutViewModel() {
 
       // Enviar mensagem para o WhatsApp
       await sendWhatsAppMessage(message, companyWhatsapp);
+
+      // Limpar cache do checkout
+      clearCheckoutCache();
 
       // Limpar carrinho e checkout
       cartViewModel.clearCart();
@@ -267,6 +415,52 @@ export function useCheckoutViewModel() {
     }
   };
 
+  // Validar estado atual do checkout
+  const validateCurrentStep = useCallback(() => {
+    switch (currentStep) {
+      case 0: // Resumo do pedido
+        return checkout.items.length > 0;
+
+      case 1: // Dados pessoais
+        if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
+          return !!(
+            checkout.personalInfo.fullName &&
+            checkout.personalInfo.whatsapp &&
+            checkout.personalInfo.address &&
+            checkout.personalInfo.number &&
+            checkout.personalInfo.neighborhood
+          );
+        }
+        return !!(
+          checkout.personalInfo.fullName && checkout.personalInfo.whatsapp
+        );
+
+      case 2: // Forma de pagamento
+        if (
+          checkout.paymentInfo.method === CheckoutPaymentMethod.CASH &&
+          !checkout.paymentInfo.change
+        ) {
+          return false;
+        }
+        return true;
+
+      default:
+        return true;
+    }
+  }, [currentStep, checkout]);
+
+  // Verificar se o passo atual está válido antes de avançar
+  const nextStepWithValidation = useCallback(() => {
+    if (validateCurrentStep()) {
+      nextStep();
+    } else {
+      toastUtils.error(
+        toast,
+        "Por favor, preencha todos os campos obrigatórios"
+      );
+    }
+  }, [nextStep, validateCurrentStep, toast]);
+
   return {
     // Estado
     checkout,
@@ -285,6 +479,7 @@ export function useCheckoutViewModel() {
     finalizeOrder,
     goToStep,
     prevStep,
-    nextStep,
+    nextStep: nextStepWithValidation,
+    validateCurrentStep,
   };
 }
