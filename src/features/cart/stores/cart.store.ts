@@ -300,7 +300,22 @@ export const useMultiCartStore = create<MultiCartState>()(
         const cart = get().carts[companySlug];
         if (!cart) return 0;
 
-        return cart.items.reduce((count, item) => count + item.quantity, 0);
+        // Contar apenas itens que não são adicionais (não têm parentItemId)
+        return cart.items.reduce((count, item) => {
+          // Verificar se o item é um adicional (tem addons com parentItemId)
+          const isAddon =
+            item.addons &&
+            item.addons.length > 0 &&
+            item.addons[0].parentItemId !== undefined;
+
+          // Se não for adicional, contar normalmente
+          if (!isAddon) {
+            return count + item.quantity;
+          }
+
+          // Se for adicional, não contar
+          return count;
+        }, 0);
       },
 
       getItemByProductId: (companySlug: string, productId: string) => {
