@@ -23,6 +23,7 @@ interface CartItemProps {
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onUpdateObservation: (itemId: string, observation: string) => void;
   primaryColor: string;
+  addons?: CartItem[]; // Nova prop para adicionais
 }
 
 export const CartItemComponent: React.FC<CartItemProps> = ({
@@ -31,6 +32,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
   onUpdateQuantity,
   onUpdateObservation,
   primaryColor,
+  addons = [], // Valor padrão vazio
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempObservation, setTempObservation] = useState(
@@ -46,8 +48,23 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
   const hasVariation = !!item.variationName;
   const hasCustomization =
     !!item.isCustomProduct && !!item.customProductSteps?.length;
-  const hasAddons = !!item.addons?.length;
+  const hasAddons = addons.length > 0;
   const hasDetails = hasVariation || hasCustomization || hasAddons;
+
+  // Calcular o total incluindo adicionais
+  const calculateTotal = () => {
+    let total = item.price * item.quantity;
+
+    // Adicionar o preço dos adicionais
+    addons.forEach((addon) => {
+      total += addon.price * addon.quantity;
+    });
+
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(total);
+  };
 
   return (
     <Card className="mb-4 overflow-hidden shadow-sm border border-gray-100">
@@ -92,12 +109,28 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
 
           <HStack className="justify-between items-center mt-1">
             <Text className="font-bold" style={{ color: primaryColor }}>
-              {item.priceFormatted}
+              {hasAddons ? calculateTotal() : item.priceFormatted}
             </Text>
 
             {/* Controles de quantidade */}
             <HStack className="items-center">
-              {/* ... Código existente para os controles ... */}
+              <TouchableOpacity
+                onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                disabled={item.quantity <= 1}
+                style={{ opacity: item.quantity <= 1 ? 0.5 : 1 }}
+              >
+                <MinusCircle size={20} color={primaryColor} />
+              </TouchableOpacity>
+
+              <Text className="mx-3 font-medium text-gray-800">
+                {item.quantity}
+              </Text>
+
+              <TouchableOpacity
+                onPress={() => onUpdateQuantity(item.id, item.quantity + 1)}
+              >
+                <PlusCircle size={20} color={primaryColor} />
+              </TouchableOpacity>
             </HStack>
           </HStack>
         </VStack>
@@ -146,7 +179,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
               <Text className="text-xs font-medium text-gray-700 mb-1">
                 Itens adicionais:
               </Text>
-              {item.addons?.map((addon, index) => (
+              {addons.map((addon, index) => (
                 <View
                   key={`${addon.id}_${index}`}
                   className="bg-white p-2 rounded-md mb-1 flex-row justify-between"
@@ -155,11 +188,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
                     {addon.quantity}x {addon.name}
                   </Text>
                   <Text className="text-sm text-gray-600">
-                    +{" "}
-                    {new Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(addon.price * addon.quantity)}
+                    {addon.priceFormatted}
                   </Text>
                 </View>
               ))}

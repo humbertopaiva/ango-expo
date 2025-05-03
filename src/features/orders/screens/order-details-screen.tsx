@@ -302,6 +302,17 @@ ${order.items
                       </View>
                     )}
 
+                    {/* Exibir adicionais do item */}
+                    {item.addons && item.addons.length > 0 && (
+                      <View className="mt-1">
+                        {item.addons.map((addon: any, idx: number) => (
+                          <Text key={idx} className="text-xs text-gray-500">
+                            + {addon.quantity}x {addon.name}
+                          </Text>
+                        ))}
+                      </View>
+                    )}
+
                     <HStack className="justify-between mt-1">
                       <Text className="text-sm text-gray-500">
                         {item.quantity} x {item.priceFormatted}

@@ -169,9 +169,9 @@ export function CartScreen() {
     const customItems: CartItem[] = [];
     const addonMap: Record<string, CartItem[]> = {};
 
-    // Separar itens em categorias
+    // Primeiro passo: identificar os itens que são adicionais
     cart.items.forEach((item) => {
-      // Verificar se é um adicional
+      // Verificar se é um adicional (tem addons com parentItemId)
       if (
         item.addons &&
         item.addons.length > 0 &&
@@ -280,32 +280,18 @@ export function CartScreen() {
               {mainItems.map((item) => {
                 const itemAddons = addonMap[item.id] || [];
 
-                if (itemAddons.length > 0) {
-                  // Renderizar item com adicionais
-                  return (
-                    <CartItemWithAddons
-                      key={item.id}
-                      item={item}
-                      addons={itemAddons}
-                      onRemove={handleRemoveItemWithToast}
-                      onUpdateQuantity={handleUpdateQuantityWithToast}
-                      onUpdateObservation={cart.updateObservation}
-                      primaryColor={primaryColor}
-                    />
-                  );
-                } else {
-                  // Renderizar item normal
-                  return (
-                    <CartItemComponent
-                      key={item.id}
-                      item={item}
-                      onRemove={handleRemoveItemWithToast}
-                      onUpdateQuantity={handleUpdateQuantityWithToast}
-                      onUpdateObservation={cart.updateObservation}
-                      primaryColor={primaryColor}
-                    />
-                  );
-                }
+                // Renderizar item com seus adicionais
+                return (
+                  <CartItemComponent
+                    key={item.id}
+                    item={item}
+                    addons={itemAddons}
+                    onRemove={handleRemoveItemWithToast}
+                    onUpdateQuantity={handleUpdateQuantityWithToast}
+                    onUpdateObservation={cart.updateObservation}
+                    primaryColor={primaryColor}
+                  />
+                );
               })}
             </View>
 
