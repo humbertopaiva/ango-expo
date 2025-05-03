@@ -1,4 +1,5 @@
 // Path: src/features/checkout/view-models/use-checkout-view-model.ts
+
 import { useState, useCallback, useEffect } from "react";
 import { useCheckoutStore } from "../stores/checkout.store";
 import {
@@ -17,14 +18,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Linking } from "react-native";
 import { formatCurrency } from "@/src/utils/format.utils";
-import {
-  formatWhatsAppMessage,
-  sendWhatsAppMessage,
-} from "../utils/checkout.utils";
-import { z } from "zod";
+import { CartProcessorService } from "../services/cart-processor.service";
 import { userPersistenceService } from "@/src/services/user-persistence.service";
 import { useOrderStore } from "@/src/features/orders/stores/order.store";
-import { PaymentMethod } from "@/src/features/orders/models/order";
 import { api } from "@/src/services/api";
 
 export function useCheckoutViewModel() {
@@ -52,30 +48,15 @@ export function useCheckoutViewModel() {
   const getDynamicPersonalInfoSchema = useCallback(() => {
     if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
       // Para retirada, validar apenas nome e whatsapp
-      return z.object({
-        fullName: z.string().min(5, "Nome completo é obrigatório"),
-        whatsapp: z
-          .string()
-          .min(11, "Número de WhatsApp inválido")
-          .max(15, "Número de WhatsApp inválido"),
-        address: z.string().optional(),
-        number: z.string().optional(),
-        neighborhood: z.string().optional(),
-        reference: z.string().optional(),
+      return personalInfoSchema.omit({
+        address: true,
+        number: true,
+        neighborhood: true,
+        reference: true,
       });
     } else {
       // Para entrega, validar todos os campos
-      return z.object({
-        fullName: z.string().min(5, "Nome completo é obrigatório"),
-        whatsapp: z
-          .string()
-          .min(11, "Número de WhatsApp inválido")
-          .max(15, "Número de WhatsApp inválido"),
-        address: z.string().min(5, "Endereço é obrigatório"),
-        number: z.string().min(1, "Número é obrigatório"),
-        neighborhood: z.string().min(3, "Bairro é obrigatório"),
-        reference: z.string().optional(),
-      });
+      return personalInfoSchema;
     }
   }, [checkout.deliveryType]);
 
@@ -86,6 +67,11 @@ export function useCheckoutViewModel() {
       return;
     }
 
+    // Processa os itens para obter o total real
+    const totalPrice = CartProcessorService.calculateOrderTotal(
+      cartViewModel.items
+    );
+
     // Inicializa o checkout com os dados do carrinho
     initCheckout(
       cartViewModel.items,
@@ -95,7 +81,7 @@ export function useCheckoutViewModel() {
       parseFloat(
         cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
       ),
-      parseFloat(cartViewModel.total.replace(/[^\d,]/g, "").replace(",", "."))
+      totalPrice
     );
 
     // Tenta recuperar os dados do usuário
@@ -110,22 +96,6 @@ export function useCheckoutViewModel() {
         setTimeout(() => {
           personalInfoForm.reset(savedUserData);
         }, 100);
-
-        // Se os dados estiverem completos e for tipo pickup,
-        // ou se os dados de endereço também estiverem completos para delivery,
-        // podemos pular automaticamente para o próximo passo
-        const isPickup = checkout.deliveryType === CheckoutDeliveryType.PICKUP;
-        const hasBasicInfo = savedUserData.fullName && savedUserData.whatsapp;
-        const hasAddressInfo =
-          savedUserData.address &&
-          savedUserData.number &&
-          savedUserData.neighborhood;
-
-        if (hasBasicInfo && (isPickup || hasAddressInfo)) {
-          // Opcionalmente, podemos pular o passo de informações pessoais
-          // Descomente se desejar implementar este comportamento
-          // nextStep();
-        }
       }
     } catch (error) {
       console.error("Erro ao recuperar dados do usuário:", error);
@@ -221,13 +191,19 @@ export function useCheckoutViewModel() {
         console.log("Não foi possível obter o telefone da empresa:", error);
       }
 
-      // Criar pedido no OrderStore
-      const orderItems = checkout.items.map((item) => ({
-        ...item,
-        companyId: checkout.companyId,
-        companySlug: checkout.companySlug,
-      }));
+      // Usar o CartProcessorService para processar os itens antes de criar o pedido
+      const { mainItems, addons, customItems, totalItems } =
+        CartProcessorService.processItems(checkout.items);
 
+      // Recalcular o total real do pedido
+      const realTotal = CartProcessorService.calculateOrderTotal(
+        checkout.items
+      );
+
+      // Preparar itens para o OrderStore, mantendo a estrutura original de cada item
+      const orderItems = [...checkout.items];
+
+      // Criar pedido no OrderStore
       const order = orderStore.createOrder(
         orderItems,
         checkout.companyId,
@@ -236,8 +212,8 @@ export function useCheckoutViewModel() {
         companyPhone
       );
 
-      // Construir mensagem para WhatsApp
-      const message = formatWhatsAppMessage(checkout);
+      // Construir mensagem para WhatsApp usando o serviço
+      const message = CartProcessorService.formatWhatsAppMessage(checkout);
 
       // Número da empresa (idealmente seria obtido do perfil da empresa)
       // Por enquanto, usamos um número de exemplo ou o que foi obtido acima
@@ -262,85 +238,33 @@ export function useCheckoutViewModel() {
     }
   };
 
-  // Construir mensagem para WhatsApp
-  const constructWhatsAppMessage = (): string => {
-    const {
-      items,
-      personalInfo,
-      paymentInfo,
-      deliveryType,
-      companyName,
-      total,
-    } = checkout;
+  // Função para enviar mensagem via WhatsApp
+  const sendWhatsAppMessage = async (
+    message: string,
+    phone: string
+  ): Promise<boolean> => {
+    try {
+      // Formatar o número de telefone (remover caracteres não numéricos)
+      const formattedPhone = phone.replace(/\D/g, "");
 
-    // Cabeçalho
-    let message = `*NOVO PEDIDO - ${companyName}*\n\n`;
+      // Criar a URL do WhatsApp
+      const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
+        message
+      )}`;
 
-    // Tipo de entrega
-    message += `*Tipo de entrega:* ${
-      deliveryType === CheckoutDeliveryType.DELIVERY
-        ? "Entrega"
-        : "Retirada no local"
-    }\n\n`;
+      // Verificar se o WhatsApp pode ser aberto
+      const canOpen = await Linking.canOpenURL(whatsappUrl);
 
-    // Dados do cliente
-    message += `*DADOS DO CLIENTE:*\n`;
-    message += `Nome: ${personalInfo.fullName}\n`;
-    message += `WhatsApp: ${personalInfo.whatsapp}\n`;
-
-    // Endereço (se for entrega)
-    if (deliveryType === CheckoutDeliveryType.DELIVERY) {
-      message += `\n*ENDEREÇO DE ENTREGA:*\n`;
-      message += `${personalInfo.address}, ${personalInfo.number}\n`;
-      message += `Bairro: ${personalInfo.neighborhood}\n`;
-      message += `Cidade: Lima Duarte (MG)\n`;
-
-      if (personalInfo.reference) {
-        message += `Ponto de referência: ${personalInfo.reference}\n`;
+      if (canOpen) {
+        await Linking.openURL(whatsappUrl);
+        return true;
       }
+
+      return false;
+    } catch (error) {
+      console.error("Erro ao abrir WhatsApp:", error);
+      return false;
     }
-
-    // Itens do pedido
-    message += `\n*ITENS DO PEDIDO:*\n`;
-    items.forEach((item, index) => {
-      message += `${index + 1}. ${item.quantity}x ${item.name} - ${
-        item.totalPriceFormatted
-      }\n`;
-
-      if (item.observation) {
-        message += `   Obs: ${item.observation}\n`;
-      }
-    });
-
-    // Forma de pagamento
-    message += `\n*PAGAMENTO:*\n`;
-    let paymentMethodText = "";
-
-    switch (paymentInfo.method) {
-      case CheckoutPaymentMethod.PIX:
-        paymentMethodText = "PIX";
-        break;
-      case CheckoutPaymentMethod.CREDIT_CARD:
-        paymentMethodText = "Cartão de Crédito";
-        break;
-      case CheckoutPaymentMethod.DEBIT_CARD:
-        paymentMethodText = "Cartão de Débito";
-        break;
-      case CheckoutPaymentMethod.CASH:
-        paymentMethodText = "Dinheiro";
-        if (paymentInfo.change) {
-          paymentMethodText += ` (Troco para R$ ${paymentInfo.change})`;
-        }
-        break;
-    }
-
-    message += `Forma de pagamento: ${paymentMethodText}\n`;
-    message += `Total: ${formatCurrency(total)}\n\n`;
-
-    // Agradecimento
-    message += `Obrigado pelo seu pedido!`;
-
-    return message;
   };
 
   return {

@@ -1,4 +1,5 @@
 // Path: src/features/cart/models/cart.ts
+
 export interface CartItem {
   id: string;
   productId: string;
@@ -34,6 +35,8 @@ export interface CartItem {
   }>;
 
   // Campos para adicionais
+  isAddon?: boolean;
+  parentItemId?: string;
   addons?: Array<{
     id: string;
     name: string;
@@ -42,6 +45,7 @@ export interface CartItem {
     parentItemId?: string;
   }>;
 }
+
 export interface Cart {
   items: CartItem[];
   companyId?: string;
