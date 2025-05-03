@@ -69,15 +69,21 @@ const recalculateCart = (
 
   // Identificar itens principais e adicionais
   items.forEach((item) => {
-    if (item.addons && item.addons.length > 0 && item.addons[0].parentItemId) {
+    // Verificar se é um adicional
+    const isAddon =
+      item.addons &&
+      item.addons.length > 0 &&
+      item.addons[0].parentItemId !== undefined;
+
+    if (isAddon) {
       // É um adicional
-      const parentId = item.addons[0].parentItemId;
+      const parentId = item.addons?.[0]?.parentItemId!;
       if (!addonsMap[parentId]) {
         addonsMap[parentId] = [];
       }
       addonsMap[parentId].push(item);
     } else {
-      // Item principal
+      // Item principal (simples ou com variação)
       mainItems.push(item);
     }
   });

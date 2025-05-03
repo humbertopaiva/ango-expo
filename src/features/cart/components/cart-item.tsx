@@ -107,6 +107,14 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
             </Text>
           )}
 
+          {/* Indicador de adicionais */}
+          {addons.length > 0 && (
+            <Text className="text-xs text-gray-500">
+              {addons.length} {addons.length === 1 ? "adicional" : "adicionais"}{" "}
+              selecionado{addons.length === 1 ? "" : "s"}
+            </Text>
+          )}
+
           <HStack className="justify-between items-center mt-1">
             <Text className="font-bold" style={{ color: primaryColor }}>
               {hasAddons ? calculateTotal() : item.priceFormatted}

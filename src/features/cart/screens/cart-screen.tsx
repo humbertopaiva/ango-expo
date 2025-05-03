@@ -280,18 +280,33 @@ export function CartScreen() {
               {mainItems.map((item) => {
                 const itemAddons = addonMap[item.id] || [];
 
-                // Renderizar item com seus adicionais
-                return (
-                  <CartItemComponent
-                    key={item.id}
-                    item={item}
-                    addons={itemAddons}
-                    onRemove={handleRemoveItemWithToast}
-                    onUpdateQuantity={handleUpdateQuantityWithToast}
-                    onUpdateObservation={cart.updateObservation}
-                    primaryColor={primaryColor}
-                  />
-                );
+                if (itemAddons.length > 0) {
+                  // Renderizar como item com adicionais
+                  return (
+                    <CartItemWithAddons
+                      key={item.id}
+                      item={item}
+                      addons={itemAddons}
+                      onRemove={handleRemoveItemWithToast}
+                      onUpdateQuantity={handleUpdateQuantityWithToast}
+                      onUpdateObservation={cart.updateObservation}
+                      primaryColor={primaryColor}
+                    />
+                  );
+                } else {
+                  // Renderizar item normal (simples ou com variação)
+                  return (
+                    <CartItemComponent
+                      key={item.id}
+                      item={item}
+                      addons={[]} // Sem adicionais
+                      onRemove={handleRemoveItemWithToast}
+                      onUpdateQuantity={handleUpdateQuantityWithToast}
+                      onUpdateObservation={cart.updateObservation}
+                      primaryColor={primaryColor}
+                    />
+                  );
+                }
               })}
             </View>
 
