@@ -5,8 +5,6 @@ import { View, Text, TouchableOpacity, TextInput } from "react-native";
 import { Card, VStack, HStack, Divider } from "@gluestack-ui/themed";
 import {
   Trash2,
-  MinusCircle,
-  PlusCircle,
   MessageSquare,
   Edit3,
   ChevronDown,
@@ -93,26 +91,12 @@ export const CartCustomProductComponent: React.FC<CartCustomProductProps> = ({
               {item.priceFormatted}
             </Text>
 
-            {/* Controles de quantidade */}
-            <HStack className="items-center">
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                disabled={item.quantity <= 1}
-                style={{ opacity: item.quantity <= 1 ? 0.5 : 1 }}
-              >
-                <MinusCircle size={20} color={primaryColor} />
-              </TouchableOpacity>
-
-              <Text className="mx-3 font-medium text-gray-800">
-                {item.quantity}
+            {/* Exibição fixa da quantidade */}
+            <View className="px-3 py-1 bg-gray-100 rounded-md">
+              <Text className="font-medium text-gray-800">
+                Qtd: {item.quantity}
               </Text>
-
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.id, item.quantity + 1)}
-              >
-                <PlusCircle size={20} color={primaryColor} />
-              </TouchableOpacity>
-            </HStack>
+            </View>
           </HStack>
         </VStack>
       </HStack>

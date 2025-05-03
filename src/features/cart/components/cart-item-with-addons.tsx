@@ -5,8 +5,6 @@ import { View, Text, TouchableOpacity, TextInput } from "react-native";
 import { VStack, HStack, Divider } from "@gluestack-ui/themed";
 import {
   Trash2,
-  MinusCircle,
-  PlusCircle,
   MessageSquare,
   Edit3,
   ChevronDown,
@@ -99,37 +97,33 @@ export const CartItemWithAddons: React.FC<CartItemWithAddonsProps> = ({
             />
           )}
 
-          {item.description && (
+          {/* Optional description */}
+          {!item.hasVariation && item.description && (
             <Text className="text-gray-500 text-xs" numberOfLines={1}>
               {item.description}
             </Text>
           )}
 
+          {/* Addons indicator */}
+          {addons.length > 0 && (
+            <Text className="text-xs text-gray-500">
+              {addons.length} {addons.length === 1 ? "adicional" : "adicionais"}{" "}
+              selecionado
+              {addons.length === 1 ? "" : "s"}
+            </Text>
+          )}
+
+          {/* Fixed quantity display - without controls */}
           <HStack className="justify-between items-center mt-1">
             <Text className="font-bold" style={{ color: primaryColor }}>
               {item.priceFormatted}
             </Text>
 
-            {/* Quantity controls */}
-            <HStack className="items-center">
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                disabled={item.quantity <= 1}
-                style={{ opacity: item.quantity <= 1 ? 0.5 : 1 }}
-              >
-                <MinusCircle size={20} color={primaryColor} />
-              </TouchableOpacity>
-
-              <Text className="mx-3 font-medium text-gray-800">
-                {item.quantity}
+            <View className="px-3 py-1 bg-gray-100 rounded-md">
+              <Text className="font-medium text-gray-800">
+                Qtd: {item.quantity}
               </Text>
-
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.id, item.quantity + 1)}
-              >
-                <PlusCircle size={20} color={primaryColor} />
-              </TouchableOpacity>
-            </HStack>
+            </View>
           </HStack>
         </VStack>
       </HStack>
