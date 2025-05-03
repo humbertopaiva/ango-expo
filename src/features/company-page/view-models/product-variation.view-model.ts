@@ -10,6 +10,7 @@ import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-
 import { useToast } from "@gluestack-ui/themed";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { api } from "@/src/services/api";
+import { router } from "expo-router";
 
 interface VariationOption {
   id: string;
@@ -67,6 +68,7 @@ export interface ProductVariationViewModel {
   addAddonToCart: (addon: CompanyProduct, quantity: number) => void;
   getAddonQuantity: (addonId: string) => number;
   removeAddonFromCart: (addonId: string) => void;
+  resetState: () => void;
 }
 
 export function useProductVariationViewModel(
@@ -242,9 +244,26 @@ export function useProductVariationViewModel(
     setIsConfirmationVisible(true);
   }, []);
 
+  const resetState = useCallback(() => {
+    setQuantity(1);
+    setObservation("");
+    setShowObservationInput(false);
+    setSelectedAddons([]);
+  }, []);
+
   const hideConfirmation = useCallback(() => {
     setIsConfirmationVisible(false);
-  }, []);
+
+    // Resetar o estado
+    resetState();
+
+    // Retornar para a página da empresa
+    if (product && product.empresa && product.empresa.slug) {
+      router.replace(`/(drawer)/empresa/${product.empresa.slug}`);
+    } else {
+      router.back();
+    }
+  }, [product, resetState]);
 
   // Actions
   const increaseQuantity = () => {
@@ -333,7 +352,7 @@ export function useProductVariationViewModel(
     const companySlug = vm.profile.empresa.slug;
     const companyName = vm.profile.nome;
 
-    // Criar um produto com variação para adicionar ao carrinho
+    // Adicionar o produto principal ao carrinho
     cartVm.addProductWithVariation(
       product,
       companySlug,
@@ -469,5 +488,6 @@ export function useProductVariationViewModel(
     removeAddonFromCart,
     showConfirmation,
     hideConfirmation,
+    resetState,
   };
 }

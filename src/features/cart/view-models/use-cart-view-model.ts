@@ -177,8 +177,9 @@ export function useCartViewModel(): CartViewModel {
     quantity: number = 1,
     observation?: string
   ) => {
-    // Gera um ID único para o item do carrinho mas mantém a relação com o ID do produto e variação
-    const itemId = `${product.id}_var_${variationId}_${Date.now()}`;
+    // Gera um ID único baseado no timestamp atual para garantir que cada adição seja um novo item
+    const uniqueTimestamp = Date.now();
+    const itemId = `${product.id}_var_${variationId}_${uniqueTimestamp}`;
 
     addItem(companySlug, {
       id: itemId,
@@ -197,6 +198,9 @@ export function useCartViewModel(): CartViewModel {
       variationName,
       variationDescription,
     });
+
+    // Retorna o ID do item criado para poder ser usado para referência
+    return itemId;
   };
 
   // Adiciona um produto customizado ao carrinho
@@ -213,19 +217,12 @@ export function useCartViewModel(): CartViewModel {
       // Verificações importantes
       if (!companySlug) {
         console.error("Cannot add custom product: companySlug is empty");
-
         return;
       }
 
-      console.log("Adding custom product to cart:", {
-        productId: product.id,
-        companySlug,
-        companyName,
-        totalPrice,
-      });
-
-      // Gera um ID único para o item do carrinho
-      const itemId = `custom_${product.id}_${Date.now()}`;
+      // Gera um ID único com timestamp atual para garantir unicidade
+      const uniqueTimestamp = Date.now();
+      const itemId = `custom_${product.id}_${uniqueTimestamp}`;
 
       // Mapear as seleções para o formato do carrinho
       const customProductSteps = selections.map((step) => ({
@@ -250,15 +247,15 @@ export function useCartViewModel(): CartViewModel {
         imageUrl: product.imagem || undefined,
         description: product.descricao || undefined,
         observation,
-        companyId: product.empresa || "", // Usar o ID da empresa do produto
-        companySlug, // Garantindo que o companySlug está definido
+        companyId: product.empresa || "",
+        companySlug,
         companyName,
         isCustomProduct: true,
         customProductSteps,
       });
 
-      // Verificar se o item foi adicionado corretamente
-      console.log("Cart after adding custom product:", getCart(companySlug));
+      // Retorna o ID do item criado
+      return itemId;
     },
     [addItem, getCart]
   );

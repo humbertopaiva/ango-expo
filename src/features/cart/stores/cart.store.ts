@@ -126,65 +126,29 @@ export const useMultiCartStore = create<MultiCartState>()(
           companyName: item.companyName,
         };
 
-        // Verifica se o item já existe no carrinho
-        // Para produtos com variação, consideramos o productId + variationId
-        const existingItemIndex = currentCart.items.findIndex((i) => {
-          if (item.hasVariation && i.hasVariation) {
-            // Para produtos com variação, comparamos productId E variationId
-            return (
-              i.productId === item.productId &&
-              i.variationId === item.variationId
-            );
-          }
-          // Para produtos sem variação, mantemos a lógica original
-          return i.productId === item.productId && !i.hasVariation;
-        });
+        // Formatar o preço para exibição
+        const formattedPrice = formatPrice(item.price);
+        const totalPrice = item.price * item.quantity;
+        const formattedTotalPrice = formatPrice(totalPrice);
 
-        if (existingItemIndex >= 0) {
-          // Se já existe, atualiza a quantidade e observação
-          const newItems = [...currentCart.items];
-          const existingItem = newItems[existingItemIndex];
-          const newQuantity = existingItem.quantity + item.quantity;
+        // Adicionar como novo item, sem verificar se já existe
+        const newItem: CartItem = {
+          ...item,
+          priceFormatted: formattedPrice,
+          totalPrice,
+          totalPriceFormatted: formattedTotalPrice,
+        };
 
-          newItems[existingItemIndex] = {
-            ...existingItem,
-            quantity: newQuantity,
-            observation:
-              item.observation !== undefined
-                ? item.observation
-                : existingItem.observation,
-            totalPrice: existingItem.price * newQuantity,
-            totalPriceFormatted: formatPrice(existingItem.price * newQuantity),
-          };
+        const newItems = [...currentCart.items, newItem];
 
-          const updatedCart = {
-            ...currentCart,
-            items: newItems,
-            ...recalculateCart(newItems),
-          };
+        const updatedCart = {
+          ...currentCart,
+          items: newItems,
+          ...recalculateCart(newItems),
+        };
 
-          carts[companySlug] = updatedCart;
-          set({ carts, activeCartSlug: companySlug });
-        } else {
-          // Se não existe, adiciona ao carrinho
-          const newItem: CartItem = {
-            ...item,
-            priceFormatted: formatPrice(item.price),
-            totalPrice: item.price * item.quantity,
-            totalPriceFormatted: formatPrice(item.price * item.quantity),
-          };
-
-          const newItems = [...currentCart.items, newItem];
-
-          const updatedCart = {
-            ...currentCart,
-            items: newItems,
-            ...recalculateCart(newItems),
-          };
-
-          carts[companySlug] = updatedCart;
-          set({ carts, activeCartSlug: companySlug });
-        }
+        carts[companySlug] = updatedCart;
+        set({ carts, activeCartSlug: companySlug });
       },
 
       removeItem: (companySlug: string, itemId: string) => {

@@ -48,6 +48,7 @@ export interface CustomProductDetailViewModel {
   // Ações para confirmação
   showConfirmation: () => void;
   hideConfirmation: () => void;
+  resetState: () => void;
 }
 
 export function useCustomProductDetailViewModel(
@@ -280,6 +281,20 @@ export function useCustomProductDetailViewModel(
     });
   }, [product, getCurrentSelectionsForStep]);
 
+  const resetState = useCallback(() => {
+    // Reinicializar seleções
+    if (product) {
+      const initialSelections = product.passos.map((step) => ({
+        stepNumber: step.passo_numero,
+        selectedItems: [],
+      }));
+      setSelections(initialSelections);
+    }
+
+    setObservation("");
+    setShowObservationInput(false);
+  }, [product]);
+
   // Funções para o modal de confirmação
   const showConfirmation = useCallback(() => {
     setIsConfirmationVisible(true);
@@ -287,7 +302,17 @@ export function useCustomProductDetailViewModel(
 
   const hideConfirmation = useCallback(() => {
     setIsConfirmationVisible(false);
-  }, []);
+
+    // Resetar o estado
+    resetState();
+
+    // Voltar para a página da empresa
+    if (currentCompanySlug) {
+      router.replace(`/(drawer)/empresa/${currentCompanySlug}`);
+    } else {
+      router.back();
+    }
+  }, [currentCompanySlug, resetState]);
 
   // Add to cart function
   const addToCart = useCallback(() => {
@@ -313,14 +338,6 @@ export function useCustomProductDetailViewModel(
 
     // Usar o nome da empresa do contexto ou do produto
     const companyName = vm.profile?.nome || "Loja";
-
-    console.log("Adicionando produto customizado com:", {
-      productId: product.id,
-      companySlug: currentCompanySlug,
-      companyName,
-      selections,
-      totalPrice,
-    });
 
     // Adicionar ao carrinho usando a função específica
     cartVm.addCustomProduct(
@@ -400,5 +417,6 @@ export function useCustomProductDetailViewModel(
     toggleObservationInput,
     showConfirmation,
     hideConfirmation,
+    resetState,
   };
 }
