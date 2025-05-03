@@ -189,7 +189,7 @@ export function CartScreen() {
       else if (item.isCustomProduct) {
         customItems.push(item);
       }
-      // É um item principal normal
+      // É um item principal normal (incluindo produtos com variação)
       else {
         mainItems.push(item);
       }
@@ -280,33 +280,19 @@ export function CartScreen() {
               {mainItems.map((item) => {
                 const itemAddons = addonMap[item.id] || [];
 
-                if (itemAddons.length > 0) {
-                  // Renderizar como item com adicionais
-                  return (
-                    <CartItemWithAddons
-                      key={item.id}
-                      item={item}
-                      addons={itemAddons}
-                      onRemove={handleRemoveItemWithToast}
-                      onUpdateQuantity={handleUpdateQuantityWithToast}
-                      onUpdateObservation={cart.updateObservation}
-                      primaryColor={primaryColor}
-                    />
-                  );
-                } else {
-                  // Renderizar item normal (simples ou com variação)
-                  return (
-                    <CartItemComponent
-                      key={item.id}
-                      item={item}
-                      addons={[]} // Sem adicionais
-                      onRemove={handleRemoveItemWithToast}
-                      onUpdateQuantity={handleUpdateQuantityWithToast}
-                      onUpdateObservation={cart.updateObservation}
-                      primaryColor={primaryColor}
-                    />
-                  );
-                }
+                // Usar o mesmo componente para todos os produtos,
+                // apenas passando os adicionais quando existirem
+                return (
+                  <CartItemComponent
+                    key={item.id}
+                    item={item}
+                    addons={itemAddons}
+                    onRemove={handleRemoveItemWithToast}
+                    onUpdateQuantity={handleUpdateQuantityWithToast}
+                    onUpdateObservation={cart.updateObservation}
+                    primaryColor={primaryColor}
+                  />
+                );
               })}
             </View>
 
@@ -348,6 +334,47 @@ export function CartScreen() {
                 </HStack>
               </VStack>
             </Card>
+
+            {/* Opção de cupom */}
+            <View className="mb-6">
+              <TouchableOpacity
+                onPress={() => setShowCouponInput(!showCouponInput)}
+                className="flex-row justify-between items-center mb-2"
+              >
+                <HStack space="sm" alignItems="center">
+                  <Tag size={18} color={primaryColor} />
+                  <Text style={{ color: primaryColor }} className="font-medium">
+                    {showCouponInput
+                      ? "Ocultar cupom"
+                      : "Adicionar cupom de desconto"}
+                  </Text>
+                </HStack>
+                {showCouponInput ? (
+                  <ChevronUp size={18} color={primaryColor} />
+                ) : (
+                  <ChevronDown size={18} color={primaryColor} />
+                )}
+              </TouchableOpacity>
+
+              {showCouponInput && (
+                <HStack space="sm" className="mb-4">
+                  <TextInput
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg"
+                    placeholder="Digite o código do cupom"
+                    value={couponCode}
+                    onChangeText={setCouponCode}
+                    autoCapitalize="characters"
+                  />
+                  <TouchableOpacity
+                    onPress={handleApplyCoupon}
+                    className="px-4 py-2 rounded-lg"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <Text className="text-white font-medium">Aplicar</Text>
+                  </TouchableOpacity>
+                </HStack>
+              )}
+            </View>
           </ScrollView>
         )}
 

@@ -145,9 +145,20 @@ export const useMultiCartStore = create<MultiCartState>()(
         const totalPrice = item.price * item.quantity;
         const formattedTotalPrice = formatPrice(totalPrice);
 
-        // Adicionar como novo item, sem verificar se já existe
+        // Adicionar como novo item, verificando se é um adicional com parentItemId
+        const isAddon =
+          item.addons && item.addons.length > 0 && item.addons[0].parentItemId;
+
+        // Se for um adicional, garantir que o ID seja único e relacionado ao item pai
+        const itemId = isAddon
+          ? `addon_${item.productId}_${
+              item.addons?.[0]?.parentItemId
+            }_${Date.now()}`
+          : item.id;
+
         const newItem: CartItem = {
           ...item,
+          id: itemId, // Usar o ID gerado acima
           priceFormatted: formattedPrice,
           totalPrice,
           totalPriceFormatted: formattedTotalPrice,
