@@ -52,15 +52,6 @@ export function CheckoutScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScreenHeader
-        title={getStepTitle()}
-        subtitle="Finalize seu pedido"
-        showBackButton={true}
-        onBackPress={() =>
-          router.replace(`/(drawer)/empresa/${companySlug}/cart`)
-        }
-      />
-
       <CheckoutStepper
         currentStep={currentStep}
         onStepPress={goToStep}

@@ -65,28 +65,9 @@ export const CartCustomProductComponent: React.FC<CartCustomProductProps> = ({
             <Text className="font-semibold text-gray-800 text-base">
               {item.name}
             </Text>
-            <View
-              className="px-2 py-0.5 rounded-md"
-              style={{ backgroundColor: `${primaryColor}15` }}
-            >
-              <Text
-                className="text-xs font-medium"
-                style={{ color: primaryColor }}
-              >
-                Personalizado
-              </Text>
-            </View>
           </HStack>
 
-          {/* Badge de produto personalizado */}
-          <HStack alignItems="center" className="mt-1">
-            <Sparkles size={14} color={primaryColor} />
-            <Text className="text-xs text-gray-600 ml-1">
-              Produto montado por você
-            </Text>
-          </HStack>
-
-          <HStack className="justify-between items-center mt-1">
+          <HStack className="justify-between mt-1">
             <Text className="font-bold" style={{ color: primaryColor }}>
               {item.priceFormatted}
             </Text>
