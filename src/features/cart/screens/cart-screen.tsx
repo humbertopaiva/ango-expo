@@ -163,6 +163,28 @@ export function CartScreen() {
     }
   };
 
+  const handleClearCart = () => {
+    // Verificar se tem itens no carrinho
+    if (cart.items.length === 0) return;
+
+    Alert.alert(
+      "Limpar carrinho",
+      "Tem certeza que deseja remover todos os itens do carrinho?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Limpar",
+          style: "destructive",
+          onPress: () => {
+            // Limpar o carrinho atual
+            cart.clearCart();
+            toastUtils.success(toast, "Carrinho limpo com sucesso");
+          },
+        },
+      ]
+    );
+  };
+
   const processCartItems = () => {
     // Separate items into categories
     const mainItems: CartItem[] = [];
@@ -263,6 +285,15 @@ export function CartScreen() {
                 Seu pedido ({cart.items.length}{" "}
                 {cart.items.length === 1 ? "item" : "itens"})
               </Text>
+
+              {/* Botão de limpar carrinho */}
+              <TouchableOpacity
+                onPress={handleClearCart}
+                className="flex-row items-center py-1 px-3 rounded-lg bg-red-50"
+              >
+                <Trash2 size={14} color="#EF4444" className="mr-1" />
+                <Text className="text-red-500 text-sm">Limpar</Text>
+              </TouchableOpacity>
 
               {/* Render custom products first */}
               {customItems.length > 0 && (
