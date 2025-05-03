@@ -32,7 +32,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
   onUpdateQuantity,
   onUpdateObservation,
   primaryColor,
-  addons = [], // Valor padrão vazio
+  addons = [], // Default empty array
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempObservation, setTempObservation] = useState(
@@ -45,11 +45,11 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
     setIsEditing(false);
   };
 
-  // Calcular o total incluindo adicionais
+  // Calculate total including addons
   const calculateTotal = () => {
     let total = item.price * item.quantity;
 
-    // Adicionar o preço dos adicionais
+    // Add price of addons
     addons.forEach((addon) => {
       total += addon.price * addon.quantity;
     });
@@ -65,7 +65,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
   return (
     <Card className="mb-4 overflow-hidden shadow-sm border border-gray-100">
       <HStack space="md" className="p-3 border-b border-gray-100 bg-white">
-        {/* Imagem do produto */}
+        {/* Product image */}
         <View className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
           <ImagePreview
             uri={item.imageUrl}
@@ -76,13 +76,13 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
           />
         </View>
 
-        {/* Informações do produto */}
+        {/* Product information */}
         <VStack className="flex-1 justify-between">
           <Text className="font-semibold text-gray-800 text-base">
             {item.name}
           </Text>
 
-          {/* Badge de variação - já inclui o nome da variação */}
+          {/* Variation badge - includes the variation name */}
           {item.hasVariation && item.variationName && (
             <CartVariationBadge
               variationName={item.variationName}
@@ -90,14 +90,14 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
             />
           )}
 
-          {/* Descrição opcional */}
+          {/* Optional description */}
           {!item.hasVariation && item.description && (
             <Text className="text-gray-500 text-xs" numberOfLines={1}>
               {item.description}
             </Text>
           )}
 
-          {/* Indicador de adicionais */}
+          {/* Addons indicator */}
           {hasAddons && (
             <Text className="text-xs text-gray-500">
               {addons.length} {addons.length === 1 ? "adicional" : "adicionais"}{" "}
@@ -111,7 +111,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
               {hasAddons ? calculateTotal() : item.priceFormatted}
             </Text>
 
-            {/* Controles de quantidade */}
+            {/* Quantity controls */}
             <HStack className="items-center">
               <TouchableOpacity
                 onPress={() => onUpdateQuantity(item.id, item.quantity - 1)}
@@ -135,7 +135,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
         </VStack>
       </HStack>
 
-      {/* Seção de adicionais */}
+      {/* Addons section */}
       {hasAddons && (
         <>
           <TouchableOpacity
@@ -178,7 +178,7 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
         </>
       )}
 
-      {/* Área de observação */}
+      {/* Observation area */}
       <View className="p-3 bg-gray-50">
         {isEditing ? (
           <VStack space="sm">
@@ -242,9 +242,9 @@ export const CartItemComponent: React.FC<CartItemProps> = ({
 
               <TouchableOpacity
                 onPress={() => {
-                  // Remove todos os adicionais primeiro
+                  // Remove all addons first
                   addons.forEach((addon) => onRemove(addon.id));
-                  // Depois remove o item principal
+                  // Then remove the main item
                   onRemove(item.id);
                 }}
                 className="p-1 rounded-full"

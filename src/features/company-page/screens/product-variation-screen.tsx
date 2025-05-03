@@ -87,8 +87,8 @@ export function ProductVariationScreen() {
     const companySlug = vm.product.empresa.slug;
     const companyName = vm.product.empresa.nome;
 
-    // Usar a função específica para produtos com variação
-    cartVm.addProductWithVariation(
+    // Add the main product to the cart and capture the returned ID
+    const itemId = cartVm.addProductWithVariation(
       vm.product,
       companySlug,
       companyName,
@@ -102,22 +102,22 @@ export function ProductVariationScreen() {
       vm.observation
     );
 
-    // Adicionar os adicionais selecionados se houver
+    // Use the captured itemId as the parentItemId for addons
     vm.selectedAddons.forEach((addon) => {
       if (addon.quantity > 0) {
-        // Criar um identificador mais específico para o adicional
-        const uniqueParentId = `${vm.product?.id}_${vm.selectedVariation?.id}`;
-
         cartVm.addAddonToCart(
           addon.product,
           companySlug,
           companyName,
-          uniqueParentId,
+          itemId, // Use the exact ID returned from addProductWithVariation
           addon.quantity,
           `${vm.product?.nome} (${vm.selectedVariation?.name})`
         );
       }
     });
+
+    console.log("Added to cart with ID:", itemId);
+    console.log("Added addons:", vm.selectedAddons);
 
     // Show success toast
     toastUtils.success(

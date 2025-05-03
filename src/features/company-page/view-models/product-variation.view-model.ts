@@ -339,20 +339,10 @@ export function useProductVariationViewModel(
   const addToCart = useCallback(() => {
     if (!product || !vm.profile || !selectedVariation) return;
 
-    // Gerar timestamp único para este item
-    const timestamp = Date.now();
-    const uniqueItemId = `${product.id}_var_${selectedVariation.id}_${timestamp}`;
-
-    // Formatar adicionais para exibição na confirmação
-    const selectedAddonItems = selectedAddons.map((addon) => ({
-      name: addon.product.nome,
-      quantity: addon.quantity,
-    }));
-
     const companySlug = vm.profile.empresa.slug;
     const companyName = vm.profile.nome;
 
-    // Adicionar o produto principal ao carrinho e obter o ID gerado
+    // First add the main product with variation and SAVE THE RETURNED ID
     const itemId = cartVm.addProductWithVariation(
       product,
       companySlug,
@@ -367,37 +357,43 @@ export function useProductVariationViewModel(
       observation.trim()
     );
 
-    // Adicionar os adicionais selecionados usando o ID específico do item pai
+    console.log("Product added with ID:", itemId);
+
+    // Format addons for confirmation display
+    const selectedAddonItems = selectedAddons.map((addon) => ({
+      name: addon.product.nome,
+      quantity: addon.quantity,
+    }));
+
+    // Now add each addon using the EXACT same itemId
     selectedAddons.forEach((addon) => {
       if (addon.quantity > 0) {
         cartVm.addAddonToCart(
           addon.product,
           companySlug,
           companyName,
-          itemId, // Use o ID retornado pela função addProductWithVariation
+          itemId, // Use the EXACT ID returned from addProductWithVariation
           addon.quantity,
           `${product.nome} (${selectedVariation.name})`
         );
       }
     });
 
-    // Calcular o valor total para exibição
-    const variationPrice = parseFloat(
-      selectedVariation.promotional_price || selectedVariation.price
-    );
-    const totalAmount = variationPrice * quantity;
-
-    // Salvar informações do item para o modal de confirmação
+    // Save info for confirmation modal
     setLastAddedItem({
       productName: product.nome,
       quantity,
-      totalPrice: formatCurrency(totalAmount),
+      totalPrice: formatCurrency(
+        parseFloat(
+          selectedVariation.promotional_price || selectedVariation.price
+        ) * quantity
+      ),
       variationName: selectedVariation.name,
       addonItems: selectedAddonItems,
       observation: observation.trim(),
     });
 
-    // Mostrar modal de confirmação
+    // Show confirmation modal
     showConfirmation();
   }, [
     product,
@@ -409,7 +405,6 @@ export function useProductVariationViewModel(
     cartVm,
     showConfirmation,
   ]);
-
   // Share product
   const handleShareProduct = async () => {
     if (!product || !vm.profile) return;

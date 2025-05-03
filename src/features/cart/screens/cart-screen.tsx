@@ -164,19 +164,19 @@ export function CartScreen() {
   };
 
   const processCartItems = () => {
-    // Separar itens em categorias
+    // Separate items into categories
     const mainItems: CartItem[] = [];
     const customItems: CartItem[] = [];
     const addonMap: Record<string, CartItem[]> = {};
 
-    // Primeiro passo: identificar os itens que são adicionais
+    // First pass: identify addons by their parentItemId
     cart.items.forEach((item) => {
-      // Verificar se é um adicional (tem addons com parentItemId)
       if (
         item.addons &&
         item.addons.length > 0 &&
         item.addons[0].parentItemId
       ) {
+        // It's an addon
         const parentId = item.addons[0].parentItemId;
 
         if (!addonMap[parentId]) {
@@ -184,16 +184,20 @@ export function CartScreen() {
         }
 
         addonMap[parentId].push(item);
-      }
-      // Verificar se é um produto customizado
-      else if (item.isCustomProduct) {
+      } else if (item.isCustomProduct) {
+        // It's a custom product
         customItems.push(item);
-      }
-      // É um item principal normal (incluindo produtos com variação)
-      else {
+      } else {
+        // It's a main item (including products with variations)
         mainItems.push(item);
       }
     });
+
+    console.log(
+      "Main items:",
+      mainItems.map((item) => item.id)
+    );
+    console.log("Addon map keys:", Object.keys(addonMap));
 
     return { mainItems, customItems, addonMap };
   };
@@ -260,7 +264,7 @@ export function CartScreen() {
                 {cart.items.length === 1 ? "item" : "itens"})
               </Text>
 
-              {/* Renderizar produtos customizados primeiro */}
+              {/* Render custom products first */}
               {customItems.length > 0 && (
                 <>
                   {customItems.map((item) => (
@@ -276,12 +280,11 @@ export function CartScreen() {
                 </>
               )}
 
-              {/* Renderizar produtos normais */}
+              {/* Render normal products */}
               {mainItems.map((item) => {
                 const itemAddons = addonMap[item.id] || [];
+                console.log("Item Addons", itemAddons);
 
-                // Usar o mesmo componente para todos os produtos,
-                // apenas passando os adicionais quando existirem
                 return (
                   <CartItemComponent
                     key={item.id}
