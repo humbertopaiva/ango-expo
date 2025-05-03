@@ -49,7 +49,7 @@ const SearchField = memo(
   }) => (
     <Input
       size="md"
-      className="bg-gray-50"
+      className="bg-white"
       style={
         Platform.OS === "web"
           ? { width: "100%", maxWidth: 400, height: 50 }
@@ -66,10 +66,10 @@ const SearchField = memo(
         <InputIcon as={Search} color={THEME_COLORS.primary} />
       </InputSlot>
       <InputField
-        placeholder="Buscar produtos..."
+        placeholder="Digite o nome do produto..."
         value={searchText}
         onChangeText={onChangeText}
-        className="py-2.5 placeholder:font-sans "
+        className="py-2.5 placeholder:font-sans placeholder:text-sm "
       />
       {searchText ? (
         <InputSlot pr="$3">
