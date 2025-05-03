@@ -210,7 +210,7 @@ export function CartScreen() {
         {cartIsEmpty ? (
           // Exibe mensagem quando o carrinho está vazio
           <View className="flex-1 justify-center items-center px-4">
-            <Card className="p-8 items-center justify-center border border-gray-200 w-full max-w-md">
+            <View className="p-8 items-center justify-centerw-full max-w-md">
               <ShoppingBag size={64} color="#9CA3AF" className="mb-4" />
               <Text className="text-lg font-semibold text-gray-800 mb-2 text-center">
                 Seu carrinho está vazio
@@ -229,7 +229,7 @@ export function CartScreen() {
                   </Text>
                 </HStack>
               </Button>
-            </Card>
+            </View>
           </View>
         ) : (
           // Exibe os itens do carrinho

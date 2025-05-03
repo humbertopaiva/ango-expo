@@ -30,6 +30,7 @@ import {
 import { CategoryProductsList } from "./category-products-list";
 import { useCategoryFilterStore } from "../stores/category-filter.store";
 import { FeaturedProductsStrip } from "./featured-products-strip";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 // Constante para a categoria "Todos"
 const ALL_CATEGORIES = "Todos";
@@ -48,19 +49,27 @@ const SearchField = memo(
   }) => (
     <Input
       size="md"
-      className="bg-white border-gray-300 shadow-sm rounded-xl"
-      style={{
-        elevation: 2,
-      }}
+      className="bg-gray-50"
+      style={
+        Platform.OS === "web"
+          ? { width: "100%", maxWidth: 400, height: 50 }
+          : {
+              width: "100%",
+              height: 44,
+              borderColor: THEME_COLORS.primary,
+              borderWidth: 1,
+              borderRadius: 12,
+            }
+      }
     >
       <InputSlot pl="$3">
-        <InputIcon as={Search} color="#9CA3AF" />
+        <InputIcon as={Search} color={THEME_COLORS.primary} />
       </InputSlot>
       <InputField
-        placeholder="Buscar produtos2..."
+        placeholder="Buscar produtos..."
         value={searchText}
         onChangeText={onChangeText}
-        className="py-2.5 placeholder:font-sans"
+        className="py-2.5 placeholder:font-sans "
       />
       {searchText ? (
         <InputSlot pr="$3">
@@ -301,9 +310,19 @@ export function ProductsByCategory({
         <HStack className="items-center justify-between mb-4">
           <Text className="text-2xl font-semibold text-gray-800">{title}</Text>
         </HStack>
+      </View>
 
+      {/* Produtos em destaque (da vitrine) */}
+      {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
+        <MemoizedFeaturedProductsStrip />
+      )}
+
+      <View className="px-4">
         {/* Barra de pesquisa melhorada */}
         <View className="mb-4">
+          <Text className="text-gray-600 mb-2 font-sans text-lg">
+            Buscar produtos
+          </Text>
           <SearchField
             searchText={searchText}
             onChangeText={handleSearchTextChange}
@@ -319,11 +338,6 @@ export function ProductsByCategory({
           </View>
         )}
       </View>
-
-      {/* Produtos em destaque (da vitrine) */}
-      {vm.showcaseProducts && vm.showcaseProducts.length > 0 && (
-        <MemoizedFeaturedProductsStrip />
-      )}
 
       {/* Mensagem de nenhum produto encontrado */}
       {!hasCategories && (
