@@ -1,6 +1,6 @@
 // Path: src/features/checkout/components/personal-info-step.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -19,42 +19,133 @@ import {
   FormControl,
   FormControlError,
   FormControlErrorText,
+  useToast,
 } from "@gluestack-ui/themed";
-import { User, Phone, MapPin, Info } from "lucide-react-native";
+import { User, Phone, MapPin, Info, AlertCircle } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutDeliveryType, PersonalInfo } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { FormValidationFeedback } from "@/components/common/form-validation-feedback";
 import { maskPhoneNumber } from "../utils/checkout.utils";
 import { toastUtils } from "@/src/utils/toast.utils";
-import { useToast } from "@/src/providers/toast-provider";
 
 export function PersonalInfoStep() {
   const { checkout, personalInfoForm, savePersonalInfo, prevStep } =
     useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
+  const toast = useToast();
+
+  const [addressFieldsComplete, setAddressFieldsComplete] = useState(false);
+  const [showDataLoadedToast, setShowDataLoadedToast] = useState(false);
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
+  const [hadInitialValidValues, setHadInitialValidValues] = useState(false);
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid, isDirty },
-    reset,
+    formState: { errors, isValid, isDirty, isSubmitting },
     watch,
+    reset,
+    getValues,
+    trigger,
   } = personalInfoForm;
 
-  // Observar alterações em tempo real
+  // Observar alterações em tempo real para todos os campos
   const watchedFields = watch();
-
-  const [showDataLoadedToast, setShowDataLoadedToast] = useState(false);
-
-  // Inicializar o formulário com os valores do checkout
-  useEffect(() => {
-    if (checkout.personalInfo.fullName && !showDataLoadedToast) {
-      setShowDataLoadedToast(true);
-    }
-  }, [checkout.personalInfo]);
-
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
+
+  // Verificar se os campos de endereço estão preenchidos quando é entrega
+  const verifyAddressFields = useCallback(() => {
+    if (!isDelivery) {
+      setAddressFieldsComplete(true);
+      return true;
+    }
+
+    const values = getValues();
+    const isComplete = !!(
+      values.address &&
+      values.address.trim().length >= 5 &&
+      values.number &&
+      values.number.trim().length >= 1 &&
+      values.neighborhood &&
+      values.neighborhood.trim().length >= 3
+    );
+
+    setAddressFieldsComplete(isComplete);
+    return isComplete;
+  }, [isDelivery, getValues]);
+
+  // Verificar inicialmente se já tinha valores válidos
+  useEffect(() => {
+    if (!isFormInitialized && checkout.personalInfo) {
+      const hasValidData = !!(
+        checkout.personalInfo.fullName &&
+        checkout.personalInfo.fullName.length >= 5 &&
+        checkout.personalInfo.whatsapp &&
+        checkout.personalInfo.whatsapp.length >= 11
+      );
+
+      // Verificar se os campos de endereço já estão preenchidos, caso seja entrega
+      const hasValidAddress =
+        !isDelivery ||
+        !!(
+          checkout.personalInfo.address &&
+          checkout.personalInfo.address.length >= 5 &&
+          checkout.personalInfo.number &&
+          checkout.personalInfo.number.length >= 1 &&
+          checkout.personalInfo.neighborhood &&
+          checkout.personalInfo.neighborhood.length >= 3
+        );
+
+      setHadInitialValidValues(hasValidData && hasValidAddress);
+
+      // Mostrar toast apenas se tiver dados carregados válidos
+      if (hasValidData) {
+        setShowDataLoadedToast(true);
+      }
+
+      setIsFormInitialized(true);
+    }
+  }, [checkout.personalInfo, isDelivery, isFormInitialized]);
+
+  // Inicializar ou resetar o formulário quando o tipo de entrega muda
+  useEffect(() => {
+    // Reset com os dados atuais do checkout
+    reset({
+      ...checkout.personalInfo,
+    });
+
+    // Verificar campos após reset
+    setTimeout(() => {
+      verifyAddressFields();
+      trigger();
+    }, 100);
+  }, [
+    checkout.deliveryType,
+    checkout.personalInfo,
+    reset,
+    trigger,
+    verifyAddressFields,
+  ]);
+
+  // Verificar campos sempre que algum valor mudar
+  useEffect(() => {
+    verifyAddressFields();
+  }, [watchedFields, verifyAddressFields]);
+
+  // Função para validar e salvar dados
+  const handleSavePersonalInfo = async (data: PersonalInfo) => {
+    // Verificação adicional para entrega
+    if (isDelivery && !verifyAddressFields()) {
+      toastUtils.error(
+        toast,
+        "Preencha todos os campos de endereço corretamente"
+      );
+      return;
+    }
+
+    await savePersonalInfo(data);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -62,17 +153,29 @@ export function PersonalInfoStep() {
       style={{ flex: 1 }}
       keyboardVerticalOffset={100}
     >
-      {showDataLoadedToast && (
-        <View className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-          <HStack space="sm" alignItems="center">
-            <Info size={18} color="#3B82F6" />
-            <Text className="text-sm text-blue-700">
-              Seus dados foram recuperados automaticamente
-            </Text>
-          </HStack>
-        </View>
-      )}
       <ScrollView className="flex-1 p-4">
+        {showDataLoadedToast && hadInitialValidValues && (
+          <View className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <HStack space="sm" alignItems="center">
+              <Info size={18} color="#3B82F6" />
+              <Text className="text-sm text-blue-700">
+                Seus dados foram recuperados automaticamente
+              </Text>
+            </HStack>
+          </View>
+        )}
+
+        {isDelivery && !addressFieldsComplete && (
+          <View className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-100">
+            <HStack space="sm" alignItems="center">
+              <AlertCircle size={18} color="#F59E0B" />
+              <Text className="text-sm text-amber-700">
+                Preencha todos os campos de endereço para entrega
+              </Text>
+            </HStack>
+          </View>
+        )}
+
         <Card className="p-4 mb-4 border border-gray-100">
           <Text className="text-lg font-semibold text-gray-800 mb-4">
             Seus Dados
@@ -80,17 +183,33 @@ export function PersonalInfoStep() {
 
           <VStack space="md">
             {/* Nome completo */}
-            <FormControl isInvalid={!!errors.fullName}>
+            <FormControl isInvalid={!!errors.fullName} isRequired>
+              <HStack alignItems="center">
+                <User size={16} color="#6B7280" />
+                <Text className="ml-2 text-gray-700 font-medium">
+                  Nome completo
+                </Text>
+              </HStack>
               <Controller
                 control={control}
                 name="fullName"
+                rules={{
+                  required: "Nome completo é obrigatório",
+                  minLength: {
+                    value: 5,
+                    message: "Nome deve ter pelo menos 5 caracteres",
+                  },
+                }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input>
                     <InputField
                       placeholder="Nome completo"
                       value={value}
                       onChangeText={onChange}
-                      onBlur={onBlur}
+                      onBlur={() => {
+                        onBlur();
+                        trigger("fullName");
+                      }}
                     />
                   </Input>
                 )}
@@ -103,21 +222,37 @@ export function PersonalInfoStep() {
             </FormControl>
 
             {/* WhatsApp com máscara */}
-            <FormControl isInvalid={!!errors.whatsapp}>
+            <FormControl isInvalid={!!errors.whatsapp} isRequired>
+              <HStack alignItems="center">
+                <Phone size={16} color="#6B7280" />
+                <Text className="ml-2 text-gray-700 font-medium">
+                  WhatsApp com DDD
+                </Text>
+              </HStack>
               <Controller
                 control={control}
                 name="whatsapp"
+                rules={{
+                  required: "WhatsApp é obrigatório",
+                  minLength: {
+                    value: 11,
+                    message: "Digite um número válido com DDD",
+                  },
+                }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input>
                     <InputField
-                      placeholder="WhatsApp (com DDD)"
+                      placeholder="(00) 0 0000-0000"
                       value={maskPhoneNumber(value)}
                       onChangeText={(text) => {
                         // Permitir apenas números
                         const cleaned = text.replace(/\D/g, "");
                         onChange(cleaned);
                       }}
-                      onBlur={onBlur}
+                      onBlur={() => {
+                        onBlur();
+                        trigger("whatsapp");
+                      }}
                       keyboardType="phone-pad"
                     />
                   </Input>
@@ -133,22 +268,36 @@ export function PersonalInfoStep() {
             {/* Campos de endereço (apenas se for entrega) */}
             {isDelivery && (
               <>
-                <Text className="text-lg font-semibold text-gray-800 mb-1 mt-2">
+                <Text className="text-lg font-semibold text-gray-800 mb-1 mt-4">
                   Endereço de Entrega
                 </Text>
 
                 {/* Rua */}
-                <FormControl isInvalid={!!errors.address}>
+                <FormControl isInvalid={!!errors.address} isRequired>
+                  <HStack alignItems="center">
+                    <MapPin size={16} color="#6B7280" />
+                    <Text className="ml-2 text-gray-700 font-medium">
+                      Rua/Avenida
+                    </Text>
+                  </HStack>
                   <Controller
                     control={control}
                     name="address"
+                    rules={{
+                      required: "Endereço é obrigatório",
+                      minLength: { value: 5, message: "Endereço muito curto" },
+                    }}
                     render={({ field: { onChange, onBlur, value } }) => (
                       <Input>
                         <InputField
                           placeholder="Rua/Avenida"
                           value={value}
                           onChangeText={onChange}
-                          onBlur={onBlur}
+                          onBlur={() => {
+                            onBlur();
+                            trigger("address");
+                            verifyAddressFields();
+                          }}
                         />
                       </Input>
                     )}
@@ -165,17 +314,26 @@ export function PersonalInfoStep() {
                   <FormControl
                     isInvalid={!!errors.number}
                     className="w-1/3 mr-2"
+                    isRequired
                   >
+                    <Text className="text-gray-700 font-medium mb-1">
+                      Número
+                    </Text>
                     <Controller
                       control={control}
                       name="number"
+                      rules={{ required: "Número é obrigatório" }}
                       render={({ field: { onChange, onBlur, value } }) => (
                         <Input>
                           <InputField
                             placeholder="Número"
                             value={value}
                             onChangeText={onChange}
-                            onBlur={onBlur}
+                            onBlur={() => {
+                              onBlur();
+                              trigger("number");
+                              verifyAddressFields();
+                            }}
                             keyboardType="numeric"
                           />
                         </Input>
@@ -191,17 +349,29 @@ export function PersonalInfoStep() {
                   <FormControl
                     isInvalid={!!errors.neighborhood}
                     className="flex-1"
+                    isRequired
                   >
+                    <Text className="text-gray-700 font-medium mb-1">
+                      Bairro
+                    </Text>
                     <Controller
                       control={control}
                       name="neighborhood"
+                      rules={{
+                        required: "Bairro é obrigatório",
+                        minLength: { value: 3, message: "Bairro muito curto" },
+                      }}
                       render={({ field: { onChange, onBlur, value } }) => (
                         <Input>
                           <InputField
                             placeholder="Bairro"
                             value={value}
                             onChangeText={onChange}
-                            onBlur={onBlur}
+                            onBlur={() => {
+                              onBlur();
+                              trigger("neighborhood");
+                              verifyAddressFields();
+                            }}
                           />
                         </Input>
                       )}
@@ -225,6 +395,9 @@ export function PersonalInfoStep() {
 
                 {/* Ponto de referência (opcional) */}
                 <FormControl>
+                  <Text className="text-gray-700 font-medium mb-1">
+                    Ponto de referência (opcional)
+                  </Text>
                   <Controller
                     control={control}
                     name="reference"
@@ -244,7 +417,7 @@ export function PersonalInfoStep() {
             )}
 
             <FormValidationFeedback
-              isValid={isValid && isDirty}
+              isValid={isDelivery ? isValid && addressFieldsComplete : isValid}
               isPartiallyValid={isDirty && !isValid}
               validMessage={
                 isDelivery
@@ -263,17 +436,28 @@ export function PersonalInfoStep() {
         </Card>
 
         <HStack space="md" className="mb-8">
-          <Button onPress={prevStep} variant="outline" className="flex-1">
+          <Button
+            onPress={prevStep}
+            variant="outline"
+            className="flex-1"
+            isDisabled={isSubmitting}
+          >
             <Text className="font-medium">Voltar</Text>
           </Button>
 
           <Button
-            onPress={handleSubmit(savePersonalInfo)}
+            onPress={handleSubmit(handleSavePersonalInfo)}
             style={{ backgroundColor: primaryColor }}
-            isDisabled={!isValid}
+            isDisabled={
+              isSubmitting || (isDelivery && !addressFieldsComplete) || !isValid
+            }
             className="flex-1"
           >
-            <Text className="text-white font-medium">Continuar</Text>
+            {isSubmitting ? (
+              <Text className="text-white font-medium">Processando...</Text>
+            ) : (
+              <Text className="text-white font-medium">Continuar</Text>
+            )}
           </Button>
         </HStack>
       </ScrollView>

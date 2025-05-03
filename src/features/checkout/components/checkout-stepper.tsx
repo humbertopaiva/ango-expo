@@ -1,6 +1,7 @@
 // Path: src/features/checkout/components/checkout-stepper.tsx
+
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Animated } from "react-native";
 import { HStack } from "@gluestack-ui/themed";
 import {
   Check,
@@ -10,6 +11,7 @@ import {
   CheckCircle,
 } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { useEffect, useRef } from "react";
 
 interface CheckoutStepperProps {
   currentStep: number;
@@ -23,6 +25,18 @@ export function CheckoutStepper({
   allowNavigation = false,
 }: CheckoutStepperProps) {
   const primaryColor = THEME_COLORS.primary;
+
+  // Animação para progresso
+  const progressAnimation = useRef(new Animated.Value(0)).current;
+
+  // Calcular a largura da barra de progresso com base no passo atual
+  useEffect(() => {
+    Animated.timing(progressAnimation, {
+      toValue: currentStep / 3, // 4 passos total, normalizado para 0-1
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [currentStep, progressAnimation]);
 
   // Define os passos
   const steps = [
@@ -40,6 +54,20 @@ export function CheckoutStepper({
 
   return (
     <View className="px-4 py-3 bg-white border-b border-gray-200">
+      {/* Barra de progresso animada */}
+      <View className="h-1 bg-gray-200 mb-3 rounded-full overflow-hidden">
+        <Animated.View
+          className="h-full"
+          style={{
+            width: progressAnimation.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["0%", "100%"],
+            }),
+            backgroundColor: primaryColor,
+          }}
+        />
+      </View>
+
       <HStack className="justify-between">
         {steps.map((step, index) => {
           const StepIcon = step.icon;
