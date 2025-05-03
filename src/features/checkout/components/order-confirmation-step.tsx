@@ -1,4 +1,5 @@
 // Path: src/features/checkout/components/order-confirmation-step.tsx
+
 import React from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { Card, VStack, HStack, Button, Divider } from "@gluestack-ui/themed";
@@ -13,6 +14,7 @@ import {
   Smartphone,
   Banknote,
   ShoppingBag,
+  Sparkles,
 } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import {
@@ -20,6 +22,7 @@ import {
   CheckoutPaymentMethod,
 } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { CartProcessorService } from "../services/cart-processor.service";
 
 export function OrderConfirmationStep() {
   const { checkout, isProcessing, finalizeOrder, prevStep } =
@@ -27,6 +30,11 @@ export function OrderConfirmationStep() {
   const primaryColor = THEME_COLORS.primary;
 
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
+
+  // Usar o CartProcessorService para processar os itens
+  const { mainItems, addons, customItems } = CartProcessorService.processItems(
+    checkout.items
+  );
 
   // Ícone para método de pagamento
   const getPaymentIcon = () => {
@@ -150,25 +158,79 @@ export function OrderConfirmationStep() {
           </Text>
 
           <VStack className="bg-gray-50 p-3 rounded-lg">
-            {checkout.items.map((item) => (
+            {/* Produtos normais com adicionais */}
+            {mainItems.map((item) => (
               <View key={item.id} className="mb-2">
                 <HStack className="justify-between">
-                  <HStack className="items-center">
-                    <ShoppingBag size={14} color="#6B7280" />
-                    <Text className="ml-2 text-gray-700">
-                      {item.quantity}x {item.name}
-                    </Text>
-                  </HStack>
-                  <Text className="font-medium text-gray-800">
+                  <VStack className="flex-1">
+                    <HStack className="items-center">
+                      <ShoppingBag size={14} color="#6B7280" />
+                      <Text className="ml-2 text-gray-700">
+                        {item.quantity}x {item.name}
+                        {item.hasVariation && item.variationName
+                          ? ` (${item.variationName})`
+                          : ""}
+                      </Text>
+                    </HStack>
+
+                    {/* Adicionais do item principal */}
+                    {addons[item.id]?.map((addon, addonIndex) => (
+                      <Text
+                        key={`addon-${addonIndex}`}
+                        className="text-xs text-gray-500 ml-6"
+                      >
+                        + {addon.quantity}x {addon.name}
+                      </Text>
+                    ))}
+
+                    {/* Observação do item */}
+                    {item.observation && (
+                      <Text className="text-xs text-gray-500 ml-6">
+                        Obs: {item.observation}
+                      </Text>
+                    )}
+                  </VStack>
+                  <Text className="font-medium text-gray-700">
                     {item.totalPriceFormatted}
                   </Text>
                 </HStack>
+              </View>
+            ))}
 
-                {item.observation && (
-                  <Text className="text-sm text-gray-500 ml-6">
-                    Obs: {item.observation}
+            {/* Produtos customizados */}
+            {customItems.map((item) => (
+              <View key={item.id} className="mb-2">
+                <HStack className="justify-between">
+                  <VStack className="flex-1">
+                    <HStack className="items-center">
+                      <Sparkles size={14} color="#6B7280" />
+                      <Text className="ml-2 text-gray-700">
+                        {item.quantity}x {item.name} (Personalizado)
+                      </Text>
+                    </HStack>
+
+                    {/* Detalhes dos passos customizados (simplificados) */}
+                    {item.customProductSteps?.map((step, stepIndex) => (
+                      <Text
+                        key={`step-${stepIndex}`}
+                        className="text-xs text-gray-500 ml-6"
+                      >
+                        {step.stepName && `${step.stepName}: `}
+                        {step.selectedItems.map((i) => i.name).join(", ")}
+                      </Text>
+                    ))}
+
+                    {/* Observação do item */}
+                    {item.observation && (
+                      <Text className="text-xs text-gray-500 ml-6">
+                        Obs: {item.observation}
+                      </Text>
+                    )}
+                  </VStack>
+                  <Text className="font-medium text-gray-700">
+                    {item.totalPriceFormatted}
                   </Text>
-                )}
+                </HStack>
               </View>
             ))}
 
