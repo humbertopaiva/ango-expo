@@ -341,7 +341,7 @@ export function useProductVariationViewModel(
 
     // Gerar timestamp único para este item
     const timestamp = Date.now();
-    const uniqueItemId = `${product.id}_${selectedVariation.id}_${timestamp}`;
+    const uniqueItemId = `${product.id}_var_${selectedVariation.id}_${timestamp}`;
 
     // Formatar adicionais para exibição na confirmação
     const selectedAddonItems = selectedAddons.map((addon) => ({
@@ -352,8 +352,8 @@ export function useProductVariationViewModel(
     const companySlug = vm.profile.empresa.slug;
     const companyName = vm.profile.nome;
 
-    // Adicionar o produto principal ao carrinho
-    cartVm.addProductWithVariation(
+    // Adicionar o produto principal ao carrinho e obter o ID gerado
+    const itemId = cartVm.addProductWithVariation(
       product,
       companySlug,
       companyName,
@@ -367,14 +367,14 @@ export function useProductVariationViewModel(
       observation.trim()
     );
 
-    // Adicionar os adicionais selecionados
+    // Adicionar os adicionais selecionados usando o ID específico do item pai
     selectedAddons.forEach((addon) => {
       if (addon.quantity > 0) {
         cartVm.addAddonToCart(
           addon.product,
           companySlug,
           companyName,
-          uniqueItemId,
+          itemId,
           addon.quantity,
           `${product.nome} (${selectedVariation.name})`
         );

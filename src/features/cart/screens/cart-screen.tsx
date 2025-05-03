@@ -169,9 +169,9 @@ export function CartScreen() {
     const customItems: CartItem[] = [];
     const addonMap: Record<string, CartItem[]> = {};
 
-    // Separar itens em categorias
+    // Primeiro passo: identificar os itens que são adicionais
     cart.items.forEach((item) => {
-      // Verificar se é um adicional
+      // Verificar se é um adicional (tem addons com parentItemId)
       if (
         item.addons &&
         item.addons.length > 0 &&
@@ -281,7 +281,7 @@ export function CartScreen() {
                 const itemAddons = addonMap[item.id] || [];
 
                 if (itemAddons.length > 0) {
-                  // Renderizar item com adicionais
+                  // Renderizar como item com adicionais
                   return (
                     <CartItemWithAddons
                       key={item.id}
@@ -294,11 +294,12 @@ export function CartScreen() {
                     />
                   );
                 } else {
-                  // Renderizar item normal
+                  // Renderizar item normal (simples ou com variação)
                   return (
                     <CartItemComponent
                       key={item.id}
                       item={item}
+                      addons={[]} // Sem adicionais
                       onRemove={handleRemoveItemWithToast}
                       onUpdateQuantity={handleUpdateQuantityWithToast}
                       onUpdateObservation={cart.updateObservation}

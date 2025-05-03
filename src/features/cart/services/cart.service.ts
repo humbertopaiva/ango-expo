@@ -185,14 +185,14 @@ export class CartService {
     addon: CompanyProduct,
     companySlug: string,
     companyName: string,
-    parentItemId: string, // ID do item principal ao qual este adicional está conectado
+    parentItemId: string,
     quantity: number = 1,
     parentItemName: string = "item"
   ): void {
     const store = useMultiCartStore.getState();
 
     // Gera um ID único para o item adicional
-    const itemId = `addon_${addon.id}_${Date.now()}`;
+    const itemId = `addon_${addon.id}_${parentItemId}_${Date.now()}`;
     const price = parseFloat(addon.preco_promocional || addon.preco);
 
     store.addItem(companySlug, {

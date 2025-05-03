@@ -53,7 +53,7 @@ export interface CartViewModel {
     variationDescription?: string,
     quantity?: number,
     observation?: string
-  ) => void;
+  ) => string;
   addCustomProduct: (
     product: CustomProductDetail,
     companySlug: string,
@@ -176,7 +176,8 @@ export function useCartViewModel(): CartViewModel {
     variationDescription?: string,
     quantity: number = 1,
     observation?: string
-  ) => {
+  ): string => {
+    // Declara explicitamente que retorna string
     // Gera um ID único baseado no timestamp atual para garantir que cada adição seja um novo item
     const uniqueTimestamp = Date.now();
     const itemId = `${product.id}_var_${variationId}_${uniqueTimestamp}`;
@@ -199,7 +200,7 @@ export function useCartViewModel(): CartViewModel {
       variationDescription,
     });
 
-    // Retorna o ID do item criado para poder ser usado para referência
+    // Retorna o ID do item criado explicitamente
     return itemId;
   };
 
