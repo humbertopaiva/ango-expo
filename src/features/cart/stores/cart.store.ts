@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storage } from "@/src/lib/storage";
 import { Cart, CartItem, emptyCart } from "../models/cart";
+import { DeliveryInfoService } from "../services/delivery-info.service";
 
 // Tipo para armazenar múltiplos carrinhos
 interface MultiCartState {
@@ -10,11 +11,19 @@ interface MultiCartState {
   carts: Record<string, Cart>;
   // Carrinho ativo atualmente
   activeCartSlug: string | null;
+  // Taxas de entrega por empresa
+  deliveryFees: Record<string, number>;
+  // Modo de entrega por empresa (true = entrega, false = retirada)
+  isDeliveryMode: Record<string, boolean>;
 
   // Ações para gerenciar carrinhos
   getCart: (companySlug: string) => Cart;
   setActiveCart: (companySlug: string) => void;
   clearActiveCart: () => void;
+
+  // Ações para gerenciar entrega
+  setDeliveryFee: (companySlug: string, fee: number) => void;
+  setDeliveryMode: (companySlug: string, isDelivery: boolean) => void;
 
   // Ações para gerenciar itens
   addItem: (
@@ -58,10 +67,18 @@ const formatPrice = (price: number): string => {
 
 // Helper para recalcular totais
 const recalculateCart = (
-  items: CartItem[]
+  items: CartItem[],
+  companySlug: string,
+  isDelivery: boolean = true,
+  deliveryFee: number = 0
 ): Pick<
   Cart,
-  "subtotal" | "subtotalFormatted" | "total" | "totalFormatted"
+  | "subtotal"
+  | "subtotalFormatted"
+  | "deliveryFee"
+  | "deliveryFeeFormatted"
+  | "total"
+  | "totalFormatted"
 > => {
   // Mapping for main items and their addons
   const mainItems: CartItem[] = [];
@@ -97,11 +114,19 @@ const recalculateCart = (
     return sum + itemTotal + addonsTotal;
   }, 0);
 
+  // Aplicar a taxa de entrega apenas se o método de entrega for selecionado
+  const finalDeliveryFee = isDelivery ? deliveryFee : 0;
+
+  // Calcular o total (subtotal + taxa de entrega)
+  const total = subtotal + finalDeliveryFee;
+
   return {
     subtotal,
     subtotalFormatted: formatPrice(subtotal),
-    total: subtotal, // For now without delivery fee
-    totalFormatted: formatPrice(subtotal),
+    deliveryFee: finalDeliveryFee,
+    deliveryFeeFormatted: formatPrice(finalDeliveryFee),
+    total,
+    totalFormatted: formatPrice(total),
   };
 };
 
@@ -111,6 +136,8 @@ export const useMultiCartStore = create<MultiCartState>()(
     (set, get) => ({
       carts: {},
       activeCartSlug: null,
+      deliveryFees: {},
+      isDeliveryMode: {},
 
       getCart: (companySlug: string) => {
         const cart = get().carts[companySlug];
@@ -125,6 +152,54 @@ export const useMultiCartStore = create<MultiCartState>()(
         set({ activeCartSlug: null });
       },
 
+      setDeliveryFee: (companySlug: string, fee: number) => {
+        const deliveryFees = { ...get().deliveryFees };
+        deliveryFees[companySlug] = fee;
+
+        // Recalcular o carrinho com a nova taxa
+        const carts = { ...get().carts };
+        const currentCart = carts[companySlug];
+
+        if (currentCart) {
+          const isDelivery = get().isDeliveryMode[companySlug] !== false;
+
+          const updatedCart = {
+            ...currentCart,
+            ...recalculateCart(currentCart.items, companySlug, isDelivery, fee),
+            isDelivery,
+          };
+
+          carts[companySlug] = updatedCart;
+          set({ carts, deliveryFees });
+        } else {
+          set({ deliveryFees });
+        }
+      },
+
+      setDeliveryMode: (companySlug: string, isDelivery: boolean) => {
+        const isDeliveryMode = { ...get().isDeliveryMode };
+        isDeliveryMode[companySlug] = isDelivery;
+
+        // Recalcular o carrinho com o novo modo
+        const carts = { ...get().carts };
+        const currentCart = carts[companySlug];
+
+        if (currentCart) {
+          const fee = get().deliveryFees[companySlug] || 0;
+
+          const updatedCart = {
+            ...currentCart,
+            isDelivery,
+            ...recalculateCart(currentCart.items, companySlug, isDelivery, fee),
+          };
+
+          carts[companySlug] = updatedCart;
+          set({ carts, isDeliveryMode });
+        } else {
+          set({ isDeliveryMode });
+        }
+      },
+
       addItem: (companySlug: string, item) => {
         const carts = { ...get().carts };
         const currentCart = carts[companySlug] || {
@@ -132,6 +207,7 @@ export const useMultiCartStore = create<MultiCartState>()(
           companyId: item.companyId,
           companySlug: companySlug,
           companyName: item.companyName,
+          isDelivery: get().isDeliveryMode[companySlug] !== false,
         };
 
         // Formatar o preço para exibição
@@ -160,10 +236,15 @@ export const useMultiCartStore = create<MultiCartState>()(
 
         const newItems = [...currentCart.items, newItem];
 
+        // Obter o modo de entrega e taxa atuais
+        const isDelivery = get().isDeliveryMode[companySlug] !== false;
+        const deliveryFee = get().deliveryFees[companySlug] || 0;
+
         const updatedCart = {
           ...currentCart,
           items: newItems,
-          ...recalculateCart(newItems),
+          isDelivery,
+          ...recalculateCart(newItems, companySlug, isDelivery, deliveryFee),
         };
 
         carts[companySlug] = updatedCart;
@@ -191,10 +272,14 @@ export const useMultiCartStore = create<MultiCartState>()(
           return;
         }
 
+        // Obter o modo de entrega e taxa atuais
+        const isDelivery = get().isDeliveryMode[companySlug] !== false;
+        const deliveryFee = get().deliveryFees[companySlug] || 0;
+
         const updatedCart = {
           ...currentCart,
           items: newItems,
-          ...recalculateCart(newItems),
+          ...recalculateCart(newItems, companySlug, isDelivery, deliveryFee),
         };
 
         carts[companySlug] = updatedCart;
@@ -226,10 +311,14 @@ export const useMultiCartStore = create<MultiCartState>()(
           return item;
         });
 
+        // Obter o modo de entrega e taxa atuais
+        const isDelivery = get().isDeliveryMode[companySlug] !== false;
+        const deliveryFee = get().deliveryFees[companySlug] || 0;
+
         const updatedCart = {
           ...currentCart,
           items: newItems,
-          ...recalculateCart(newItems),
+          ...recalculateCart(newItems, companySlug, isDelivery, deliveryFee),
         };
 
         carts[companySlug] = updatedCart;
@@ -309,7 +398,12 @@ export const useMultiCartStore = create<MultiCartState>()(
       },
 
       clearAllCarts: () => {
-        set({ carts: {}, activeCartSlug: null });
+        set({
+          carts: {},
+          activeCartSlug: null,
+          deliveryFees: {},
+          isDeliveryMode: {},
+        });
       },
     }),
     {
