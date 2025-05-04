@@ -1,7 +1,11 @@
 // Path: src/features/checkout/services/cart-processor.service.ts
 
 import { CartItem } from "../../cart/models/cart";
-import { CheckoutData } from "../models/checkout";
+import {
+  CheckoutData,
+  CheckoutDeliveryType,
+  CheckoutPaymentMethod,
+} from "../models/checkout";
 
 interface ProcessedCartItems {
   mainItems: CartItem[];
@@ -120,6 +124,28 @@ export class CartProcessorService {
   }
 
   /**
+   * Calcula o total do pedido incluindo todos os tipos de itens e taxa de entrega
+   * @param items Lista de itens do carrinho
+   * @param isDelivery Se a entrega está selecionada
+   * @param deliveryFee Valor da taxa de entrega
+   * @returns Valor total do pedido
+   */
+  static calculateOrderTotalWithDelivery(
+    items: CartItem[],
+    isDelivery: boolean = true,
+    deliveryFee: number = 0
+  ): number {
+    // Calcular o subtotal dos itens
+    const subtotal = this.calculateOrderTotal(items);
+
+    // Adicionar taxa de entrega se o método de entrega for selecionado
+    const finalDeliveryFee = isDelivery ? deliveryFee : 0;
+
+    // Retornar o valor total
+    return subtotal + finalDeliveryFee;
+  }
+
+  /**
    * Formata os itens para a mensagem de WhatsApp no checkout
    * @param checkoutData Dados do checkout
    * @returns Mensagem formatada
@@ -132,9 +158,11 @@ export class CartProcessorService {
       deliveryType,
       companyName,
       total,
+      subtotal,
+      deliveryFee,
     } = checkoutData;
 
-    // Processar os itens
+    // Processar os itens em categorias
     const { mainItems, addons, customItems } = this.processItems(items);
 
     // Cabeçalho
@@ -142,7 +170,9 @@ export class CartProcessorService {
 
     // Tipo de entrega
     message += `*Tipo de entrega:* ${
-      deliveryType === "delivery" ? "Entrega" : "Retirada no local"
+      deliveryType === CheckoutDeliveryType.DELIVERY
+        ? "Entrega"
+        : "Retirada no local"
     }\n\n`;
 
     // Dados do cliente
@@ -151,7 +181,7 @@ export class CartProcessorService {
     message += `WhatsApp: ${personalInfo.whatsapp}\n`;
 
     // Endereço (se for entrega)
-    if (deliveryType === "delivery") {
+    if (deliveryType === CheckoutDeliveryType.DELIVERY) {
       message += `\n*ENDEREÇO DE ENTREGA:*\n`;
       message += `${personalInfo.address}, ${personalInfo.number}\n`;
       message += `Bairro: ${personalInfo.neighborhood}\n`;
@@ -215,21 +245,21 @@ export class CartProcessorService {
       }
     });
 
-    // Forma de pagamento
+    // Adicionar informações de pagamento de forma mais clara
     message += `\n*PAGAMENTO:*\n`;
     let paymentMethodText = "";
 
     switch (paymentInfo.method) {
-      case "pix":
+      case CheckoutPaymentMethod.PIX:
         paymentMethodText = "PIX";
         break;
-      case "credit_card":
+      case CheckoutPaymentMethod.CREDIT_CARD:
         paymentMethodText = "Cartão de Crédito";
         break;
-      case "debit_card":
+      case CheckoutPaymentMethod.DEBIT_CARD:
         paymentMethodText = "Cartão de Débito";
         break;
-      case "cash":
+      case CheckoutPaymentMethod.CASH:
         paymentMethodText = "Dinheiro";
         if (paymentInfo.change) {
           paymentMethodText += ` (Troco para R$ ${paymentInfo.change})`;
@@ -238,6 +268,24 @@ export class CartProcessorService {
     }
 
     message += `Forma de pagamento: ${paymentMethodText}\n`;
+
+    // Adicionar detalhamento do valor com taxa de entrega
+    message += `Subtotal: ${subtotal.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })}\n`;
+
+    if (deliveryType === CheckoutDeliveryType.DELIVERY) {
+      message += `Taxa de entrega: ${
+        deliveryFee > 0
+          ? deliveryFee.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })
+          : "Grátis"
+      }\n`;
+    }
+
     message += `Total: ${total.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",

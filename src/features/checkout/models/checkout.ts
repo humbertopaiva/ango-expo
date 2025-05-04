@@ -67,6 +67,7 @@ export interface CheckoutData {
   companySlug: string;
   companyName: string;
   subtotal: number;
+  deliveryFee: number; // Taxa de entrega
   total: number;
 }
 
@@ -90,5 +91,6 @@ export const emptyCheckout: CheckoutData = {
   companySlug: "",
   companyName: "",
   subtotal: 0,
+  deliveryFee: 0, // Taxa de entrega inicialmente zerada
   total: 0,
 };

@@ -1,7 +1,8 @@
 // Path: src/features/checkout/components/order-summary-step.tsx
+
 import React from "react";
 import { View, Text, ScrollView } from "react-native";
-import { Card, VStack, HStack, RadioGroup } from "@gluestack-ui/themed";
+import { Card, VStack, HStack, RadioGroup, Badge } from "@gluestack-ui/themed";
 import { Truck, Home, ShoppingBag, Sparkles } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutDeliveryType } from "../models/checkout";
@@ -17,6 +18,26 @@ export function OrderSummaryStep() {
   const { mainItems, addons, customItems } = CartProcessorService.processItems(
     checkout.items
   );
+
+  // Verificar se a entrega é gratuita
+  const isDeliveryFree =
+    checkout.deliveryFee === 0 || checkout.deliveryFee === undefined;
+
+  // Formatar a taxa de entrega
+  const formatDeliveryFee = () => {
+    if (checkout.deliveryType !== CheckoutDeliveryType.DELIVERY) {
+      return "Grátis";
+    }
+
+    if (isDeliveryFree) {
+      return "Grátis";
+    }
+
+    return checkout.deliveryFee.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
 
   const deliveryOptions = [
     {
@@ -58,6 +79,35 @@ export function OrderSummaryStep() {
           <Text className="text-lg font-semibold text-gray-800 mb-4">
             Resumo do Pedido
           </Text>
+
+          {/* Exibir claramente a taxa de entrega */}
+          {checkout.deliveryType === CheckoutDeliveryType.DELIVERY && (
+            <View className="bg-blue-50 p-3 rounded-lg mb-4">
+              <HStack className="justify-between items-center">
+                <Text className="text-blue-800 font-medium">
+                  Taxa de entrega:
+                </Text>
+                <View>
+                  {isDeliveryFree ? (
+                    <Badge
+                      backgroundColor="green.100"
+                      borderColor="green.400"
+                      borderWidth={1}
+                      rounded="lg"
+                    >
+                      <Text className="text-xs text-green-600 font-medium">
+                        Grátis
+                      </Text>
+                    </Badge>
+                  ) : (
+                    <Text className="font-medium text-blue-800">
+                      {formatDeliveryFee()}
+                    </Text>
+                  )}
+                </View>
+              </HStack>
+            </View>
+          )}
 
           <View className="bg-gray-50 p-3 rounded-lg mb-4">
             <Text className="font-medium text-gray-800 mb-2">
@@ -161,6 +211,38 @@ export function OrderSummaryStep() {
 
             <View className="mt-3 pt-3 border-t border-gray-200">
               <HStack className="justify-between">
+                <Text className="text-gray-600">Subtotal</Text>
+                <Text className="font-medium text-gray-800">
+                  {checkout.subtotal.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </Text>
+              </HStack>
+
+              {/* Mostrar taxa de entrega no resumo de valores */}
+              <HStack className="justify-between mt-1">
+                <Text className="text-gray-600">Taxa de entrega</Text>
+                <Text
+                  className={`font-medium ${
+                    isDeliveryFree ||
+                    checkout.deliveryType === CheckoutDeliveryType.PICKUP
+                      ? "text-green-600"
+                      : "text-gray-800"
+                  }`}
+                >
+                  {checkout.deliveryType === CheckoutDeliveryType.DELIVERY
+                    ? isDeliveryFree
+                      ? "Grátis"
+                      : checkout.deliveryFee.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })
+                    : "Grátis (Retirada)"}
+                </Text>
+              </HStack>
+
+              <HStack className="justify-between mt-2">
                 <Text className="font-semibold text-gray-800">Total</Text>
                 <Text className="font-bold text-gray-800">
                   {checkout.total.toLocaleString("pt-BR", {
@@ -193,6 +275,26 @@ export function OrderSummaryStep() {
               />
             ))}
           </RadioGroup>
+
+          {/* Indicação clara do status da taxa de entrega */}
+          <View className="mt-3 p-3 bg-gray-50 rounded-lg">
+            <HStack className="items-center">
+              <Truck size={16} color={primaryColor} className="mr-2" />
+              <Text className="text-gray-700">
+                {checkout.deliveryType === CheckoutDeliveryType.DELIVERY
+                  ? isDeliveryFree
+                    ? "Entrega gratuita disponível para seu pedido!"
+                    : `Taxa de entrega: ${checkout.deliveryFee.toLocaleString(
+                        "pt-BR",
+                        {
+                          style: "currency",
+                          currency: "BRL",
+                        }
+                      )}`
+                  : "Retirada gratuita no estabelecimento"}
+              </Text>
+            </HStack>
+          </View>
         </Card>
       </View>
     </ScrollView>

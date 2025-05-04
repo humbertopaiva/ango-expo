@@ -29,6 +29,8 @@ export function OrderConfirmationStep() {
   const primaryColor = THEME_COLORS.primary;
 
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
+  const isDeliveryFree =
+    checkout.deliveryFee === 0 || checkout.deliveryFee === undefined;
 
   // Usar o CartProcessorService para processar os itens
   const { mainItems, addons, customItems } = CartProcessorService.processItems(
@@ -239,15 +241,49 @@ export function OrderConfirmationStep() {
 
             <Divider className="my-2" />
 
-            <HStack className="justify-between">
-              <Text className="font-semibold text-gray-800">Total</Text>
-              <Text className="font-bold text-gray-800">
-                {checkout.total.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </Text>
-            </HStack>
+            {/* Resumo de pagamento melhorado */}
+            <VStack space="sm">
+              <HStack className="justify-between">
+                <Text className="text-gray-600">Subtotal</Text>
+                <Text className="font-medium text-gray-800">
+                  {checkout.subtotal.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </Text>
+              </HStack>
+
+              {/* Taxa de entrega - mostrar mesmo quando for grátis */}
+              <HStack className="justify-between mt-1">
+                <Text className="text-gray-600">Taxa de entrega</Text>
+                <Text
+                  className={`font-medium ${
+                    isDeliveryFree ? "text-green-600" : "text-gray-800"
+                  }`}
+                >
+                  {isDelivery
+                    ? isDeliveryFree
+                      ? "Grátis"
+                      : checkout.deliveryFee.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })
+                    : "Grátis (Retirada)"}
+                </Text>
+              </HStack>
+
+              <Divider className="my-2" />
+
+              <HStack className="justify-between">
+                <Text className="font-semibold text-gray-800">Total</Text>
+                <Text className="font-bold text-gray-800">
+                  {checkout.total.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </Text>
+              </HStack>
+            </VStack>
           </VStack>
         </View>
 

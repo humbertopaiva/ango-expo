@@ -284,7 +284,7 @@ export function CartScreen() {
             </HStack>
 
             {/* Seletor de modo de entrega */}
-            {companyContext.hasDelivery() && (
+            {/* {companyContext.hasDelivery() && (
               <CartDeliverySelector
                 isDelivery={cart.isDelivery}
                 onToggleDeliveryMode={cart.toggleDeliveryMode}
@@ -297,7 +297,7 @@ export function CartScreen() {
                 config={companyContext.config}
                 primaryColor={primaryColor}
               />
-            )}
+            )} */}
 
             {/* Lista de itens do carrinho */}
             <View className="mb-6">
