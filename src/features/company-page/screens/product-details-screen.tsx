@@ -243,13 +243,16 @@ export function ProductDetailsScreen() {
             </View>
 
             {/* Controles de quantidade */}
-            <ProductQuantityControl
-              quantity={vm.quantity}
-              maxQuantity={vm.maxQuantity}
-              onIncrease={vm.increaseQuantity}
-              onDecrease={vm.decreaseQuantity}
-              primaryColor={vm.primaryColor}
-            />
+            {!hasAddons && (
+              <ProductQuantityControl
+                quantity={vm.quantity}
+                maxQuantity={vm.maxQuantity}
+                onIncrease={vm.increaseQuantity}
+                onDecrease={vm.decreaseQuantity}
+                primaryColor={vm.primaryColor}
+                hasAddons={hasAddons}
+              />
+            )}
 
             {/* Observação */}
             <View className="mb-6">

@@ -11,6 +11,7 @@ interface ProductQuantityControlProps {
   onIncrease: () => void;
   onDecrease: () => void;
   primaryColor: string;
+  hasAddons: boolean;
 }
 
 export function ProductQuantityControl({
@@ -19,7 +20,13 @@ export function ProductQuantityControl({
   onIncrease,
   onDecrease,
   primaryColor,
+  hasAddons = false, // Nova propriedade para verificar se tem adicionais
 }: ProductQuantityControlProps) {
+  // Se o produto tiver adicionais, não renderizamos o componente
+  if (hasAddons) {
+    return null;
+  }
+
   return (
     <View className="mb-6">
       <Text className="text-lg font-semibold text-gray-800 mb-3">
