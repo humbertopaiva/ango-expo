@@ -27,6 +27,12 @@ import { storage } from "@/src/lib/storage";
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+  const [stepsValidation, setStepsValidation] = useState([
+    true,
+    false,
+    false,
+    false,
+  ]);
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const cartViewModel = useCartViewModel();
   const toast = useToast();
@@ -41,8 +47,8 @@ export function useCheckoutViewModel() {
     updatePersonalInfo,
     updatePaymentInfo,
     nextStep: storeNextStep,
-    prevStep,
-    goToStep,
+    prevStep: storePrevStep,
+    goToStep: storeGoToStep,
     resetCheckout,
   } = useCheckoutStore();
 
@@ -267,6 +273,9 @@ export function useCheckoutViewModel() {
         paymentInfoForm.reset(cachedCheckout.paymentInfo);
       }, 100);
 
+      // Atualizar validação de steps
+      updateStepsValidation();
+
       setIsLoadingUserData(false);
       return;
     }
@@ -294,6 +303,9 @@ export function useCheckoutViewModel() {
         setTimeout(() => {
           personalInfoForm.reset(savedUserData);
           personalInfoForm.trigger();
+
+          // Atualizar validação de steps
+          updateStepsValidation();
         }, 100);
 
         // Mostrar feedback visual de que os dados foram carregados
@@ -321,8 +333,73 @@ export function useCheckoutViewModel() {
     // Gravar no cache
     setTimeout(() => {
       cacheCheckoutState();
+      // Revalidar o step
+      validateCurrentStep();
+      updateStepsValidation();
     }, 100);
   };
+
+  // Função para validar o passo de dados pessoais
+  const validatePersonalInfo = useCallback(() => {
+    const { fullName, whatsapp, address, number, neighborhood } =
+      checkout.personalInfo;
+
+    // Validação básica independente do tipo de entrega
+    const basicInfoValid = !!(
+      fullName &&
+      fullName.length >= 5 &&
+      whatsapp &&
+      whatsapp.length >= 11
+    );
+
+    // Se não for entrega, apenas valida informações básicas
+    if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
+      return basicInfoValid;
+    }
+
+    // Para entrega, valida também o endereço
+    return (
+      basicInfoValid &&
+      !!(
+        address &&
+        address.length >= 5 &&
+        number &&
+        number.length >= 1 &&
+        neighborhood &&
+        neighborhood.length >= 3
+      )
+    );
+  }, [checkout.personalInfo, checkout.deliveryType]);
+
+  // Função para validar o passo de método de pagamento
+  const validatePaymentInfo = useCallback(() => {
+    const { method, change } = checkout.paymentInfo;
+
+    // Se for dinheiro, precisa ter um valor de troco válido
+    if (method === CheckoutPaymentMethod.CASH) {
+      if (!change) return false;
+
+      // Verificar se o valor de troco é maior que o total
+      const changeValue = parseFloat(change.replace(",", "."));
+      return !isNaN(changeValue) && changeValue > checkout.total;
+    }
+
+    // Para outros métodos, só verifica se tem um método selecionado
+    return !!method;
+  }, [checkout.paymentInfo, checkout.total]);
+
+  // Atualizar a validação de todos os steps
+  const updateStepsValidation = useCallback(() => {
+    const stepValidation = [
+      true, // Primeiro passo sempre é válido (resumo)
+      validatePersonalInfo(),
+      validatePaymentInfo(),
+      true, // Último passo (confirmação) também sempre é válido
+    ];
+
+    setStepsValidation(stepValidation);
+    return stepValidation;
+  }, [validatePersonalInfo, validatePaymentInfo]);
 
   // Salvar dados pessoais, persistir localmente e avançar
   const savePersonalInfo = async (data: PersonalInfo) => {
@@ -355,6 +432,9 @@ export function useCheckoutViewModel() {
 
       // Persiste localmente para reuso futuro
       await userPersistenceService.saveUserPersonalInfo(data);
+
+      // Atualizar validação de steps
+      const validations = updateStepsValidation();
 
       // Avança para o próximo passo
       storeNextStep();
@@ -404,6 +484,9 @@ export function useCheckoutViewModel() {
       // Salvar no cache
       await cacheCheckoutState();
 
+      // Atualizar validação de steps
+      updateStepsValidation();
+
       storeNextStep();
       return true;
     } catch (error) {
@@ -423,11 +506,142 @@ export function useCheckoutViewModel() {
     }
   }, []);
 
+  // Validar o step atual
+  const validateCurrentStep = useCallback(() => {
+    switch (currentStep) {
+      case 0: // Resumo do pedido
+        return checkout.items.length > 0;
+      case 1: // Dados pessoais
+        return validatePersonalInfo();
+      case 2: // Forma de pagamento
+        return validatePaymentInfo();
+      case 3: // Confirmação
+        return validatePersonalInfo() && validatePaymentInfo();
+      default:
+        return true;
+    }
+  }, [currentStep, checkout, validatePersonalInfo, validatePaymentInfo]);
+
+  // Validar um step específico
+  const validateStep = useCallback(
+    (step: number) => {
+      switch (step) {
+        case 0: // Resumo do pedido
+          return checkout.items.length > 0;
+        case 1: // Dados pessoais
+          return validatePersonalInfo();
+        case 2: // Forma de pagamento
+          return validatePaymentInfo();
+        case 3: // Confirmação
+          return validatePersonalInfo() && validatePaymentInfo();
+        default:
+          return true;
+      }
+    },
+    [checkout, validatePersonalInfo, validatePaymentInfo]
+  );
+
+  // Função para ir para um step específico com validação
+  const goToStep = useCallback(
+    (step: number) => {
+      // Não permitir ir para um step futuro sem validar os steps anteriores
+      if (step > currentStep) {
+        // Validar todos os steps anteriores
+        for (let i = 0; i <= currentStep; i++) {
+          if (!validateStep(i)) {
+            toastUtils.error(toast, "Complete a etapa atual antes de avançar");
+            return;
+          }
+        }
+      }
+
+      // Atualizar a validação de steps
+      updateStepsValidation();
+
+      // Ir para o step
+      storeGoToStep(step);
+    },
+    [currentStep, validateStep, storeGoToStep, toast, updateStepsValidation]
+  );
+
+  // Função para avançar ao próximo step com validação
+  const nextStep = useCallback(() => {
+    // Verificar se o step atual é válido
+    if (!validateCurrentStep()) {
+      // Mensagens de erro específicas para cada step
+      switch (currentStep) {
+        case 0:
+          if (checkout.items.length === 0) {
+            toastUtils.error(toast, "Seu carrinho está vazio");
+          } else {
+            toastUtils.error(toast, "Selecione uma forma de recebimento");
+          }
+          break;
+        case 1:
+          if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
+            toastUtils.error(
+              toast,
+              "Preencha todos os campos de endereço corretamente"
+            );
+          } else {
+            toastUtils.error(
+              toast,
+              "Preencha seu nome e WhatsApp corretamente"
+            );
+          }
+          break;
+        case 2:
+          if (checkout.paymentInfo.method === CheckoutPaymentMethod.CASH) {
+            toastUtils.error(toast, "Informe um valor válido para troco");
+          } else {
+            toastUtils.error(toast, "Selecione uma forma de pagamento");
+          }
+          break;
+      }
+      return false;
+    }
+
+    // Atualizar validação de steps
+    const validations = updateStepsValidation();
+
+    // Se o step atual é válido, avançar
+    storeNextStep();
+    return true;
+  }, [
+    currentStep,
+    validateCurrentStep,
+    updateStepsValidation,
+    storeNextStep,
+    checkout,
+    toast,
+  ]);
+
+  // Função para voltar ao step anterior
+  const prevStep = useCallback(() => {
+    // Atualizar validação de steps ao voltar
+    setTimeout(() => {
+      updateStepsValidation();
+    }, 100);
+
+    storePrevStep();
+    return true;
+  }, [storePrevStep, updateStepsValidation]);
+
   // Finalizar o pedido e criar um registro no OrderStore
   const finalizeOrder = async () => {
     setIsProcessing(true);
 
     try {
+      // Validar todas as etapas antes de finalizar
+      if (!validateStep(1) || !validateStep(2)) {
+        toastUtils.error(
+          toast,
+          "Complete todas as etapas antes de finalizar o pedido"
+        );
+        setIsProcessing(false);
+        return false;
+      }
+
       // Buscar o telefone da empresa, se disponível
       let companyPhone = undefined;
 
@@ -523,120 +737,10 @@ export function useCheckoutViewModel() {
     }
   };
 
-  // Validar estado atual do checkout
-  const validateCurrentStep = useCallback(() => {
-    switch (currentStep) {
-      case 0: // Resumo do pedido
-        return checkout.items.length > 0;
-
-      case 1: // Dados pessoais
-        if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
-          return !!(
-            checkout.personalInfo.fullName &&
-            checkout.personalInfo.fullName.length >= 5 &&
-            checkout.personalInfo.whatsapp &&
-            checkout.personalInfo.whatsapp.length >= 11 &&
-            checkout.personalInfo.address &&
-            checkout.personalInfo.address.length >= 5 &&
-            checkout.personalInfo.number &&
-            checkout.personalInfo.number.length >= 1 &&
-            checkout.personalInfo.neighborhood &&
-            checkout.personalInfo.neighborhood.length >= 3
-          );
-        }
-        return !!(
-          checkout.personalInfo.fullName &&
-          checkout.personalInfo.fullName.length >= 5 &&
-          checkout.personalInfo.whatsapp &&
-          checkout.personalInfo.whatsapp.length >= 11
-        );
-
-      case 2: // Forma de pagamento
-        if (
-          checkout.paymentInfo.method === CheckoutPaymentMethod.CASH &&
-          !checkout.paymentInfo.change
-        ) {
-          return false;
-        }
-        return true;
-
-      default:
-        return true;
-    }
-  }, [currentStep, checkout]);
-
-  // Verificar se o passo atual está válido antes de avançar
-  const nextStep = useCallback(() => {
-    // Verificar se há novos itens no carrinho antes de avançar
-    const currentItems = cartViewModel.items;
-
-    // Verificar se o carrinho foi modificado desde a última atualização do checkout
-    if (
-      currentItems.length !== checkout.items.length ||
-      JSON.stringify(currentItems.map((i) => i.id).sort()) !==
-        JSON.stringify(checkout.items.map((i) => i.id).sort())
-    ) {
-      // Atualizar checkout com os itens atuais do carrinho
-      const totalPrice = CartProcessorService.calculateOrderTotal(currentItems);
-
-      initCheckout(
-        currentItems,
-        checkout.companyId,
-        checkout.companySlug,
-        checkout.companyName,
-        parseFloat(
-          cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
-        ),
-        totalPrice
-      );
-
-      // Atualizar o cache
-      cacheCheckoutState();
-
-      console.log("Checkout atualizado com novos itens antes de avançar");
-    }
-
-    if (validateCurrentStep()) {
-      storeNextStep();
-      return true;
-    } else {
-      // Mostrar mensagem de erro específica para cada passo
-      switch (currentStep) {
-        case 0:
-          toastUtils.error(toast, "Seu carrinho está vazio");
-          break;
-        case 1:
-          if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
-            toastUtils.error(
-              toast,
-              "Preencha todos os campos de dados pessoais e endereço"
-            );
-          } else {
-            toastUtils.error(
-              toast,
-              "Preencha seu nome e WhatsApp corretamente"
-            );
-          }
-          break;
-        case 2:
-          if (checkout.paymentInfo.method === CheckoutPaymentMethod.CASH) {
-            toastUtils.error(toast, "Informe um valor válido para troco");
-          } else {
-            toastUtils.error(toast, "Selecione uma forma de pagamento");
-          }
-          break;
-      }
-      return false;
-    }
-  }, [
-    currentStep,
-    validateCurrentStep,
-    storeNextStep,
-    checkout,
-    toast,
-    cartViewModel.items,
-    cartViewModel.subtotal,
-  ]);
+  // Efeito para atualizar a validação dos steps quando necessário
+  useEffect(() => {
+    updateStepsValidation();
+  }, [checkout, updateStepsValidation]);
 
   return {
     // Estado
@@ -644,6 +748,7 @@ export function useCheckoutViewModel() {
     currentStep,
     isProcessing,
     isLoadingUserData,
+    stepsValidation,
 
     // Formulários
     personalInfoForm,
@@ -656,8 +761,10 @@ export function useCheckoutViewModel() {
     savePaymentInfo,
     finalizeOrder,
     goToStep,
-    prevStep,
     nextStep,
+    prevStep,
     validateCurrentStep,
+    validateStep,
+    updateStepsValidation,
   };
 }
