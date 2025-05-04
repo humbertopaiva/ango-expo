@@ -124,10 +124,12 @@ export function useCheckoutViewModel() {
           timestamp: Date.now(),
         })
       );
+      console.log("Estado do checkout salvo no cache com sucesso");
     } catch (error) {
       console.error("Erro ao salvar cache do checkout:", error);
     }
   }, [checkout]);
+
   const getCachedCheckout = useCallback(async () => {
     try {
       // Usar o storage em vez de localStorage
@@ -140,6 +142,7 @@ export function useCheckoutViewModel() {
       const now = Date.now();
       if (now - parsed.timestamp > 30 * 60 * 1000) {
         await storage.removeItem("cached_checkout");
+        console.log("Cache do checkout expirado - removido");
         return null;
       }
 
@@ -149,6 +152,51 @@ export function useCheckoutViewModel() {
       return null;
     }
   }, []);
+
+  // Observar mudanças no carrinho durante o checkout
+  useEffect(() => {
+    if (companySlug && currentStep < 3) {
+      // Não atualizar na etapa de confirmação
+      const currentCart = cartViewModel.items;
+
+      // Verificar se o carrinho foi alterado
+      if (
+        currentCart.length !== checkout.items.length ||
+        JSON.stringify(currentCart.map((i) => i.id).sort()) !==
+          JSON.stringify(checkout.items.map((i) => i.id).sort())
+      ) {
+        console.log(
+          "Carrinho modificado durante checkout - atualizando estado"
+        );
+
+        // Recalcular o total
+        const totalPrice =
+          CartProcessorService.calculateOrderTotal(currentCart);
+
+        // Atualizar checkout com novos itens
+        initCheckout(
+          currentCart,
+          checkout.companyId,
+          checkout.companySlug,
+          checkout.companyName,
+          parseFloat(
+            cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
+          ),
+          totalPrice
+        );
+
+        // Atualizar o cache com os novos dados
+        cacheCheckoutState();
+      }
+    }
+  }, [
+    cartViewModel.items,
+    companySlug,
+    currentStep,
+    checkout.companyId,
+    checkout.companyName,
+    checkout.companySlug,
+  ]);
 
   // Inicializar checkout com dados do carrinho e recuperar dados do usuário
   const initialize = useCallback(async () => {
@@ -162,26 +210,56 @@ export function useCheckoutViewModel() {
 
     // Tentar recuperar o estado anterior do checkout do cache
     const cachedCheckout = await getCachedCheckout();
+    const currentCartItems = cartViewModel.items;
+    const currentCartTotal =
+      CartProcessorService.calculateOrderTotal(currentCartItems);
 
-    // Se o checkout é para a mesma empresa e tem dados válidos, use-o
-    if (
-      cachedCheckout &&
-      cachedCheckout.companySlug === companySlug &&
-      cachedCheckout.items.length > 0
-    ) {
-      // Inicializa com os dados em cache
-      initCheckout(
-        cachedCheckout.items,
-        cachedCheckout.companyId,
-        cachedCheckout.companySlug,
-        cachedCheckout.companyName,
-        cachedCheckout.subtotal,
-        cachedCheckout.total
+    // Se o checkout é para a mesma empresa, combine o estado em cache com o carrinho atual
+    if (cachedCheckout && cachedCheckout.companySlug === companySlug) {
+      // Compare os itens do cache com os itens atuais do carrinho
+      const cachedItemIds = new Set(
+        cachedCheckout.items.map((item: any) => item.id)
+      );
+      const currentItemIds = new Set(currentCartItems.map((item) => item.id));
+
+      // Verificar se há diferenças entre os itens
+      const hasNewItems = currentCartItems.some(
+        (item) => !cachedItemIds.has(item.id)
+      );
+      const hasMissingItems = cachedCheckout.items.some(
+        (item: any) => !currentItemIds.has(item.id)
       );
 
-      // Atualiza os dados pessoais e pagamento
-      updatePersonalInfo(cachedCheckout.personalInfo);
-      updatePaymentInfo(cachedCheckout.paymentInfo);
+      if (hasNewItems || hasMissingItems) {
+        // Inicializa com os itens atuais do carrinho, mas mantém os dados pessoais e pagamento
+        initCheckout(
+          currentCartItems,
+          cachedCheckout.companyId,
+          cachedCheckout.companySlug,
+          cachedCheckout.companyName,
+          parseFloat(
+            cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
+          ),
+          currentCartTotal
+        );
+
+        // Restaurar dados pessoais e de pagamento do cache
+        updatePersonalInfo(cachedCheckout.personalInfo);
+        updatePaymentInfo(cachedCheckout.paymentInfo);
+      } else {
+        // Se os itens são os mesmos, use o cache normalmente
+        initCheckout(
+          cachedCheckout.items,
+          cachedCheckout.companyId,
+          cachedCheckout.companySlug,
+          cachedCheckout.companyName,
+          cachedCheckout.subtotal,
+          cachedCheckout.total
+        );
+
+        updatePersonalInfo(cachedCheckout.personalInfo);
+        updatePaymentInfo(cachedCheckout.paymentInfo);
+      }
 
       // Reset dos formulários com dados do cache
       setTimeout(() => {
@@ -194,20 +272,15 @@ export function useCheckoutViewModel() {
     }
 
     // Se não há cache válido, processa os itens do carrinho
-    const totalPrice = CartProcessorService.calculateOrderTotal(
-      cartViewModel.items
-    );
-
-    // Inicializa o checkout com os dados do carrinho
     initCheckout(
-      cartViewModel.items,
-      cartViewModel.items[0]?.companyId || "",
+      currentCartItems,
+      currentCartItems[0]?.companyId || "",
       companySlug,
       cartViewModel.companyName || "",
       parseFloat(
         cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
       ),
-      totalPrice
+      currentCartTotal
     );
 
     // Tenta recuperar os dados do usuário
@@ -237,6 +310,8 @@ export function useCheckoutViewModel() {
     initCheckout,
     updatePersonalInfo,
     updatePaymentInfo,
+    getCachedCheckout,
+    toast,
   ]);
 
   // Atualizar tipo de entrega
@@ -342,6 +417,7 @@ export function useCheckoutViewModel() {
   const clearCheckoutCache = useCallback(async () => {
     try {
       await storage.removeItem("cached_checkout");
+      console.log("Cache do checkout limpo com sucesso");
     } catch (error) {
       console.error("Erro ao limpar cache:", error);
     }
@@ -491,6 +567,35 @@ export function useCheckoutViewModel() {
 
   // Verificar se o passo atual está válido antes de avançar
   const nextStep = useCallback(() => {
+    // Verificar se há novos itens no carrinho antes de avançar
+    const currentItems = cartViewModel.items;
+
+    // Verificar se o carrinho foi modificado desde a última atualização do checkout
+    if (
+      currentItems.length !== checkout.items.length ||
+      JSON.stringify(currentItems.map((i) => i.id).sort()) !==
+        JSON.stringify(checkout.items.map((i) => i.id).sort())
+    ) {
+      // Atualizar checkout com os itens atuais do carrinho
+      const totalPrice = CartProcessorService.calculateOrderTotal(currentItems);
+
+      initCheckout(
+        currentItems,
+        checkout.companyId,
+        checkout.companySlug,
+        checkout.companyName,
+        parseFloat(
+          cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
+        ),
+        totalPrice
+      );
+
+      // Atualizar o cache
+      cacheCheckoutState();
+
+      console.log("Checkout atualizado com novos itens antes de avançar");
+    }
+
     if (validateCurrentStep()) {
       storeNextStep();
       return true;
@@ -523,7 +628,15 @@ export function useCheckoutViewModel() {
       }
       return false;
     }
-  }, [currentStep, validateCurrentStep, storeNextStep, checkout, toast]);
+  }, [
+    currentStep,
+    validateCurrentStep,
+    storeNextStep,
+    checkout,
+    toast,
+    cartViewModel.items,
+    cartViewModel.subtotal,
+  ]);
 
   return {
     // Estado
