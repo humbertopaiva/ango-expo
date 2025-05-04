@@ -138,8 +138,15 @@ export class CartProcessorService {
     // Calcular o subtotal dos itens
     const subtotal = this.calculateOrderTotal(items);
 
+    // Garantir que a taxa de entrega seja um número válido
+    const validDeliveryFee = isNaN(deliveryFee) ? 0 : deliveryFee;
+
     // Adicionar taxa de entrega se o método de entrega for selecionado
-    const finalDeliveryFee = isDelivery ? deliveryFee : 0;
+    const finalDeliveryFee = isDelivery ? validDeliveryFee : 0;
+
+    console.log(
+      `Calculando total: Subtotal=${subtotal}, DeliveryFee=${finalDeliveryFee}, isDelivery=${isDelivery}`
+    );
 
     // Retornar o valor total
     return subtotal + finalDeliveryFee;

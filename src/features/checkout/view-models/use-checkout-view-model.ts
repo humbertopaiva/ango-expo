@@ -23,6 +23,7 @@ import { useOrderStore } from "@/src/features/orders/stores/order.store";
 import { z } from "zod";
 import { api } from "@/src/services/api";
 import { storage } from "@/src/lib/storage";
+import { DeliveryInfoService } from "../../cart/services/delivery-info.service";
 
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -175,9 +176,18 @@ export function useCheckoutViewModel() {
           "Carrinho modificado durante checkout - atualizando estado"
         );
 
-        // Recalcular o total
-        const totalPrice =
-          CartProcessorService.calculateOrderTotal(currentCart);
+        // Recalcular o total com a taxa de entrega
+        const isDelivery =
+          checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
+        const deliveryFee = parseFloat(
+          cartViewModel.deliveryFee.replace(/[^\d,]/g, "").replace(",", ".")
+        );
+        const subtotal = CartProcessorService.calculateOrderTotal(currentCart);
+        const total = CartProcessorService.calculateOrderTotalWithDelivery(
+          currentCart,
+          isDelivery,
+          deliveryFee
+        );
 
         // Atualizar checkout com novos itens
         initCheckout(
@@ -185,10 +195,8 @@ export function useCheckoutViewModel() {
           checkout.companyId,
           checkout.companySlug,
           checkout.companyName,
-          parseFloat(
-            cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
-          ),
-          totalPrice
+          subtotal,
+          total
         );
 
         // Atualizar o cache com os novos dados
@@ -197,12 +205,22 @@ export function useCheckoutViewModel() {
     }
   }, [
     cartViewModel.items,
+    cartViewModel.deliveryFee,
     companySlug,
     currentStep,
     checkout.companyId,
     checkout.companyName,
     checkout.companySlug,
+    checkout.deliveryType,
   ]);
+
+  const forcedDeliveryFee = (checkout.total - checkout.subtotal).toLocaleString(
+    "pt-BR",
+    {
+      style: "currency",
+      currency: "BRL",
+    }
+  );
 
   // Inicializar checkout com dados do carrinho e recuperar dados do usuário
   const initialize = useCallback(async () => {
@@ -214,11 +232,44 @@ export function useCheckoutViewModel() {
       return;
     }
 
+    // Obter a taxa de entrega atual
+    const isDelivery = cartViewModel.isDelivery;
+    let deliveryFee = parseFloat(
+      cartViewModel.deliveryFee.replace(/[^\d,]/g, "").replace(",", ".")
+    );
+
     // Tentar recuperar o estado anterior do checkout do cache
     const cachedCheckout = await getCachedCheckout();
     const currentCartItems = cartViewModel.items;
     const currentCartTotal =
       CartProcessorService.calculateOrderTotal(currentCartItems);
+
+    // Calcular subtotal e total com taxa de entrega
+    const subtotal = CartProcessorService.calculateOrderTotal(currentCartItems);
+    const total = CartProcessorService.calculateOrderTotalWithDelivery(
+      currentCartItems,
+      isDelivery,
+      deliveryFee
+    );
+
+    // Se a taxa de entrega não puder ser analisada, tentar obter da configuração da empresa
+    if (isNaN(deliveryFee) || deliveryFee === 0) {
+      try {
+        // Tentar obter a taxa de entrega da configuração da empresa
+        const companyData = await api.get(
+          `/api/companies/profile/${companySlug}`
+        );
+        if (companyData?.data?.data?.delivery) {
+          const config = {
+            delivery: companyData.data.data.delivery,
+          };
+          deliveryFee = DeliveryInfoService.getDeliveryFee(config);
+        }
+      } catch (error) {
+        console.error("Erro ao obter taxa de entrega:", error);
+        deliveryFee = 0;
+      }
+    }
 
     // Se o checkout é para a mesma empresa, combine o estado em cache com o carrinho atual
     if (cachedCheckout && cachedCheckout.companySlug === companySlug) {
@@ -243,10 +294,15 @@ export function useCheckoutViewModel() {
           cachedCheckout.companyId,
           cachedCheckout.companySlug,
           cachedCheckout.companyName,
-          parseFloat(
-            cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
-          ),
-          currentCartTotal
+          subtotal,
+          total
+        );
+
+        // Definir o tipo de entrega para manter a consistência com o carrinho
+        updateDeliveryType(
+          isDelivery
+            ? CheckoutDeliveryType.DELIVERY
+            : CheckoutDeliveryType.PICKUP
         );
 
         // Restaurar dados pessoais e de pagamento do cache
@@ -259,8 +315,15 @@ export function useCheckoutViewModel() {
           cachedCheckout.companyId,
           cachedCheckout.companySlug,
           cachedCheckout.companyName,
-          cachedCheckout.subtotal,
-          cachedCheckout.total
+          subtotal,
+          total
+        );
+
+        // Definir o tipo de entrega para manter a consistência com o carrinho
+        updateDeliveryType(
+          isDelivery
+            ? CheckoutDeliveryType.DELIVERY
+            : CheckoutDeliveryType.PICKUP
         );
 
         updatePersonalInfo(cachedCheckout.personalInfo);
@@ -286,10 +349,13 @@ export function useCheckoutViewModel() {
       currentCartItems[0]?.companyId || "",
       companySlug,
       cartViewModel.companyName || "",
-      parseFloat(
-        cartViewModel.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
-      ),
-      currentCartTotal
+      subtotal,
+      total
+    );
+
+    // Configurar o tipo de entrega com base no estado do carrinho
+    updateDeliveryType(
+      isDelivery ? CheckoutDeliveryType.DELIVERY : CheckoutDeliveryType.PICKUP
     );
 
     // Tenta recuperar os dados do usuário
@@ -320,6 +386,7 @@ export function useCheckoutViewModel() {
     cartViewModel,
     companySlug,
     initCheckout,
+    updateDeliveryType,
     updatePersonalInfo,
     updatePaymentInfo,
     getCachedCheckout,
@@ -329,6 +396,17 @@ export function useCheckoutViewModel() {
   // Atualizar tipo de entrega
   const setDeliveryType = (type: CheckoutDeliveryType) => {
     updateDeliveryType(type);
+
+    // Recalcular o total com ou sem taxa de entrega
+    const subtotal = checkout.subtotal;
+    let total = subtotal;
+
+    if (type === CheckoutDeliveryType.DELIVERY && checkout.deliveryFee > 0) {
+      total += checkout.deliveryFee;
+    }
+
+    // Atualizar o total no checkout
+    checkout.total = total;
 
     // Gravar no cache
     setTimeout(() => {
@@ -655,19 +733,22 @@ export function useCheckoutViewModel() {
         console.log("Não foi possível obter o telefone da empresa:", error);
       }
 
-      // Usar o CartProcessorService para processar os itens antes de criar o pedido
-      const { mainItems, addons, customItems, totalItems } =
-        CartProcessorService.processItems(checkout.items);
+      // Processar os itens para obter o subtotal
+      const subtotal = CartProcessorService.calculateOrderTotal(checkout.items);
 
-      // Recalcular o total real do pedido
-      const realTotal = CartProcessorService.calculateOrderTotal(
-        checkout.items
-      );
+      // Obter o valor da taxa de entrega
+      const deliveryFee =
+        checkout.deliveryType === CheckoutDeliveryType.DELIVERY
+          ? checkout.deliveryFee
+          : 0;
+
+      // Calcular o total final com a taxa de entrega
+      const total = subtotal + deliveryFee;
 
       // Preparar itens para o OrderStore, mantendo a estrutura original de cada item
       const orderItems = [...checkout.items];
 
-      // Criar pedido no OrderStore
+      // Criar pedido no OrderStore com os valores corretos
       const order = orderStore.createOrder(
         orderItems,
         checkout.companyId,
@@ -676,11 +757,16 @@ export function useCheckoutViewModel() {
         companyPhone
       );
 
+      // Atualizar o pedido com o valor correto da taxa de entrega
+      if (deliveryFee > 0) {
+        order.deliveryFee = deliveryFee;
+        order.total = total; // Atualizar total para incluir taxa de entrega
+      }
+
       // Construir mensagem para WhatsApp usando o serviço
       const message = CartProcessorService.formatWhatsAppMessage(checkout);
 
-      // Número da empresa (idealmente seria obtido do perfil da empresa)
-      // Por enquanto, usamos um número de exemplo ou o que foi obtido acima
+      // Número da empresa
       const companyWhatsapp = companyPhone || "5532999999999";
 
       // Enviar mensagem para o WhatsApp
@@ -766,5 +852,6 @@ export function useCheckoutViewModel() {
     validateCurrentStep,
     validateStep,
     updateStepsValidation,
+    forcedDeliveryFee,
   };
 }
