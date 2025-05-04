@@ -115,10 +115,6 @@ export function CompanyPageContent() {
     router.back();
   }, []);
 
-  if (vm.isLoading) {
-    return <Loader />;
-  }
-
   return (
     <AnimatedPageTransition animation="slide" duration={600}>
       <View className="flex-1 relative">

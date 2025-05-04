@@ -7,6 +7,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import {
@@ -21,38 +22,70 @@ import {
   FormControlErrorText,
   useToast,
 } from "@gluestack-ui/themed";
-import { User, Phone, MapPin, Info, AlertCircle } from "lucide-react-native";
+import {
+  User,
+  Phone,
+  MapPin,
+  Info,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutDeliveryType, PersonalInfo } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { FormValidationFeedback } from "@/components/common/form-validation-feedback";
 import { maskPhoneNumber } from "../utils/checkout.utils";
-import { toastUtils } from "@/src/utils/toast.utils";
 
 export function PersonalInfoStep() {
-  const { checkout, personalInfoForm, savePersonalInfo, prevStep } =
-    useCheckoutViewModel();
+  const {
+    checkout,
+    personalInfoForm,
+    savePersonalInfo,
+    prevStep,
+    isLoadingUserData,
+  } = useCheckoutViewModel();
+
   const primaryColor = THEME_COLORS.primary;
   const toast = useToast();
 
   const [addressFieldsComplete, setAddressFieldsComplete] = useState(false);
-  const [showDataLoadedToast, setShowDataLoadedToast] = useState(false);
-  const [isFormInitialized, setIsFormInitialized] = useState(false);
-  const [hadInitialValidValues, setHadInitialValidValues] = useState(false);
+  const [hasLoadedUserData, setHasLoadedUserData] = useState(false);
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid, isDirty, isSubmitting },
+    formState: { errors, isValid, isDirty, isSubmitting, dirtyFields },
     watch,
-    reset,
-    getValues,
     trigger,
+    getValues,
   } = personalInfoForm;
 
   // Observar alterações em tempo real para todos os campos
   const watchedFields = watch();
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
+
+  // Verificar se os dados iniciais são válidos quando o componente monta
+  useEffect(() => {
+    if (!hasLoadedUserData && !isLoadingUserData) {
+      const values = getValues();
+      const hasValidData = !!(
+        values.fullName &&
+        values.fullName.length >= 5 &&
+        values.whatsapp &&
+        values.whatsapp.length >= 11
+      );
+
+      setHasLoadedUserData(hasValidData);
+
+      // Trigger para validar os campos iniciais
+      trigger();
+
+      // Se for entrega, verificar os campos de endereço
+      if (isDelivery) {
+        verifyAddressFields();
+      }
+    }
+  }, [isLoadingUserData, checkout.personalInfo]);
 
   // Verificar se os campos de endereço estão preenchidos quando é entrega
   const verifyAddressFields = useCallback(() => {
@@ -75,59 +108,6 @@ export function PersonalInfoStep() {
     return isComplete;
   }, [isDelivery, getValues]);
 
-  // Verificar inicialmente se já tinha valores válidos
-  useEffect(() => {
-    if (!isFormInitialized && checkout.personalInfo) {
-      const hasValidData = !!(
-        checkout.personalInfo.fullName &&
-        checkout.personalInfo.fullName.length >= 5 &&
-        checkout.personalInfo.whatsapp &&
-        checkout.personalInfo.whatsapp.length >= 11
-      );
-
-      // Verificar se os campos de endereço já estão preenchidos, caso seja entrega
-      const hasValidAddress =
-        !isDelivery ||
-        !!(
-          checkout.personalInfo.address &&
-          checkout.personalInfo.address.length >= 5 &&
-          checkout.personalInfo.number &&
-          checkout.personalInfo.number.length >= 1 &&
-          checkout.personalInfo.neighborhood &&
-          checkout.personalInfo.neighborhood.length >= 3
-        );
-
-      setHadInitialValidValues(hasValidData && hasValidAddress);
-
-      // Mostrar toast apenas se tiver dados carregados válidos
-      if (hasValidData) {
-        setShowDataLoadedToast(true);
-      }
-
-      setIsFormInitialized(true);
-    }
-  }, [checkout.personalInfo, isDelivery, isFormInitialized]);
-
-  // Inicializar ou resetar o formulário quando o tipo de entrega muda
-  useEffect(() => {
-    // Reset com os dados atuais do checkout
-    reset({
-      ...checkout.personalInfo,
-    });
-
-    // Verificar campos após reset
-    setTimeout(() => {
-      verifyAddressFields();
-      trigger();
-    }, 100);
-  }, [
-    checkout.deliveryType,
-    checkout.personalInfo,
-    reset,
-    trigger,
-    verifyAddressFields,
-  ]);
-
   // Verificar campos sempre que algum valor mudar
   useEffect(() => {
     verifyAddressFields();
@@ -137,15 +117,29 @@ export function PersonalInfoStep() {
   const handleSavePersonalInfo = async (data: PersonalInfo) => {
     // Verificação adicional para entrega
     if (isDelivery && !verifyAddressFields()) {
-      toastUtils.error(
-        toast,
-        "Preencha todos os campos de endereço corretamente"
-      );
+      toast.show({
+        render: () => (
+          <View className="bg-red-500 px-4 py-3 rounded-lg mx-4 my-2">
+            <Text className="text-white font-medium">
+              Preencha todos os campos de endereço corretamente
+            </Text>
+          </View>
+        ),
+      });
       return;
     }
 
     await savePersonalInfo(data);
   };
+
+  if (isLoadingUserData) {
+    return (
+      <View className="flex-1 justify-center items-center p-4">
+        <ActivityIndicator size="large" color={primaryColor} />
+        <Text className="mt-4 text-gray-700">Carregando seus dados...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -154,10 +148,10 @@ export function PersonalInfoStep() {
       keyboardVerticalOffset={100}
     >
       <ScrollView className="flex-1 p-4">
-        {showDataLoadedToast && hadInitialValidValues && (
+        {hasLoadedUserData && (
           <View className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
             <HStack space="sm" alignItems="center">
-              <Info size={18} color="#3B82F6" />
+              <CheckCircle size={18} color="#3B82F6" />
               <Text className="text-sm text-blue-700">
                 Seus dados foram recuperados automaticamente
               </Text>
@@ -184,7 +178,7 @@ export function PersonalInfoStep() {
           <VStack space="md">
             {/* Nome completo */}
             <FormControl isInvalid={!!errors.fullName} isRequired>
-              <HStack alignItems="center">
+              <HStack alignItems="center" className="mb-1">
                 <User size={16} color="#6B7280" />
                 <Text className="ml-2 text-gray-700 font-medium">
                   Nome completo
@@ -210,6 +204,7 @@ export function PersonalInfoStep() {
                         onBlur();
                         trigger("fullName");
                       }}
+                      testID="fullName-input"
                     />
                   </Input>
                 )}
@@ -223,7 +218,7 @@ export function PersonalInfoStep() {
 
             {/* WhatsApp com máscara */}
             <FormControl isInvalid={!!errors.whatsapp} isRequired>
-              <HStack alignItems="center">
+              <HStack alignItems="center" className="mb-1">
                 <Phone size={16} color="#6B7280" />
                 <Text className="ml-2 text-gray-700 font-medium">
                   WhatsApp com DDD
@@ -254,6 +249,7 @@ export function PersonalInfoStep() {
                         trigger("whatsapp");
                       }}
                       keyboardType="phone-pad"
+                      testID="whatsapp-input"
                     />
                   </Input>
                 )}
@@ -274,7 +270,7 @@ export function PersonalInfoStep() {
 
                 {/* Rua */}
                 <FormControl isInvalid={!!errors.address} isRequired>
-                  <HStack alignItems="center">
+                  <HStack alignItems="center" className="mb-1">
                     <MapPin size={16} color="#6B7280" />
                     <Text className="ml-2 text-gray-700 font-medium">
                       Rua/Avenida
@@ -298,6 +294,7 @@ export function PersonalInfoStep() {
                             trigger("address");
                             verifyAddressFields();
                           }}
+                          testID="address-input"
                         />
                       </Input>
                     )}
@@ -335,6 +332,7 @@ export function PersonalInfoStep() {
                               verifyAddressFields();
                             }}
                             keyboardType="numeric"
+                            testID="number-input"
                           />
                         </Input>
                       )}
@@ -372,6 +370,7 @@ export function PersonalInfoStep() {
                               trigger("neighborhood");
                               verifyAddressFields();
                             }}
+                            testID="neighborhood-input"
                           />
                         </Input>
                       )}
@@ -385,7 +384,7 @@ export function PersonalInfoStep() {
                 </HStack>
 
                 {/* Cidade (fixa) */}
-                <Input isDisabled={true}>
+                <Input isDisabled={true} className="mt-2">
                   <InputField
                     value="Lima Duarte (MG)"
                     placeholder="Cidade"
@@ -394,7 +393,7 @@ export function PersonalInfoStep() {
                 </Input>
 
                 {/* Ponto de referência (opcional) */}
-                <FormControl>
+                <FormControl className="mt-2">
                   <Text className="text-gray-700 font-medium mb-1">
                     Ponto de referência (opcional)
                   </Text>
@@ -408,6 +407,7 @@ export function PersonalInfoStep() {
                           value={value}
                           onChangeText={onChange}
                           onBlur={onBlur}
+                          testID="reference-input"
                         />
                       </Input>
                     )}
@@ -421,15 +421,15 @@ export function PersonalInfoStep() {
               isPartiallyValid={isDirty && !isValid}
               validMessage={
                 isDelivery
-                  ? "Todos os campos preenchidos"
-                  : "Dados básicos preenchidos"
+                  ? "Todos os campos preenchidos corretamente"
+                  : "Dados básicos preenchidos corretamente"
               }
               invalidMessage={
                 isDelivery
-                  ? "Preencha os campos obrigatórios"
-                  : "Preencha seu nome e WhatsApp"
+                  ? "Preencha todos os campos obrigatórios"
+                  : "Preencha seu nome e WhatsApp corretamente"
               }
-              partialMessage="Continue preenchendo os campos"
+              partialMessage="Continue preenchendo os campos obrigatórios"
               primaryColor={primaryColor}
             />
           </VStack>
@@ -449,7 +449,8 @@ export function PersonalInfoStep() {
             onPress={handleSubmit(handleSavePersonalInfo)}
             style={{ backgroundColor: primaryColor }}
             isDisabled={
-              isSubmitting || (isDelivery && !addressFieldsComplete) || !isValid
+              isSubmitting ||
+              (isDelivery ? !isValid || !addressFieldsComplete : !isValid)
             }
             className="flex-1"
           >

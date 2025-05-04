@@ -20,10 +20,6 @@ export function CategoryPage() {
     return null;
   }
 
-  if (isLoading) {
-    return <Loader />;
-  }
-
   return (
     <AnimatedPageTransition animation="slide" duration={600}>
       <View className="flex-1 bg-white">
