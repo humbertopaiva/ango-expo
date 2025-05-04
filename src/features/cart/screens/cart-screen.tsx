@@ -11,7 +11,6 @@ import {
   Platform,
   TextInput,
   ActivityIndicator,
-  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { ShoppingBag, Trash2, CreditCard } from "lucide-react-native";
@@ -31,11 +30,14 @@ import { useMultiCartStore } from "../stores/cart.store";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { CartItemComponent } from "../components/cart-item";
 import { CartCustomProductComponent } from "../components/cart-custom-product";
+import { CartDeliverySelector } from "../components/cart-delivery-selector";
+import { useCompanyPageContext } from "@/src/features/company-page/contexts/use-company-page-context";
 
 export function CartScreen() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const multiCartStore = useMultiCartStore();
   const cart = useCartViewModel();
+  const companyContext = useCompanyPageContext(); // Contexto da empresa para obter config
   const [isProcessing, setIsProcessing] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [isCouponValid, setIsCouponValid] = useState(false);
@@ -49,6 +51,17 @@ export function CartScreen() {
       multiCartStore.setActiveCart(companySlug);
     }
   }, [companySlug]);
+
+  // Efeito para definir a taxa de entrega inicial quando o config for carregado
+  useEffect(() => {
+    if (companySlug && companyContext.config) {
+      // Obter a taxa de entrega da configuração
+      const deliveryFee = cart.getDeliveryFeeFromConfig(companyContext.config);
+
+      // Configurar a taxa no store do carrinho
+      cart.setDeliveryFee(deliveryFee);
+    }
+  }, [companySlug, companyContext.config]);
 
   // Verificar se o carrinho está vazio
   const cartIsEmpty = cart.isEmpty;
@@ -101,6 +114,23 @@ export function CartScreen() {
 
       // Garantir que o carrinho ativo seja o da empresa atual
       multiCartStore.setActiveCart(companySlug);
+
+      // Verificar valor mínimo para entrega
+      if (
+        cart.isDelivery &&
+        !cart.hasReachedMinimumOrderValue(companyContext.config)
+      ) {
+        const minValue = companyContext.config?.delivery?.pedido_minimo || "0";
+
+        Alert.alert(
+          "Pedido mínimo não atingido",
+          `Para delivery, o valor mínimo é de R$ ${
+            parseFloat(minValue) / 100
+          }. Adicione mais itens para continuar.`
+        );
+        setIsProcessing(false);
+        return;
+      }
 
       // Navegar para a tela de checkout
       router.push(`/(drawer)/empresa/${companySlug}/checkout`);
@@ -253,6 +283,22 @@ export function CartScreen() {
               </TouchableOpacity>
             </HStack>
 
+            {/* Seletor de modo de entrega */}
+            {companyContext.hasDelivery() && (
+              <CartDeliverySelector
+                isDelivery={cart.isDelivery}
+                onToggleDeliveryMode={cart.toggleDeliveryMode}
+                subtotal={parseFloat(
+                  cart.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
+                )}
+                deliveryFee={parseFloat(
+                  cart.deliveryFee.replace(/[^\d,]/g, "").replace(",", ".")
+                )}
+                config={companyContext.config}
+                primaryColor={primaryColor}
+              />
+            )}
+
             {/* Lista de itens do carrinho */}
             <View className="mb-6">
               <HStack className="justify-between items-center mb-2">
@@ -306,7 +352,7 @@ export function CartScreen() {
               })}
             </View>
 
-            {/* Resumo do pedido */}
+            {/* Resumo do pedido atualizado */}
             <Card className="p-4 border border-gray-100 mb-4">
               <Text className="font-semibold mb-3 text-base text-gray-800">
                 Resumo do Pedido
@@ -322,7 +368,9 @@ export function CartScreen() {
 
                 <HStack className="justify-between">
                   <Text className="text-gray-600">Taxa de entrega</Text>
-                  <Text className="font-medium text-gray-800">A calcular</Text>
+                  <Text className="font-medium text-gray-800">
+                    {cart.isDelivery ? cart.deliveryFee : "R$ 0,00"}
+                  </Text>
                 </HStack>
 
                 {isCouponValid && (
@@ -337,13 +385,46 @@ export function CartScreen() {
                 <HStack className="justify-between">
                   <Text className="font-semibold text-gray-800">Total</Text>
                   <Text className="font-bold text-lg text-gray-800">
-                    {isCouponValid
-                      ? cart.total // Aplicar o desconto no cálculo real
-                      : cart.total}
+                    {cart.total}
                   </Text>
                 </HStack>
               </VStack>
             </Card>
+
+            {/* Seção de cupom (opcional) */}
+            <TouchableOpacity
+              onPress={() => setShowCouponInput(!showCouponInput)}
+              className="mb-4"
+            >
+              <HStack className="items-center">
+                <Text
+                  className="text-base font-medium"
+                  style={{ color: primaryColor }}
+                >
+                  {showCouponInput
+                    ? "Ocultar cupom"
+                    : "Possui cupom de desconto?"}
+                </Text>
+              </HStack>
+            </TouchableOpacity>
+
+            {showCouponInput && (
+              <HStack className="items-center mb-6">
+                <TextInput
+                  value={couponCode}
+                  onChangeText={setCouponCode}
+                  placeholder="Digite o código do cupom"
+                  className="flex-1 h-12 px-4 border border-gray-300 rounded-l-lg bg-white"
+                />
+                <TouchableOpacity
+                  onPress={handleApplyCoupon}
+                  className="h-12 px-4 flex items-center justify-center rounded-r-lg"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <Text className="text-white font-medium">Aplicar</Text>
+                </TouchableOpacity>
+              </HStack>
+            )}
           </ScrollView>
         )}
 
@@ -370,7 +451,7 @@ export function CartScreen() {
               <View>
                 <Text className="text-gray-600 text-sm">Total</Text>
                 <Text className="font-bold text-gray-800 text-lg">
-                  {isCouponValid ? cart.total : cart.total}
+                  {cart.total}
                 </Text>
               </View>
 
@@ -382,7 +463,11 @@ export function CartScreen() {
                   borderRadius: 8,
                   paddingHorizontal: 16,
                 }}
-                disabled={isProcessing}
+                disabled={
+                  isProcessing ||
+                  (cart.isDelivery &&
+                    !cart.hasReachedMinimumOrderValue(companyContext.config))
+                }
               >
                 {isProcessing ? (
                   <HStack space="sm" alignItems="center">
@@ -401,6 +486,14 @@ export function CartScreen() {
                 )}
               </Button>
             </HStack>
+
+            {/* Mensagem de erro para valor mínimo */}
+            {cart.isDelivery &&
+              !cart.hasReachedMinimumOrderValue(companyContext.config) && (
+                <Text className="text-red-500 text-xs mt-1 text-center">
+                  O valor mínimo para delivery não foi atingido.
+                </Text>
+              )}
           </View>
         )}
       </View>

@@ -53,17 +53,20 @@ export interface Cart {
   companyName?: string;
   subtotal: number;
   subtotalFormatted: string;
-  deliveryFee?: number;
-  deliveryFeeFormatted?: string;
+  deliveryFee: number;
+  deliveryFeeFormatted: string;
   total: number;
   totalFormatted: string;
+  isDelivery: boolean;
 }
 
-// Modelo inicial para o carrinho vazio
 export const emptyCart: Cart = {
   items: [],
   subtotal: 0,
   subtotalFormatted: "R$ 0,00",
+  deliveryFee: 0,
+  deliveryFeeFormatted: "R$ 0,00",
   total: 0,
   totalFormatted: "R$ 0,00",
+  isDelivery: true,
 };
