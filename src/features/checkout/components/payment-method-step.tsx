@@ -7,7 +7,6 @@ import {
   Card,
   VStack,
   HStack,
-  Button,
   RadioGroup,
   Input,
   InputField,
@@ -28,8 +27,7 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { RadioOptionButton } from "@/components/ui/radio-option-button";
 
 export function PaymentMethodStep() {
-  const { checkout, paymentInfoForm, savePaymentInfo, prevStep } =
-    useCheckoutViewModel();
+  const { checkout, paymentInfoForm } = useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
 
   const [showChangeInput, setShowChangeInput] = useState(
@@ -40,11 +38,10 @@ export function PaymentMethodStep() {
 
   const {
     control,
-    handleSubmit,
     watch,
     setValue,
     trigger,
-    formState: { isValid, errors, isSubmitting },
+    formState: { errors, isSubmitting },
     reset,
   } = paymentInfoForm;
 
@@ -122,19 +119,6 @@ export function PaymentMethodStep() {
     }
   }, [changeValue, paymentMethod, checkout.total]);
 
-  // Função para validar e salvar
-  const handleSavePayment = (data: PaymentInfo) => {
-    // Validação extra para troco
-    if (data.method === CheckoutPaymentMethod.CASH) {
-      if (!validateChangeValue(data.change || "")) {
-        return;
-      }
-    }
-
-    // Se chegou aqui, está tudo ok
-    savePaymentInfo(data);
-  };
-
   // Opções de pagamento
   const paymentOptions = [
     {
@@ -206,7 +190,11 @@ export function PaymentMethodStep() {
   };
 
   return (
-    <ScrollView className="flex-1 p-4">
+    <ScrollView
+      className="flex-1"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+    >
       <Card className="p-4 mb-4 border border-gray-100">
         <Text className="text-lg font-semibold text-gray-800 mb-4">
           Forma de Pagamento
@@ -365,33 +353,6 @@ export function PaymentMethodStep() {
           </View>
         </VStack>
       </Card>
-
-      <HStack space="md" className="mb-8">
-        <Button
-          onPress={prevStep}
-          variant="outline"
-          className="flex-1"
-          isDisabled={isSubmitting}
-        >
-          <Text className="font-medium">Voltar</Text>
-        </Button>
-
-        <Button
-          onPress={handleSubmit(handleSavePayment)}
-          style={{ backgroundColor: primaryColor }}
-          className="flex-1"
-          isDisabled={
-            isSubmitting ||
-            (paymentMethod === CheckoutPaymentMethod.CASH && !isFormValid)
-          }
-        >
-          {isSubmitting ? (
-            <Text className="text-white font-medium">Processando...</Text>
-          ) : (
-            <Text className="text-white font-medium">Continuar</Text>
-          )}
-        </Button>
-      </HStack>
     </ScrollView>
   );
 }

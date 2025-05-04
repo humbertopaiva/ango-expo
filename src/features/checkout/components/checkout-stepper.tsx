@@ -1,6 +1,5 @@
 // Path: src/features/checkout/components/checkout-stepper.tsx
-
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, Animated } from "react-native";
 import { HStack } from "@gluestack-ui/themed";
 import {
@@ -12,7 +11,6 @@ import {
   AlertCircle,
 } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { useEffect, useRef } from "react";
 
 interface CheckoutStepperProps {
   currentStep: number;
@@ -24,7 +22,7 @@ interface CheckoutStepperProps {
 export function CheckoutStepper({
   currentStep,
   onStepPress,
-  allowNavigation = false,
+  allowNavigation = true,
   stepsValidation = [true, false, false, false],
 }: CheckoutStepperProps) {
   const primaryColor = THEME_COLORS.primary;
@@ -59,6 +57,9 @@ export function CheckoutStepper({
   // Verifica se o passo está validado
   const isValid = (step: number) => stepsValidation[step];
 
+  // Verifica se o passo está disponível para navegação
+  const isNavigable = (step: number) => step <= currentStep;
+
   return (
     <View className="px-4 py-3 bg-white border-b border-gray-200">
       {/* Barra de progresso animada */}
@@ -81,6 +82,7 @@ export function CheckoutStepper({
           const completed = isCompleted(index);
           const active = isActive(index);
           const valid = isValid(index);
+          const navigable = isNavigable(index);
 
           // Determinar a cor do ícone
           let iconColor = "#9CA3AF"; // Cinza para passos futuros
@@ -98,20 +100,25 @@ export function CheckoutStepper({
             <TouchableOpacity
               key={index}
               onPress={() => {
-                if (allowNavigation && onStepPress && (completed || active)) {
+                if (allowNavigation && onStepPress && navigable) {
                   onStepPress(index);
                 }
               }}
-              disabled={!(allowNavigation && (completed || active))}
+              disabled={!(allowNavigation && navigable)}
               className="items-center"
-              style={{ opacity: completed || active ? 1 : 0.5 }}
+              style={{ opacity: navigable ? 1 : 0.5 }}
+              activeOpacity={navigable ? 0.7 : 1}
             >
               <View
                 className={`w-8 h-8 rounded-full items-center justify-center mb-1 ${
+                  navigable ? "border" : ""
+                } ${
                   active
-                    ? `border ${
-                        valid ? "border-primary-500" : "border-amber-500"
-                      }`
+                    ? valid
+                      ? "border-primary-500"
+                      : "border-amber-500"
+                    : navigable
+                    ? "border-gray-300"
                     : ""
                 }`}
                 style={{
@@ -134,6 +141,8 @@ export function CheckoutStepper({
                       : "font-medium text-amber-600"
                     : completed
                     ? "font-medium text-gray-800"
+                    : navigable
+                    ? "text-gray-700"
                     : "text-gray-500"
                 }`}
               >

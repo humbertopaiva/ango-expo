@@ -350,26 +350,57 @@ export function CartScreen() {
         {/* Barra inferior com botão de finalizar pedido */}
         {!cartIsEmpty && (
           <View
-            className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4"
-            style={{ paddingBottom: Math.max(insets.bottom, 16) }}
+            className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3"
+            style={{
+              paddingBottom: Math.max(insets.bottom, 16),
+              ...Platform.select({
+                ios: {
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: -3 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 5,
+                },
+                android: {
+                  elevation: 5,
+                },
+              }),
+            }}
           >
-            <Button
-              onPress={handleCheckout}
-              style={{ backgroundColor: primaryColor }}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <HStack space="sm" alignItems="center">
-                  <ActivityIndicator size="small" color="white" />
-                  <Text className="text-white font-bold">Processando...</Text>
-                </HStack>
-              ) : (
-                <HStack space="sm" alignItems="center">
-                  <CreditCard size={20} color="white" />
-                  <Text className="text-white font-bold">Finalizar Pedido</Text>
-                </HStack>
-              )}
-            </Button>
+            <HStack alignItems="center" justifyContent="space-between">
+              <View>
+                <Text className="text-gray-600 text-sm">Total</Text>
+                <Text className="font-bold text-gray-800 text-lg">
+                  {isCouponValid ? cart.total : cart.total}
+                </Text>
+              </View>
+
+              <Button
+                onPress={handleCheckout}
+                style={{
+                  backgroundColor: primaryColor,
+                  height: 48,
+                  borderRadius: 8,
+                  paddingHorizontal: 16,
+                }}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <HStack space="sm" alignItems="center">
+                    <ActivityIndicator size="small" color="white" />
+                    <Text className="text-white font-medium">
+                      Processando...
+                    </Text>
+                  </HStack>
+                ) : (
+                  <HStack space="sm" alignItems="center">
+                    <CreditCard size={18} color="white" />
+                    <Text className="text-white font-medium">
+                      Finalizar Pedido
+                    </Text>
+                  </HStack>
+                )}
+              </Button>
+            </HStack>
           </View>
         )}
       </View>

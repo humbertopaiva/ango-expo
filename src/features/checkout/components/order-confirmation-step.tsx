@@ -1,8 +1,8 @@
 // Path: src/features/checkout/components/order-confirmation-step.tsx
 
 import React from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
-import { Card, VStack, HStack, Button, Divider } from "@gluestack-ui/themed";
+import { View, Text, ScrollView } from "react-native";
+import { Card, VStack, HStack, Divider } from "@gluestack-ui/themed";
 import {
   Check,
   Truck,
@@ -25,8 +25,7 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { CartProcessorService } from "../services/cart-processor.service";
 
 export function OrderConfirmationStep() {
-  const { checkout, isProcessing, finalizeOrder, prevStep } =
-    useCheckoutViewModel();
+  const { checkout } = useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
 
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
@@ -68,7 +67,11 @@ export function OrderConfirmationStep() {
   };
 
   return (
-    <ScrollView className="flex-1 p-4">
+    <ScrollView
+      className="flex-1"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+    >
       <Card className="p-4 mb-4 border border-gray-100">
         <Text className="text-lg font-semibold text-gray-800 mb-1">
           Confirme seu Pedido
@@ -271,36 +274,6 @@ export function OrderConfirmationStep() {
           </VStack>
         </View>
       </Card>
-
-      <HStack space="md" className="mb-8">
-        <Button
-          onPress={prevStep}
-          variant="outline"
-          className="flex-1"
-          isDisabled={isProcessing}
-        >
-          <Text className="font-medium">Voltar</Text>
-        </Button>
-
-        <Button
-          onPress={finalizeOrder}
-          style={{ backgroundColor: primaryColor }}
-          className="flex-1"
-          isDisabled={isProcessing}
-        >
-          {isProcessing ? (
-            <HStack space="sm">
-              <ActivityIndicator size="small" color="white" />
-              <Text className="text-white font-medium">Processando...</Text>
-            </HStack>
-          ) : (
-            <HStack space="sm">
-              <Check size={18} color="white" />
-              <Text className="text-white font-medium">Finalizar Pedido</Text>
-            </HStack>
-          )}
-        </Button>
-      </HStack>
     </ScrollView>
   );
 }
