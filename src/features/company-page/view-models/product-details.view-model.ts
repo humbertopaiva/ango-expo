@@ -8,6 +8,7 @@ import { Platform, Share } from "react-native";
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { useToast } from "@gluestack-ui/themed";
 import { toastUtils } from "@/src/utils/toast.utils";
+import { ProductAddonList } from "../models/product-addon-list";
 
 // Interface para adicionais selecionados
 interface SelectedAddon {
@@ -16,7 +17,7 @@ interface SelectedAddon {
 }
 
 export interface ProductDetailsViewModel {
-  // State existente...
+  // State
   product: CompanyProduct | null;
   isLoading: boolean;
   quantity: number;
@@ -36,12 +37,13 @@ export interface ProductDetailsViewModel {
 
   // Calculated properties
   hasVariation: boolean;
+  hasAddons: boolean; // Nova propriedade para verificar se tem adicionais
   maxQuantity: number;
   discountPercent: number | null;
   formattedTotal: string;
   primaryColor: string;
 
-  // Actions existentes...
+  // Actions
   increaseQuantity: () => void;
   decreaseQuantity: () => void;
   toggleFavorite: () => void;
@@ -59,7 +61,8 @@ export interface ProductDetailsViewModel {
 }
 
 export function useProductDetailsViewModel(
-  productId: string
+  productId: string,
+  addonLists?: ProductAddonList[] // Novo parâmetro para receber addonLists
 ): ProductDetailsViewModel {
   const vm = useCompanyPageContext();
   const isCartEnabled = vm.config?.delivery?.habilitar_carrinho !== false;
@@ -103,6 +106,11 @@ export function useProductDetailsViewModel(
       setIsLoading(false);
     }, 300);
   }, [productId, vm.products, isCartEnabled]);
+
+  // Verificar se o produto tem adicionais
+  const hasAddons = useCallback(() => {
+    return addonLists !== undefined && addonLists.length > 0;
+  }, [addonLists]);
 
   // Formatação de moeda
   const formatCurrency = (value: string | number) => {
@@ -244,12 +252,15 @@ export function useProductDetailsViewModel(
     const companySlug = product.empresa.slug;
     const companyName = product.empresa.nome;
 
-    // Adiciona o item principal ao carrinho
+    // Se o produto tem adicionais, sempre usar quantidade 1
+    const finalQuantity = selectedAddons.length > 0 ? 1 : quantity;
+
+    // Adiciona o item principal ao carrinho com a quantidade ajustada
     cartVm.addToCartWithObservation(
       product,
       companySlug,
       companyName,
-      quantity,
+      finalQuantity,
       observation.trim()
     );
 
@@ -269,11 +280,11 @@ export function useProductDetailsViewModel(
 
     // Salvar informações do item para o modal de confirmação
     const totalAmount =
-      parseFloat(product.preco_promocional || product.preco) * quantity;
+      parseFloat(product.preco_promocional || product.preco) * finalQuantity;
 
     setLastAddedItem({
       productName: product.nome,
-      quantity,
+      quantity: finalQuantity,
       totalPrice: formatCurrency(totalAmount),
       addonItems: selectedAddonItems,
       observation: observation.trim(),
@@ -343,6 +354,7 @@ export function useProductDetailsViewModel(
 
     // Calculated properties
     hasVariation,
+    hasAddons: hasAddons(),
     maxQuantity,
     discountPercent: calculateDiscount(),
     formattedTotal: calculateTotal(),

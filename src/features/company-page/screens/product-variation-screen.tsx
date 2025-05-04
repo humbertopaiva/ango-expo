@@ -335,6 +335,7 @@ export function ProductVariationScreen() {
               onIncrease={vm.increaseQuantity}
               onDecrease={vm.decreaseQuantity}
               primaryColor={vm.primaryColor}
+              hasAddons={hasAddons}
             />
 
             {/* Observation section */}
