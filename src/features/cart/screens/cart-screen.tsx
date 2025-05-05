@@ -1,6 +1,6 @@
 // Path: src/features/cart/screens/cart-screen.tsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -45,12 +45,55 @@ export function CartScreen() {
   const insets = useSafeAreaInsets();
   const toast = useToast();
 
-  // Efeito para definir o carrinho ativo com base no slug da URL
+  // Memoizar processamento dos itens do carrinho para evitar recálculos desnecessários
+  const processCartItems = useCallback(() => {
+    // Separate items into categories
+    const mainItems: CartItem[] = [];
+    const customItems: CartItem[] = [];
+    const addonMap: Record<string, CartItem[]> = {};
+
+    // First pass: identify addons by their parentItemId
+    cart.items.forEach((item) => {
+      if (
+        item.isAddon ||
+        (item.addons && item.addons.length > 0 && item.addons[0].parentItemId)
+      ) {
+        // It's an addon
+        const parentId =
+          item.parentItemId || (item.addons && item.addons[0].parentItemId);
+
+        if (parentId) {
+          if (!addonMap[parentId]) {
+            addonMap[parentId] = [];
+          }
+          addonMap[parentId].push(item);
+        }
+      } else if (item.isCustomProduct) {
+        // It's a custom product
+        customItems.push(item);
+      } else {
+        // It's a main item (including products with variations)
+        mainItems.push(item);
+      }
+    });
+
+    return { mainItems, customItems, addonMap };
+  }, [cart.items]);
+
+  // Extrair processamento para fora do corpo do componente
+  const { mainItems, customItems, addonMap } = processCartItems();
+
+  // Efeito para definir o carrinho ativo com base no slug da URL - APENAS UMA VEZ AO MONTAR
   useEffect(() => {
     if (companySlug) {
       multiCartStore.setActiveCart(companySlug);
     }
-  }, [companySlug, multiCartStore]);
+
+    // Função de limpeza para evitar efeitos colaterais indesejados
+    return () => {
+      // Opcional: Limpar aqui se necessário
+    };
+  }, [companySlug]); // Dependência única - não incluir multiCartStore para evitar loops
 
   // Verificar se o carrinho está vazio
   const cartIsEmpty = cart.isEmpty;
@@ -58,18 +101,16 @@ export function CartScreen() {
   // Primary color para personalização baseada na empresa
   const primaryColor = THEME_COLORS.primary;
 
-  // Botão para retornar à página da empresa
-  const handleBackToCompany = () => {
+  // Memoizar handlers para evitar recriações a cada renderização
+  const handleBackToCompany = useCallback(() => {
     router.push(`/(drawer)/empresa/${companySlug}`);
-  };
+  }, [companySlug]);
 
-  // Botão para adicionar produtos
-  const handleAddProducts = () => {
+  const handleAddProducts = useCallback(() => {
     router.push(`/(drawer)/empresa/${companySlug}`);
-  };
+  }, [companySlug]);
 
-  // Verificar cupom (mockado por enquanto)
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = useCallback(() => {
     if (!couponCode.trim()) {
       Alert.alert("Erro", "Digite um código de cupom");
       return;
@@ -85,10 +126,9 @@ export function CartScreen() {
         Alert.alert("Erro", "Cupom inválido ou expirado");
       }
     }, 500);
-  };
+  }, [couponCode]);
 
-  // Botão para finalizar pedido
-  const handleCheckout = async () => {
+  const handleCheckout = useCallback(async () => {
     try {
       setIsProcessing(true);
 
@@ -100,9 +140,6 @@ export function CartScreen() {
         );
         return;
       }
-
-      // Garantir que o carrinho ativo seja o da empresa atual
-      multiCartStore.setActiveCart(companySlug);
 
       // Verificar valor mínimo para entrega
       if (
@@ -137,35 +174,41 @@ export function CartScreen() {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [companySlug, cart, companyContext.config]);
 
-  const handleRemoveItemWithToast = (itemId: string) => {
-    // Encontrar o item para obter o nome antes de remover
-    const item = cart.items.find((item) => item.id === itemId);
+  const handleRemoveItemWithToast = useCallback(
+    (itemId: string) => {
+      // Encontrar o item para obter o nome antes de remover
+      const item = cart.items.find((item) => item.id === itemId);
 
-    // Remover do carrinho
-    cart.removeItem(itemId);
+      // Remover do carrinho
+      cart.removeItem(itemId);
 
-    // Mostrar toast se o item foi encontrado
-    if (item) {
-      toastUtils.info(toast, `${item.name} removido do carrinho`);
-    }
-  };
+      // Mostrar toast se o item foi encontrado
+      if (item) {
+        toastUtils.info(toast, `${item.name} removido do carrinho`);
+      }
+    },
+    [cart, toast]
+  );
 
-  const handleUpdateQuantityWithToast = (itemId: string, quantity: number) => {
-    // Encontrar o item para obter o nome
-    const item = cart.items.find((item) => item.id === itemId);
+  const handleUpdateQuantityWithToast = useCallback(
+    (itemId: string, quantity: number) => {
+      // Encontrar o item para obter o nome
+      const item = cart.items.find((item) => item.id === itemId);
 
-    // Atualizar quantidade
-    cart.updateQuantity(itemId, quantity);
+      // Atualizar quantidade
+      cart.updateQuantity(itemId, quantity);
 
-    // Mostrar toast se o item foi encontrado
-    if (item) {
-      toastUtils.success(toast, `Agora você tem ${quantity}x ${item.name}`);
-    }
-  };
+      // Mostrar toast se o item foi encontrado
+      if (item) {
+        toastUtils.success(toast, `Agora você tem ${quantity}x ${item.name}`);
+      }
+    },
+    [cart, toast]
+  );
 
-  const handleClearCart = () => {
+  const handleClearCart = useCallback(() => {
     // Verificar se tem itens no carrinho
     if (cart.items.length === 0) return;
 
@@ -185,44 +228,7 @@ export function CartScreen() {
         },
       ]
     );
-  };
-
-  // Processar itens do carrinho em categorias
-  const processCartItems = () => {
-    // Separate items into categories
-    const mainItems: CartItem[] = [];
-    const customItems: CartItem[] = [];
-    const addonMap: Record<string, CartItem[]> = {};
-
-    // First pass: identify addons by their parentItemId
-    cart.items.forEach((item) => {
-      if (
-        item.isAddon ||
-        (item.addons && item.addons.length > 0 && item.addons[0].parentItemId)
-      ) {
-        // It's an addon
-        const parentId =
-          item.parentItemId || (item.addons && item.addons[0].parentItemId);
-
-        if (parentId) {
-          if (!addonMap[parentId]) {
-            addonMap[parentId] = [];
-          }
-          addonMap[parentId].push(item);
-        }
-      } else if (item.isCustomProduct) {
-        // It's a custom product
-        customItems.push(item);
-      } else {
-        // It's a main item (including products with variations)
-        mainItems.push(item);
-      }
-    });
-
-    return { mainItems, customItems, addonMap };
-  };
-
-  const { mainItems, customItems, addonMap } = processCartItems();
+  }, [cart, toast]);
 
   return (
     <KeyboardAvoidingView
@@ -277,21 +283,7 @@ export function CartScreen() {
               </TouchableOpacity>
             </HStack>
 
-            {/* Seletor de modo de entrega */}
-            {/* {companyContext.hasDelivery() && (
-              <CartDeliverySelector
-                isDelivery={cart.isDelivery}
-                onToggleDeliveryMode={cart.toggleDeliveryMode}
-                subtotal={parseFloat(
-                  cart.subtotal.replace(/[^\d,]/g, "").replace(",", ".")
-                )}
-                deliveryFee={parseFloat(
-                  cart.deliveryFee.replace(/[^\d,]/g, "").replace(",", ".")
-                )}
-                config={cart.deliveryConfig || companyContext.config}
-                primaryColor={primaryColor}
-              />
-            )} */}
+            {/* Removido o componente CartDeliverySelector para debug */}
 
             {/* Lista de itens do carrinho */}
             <View className="mb-6">
@@ -312,20 +304,16 @@ export function CartScreen() {
               </HStack>
 
               {/* Render custom products first */}
-              {customItems.length > 0 && (
-                <>
-                  {customItems.map((item) => (
-                    <CartCustomProductComponent
-                      key={item.id}
-                      item={item}
-                      onRemove={handleRemoveItemWithToast}
-                      onUpdateQuantity={handleUpdateQuantityWithToast}
-                      onUpdateObservation={cart.updateObservation}
-                      primaryColor={primaryColor}
-                    />
-                  ))}
-                </>
-              )}
+              {customItems.map((item) => (
+                <CartCustomProductComponent
+                  key={item.id}
+                  item={item}
+                  onRemove={handleRemoveItemWithToast}
+                  onUpdateQuantity={handleUpdateQuantityWithToast}
+                  onUpdateObservation={cart.updateObservation}
+                  primaryColor={primaryColor}
+                />
+              ))}
 
               {/* Render normal products */}
               {mainItems.map((item) => {
@@ -457,7 +445,7 @@ export function CartScreen() {
                   borderRadius: 8,
                   paddingHorizontal: 16,
                 }}
-                disabled={
+                isDisabled={
                   isProcessing ||
                   (cart.isDelivery &&
                     !cart.hasReachedMinimumOrderValue(
