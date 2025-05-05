@@ -92,6 +92,8 @@ export function useCheckoutViewModel() {
         checkout.deliveryFee = deliveryFee;
         checkout.total = newTotal;
       }
+
+      console.log("DELIVERY CONFIG: ", deliveryConfig);
     }
   }, [deliveryConfig, checkout]);
 

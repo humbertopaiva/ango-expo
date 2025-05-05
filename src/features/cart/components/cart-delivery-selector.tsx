@@ -101,8 +101,6 @@ export const CartDeliverySelector: React.FC<CartDeliverySelectorProps> = ({
           }}
         >
           <VStack className="items-center space-y-1">
-            // Path: src/features/cart/components/cart-delivery-selector.tsx
-            (continuação)
             <Home size={24} color={!isDelivery ? primaryColor : "#6B7280"} />
             <Text
               className="font-medium text-center"

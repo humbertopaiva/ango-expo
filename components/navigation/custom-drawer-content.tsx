@@ -282,7 +282,6 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
         {...props}
         contentContainerStyle={{ paddingTop: 0 }}
       >
-        // Path: components/navigation/custom-drawer-content.tsx (continuação)
         <View className="px-2 pt-2">
           <Text className="text-xs font-medium text-slate-400 px-4 py-2 uppercase">
             Navegação

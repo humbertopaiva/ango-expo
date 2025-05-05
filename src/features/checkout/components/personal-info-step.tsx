@@ -345,6 +345,9 @@ export function PersonalInfoStep() {
 
                 {hasSpecificNeighborhoods ? (
                   <FormControl className="flex-1" isRequired>
+                    <Text className="text-gray-700 font-medium mb-1">
+                      Bairro
+                    </Text>
                     <Controller
                       control={control}
                       name="neighborhood"
@@ -361,6 +364,13 @@ export function PersonalInfoStep() {
                         />
                       )}
                     />
+                    {!isNeighborhoodValid && (
+                      <FormControlError>
+                        <FormControlErrorText>
+                          Este bairro não é atendido para entrega
+                        </FormControlErrorText>
+                      </FormControlError>
+                    )}
                   </FormControl>
                 ) : (
                   <FormControl
