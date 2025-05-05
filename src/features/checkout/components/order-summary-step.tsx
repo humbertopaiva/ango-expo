@@ -2,8 +2,14 @@
 
 import React from "react";
 import { View, Text, ScrollView } from "react-native";
-import { Card, VStack, HStack, RadioGroup, Badge } from "@gluestack-ui/themed";
-import { Truck, Home, ShoppingBag, Sparkles } from "lucide-react-native";
+import {
+  Card,
+  VStack,
+  HStack,
+  RadioGroup,
+  Divider,
+} from "@gluestack-ui/themed";
+import { Truck, Home, ShoppingBag, Sparkles, Info } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutDeliveryType } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -29,46 +35,6 @@ export function OrderSummaryStep() {
   // Verificar se há bairros específicos
   const hasSpecificNeighborhoods =
     deliveryConfig?.especificar_bairros_atendidos;
-
-  // Adicionar informações sobre bairros atendidos
-  const renderDeliveryNote = () => {
-    if (!isDelivery) return null;
-
-    if (
-      hasSpecificNeighborhoods &&
-      deliveryConfig?.bairros_atendidos &&
-      deliveryConfig.bairros_atendidos.length > 0
-    ) {
-      return (
-        <View className="mt-2 p-3 bg-blue-50 rounded-lg">
-          <Text className="text-blue-700 font-medium mb-1">
-            Bairros atendidos:
-          </Text>
-          <Text className="text-blue-700">
-            {deliveryConfig.bairros_atendidos.join(", ")}
-          </Text>
-        </View>
-      );
-    }
-
-    return null;
-  };
-
-  // Formatar a taxa de entrega
-  const formatDeliveryFee = () => {
-    if (checkout.deliveryType !== CheckoutDeliveryType.DELIVERY) {
-      return "Grátis";
-    }
-
-    if (isDeliveryFree) {
-      return "Grátis";
-    }
-
-    return checkout.deliveryFee.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
 
   const deliveryOptions = [
     {
@@ -104,215 +70,236 @@ export function OrderSummaryStep() {
   ];
 
   return (
-    <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-      <View className="p-4">
-        <Card className="p-4 mb-4 border border-gray-100">
-          <Text className="text-lg font-semibold text-gray-800 mb-4">
-            Resumo do Pedido
-          </Text>
+    <ScrollView
+      className="flex-1"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+    >
+      {/* Método de Recebimento Section - Movido para o topo como decisão principal */}
+      <Card className="p-4 mb-4 border border-gray-100">
+        <Text className="text-lg font-semibold text-gray-800 mb-3">
+          Como você quer receber seu pedido?
+        </Text>
 
-          {/* Exibir claramente a taxa de entrega */}
-          {checkout.deliveryType === CheckoutDeliveryType.DELIVERY && (
-            <View className="bg-secondary-50 p-3 rounded-lg mb-4">
-              <HStack className="justify-between items-center">
-                <Text className="text-primary-500 font-medium">
-                  Taxa de entrega:
-                </Text>
-                <View>
-                  {isDelivery && (
-                    <Text className="font-medium text-primary-500">
-                      {isDelivery && forcedDeliveryFee}
-                    </Text>
-                  )}
+        <RadioGroup
+          value={checkout.deliveryType}
+          onChange={(value) => setDeliveryType(value as CheckoutDeliveryType)}
+        >
+          {deliveryOptions.map((option) => (
+            <RadioOptionButton
+              key={option.type}
+              value={option.type}
+              label={option.label}
+              description={option.description}
+              icon={option.icon}
+              isSelected={checkout.deliveryType === option.type}
+              onPress={() => setDeliveryType(option.type)}
+              primaryColor={primaryColor}
+            />
+          ))}
+        </RadioGroup>
+
+        {/* Indicação da taxa */}
+        <View className="mt-3 p-3 bg-gray-50 rounded-lg">
+          <HStack className="items-center">
+            {isDelivery ? (
+              <Truck size={16} color={primaryColor} className="mr-2" />
+            ) : (
+              <Home size={16} color={primaryColor} className="mr-2" />
+            )}
+            <Text className="text-gray-700 flex-1">
+              {checkout.deliveryType === CheckoutDeliveryType.DELIVERY
+                ? isDeliveryFree
+                  ? "Entrega gratuita disponível para seu pedido!"
+                  : `Taxa de entrega: ${checkout.deliveryFee.toLocaleString(
+                      "pt-BR",
+                      {
+                        style: "currency",
+                        currency: "BRL",
+                      }
+                    )}`
+                : "Retirada gratuita no estabelecimento"}
+            </Text>
+          </HStack>
+        </View>
+
+        {/* Informações sobre bairros atendidos */}
+        {isDelivery &&
+          hasSpecificNeighborhoods &&
+          deliveryConfig?.bairros_atendidos &&
+          deliveryConfig.bairros_atendidos.length > 0 && (
+            <View className="mt-3 p-3 bg-blue-50 rounded-lg">
+              <HStack className="items-start">
+                <Info size={16} color="#3B82F6" className="mt-0.5 mr-2" />
+                <View className="flex-1">
+                  <Text className="text-blue-700 font-medium mb-1">
+                    Bairros atendidos:
+                  </Text>
+                  <Text className="text-blue-700 text-sm">
+                    {deliveryConfig.bairros_atendidos.join(", ")}
+                  </Text>
                 </View>
               </HStack>
             </View>
           )}
+      </Card>
 
-          {/* Informações sobre bairros atendidos */}
-          {renderDeliveryNote()}
+      {/* Resumo de itens */}
+      <Card className="p-4 mb-4 border border-gray-100">
+        <View className="flex-row justify-between items-center mb-4">
+          <Text className="text-lg font-semibold text-gray-800">
+            Resumo do Pedido
+          </Text>
+          <Text className="text-sm font-medium text-gray-500">
+            {checkout.items.length}{" "}
+            {checkout.items.length === 1 ? "item" : "itens"}
+          </Text>
+        </View>
 
-          <View className="bg-gray-50 p-3 rounded-lg mb-4">
-            <Text className="font-medium text-gray-800 mb-2">
-              {checkout.items.length}{" "}
-              {checkout.items.length === 1 ? "item" : "itens"} de{" "}
-              {checkout.companyName}
-            </Text>
-
-            {/* Produtos normais com adicionais */}
-            {mainItems.map((item) => (
-              <View key={item.id} className="mb-2">
-                <HStack className="justify-between">
-                  <View className="flex-1">
-                    <HStack>
-                      <ShoppingBag
-                        size={14}
-                        color="#6B7280"
-                        className="mt-1 mr-1"
-                      />
-                      <View className="flex-1">
-                        <Text className="text-gray-700">
-                          {item.quantity}x {item.name}
-                          {item.hasVariation && item.variationName
-                            ? ` (${item.variationName})`
-                            : ""}
-                        </Text>
-
-                        {/* Adicionais do item principal */}
-                        {addons[item.id]?.map((addon, addonIndex) => (
-                          <Text
-                            key={`addon-${addonIndex}`}
-                            className="text-xs text-gray-500 ml-4"
-                          >
-                            + {addon.quantity}x {addon.name}
-                          </Text>
-                        ))}
-                      </View>
-                    </HStack>
-                  </View>
-                  <Text className="font-medium text-gray-800 ml-2">
-                    {item.totalPriceFormatted}
+        {/* Produtos normais com adicionais */}
+        {mainItems.map((item) => (
+          <View key={item.id} className="mb-4">
+            <HStack className="justify-between mb-1">
+              <View className="flex-row items-start">
+                <ShoppingBag size={14} color="#6B7280" className="mt-1 mr-2" />
+                <View className="flex-1">
+                  <Text className="text-gray-800 font-medium">
+                    {item.quantity}x {item.name}
                   </Text>
-                </HStack>
-
-                {item.observation && (
-                  <Text className="text-sm text-gray-500 ml-6">
-                    Obs: {item.observation}
-                  </Text>
-                )}
+                  {item.hasVariation && item.variationName && (
+                    <Text className="text-gray-600 text-sm">
+                      Opção: {item.variationName}
+                    </Text>
+                  )}
+                </View>
               </View>
-            ))}
-            {/* Produtos customizados */}
-            {customItems.map((item) => (
-              <View key={item.id} className="mb-2">
-                <HStack className="justify-between">
-                  <View className="flex-1">
-                    <HStack>
-                      <Sparkles
-                        size={14}
-                        color="#6B7280"
-                        className="mt-1 mr-1"
-                      />
-                      <View className="flex-1">
-                        <HStack>
-                          <Text className="text-gray-700 flex-1">
-                            {item.quantity}x {item.name}
-                          </Text>
-                          <View className="bg-gray-200 px-1 rounded ml-1">
-                            <Text className="text-xs text-gray-600">
-                              Personalizado
-                            </Text>
-                          </View>
-                        </HStack>
+              <Text className="font-semibold text-gray-800">
+                {item.totalPriceFormatted}
+              </Text>
+            </HStack>
 
-                        {/* Detalhes dos passos customizados (simplificados) */}
-                        {item.customProductSteps?.map((step, stepIndex) => (
-                          <Text
-                            key={`step-${stepIndex}`}
-                            className="text-xs text-gray-500 ml-4"
-                          >
-                            {step.stepName && `${step.stepName}: `}
-                            {step.selectedItems.map((i) => i.name).join(", ")}
-                          </Text>
-                        ))}
-                      </View>
-                    </HStack>
-                  </View>
-                  <Text className="font-medium text-gray-800 ml-2">
-                    {item.totalPriceFormatted}
-                  </Text>
-                </HStack>
-
-                {item.observation && (
-                  <Text className="text-sm text-gray-500 ml-6">
-                    Obs: {item.observation}
-                  </Text>
-                )}
-              </View>
-            ))}
-            <View className="mt-3 pt-3 border-t border-gray-200">
-              <HStack className="justify-between">
-                <Text className="text-gray-600">Subtotal</Text>
-                <Text className="font-medium text-gray-800">
-                  {checkout.subtotal.toLocaleString("pt-BR", {
+            {/* Adicionais do item principal com preços individuais */}
+            {addons[item.id]?.map((addon, addonIndex) => (
+              <View
+                key={`addon-${addonIndex}`}
+                className="flex-row justify-between ml-6 mb-0.5"
+              >
+                <Text className="text-sm text-gray-600">
+                  + {addon.quantity}x {addon.name}
+                </Text>
+                <Text className="text-sm text-gray-600">
+                  {(addon.price * addon.quantity).toLocaleString("pt-BR", {
                     style: "currency",
                     currency: "BRL",
                   })}
                 </Text>
-              </HStack>
-
-              {/* Mostrar taxa de entrega no resumo de valores */}
-              <HStack className="justify-between mt-1">
-                <Text className="text-gray-600">Taxa de entrega</Text>
-                {isDelivery ? (
-                  <Text className="font-medium text-primary-500">
-                    {forcedDeliveryFee}
-                  </Text>
-                ) : (
-                  <Text className="font-medium text-gray-800">R$ 0,00</Text>
-                )}
-              </HStack>
-
-              <HStack className="justify-between mt-2">
-                <Text className="font-semibold text-gray-800">Total</Text>
-                <Text className="font-bold text-gray-800">
-                  {checkout.deliveryType === CheckoutDeliveryType.DELIVERY
-                    ? checkout.total.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })
-                    : checkout.subtotal.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                </Text>
-              </HStack>
-            </View>
-          </View>
-
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
-            Como você quer receber seu pedido?
-          </Text>
-
-          <RadioGroup
-            value={checkout.deliveryType}
-            onChange={(value) => setDeliveryType(value as CheckoutDeliveryType)}
-          >
-            {deliveryOptions.map((option) => (
-              <RadioOptionButton
-                key={option.type}
-                value={option.type}
-                label={option.label}
-                description={option.description}
-                icon={option.icon}
-                isSelected={checkout.deliveryType === option.type}
-                onPress={() => setDeliveryType(option.type)}
-                primaryColor={primaryColor}
-              />
+              </View>
             ))}
-          </RadioGroup>
 
-          {/* Indicação clara do status da taxa de entrega */}
-          <View className="mt-3 p-3 bg-gray-50 rounded-lg">
-            <HStack className="items-center">
-              <Truck size={16} color={primaryColor} className="mr-2" />
-              <Text className="text-gray-700">
-                {checkout.deliveryType === CheckoutDeliveryType.DELIVERY
-                  ? isDeliveryFree
-                    ? "Entrega gratuita disponível para seu pedido!"
-                    : `Taxa de entrega: ${checkout.deliveryFee.toLocaleString(
-                        "pt-BR",
-                        {
-                          style: "currency",
-                          currency: "BRL",
-                        }
-                      )}`
-                  : "Retirada gratuita no estabelecimento"}
+            {item.observation && (
+              <View className="ml-6 mt-1 bg-gray-50 p-2 rounded">
+                <Text className="text-xs text-gray-600">
+                  <Text className="font-medium">Observação:</Text>{" "}
+                  {item.observation}
+                </Text>
+              </View>
+            )}
+          </View>
+        ))}
+
+        {/* Produtos customizados */}
+        {customItems.map((item) => (
+          <View key={item.id} className="mb-4">
+            <HStack className="justify-between mb-1">
+              <View className="flex-row items-start">
+                <Sparkles size={14} color="#6B7280" className="mt-1 mr-2" />
+                <View className="flex-1">
+                  <View className="flex-row items-center">
+                    <Text className="text-gray-800 font-medium">
+                      {item.quantity}x {item.name}
+                    </Text>
+                    <View className="bg-blue-100 px-2 py-0.5 rounded ml-2">
+                      <Text className="text-xs text-blue-700 font-medium">
+                        Personalizado
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+              <Text className="font-semibold text-gray-800">
+                {item.totalPriceFormatted}
               </Text>
             </HStack>
+
+            {/* Detalhes dos passos customizados */}
+            {item.customProductSteps?.map((step, stepIndex) => (
+              <View key={`step-${stepIndex}`} className="ml-6 mb-0.5">
+                <Text className="text-sm text-gray-600">
+                  {step.stepName && (
+                    <Text className="font-medium">{step.stepName}:</Text>
+                  )}{" "}
+                  {step.selectedItems.map((i) => i.name).join(", ")}
+                </Text>
+              </View>
+            ))}
+
+            {item.observation && (
+              <View className="ml-6 mt-1 bg-gray-50 p-2 rounded">
+                <Text className="text-xs text-gray-600">
+                  <Text className="font-medium">Observação:</Text>{" "}
+                  {item.observation}
+                </Text>
+              </View>
+            )}
           </View>
-        </Card>
-      </View>
+        ))}
+
+        <Divider className="my-3" />
+
+        {/* Resumo de valores com visual aprimorado */}
+        <View className="space-y-2">
+          <HStack className="justify-between">
+            <Text className="text-gray-600">Subtotal</Text>
+            <Text className="font-medium text-gray-800">
+              {checkout.subtotal.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </Text>
+          </HStack>
+
+          {/* Taxa de entrega mais visual */}
+          <HStack className="justify-between">
+            <Text className="text-gray-600">Taxa de entrega</Text>
+            {isDelivery ? (
+              <Text
+                className={`font-medium ${
+                  isDeliveryFree ? "text-green-600" : "text-primary-500"
+                }`}
+              >
+                {isDeliveryFree ? "Grátis" : forcedDeliveryFee}
+              </Text>
+            ) : (
+              <Text className="font-medium text-green-600">Grátis</Text>
+            )}
+          </HStack>
+
+          <Divider className="my-1" />
+
+          <HStack className="justify-between">
+            <Text className="font-semibold text-gray-800">Total</Text>
+            <Text className="font-bold text-lg text-gray-800">
+              {(checkout.deliveryType === CheckoutDeliveryType.PICKUP
+                ? checkout.subtotal
+                : checkout.total
+              ).toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </Text>
+          </HStack>
+        </View>
+      </Card>
     </ScrollView>
   );
 }

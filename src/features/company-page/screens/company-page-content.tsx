@@ -75,23 +75,6 @@ export function CompanyPageContent() {
     []
   );
 
-  // Verificar se deve mostrar informações de delivery separadamente
-  const shouldShowDeliveryInfo = useCallback(() => {
-    return (
-      vm.hasDelivery() &&
-      vm.config?.delivery &&
-      !(
-        vm.config?.delivery?.mostrar_info_delivery === true ||
-        vm.config?.delivery?.mostrar_info_delivery === null
-      )
-    );
-  }, [vm]);
-
-  // Verificar se o carrinho está habilitado
-  const isCartEnabled = useCallback(() => {
-    return vm.config?.delivery?.habilitar_carrinho !== false;
-  }, [vm.config?.delivery?.habilitar_carrinho]);
-
   // Configurar informações do header quando o perfil estiver disponível
   useEffect(() => {
     if (vm.profile) {
