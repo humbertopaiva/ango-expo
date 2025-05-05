@@ -256,7 +256,7 @@ export function OrderSummaryStep() {
               <HStack className="justify-between mt-2">
                 <Text className="font-semibold text-gray-800">Total</Text>
                 <Text className="font-bold text-gray-800">
-                  {isDelivery
+                  {checkout.deliveryType === CheckoutDeliveryType.DELIVERY
                     ? checkout.total.toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
