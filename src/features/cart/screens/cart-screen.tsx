@@ -37,9 +37,8 @@ export function CartScreen() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const multiCartStore = useMultiCartStore();
   const cart = useCartViewModel();
-  const companyContext = useCompanyPageContext(); // Contexto da empresa para obter config
+  const companyContext = useCompanyPageContext();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isLoadingConfig, setIsLoadingConfig] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [isCouponValid, setIsCouponValid] = useState(false);
   const [showCouponInput, setShowCouponInput] = useState(false);
@@ -51,46 +50,7 @@ export function CartScreen() {
     if (companySlug) {
       multiCartStore.setActiveCart(companySlug);
     }
-  }, [companySlug]);
-
-  // Efeito para buscar as configurações de delivery quando a tela é carregada
-  useEffect(() => {
-    const fetchConfig = async () => {
-      if (!companySlug) return;
-
-      setIsLoadingConfig(true);
-      try {
-        // Se temos um ID de empresa, buscar configurações da API
-        const currentCartItems = cart.items;
-        if (currentCartItems.length > 0 && currentCartItems[0].companyId) {
-          await cart.fetchDeliveryConfig(currentCartItems[0].companyId);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar configurações de delivery:", error);
-      } finally {
-        setIsLoadingConfig(false);
-      }
-    };
-
-    fetchConfig();
-  }, [companySlug, cart]);
-
-  // Efeito para definir a taxa de entrega inicial quando o config for carregado
-  useEffect(() => {
-    if (companySlug && companyContext.config) {
-      // Obter a taxa de entrega da configuração
-      const deliveryFee = cart.getDeliveryFeeFromConfig(
-        cart.deliveryConfig || companyContext.config
-      );
-
-      console.log("Taxa de entrega obtida:", deliveryFee);
-
-      // Configurar a taxa no store do carrinho
-      if (!isNaN(deliveryFee) && deliveryFee > 0) {
-        cart.setDeliveryFee(deliveryFee);
-      }
-    }
-  }, [companySlug, companyContext.config, cart.deliveryConfig]);
+  }, [companySlug, multiCartStore]);
 
   // Verificar se o carrinho está vazio
   const cartIsEmpty = cart.isEmpty;
@@ -318,7 +278,7 @@ export function CartScreen() {
             </HStack>
 
             {/* Seletor de modo de entrega */}
-            {companyContext.hasDelivery() && (
+            {/* {companyContext.hasDelivery() && (
               <CartDeliverySelector
                 isDelivery={cart.isDelivery}
                 onToggleDeliveryMode={cart.toggleDeliveryMode}
@@ -331,7 +291,7 @@ export function CartScreen() {
                 config={cart.deliveryConfig || companyContext.config}
                 primaryColor={primaryColor}
               />
-            )}
+            )} */}
 
             {/* Lista de itens do carrinho */}
             <View className="mb-6">

@@ -1,7 +1,6 @@
 // Path: src/features/checkout/services/delivery-config.service.ts
 
 import { api } from "@/src/services/api";
-import { cacheService } from "@/src/services/cache-service";
 
 // Interface para bairros atendidos
 export interface DeliveryNeighborhood {
@@ -23,59 +22,7 @@ export interface DeliveryConfig {
   empresa?: any;
 }
 
-// Chave para cache
-const CACHE_KEY_PREFIX = "delivery_config_";
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutos
-
 export class DeliveryConfigService {
-  /**
-   * Busca a configuração de delivery da empresa
-   * @param companyId ID da empresa
-   * @returns Configuração de delivery
-   */
-  static async getDeliveryConfig(
-    companyId: string
-  ): Promise<DeliveryConfig | null> {
-    if (!companyId) {
-      console.error("CompanyId não fornecido para buscar config de delivery");
-      return null;
-    }
-
-    const cacheKey = `${CACHE_KEY_PREFIX}${companyId}`;
-
-    try {
-      // Verificar cache primeiro
-      const cachedConfig = await cacheService.get<DeliveryConfig>(
-        cacheKey,
-        CACHE_DURATION
-      );
-
-      if (cachedConfig) {
-        console.log("Usando config de delivery do cache");
-        return cachedConfig;
-      }
-
-      // Buscar da API se não estiver em cache
-      console.log(`Buscando config de delivery para empresa: ${companyId}`);
-      const response = await api.get(`/api/delivery/config?slug=${companyId}`);
-
-      if (response.data?.status === "success" && response.data?.data) {
-        const config = response.data.data;
-
-        // Salvar no cache para futuras consultas
-        await cacheService.set(cacheKey, config);
-
-        return config;
-      }
-
-      console.log("Nenhuma configuração de delivery encontrada");
-      return null;
-    } catch (error) {
-      console.error("Erro ao buscar configuração de delivery:", error);
-      return null;
-    }
-  }
-
   /**
    * Obtém a taxa de entrega em número
    * @param config Configuração de delivery
