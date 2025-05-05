@@ -15,15 +15,10 @@ export function useDeliveryConfig(companyId?: string, companySlug?: string) {
 
       try {
         // Usar slug ou id dependendo do que estiver disponível
-        console.log(
-          `Tentando buscar em: /api/delivery/config?slug=${identifier}`
-        );
         const param = companyId
           ? `companyId=${companyId}`
           : `slug=${companySlug}`;
-        const response = await api.get(
-          `/api/delivery/config?slug${identifier}`
-        );
+        const response = await api.get(`/api/delivery/config?${param}`);
 
         if (response.data?.status === "success" && response.data?.data) {
           return response.data.data;

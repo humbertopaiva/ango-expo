@@ -131,8 +131,9 @@ export function useCartViewModel(): CartViewModel {
   // Usar o carrinho ativo ou o da URL
   const currentSlug = activeCartSlug || urlCompanySlug;
 
-  // Garantir que sempre temos um cart válido mesmo que vazio
-  const cart: Cart = currentSlug ? getCart(currentSlug) : { ...emptyCart };
+  const cart = useMemo(() => {
+    return currentSlug ? getCart(currentSlug) : { ...emptyCart };
+  }, [currentSlug, getCart]);
 
   // Obter o ID da empresa do primeiro item do carrinho
   const companyIdFromCart = useMemo(() => {
