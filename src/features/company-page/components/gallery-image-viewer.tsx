@@ -295,7 +295,6 @@ export function GalleryImageViewer({
   );
 }
 
-// Path: src/features/company-page/components/gallery-image-viewer.tsx (continuação)
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,

@@ -245,8 +245,7 @@ ${order.items
               </HStack>
             )}
           </View>
-          // Path: src/features/orders/screens/order-details-screen.tsx
-          (continuação)
+
           {/* Botão de ação rápida */}
           <TouchableOpacity
             onPress={handleContactCompany}

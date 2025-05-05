@@ -138,8 +138,7 @@ export function OrderSummaryStep() {
               {checkout.items.length === 1 ? "item" : "itens"} de{" "}
               {checkout.companyName}
             </Text>
-            // Path: src/features/checkout/components/order-summary-step.tsx
-            (continuação)
+
             {/* Produtos normais com adicionais */}
             {mainItems.map((item) => (
               <View key={item.id} className="mb-2">

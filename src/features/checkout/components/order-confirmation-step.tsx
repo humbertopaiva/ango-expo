@@ -53,8 +53,6 @@ export function OrderConfirmationStep() {
     }
   };
 
-  // Path: src/features/checkout/components/order-confirmation-step.tsx
-
   // Texto para método de pagamento
   const getPaymentMethodText = () => {
     switch (checkout.paymentInfo.method) {

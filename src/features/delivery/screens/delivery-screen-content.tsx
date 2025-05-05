@@ -153,16 +153,16 @@ export function DeliveryScreenContent() {
           </Section>
         )}
 
-        <Text className="text-xl font-semibold text-primary-500 px-4 mb-4">
-          Estabelecimentos
-        </Text>
-
         {/* Seção "Abertos Agora" (só aparece se tiver empresas abertas) */}
         {openCompanies.length > 0 && (
           <Section className="mb-4" paddingX={0}>
             <OpenNowCompanies profiles={openCompanies} isLoading={isLoading} />
           </Section>
         )}
+
+        <Text className="text-xl font-semibold text-primary-500 px-4 mb-4">
+          Encontre na cidade
+        </Text>
 
         {/* Contador de resultados */}
         <Section className="mb-4">
