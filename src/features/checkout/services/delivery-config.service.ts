@@ -57,9 +57,7 @@ export class DeliveryConfigService {
 
       // Buscar da API se não estiver em cache
       console.log(`Buscando config de delivery para empresa: ${companyId}`);
-      const response = await api.get(
-        `/api/delivery/config?company=${companyId}`
-      );
+      const response = await api.get(`/api/delivery/config?slug=${companyId}`);
 
       if (response.data?.status === "success" && response.data?.data) {
         const config = response.data.data;
