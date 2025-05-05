@@ -39,6 +39,7 @@ export function CartScreen() {
   const cart = useCartViewModel();
   const companyContext = useCompanyPageContext(); // Contexto da empresa para obter config
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [isCouponValid, setIsCouponValid] = useState(false);
   const [showCouponInput, setShowCouponInput] = useState(false);
@@ -52,11 +53,35 @@ export function CartScreen() {
     }
   }, [companySlug]);
 
+  // Efeito para buscar as configurações de delivery quando a tela é carregada
+  useEffect(() => {
+    const fetchConfig = async () => {
+      if (!companySlug) return;
+
+      setIsLoadingConfig(true);
+      try {
+        // Se temos um ID de empresa, buscar configurações da API
+        const currentCartItems = cart.items;
+        if (currentCartItems.length > 0 && currentCartItems[0].companyId) {
+          await cart.fetchDeliveryConfig(currentCartItems[0].companyId);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar configurações de delivery:", error);
+      } finally {
+        setIsLoadingConfig(false);
+      }
+    };
+
+    fetchConfig();
+  }, [companySlug, cart]);
+
   // Efeito para definir a taxa de entrega inicial quando o config for carregado
   useEffect(() => {
     if (companySlug && companyContext.config) {
       // Obter a taxa de entrega da configuração
-      const deliveryFee = cart.getDeliveryFeeFromConfig(companyContext.config);
+      const deliveryFee = cart.getDeliveryFeeFromConfig(
+        cart.deliveryConfig || companyContext.config
+      );
 
       console.log("Taxa de entrega obtida:", deliveryFee);
 
@@ -65,7 +90,7 @@ export function CartScreen() {
         cart.setDeliveryFee(deliveryFee);
       }
     }
-  }, [companySlug, companyContext.config]);
+  }, [companySlug, companyContext.config, cart.deliveryConfig]);
 
   // Verificar se o carrinho está vazio
   const cartIsEmpty = cart.isEmpty;
@@ -122,15 +147,20 @@ export function CartScreen() {
       // Verificar valor mínimo para entrega
       if (
         cart.isDelivery &&
-        !cart.hasReachedMinimumOrderValue(companyContext.config)
+        !cart.hasReachedMinimumOrderValue(
+          cart.deliveryConfig || companyContext.config
+        )
       ) {
-        const minValue = companyContext.config?.delivery?.pedido_minimo || "0";
+        const minValue =
+          cart.deliveryConfig?.pedido_minimo ||
+          companyContext.config?.delivery?.pedido_minimo ||
+          "0";
 
         Alert.alert(
           "Pedido mínimo não atingido",
-          `Para delivery, o valor mínimo é de R$ ${
-            parseFloat(minValue) / 100
-          }. Adicione mais itens para continuar.`
+          `Para delivery, o valor mínimo é de ${cart.formatCurrency(
+            minValue
+          )}. Adicione mais itens para continuar.`
         );
         setIsProcessing(false);
         return;
@@ -298,7 +328,7 @@ export function CartScreen() {
                 deliveryFee={parseFloat(
                   cart.deliveryFee.replace(/[^\d,]/g, "").replace(",", ".")
                 )}
-                config={companyContext.config}
+                config={cart.deliveryConfig || companyContext.config}
                 primaryColor={primaryColor}
               />
             )}
@@ -470,7 +500,9 @@ export function CartScreen() {
                 disabled={
                   isProcessing ||
                   (cart.isDelivery &&
-                    !cart.hasReachedMinimumOrderValue(companyContext.config))
+                    !cart.hasReachedMinimumOrderValue(
+                      cart.deliveryConfig || companyContext.config
+                    ))
                 }
               >
                 {isProcessing ? (
@@ -493,7 +525,9 @@ export function CartScreen() {
 
             {/* Mensagem de erro para valor mínimo */}
             {cart.isDelivery &&
-              !cart.hasReachedMinimumOrderValue(companyContext.config) && (
+              !cart.hasReachedMinimumOrderValue(
+                cart.deliveryConfig || companyContext.config
+              ) && (
                 <Text className="text-red-500 text-xs mt-1 text-center">
                   O valor mínimo para delivery não foi atingido.
                 </Text>

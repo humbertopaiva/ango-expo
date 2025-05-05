@@ -1,4 +1,5 @@
 // Path: src/features/cart/stores/cart.store.ts
+
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { storage } from "@/src/lib/storage";
@@ -83,8 +84,9 @@ const recalculateCart = (
   // Mapping for main items and their addons
   const mainItems: CartItem[] = [];
   const addonsMap: Record<string, CartItem[]> = {};
+  const customItems: CartItem[] = [];
 
-  // First pass: identify addons and their parent items
+  // First pass: identify addons and their parent items, and custom products
   items.forEach((item) => {
     // Check if it's an addon
     if (item.addons && item.addons.length > 0 && item.addons[0].parentItemId) {
@@ -93,14 +95,17 @@ const recalculateCart = (
         addonsMap[parentId] = [];
       }
       addonsMap[parentId].push(item);
+    } else if (item.isCustomProduct) {
+      // It's a custom product
+      customItems.push(item);
     } else {
       // It's a main item (simple or with variation)
       mainItems.push(item);
     }
   });
 
-  // Calculate subtotal considering main items and their addons
-  const subtotal = mainItems.reduce((sum, item) => {
+  // Calculate subtotal for main items with their addons
+  const mainItemsTotal = mainItems.reduce((sum, item) => {
     // Price of the main item
     let itemTotal = item.price * item.quantity;
 
@@ -113,6 +118,14 @@ const recalculateCart = (
 
     return sum + itemTotal + addonsTotal;
   }, 0);
+
+  // Calculate subtotal for custom products
+  const customItemsTotal = customItems.reduce((sum, item) => {
+    return sum + item.price * item.quantity;
+  }, 0);
+
+  // Total subtotal
+  const subtotal = mainItemsTotal + customItemsTotal;
 
   // Aplicar a taxa de entrega apenas se o método de entrega for selecionado
   const finalDeliveryFee = isDelivery ? deliveryFee : 0;

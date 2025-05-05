@@ -11,7 +11,7 @@ import { RadioOptionButton } from "@/components/ui/radio-option-button";
 import { CartProcessorService } from "../services/cart-processor.service";
 
 export function OrderSummaryStep() {
-  const { checkout, setDeliveryType, forcedDeliveryFee } =
+  const { checkout, setDeliveryType, forcedDeliveryFee, deliveryConfig } =
     useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
 
@@ -25,6 +25,34 @@ export function OrderSummaryStep() {
     checkout.deliveryFee === 0 || checkout.deliveryFee === undefined;
 
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
+
+  // Verificar se há bairros específicos
+  const hasSpecificNeighborhoods =
+    deliveryConfig?.especificar_bairros_atendidos;
+
+  // Adicionar informações sobre bairros atendidos
+  const renderDeliveryNote = () => {
+    if (!isDelivery) return null;
+
+    if (
+      hasSpecificNeighborhoods &&
+      deliveryConfig?.bairros_atendidos &&
+      deliveryConfig.bairros_atendidos.length > 0
+    ) {
+      return (
+        <View className="mt-2 p-3 bg-blue-50 rounded-lg">
+          <Text className="text-blue-700 font-medium mb-1">
+            Bairros atendidos:
+          </Text>
+          <Text className="text-blue-700">
+            {deliveryConfig.bairros_atendidos.join(", ")}
+          </Text>
+        </View>
+      );
+    }
+
+    return null;
+  };
 
   // Formatar a taxa de entrega
   const formatDeliveryFee = () => {
@@ -101,13 +129,17 @@ export function OrderSummaryStep() {
             </View>
           )}
 
+          {/* Informações sobre bairros atendidos */}
+          {renderDeliveryNote()}
+
           <View className="bg-gray-50 p-3 rounded-lg mb-4">
             <Text className="font-medium text-gray-800 mb-2">
               {checkout.items.length}{" "}
               {checkout.items.length === 1 ? "item" : "itens"} de{" "}
               {checkout.companyName}
             </Text>
-
+            // Path: src/features/checkout/components/order-summary-step.tsx
+            (continuação)
             {/* Produtos normais com adicionais */}
             {mainItems.map((item) => (
               <View key={item.id} className="mb-2">
@@ -151,7 +183,6 @@ export function OrderSummaryStep() {
                 )}
               </View>
             ))}
-
             {/* Produtos customizados */}
             {customItems.map((item) => (
               <View key={item.id} className="mb-2">
@@ -200,7 +231,6 @@ export function OrderSummaryStep() {
                 )}
               </View>
             ))}
-
             <View className="mt-3 pt-3 border-t border-gray-200">
               <HStack className="justify-between">
                 <Text className="text-gray-600">Subtotal</Text>
@@ -215,10 +245,12 @@ export function OrderSummaryStep() {
               {/* Mostrar taxa de entrega no resumo de valores */}
               <HStack className="justify-between mt-1">
                 <Text className="text-gray-600">Taxa de entrega</Text>
-                {isDelivery && (
+                {isDelivery ? (
                   <Text className="font-medium text-primary-500">
-                    {isDelivery && forcedDeliveryFee}
+                    {forcedDeliveryFee}
                   </Text>
+                ) : (
+                  <Text className="font-medium text-gray-800">R$ 0,00</Text>
                 )}
               </HStack>
 

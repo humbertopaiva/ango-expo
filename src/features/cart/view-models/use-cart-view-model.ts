@@ -1,11 +1,12 @@
 // Path: src/features/cart/view-models/use-cart-view-model.ts
+
 import { useMultiCartStore } from "../stores/cart.store";
 import {
   CompanyProduct,
   ProductWithVariation,
 } from "@/src/features/company-page/models/company-product";
 import { Cart, CartItem, emptyCart } from "../models/cart";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import {
   CustomProductDetail,
@@ -14,6 +15,10 @@ import {
 import { toastUtils } from "@/src/utils/toast.utils";
 import { CompanyConfig } from "@/src/features/company-page/models/company-config";
 import { DeliveryInfoService } from "../services/delivery-info.service";
+import {
+  DeliveryConfig,
+  DeliveryConfigService,
+} from "@/src/features/checkout/services/delivery-config.service";
 
 export interface CartViewModel {
   // Estado
@@ -26,6 +31,8 @@ export interface CartViewModel {
   companySlug: string | undefined;
   companyName: string | undefined;
   isDelivery: boolean; // Indica se o pedido é para entrega
+  deliveryConfig: DeliveryConfig | null;
+  isLoadingDeliveryConfig: boolean;
 
   // Ações
   addProduct: (
@@ -50,8 +57,14 @@ export interface CartViewModel {
   setDeliveryFee: (fee: number) => void;
   toggleDeliveryMode: () => void;
   setDeliveryMode: (isDelivery: boolean) => void;
-  hasReachedMinimumOrderValue: (config: CompanyConfig | null) => boolean;
-  getDeliveryFeeFromConfig: (config: CompanyConfig | null) => number;
+  hasReachedMinimumOrderValue: (
+    config: CompanyConfig | DeliveryConfig | null
+  ) => boolean;
+  getDeliveryFeeFromConfig: (
+    config: CompanyConfig | DeliveryConfig | null
+  ) => number;
+  fetchDeliveryConfig: (companyId: string) => Promise<void>;
+  formatCurrency: (value: number | string) => string;
 
   // Ações para diferentes tipos de pedidos
   addProductWithVariation: (
@@ -107,6 +120,11 @@ export function useCartViewModel(): CartViewModel {
     deliveryFees,
   } = useMultiCartStore();
 
+  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig | null>(
+    null
+  );
+  const [isLoadingDeliveryConfig, setIsLoadingDeliveryConfig] = useState(false);
+
   // Pegar o parâmetro companySlug da URL para definir o carrinho ativo
   const { companySlug: urlCompanySlug } = useLocalSearchParams<{
     companySlug: string;
@@ -118,6 +136,40 @@ export function useCartViewModel(): CartViewModel {
       setActiveCart(urlCompanySlug);
     }
   }, [urlCompanySlug, setActiveCart]);
+
+  // Método para buscar config
+  const fetchDeliveryConfig = useCallback(async (companyId: string) => {
+    if (!companyId) return;
+
+    setIsLoadingDeliveryConfig(true);
+    try {
+      const config = await DeliveryConfigService.getDeliveryConfig(companyId);
+      if (config) {
+        setDeliveryConfig(config);
+
+        // Atualizar a taxa de entrega no carrinho se necessário
+        const deliveryFee = DeliveryConfigService.getDeliveryFee(config);
+        if (deliveryFee > 0) {
+          setDeliveryFee(deliveryFee);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao buscar configuração de delivery:", error);
+    } finally {
+      setIsLoadingDeliveryConfig(false);
+    }
+  }, []);
+
+  // Adicionar efeito para buscar a config quando o carrinho é carregado
+  useEffect(() => {
+    const currentSlug = activeCartSlug || urlCompanySlug;
+    if (currentSlug) {
+      const currentCart = getCart(currentSlug);
+      if (currentCart && currentCart.companyId) {
+        fetchDeliveryConfig(currentCart.companyId);
+      }
+    }
+  }, [activeCartSlug, urlCompanySlug, fetchDeliveryConfig]);
 
   // Usar o carrinho ativo ou o da URL
   const currentSlug = activeCartSlug || urlCompanySlug;
@@ -133,6 +185,17 @@ export function useCartViewModel(): CartViewModel {
 
   // Quantidade total de itens no carrinho
   const itemCount = currentSlug ? getItemCount(currentSlug) : 0;
+
+  // Função para formatar moeda
+  const formatCurrency = (value: number | string): string => {
+    const numericValue = typeof value === "string" ? parseFloat(value) : value;
+    if (isNaN(numericValue)) return "R$ 0,00";
+
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(numericValue);
+  };
 
   // Novas ações para entrega
   const setDeliveryFee = (fee: number) => {
@@ -154,20 +217,43 @@ export function useCartViewModel(): CartViewModel {
   };
 
   // Obter a taxa de entrega de uma configuração de empresa
-  const getDeliveryFeeFromConfig = (config: CompanyConfig | null): number => {
+  const getDeliveryFeeFromConfig = (
+    config: CompanyConfig | DeliveryConfig | null
+  ): number => {
+    // Primeiro, verificar se temos a configuração de delivery mais recente
+    if (deliveryConfig) {
+      return DeliveryConfigService.getDeliveryFee(deliveryConfig);
+    }
+
+    // Caso contrário, usar o método existente
     return DeliveryInfoService.getDeliveryFee(config);
   };
 
   // Verificar se o pedido atingiu o valor mínimo para entrega
   const hasReachedMinimumOrderValue = (
-    config: CompanyConfig | null
+    config: CompanyConfig | DeliveryConfig | null
   ): boolean => {
-    if (!currentSlug) return true;
+    // Obter o subtotal do carrinho atual como número
+    const subtotalValue = parseFloat(
+      cart.subtotal
+        .toString()
+        .replace(/[^\d,]/g, "")
+        .replace(",", ".")
+    );
 
-    // Obter o subtotal do carrinho atual
-    const subtotal = cart.subtotal || 0;
+    // Primeiro, verificar se temos a configuração de delivery mais recente
+    if (deliveryConfig) {
+      return DeliveryInfoService.hasReachedMinimumOrderValue(
+        subtotalValue,
+        deliveryConfig
+      );
+    }
 
-    return DeliveryInfoService.hasReachedMinimumOrderValue(subtotal, config);
+    // Caso contrário, usar o método existente
+    return DeliveryInfoService.hasReachedMinimumOrderValue(
+      subtotalValue,
+      config
+    );
   };
 
   // Adiciona um produto ao carrinho com quantidade padrão 1
@@ -396,6 +482,8 @@ export function useCartViewModel(): CartViewModel {
     companySlug: cart.companySlug,
     companyName: cart.companyName,
     isDelivery,
+    deliveryConfig,
+    isLoadingDeliveryConfig,
 
     // Ações
     addProduct,
@@ -405,6 +493,7 @@ export function useCartViewModel(): CartViewModel {
     updateObservation,
     clearCart,
     isProductInCart,
+    formatCurrency,
 
     // Novas ações para entrega
     setDeliveryFee,
@@ -412,6 +501,7 @@ export function useCartViewModel(): CartViewModel {
     setDeliveryMode,
     hasReachedMinimumOrderValue,
     getDeliveryFeeFromConfig,
+    fetchDeliveryConfig,
 
     // Ações para diferentes tipos de pedidos
     addProductWithVariation,

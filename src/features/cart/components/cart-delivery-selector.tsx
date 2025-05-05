@@ -6,13 +6,14 @@ import { HStack, VStack, Badge } from "@gluestack-ui/themed";
 import { Truck, Home } from "lucide-react-native";
 import { CompanyConfig } from "@/src/features/company-page/models/company-config";
 import { DeliveryInfoService } from "../services/delivery-info.service";
+import { DeliveryConfig } from "@/src/features/checkout/services/delivery-config.service";
 
 interface CartDeliverySelectorProps {
   isDelivery: boolean;
   onToggleDeliveryMode: () => void;
   subtotal: number;
   deliveryFee: number;
-  config: CompanyConfig | null;
+  config: CompanyConfig | DeliveryConfig | null;
   primaryColor: string;
 }
 
@@ -30,18 +31,20 @@ export const CartDeliverySelector: React.FC<CartDeliverySelectorProps> = ({
     config
   );
 
-  // Obter o valor mínimo formatado
-  const getMinimumOrderValue = () => {
-    if (!config?.delivery?.pedido_minimo) return null;
-    return DeliveryInfoService.formatCurrency(config.delivery.pedido_minimo);
-  };
+  // Obter o valor mínimo e formatá-lo
+  const minimumOrderValue = DeliveryInfoService.getMinimumOrderValue(config);
+  const formattedMinimumValue =
+    DeliveryInfoService.formatCurrency(minimumOrderValue);
 
-  // Obter o valor restante para atingir o mínimo
-  const getRemainingValue = () => {
-    if (!config?.delivery?.pedido_minimo) return 0;
-    const minValue = parseFloat(config.delivery.pedido_minimo);
-    return Math.max(0, minValue - subtotal);
-  };
+  // Calcular valor restante para atingir o mínimo
+  const remainingValue = Math.max(0, minimumOrderValue - subtotal);
+  const formattedRemainingValue =
+    DeliveryInfoService.formatCurrency(remainingValue);
+
+  // Verificar se a empresa tem bairros específicos
+  const hasSpecificNeighborhoods =
+    DeliveryInfoService.hasSpecificNeighborhoods(config);
+  const neighborhoods = DeliveryInfoService.getNeighborhoodsList(config);
 
   return (
     <View className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
@@ -98,6 +101,8 @@ export const CartDeliverySelector: React.FC<CartDeliverySelectorProps> = ({
           }}
         >
           <VStack className="items-center space-y-1">
+            // Path: src/features/cart/components/cart-delivery-selector.tsx
+            (continuação)
             <Home size={24} color={!isDelivery ? primaryColor : "#6B7280"} />
             <Text
               className="font-medium text-center"
@@ -111,15 +116,23 @@ export const CartDeliverySelector: React.FC<CartDeliverySelectorProps> = ({
       </HStack>
 
       {/* Mensagem de valor mínimo */}
-      {isDelivery && !hasReachedMinimum && getMinimumOrderValue() && (
+      {isDelivery && !hasReachedMinimum && minimumOrderValue > 0 && (
         <View className="mt-2 p-2 bg-amber-50 rounded-md border border-amber-200">
           <Text className="text-amber-800 text-sm">
-            Valor mínimo para entrega: {getMinimumOrderValue()}
+            Valor mínimo para entrega: {formattedMinimumValue}
           </Text>
           <Text className="text-amber-800 text-sm">
-            Adicione mais{" "}
-            {DeliveryInfoService.formatCurrency(getRemainingValue())} ao seu
-            pedido.
+            Adicione mais {formattedRemainingValue} ao seu pedido.
+          </Text>
+        </View>
+      )}
+
+      {/* Alerta sobre bairros específicos */}
+      {isDelivery && hasSpecificNeighborhoods && neighborhoods.length > 0 && (
+        <View className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-200">
+          <Text className="text-blue-800 text-sm">
+            Entrega disponível apenas para bairros selecionados. Verifique
+            disponibilidade no checkout.
           </Text>
         </View>
       )}

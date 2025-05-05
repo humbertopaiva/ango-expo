@@ -25,7 +25,8 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { CartProcessorService } from "../services/cart-processor.service";
 
 export function OrderConfirmationStep() {
-  const { checkout, forcedDeliveryFee } = useCheckoutViewModel();
+  const { checkout, forcedDeliveryFee, deliveryConfig } =
+    useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
 
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
@@ -51,6 +52,8 @@ export function OrderConfirmationStep() {
         return <CreditCard size={18} color="#6B7280" />;
     }
   };
+
+  // Path: src/features/checkout/components/order-confirmation-step.tsx
 
   // Texto para método de pagamento
   const getPaymentMethodText = () => {
@@ -141,8 +144,8 @@ export function OrderConfirmationStep() {
                     {checkout.personalInfo.address},{" "}
                     {checkout.personalInfo.number}
                   </Text>
-                  <Text className="text-gray-700">
-                    {checkout.personalInfo.neighborhood}
+                  <Text className="text-gray-700 font-medium">
+                    Bairro: {checkout.personalInfo.neighborhood}
                   </Text>
                   <Text className="text-gray-700">Lima Duarte (MG)</Text>
                   {checkout.personalInfo.reference && (
@@ -254,12 +257,14 @@ export function OrderConfirmationStep() {
               </HStack>
 
               {/* Taxa de entrega - mostrar mesmo quando for grátis */}
-              <HStack className="justify-between mt-1">
+              <HStack className="justify-between">
                 <Text className="text-gray-600">Taxa de entrega</Text>
-                {isDelivery && (
-                  <Text className="font-medium text-primary-500">
-                    {isDelivery && forcedDeliveryFee}
+                {isDelivery ? (
+                  <Text className="font-medium text-gray-800">
+                    {forcedDeliveryFee}
                   </Text>
+                ) : (
+                  <Text className="font-medium text-gray-800">R$ 0,00</Text>
                 )}
               </HStack>
 
