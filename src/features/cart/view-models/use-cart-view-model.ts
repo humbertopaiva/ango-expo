@@ -6,19 +6,16 @@ import {
   ProductWithVariation,
 } from "@/src/features/company-page/models/company-product";
 import { Cart, CartItem, emptyCart } from "../models/cart";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useLocalSearchParams } from "expo-router";
 import {
   CustomProductDetail,
   CustomProductSelection,
 } from "@/src/features/company-page/models/custom-product";
-import { toastUtils } from "@/src/utils/toast.utils";
 import { CompanyConfig } from "@/src/features/company-page/models/company-config";
 import { DeliveryInfoService } from "../services/delivery-info.service";
-import {
-  DeliveryConfig,
-  DeliveryConfigService,
-} from "@/src/features/checkout/services/delivery-config.service";
+import { DeliveryConfig } from "@/src/features/checkout/services/delivery-config.service";
+import { useDeliveryConfig } from "@/src/features/checkout/hooks/use-delivery-config";
 
 export interface CartViewModel {
   // Estado
@@ -53,7 +50,7 @@ export interface CartViewModel {
   clearCart: () => void;
   isProductInCart: (productId: string) => boolean;
 
-  // Novas ações para entrega
+  // Ações para entrega
   setDeliveryFee: (fee: number) => void;
   toggleDeliveryMode: () => void;
   setDeliveryMode: (isDelivery: boolean) => void;
@@ -63,7 +60,6 @@ export interface CartViewModel {
   getDeliveryFeeFromConfig: (
     config: CompanyConfig | DeliveryConfig | null
   ) => number;
-  fetchDeliveryConfig: (companyId: string) => Promise<void>;
   formatCurrency: (value: number | string) => string;
 
   // Ações para diferentes tipos de pedidos
@@ -120,11 +116,6 @@ export function useCartViewModel(): CartViewModel {
     deliveryFees,
   } = useMultiCartStore();
 
-  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig | null>(
-    null
-  );
-  const [isLoadingDeliveryConfig, setIsLoadingDeliveryConfig] = useState(false);
-
   // Pegar o parâmetro companySlug da URL para definir o carrinho ativo
   const { companySlug: urlCompanySlug } = useLocalSearchParams<{
     companySlug: string;
@@ -137,45 +128,34 @@ export function useCartViewModel(): CartViewModel {
     }
   }, [urlCompanySlug, setActiveCart]);
 
-  // Método para buscar config
-  const fetchDeliveryConfig = useCallback(async (companyId: string) => {
-    if (!companyId) return;
-
-    setIsLoadingDeliveryConfig(true);
-    try {
-      const config = await DeliveryConfigService.getDeliveryConfig(companyId);
-      if (config) {
-        setDeliveryConfig(config);
-
-        // Atualizar a taxa de entrega no carrinho se necessário
-        const deliveryFee = DeliveryConfigService.getDeliveryFee(config);
-        if (deliveryFee > 0) {
-          setDeliveryFee(deliveryFee);
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao buscar configuração de delivery:", error);
-    } finally {
-      setIsLoadingDeliveryConfig(false);
-    }
-  }, []);
-
-  // Adicionar efeito para buscar a config quando o carrinho é carregado
-  useEffect(() => {
-    const currentSlug = activeCartSlug || urlCompanySlug;
-    if (currentSlug) {
-      const currentCart = getCart(currentSlug);
-      if (currentCart && currentCart.companyId) {
-        fetchDeliveryConfig(currentCart.companyId);
-      }
-    }
-  }, [activeCartSlug, urlCompanySlug, fetchDeliveryConfig]);
-
   // Usar o carrinho ativo ou o da URL
   const currentSlug = activeCartSlug || urlCompanySlug;
 
   // Garantir que sempre temos um cart válido mesmo que vazio
   const cart: Cart = currentSlug ? getCart(currentSlug) : { ...emptyCart };
+
+  // Obter o ID da empresa do primeiro item do carrinho
+  const companyIdFromCart = useMemo(() => {
+    if (!currentSlug || !cart.items.length) return undefined;
+    return cart.items[0].companyId;
+  }, [currentSlug, cart.items]);
+
+  // Usar o hook de delivery config
+  const { data: deliveryConfig, isLoading: isLoadingDeliveryConfig } =
+    useDeliveryConfig(companyIdFromCart, currentSlug);
+
+  // Efeito para definir a taxa de entrega quando o config for carregado
+  useEffect(() => {
+    if (deliveryConfig && currentSlug) {
+      // Obter a taxa de entrega da configuração
+      const deliveryFee = DeliveryInfoService.getDeliveryFee(deliveryConfig);
+
+      // Configurar a taxa no store do carrinho
+      if (!isNaN(deliveryFee) && deliveryFee > 0) {
+        setCartDeliveryFee(currentSlug, deliveryFee);
+      }
+    }
+  }, [deliveryConfig, currentSlug, setCartDeliveryFee]);
 
   // Obter o modo de entrega atual
   const isDelivery = currentSlug ? isDeliveryMode[currentSlug] !== false : true;
@@ -197,7 +177,7 @@ export function useCartViewModel(): CartViewModel {
     }).format(numericValue);
   };
 
-  // Novas ações para entrega
+  // Ações para entrega
   const setDeliveryFee = (fee: number) => {
     if (currentSlug) {
       setCartDeliveryFee(currentSlug, fee);
@@ -220,9 +200,9 @@ export function useCartViewModel(): CartViewModel {
   const getDeliveryFeeFromConfig = (
     config: CompanyConfig | DeliveryConfig | null
   ): number => {
-    // Primeiro, verificar se temos a configuração de delivery mais recente
+    // Primeiro, verificar se temos a configuração de delivery do React Query
     if (deliveryConfig) {
-      return DeliveryConfigService.getDeliveryFee(deliveryConfig);
+      return DeliveryInfoService.getDeliveryFee(deliveryConfig);
     }
 
     // Caso contrário, usar o método existente
@@ -482,7 +462,7 @@ export function useCartViewModel(): CartViewModel {
     companySlug: cart.companySlug,
     companyName: cart.companyName,
     isDelivery,
-    deliveryConfig,
+    deliveryConfig: deliveryConfig ?? null,
     isLoadingDeliveryConfig,
 
     // Ações
@@ -495,13 +475,12 @@ export function useCartViewModel(): CartViewModel {
     isProductInCart,
     formatCurrency,
 
-    // Novas ações para entrega
+    // Ações para entrega
     setDeliveryFee,
     toggleDeliveryMode,
     setDeliveryMode,
     hasReachedMinimumOrderValue,
     getDeliveryFeeFromConfig,
-    fetchDeliveryConfig,
 
     // Ações para diferentes tipos de pedidos
     addProductWithVariation,

@@ -1,6 +1,6 @@
 // Path: src/features/checkout/view-models/use-checkout-view-model.ts
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useCheckoutStore } from "../stores/checkout.store";
 import {
   CheckoutDeliveryType,
@@ -24,10 +24,8 @@ import { z } from "zod";
 import { api } from "@/src/services/api";
 import { storage } from "@/src/lib/storage";
 import { DeliveryInfoService } from "../../cart/services/delivery-info.service";
-import {
-  DeliveryConfig,
-  DeliveryConfigService,
-} from "../services/delivery-config.service";
+import { DeliveryConfigService } from "../services/delivery-config.service";
+import { useDeliveryConfig } from "../hooks/use-delivery-config";
 
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -38,11 +36,6 @@ export function useCheckoutViewModel() {
     false,
     false,
   ]);
-  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig | null>(
-    null
-  );
-  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
-  const [isLoadingDeliveryConfig, setIsLoadingDeliveryConfig] = useState(false);
 
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const cartViewModel = useCartViewModel();
@@ -63,44 +56,44 @@ export function useCheckoutViewModel() {
     resetCheckout,
   } = useCheckoutStore();
 
-  // Buscar configurações de delivery
-  const fetchDeliveryConfig = useCallback(
-    async (companyId: string) => {
-      if (!companyId) return;
+  // Buscar o ID da empresa a partir do checkout ou do carrinho
+  const companyId = useMemo(() => {
+    return checkout?.companyId || cartViewModel.items[0]?.companyId;
+  }, [checkout?.companyId, cartViewModel.items]);
 
-      setIsLoadingDeliveryConfig(true);
-      try {
-        const config = await DeliveryConfigService.getDeliveryConfig(companyId);
-        if (config) {
-          setDeliveryConfig(config);
+  // Usar o hook de delivery config
+  const { data: deliveryConfig, isLoading: isLoadingDeliveryConfig } =
+    useDeliveryConfig(companyId, companySlug);
 
-          // Se a empresa especifica bairros, carregar a lista
-          if (
-            config.especificar_bairros_atendidos &&
-            config.bairros_atendidos
-          ) {
-            setNeighborhoods(config.bairros_atendidos);
-          }
+  // Extrair bairros da configuração - usando useMemo para otimização
+  const neighborhoods = useMemo(() => {
+    if (
+      deliveryConfig?.especificar_bairros_atendidos &&
+      deliveryConfig?.bairros_atendidos
+    ) {
+      return deliveryConfig.bairros_atendidos;
+    }
+    return [];
+  }, [deliveryConfig]);
 
-          // Atualizar a taxa de entrega no checkout
-          const deliveryFee = DeliveryConfigService.getDeliveryFee(config);
-          if (deliveryFee > 0) {
-            // Recalcular o total com a nova taxa
-            const newTotal = checkout.subtotal + deliveryFee;
+  // Efeito para atualizar o checkout quando a configuração for carregada
+  useEffect(() => {
+    if (deliveryConfig && checkout) {
+      // Atualizar a taxa de entrega no checkout
+      const deliveryFee = DeliveryConfigService.getDeliveryFee(deliveryConfig);
+      if (
+        deliveryFee > 0 &&
+        checkout.deliveryType === CheckoutDeliveryType.DELIVERY
+      ) {
+        // Recalcular o total com a nova taxa
+        const newTotal = checkout.subtotal + deliveryFee;
 
-            // Atualizar taxa e total no checkout
-            checkout.deliveryFee = deliveryFee;
-            checkout.total = newTotal;
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao buscar configuração de delivery:", error);
-      } finally {
-        setIsLoadingDeliveryConfig(false);
+        // Atualizar taxa e total no checkout
+        checkout.deliveryFee = deliveryFee;
+        checkout.total = newTotal;
       }
-    },
-    [checkout]
-  );
+    }
+  }, [deliveryConfig, checkout]);
 
   // Criar um schema dinâmico baseado no tipo de entrega
   const getDynamicPersonalInfoSchema = useCallback(() => {
@@ -168,26 +161,6 @@ export function useCheckoutViewModel() {
     mode: "onChange",
   });
 
-  // Revalidar ao mudar o tipo de entrega
-  useEffect(() => {
-    personalInfoForm.clearErrors();
-
-    // Atualizar o resolver com o schema atualizado
-    personalInfoForm.reset(checkout.personalInfo);
-
-    // Resetar os campos de endereço ao mudar para retirada
-    if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
-      setTimeout(() => {
-        personalInfoForm.trigger(["fullName", "whatsapp"]);
-      }, 100);
-    } else {
-      // Trigger de validação para campos de endereço quando for entrega
-      setTimeout(() => {
-        personalInfoForm.trigger();
-      }, 100);
-    }
-  }, [checkout.deliveryType, getDynamicPersonalInfoSchema]);
-
   // Serviço para caching do checkout
   const cacheCheckoutState = useCallback(async () => {
     try {
@@ -227,6 +200,146 @@ export function useCheckoutViewModel() {
       return null;
     }
   }, []);
+
+  // Helper para limpar cache
+  const clearCheckoutCache = useCallback(async () => {
+    try {
+      await storage.removeItem("cached_checkout");
+      console.log("Cache do checkout limpo com sucesso");
+    } catch (error) {
+      console.error("Erro ao limpar cache:", error);
+    }
+  }, []);
+
+  // IMPORTANTE: As funções de validação precisam ser declaradas antes de qualquer função que as use
+  // Função para validar o passo de dados pessoais
+  const validatePersonalInfo = useCallback(() => {
+    const { fullName, whatsapp, address, number, neighborhood } =
+      checkout.personalInfo;
+
+    // Validação básica independente do tipo de entrega
+    const basicInfoValid = !!(
+      fullName &&
+      fullName.length >= 5 &&
+      whatsapp &&
+      whatsapp.length >= 11
+    );
+
+    // Se não for entrega, apenas valida informações básicas
+    if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
+      return basicInfoValid;
+    }
+
+    // Para entrega, valida também o endereço
+    const addressValid = !!(
+      address &&
+      address.length >= 5 &&
+      number &&
+      number.length >= 1 &&
+      neighborhood &&
+      neighborhood.length >= 3
+    );
+
+    // Se a empresa especifica bairros, verificar se o bairro é atendido
+    if (
+      deliveryConfig?.especificar_bairros_atendidos &&
+      deliveryConfig.bairros_atendidos &&
+      deliveryConfig.bairros_atendidos.length > 0
+    ) {
+      return (
+        basicInfoValid &&
+        addressValid &&
+        DeliveryConfigService.isValidNeighborhood(deliveryConfig, neighborhood)
+      );
+    }
+
+    return basicInfoValid && addressValid;
+  }, [checkout.personalInfo, checkout.deliveryType, deliveryConfig]);
+
+  // Função para validar o passo de método de pagamento
+  const validatePaymentInfo = useCallback(() => {
+    const { method, change } = checkout.paymentInfo;
+
+    // Se for dinheiro, precisa ter um valor de troco válido
+    if (method === CheckoutPaymentMethod.CASH) {
+      if (!change) return false;
+
+      // Verificar se o valor de troco é maior que o total
+      const changeValue = parseFloat(change.replace(",", "."));
+      return !isNaN(changeValue) && changeValue > checkout.total;
+    }
+
+    // Para outros métodos, só verifica se tem um método selecionado
+    return !!method;
+  }, [checkout.paymentInfo, checkout.total]);
+
+  // Atualizar a validação de todos os steps - IMPORTANTE: declarar após as funções acima
+  const updateStepsValidation = useCallback(() => {
+    const stepValidation = [
+      true, // Primeiro passo sempre é válido (resumo)
+      validatePersonalInfo(),
+      validatePaymentInfo(),
+      true, // Último passo (confirmação) também sempre é válido
+    ];
+
+    setStepsValidation(stepValidation);
+    return stepValidation;
+  }, [validatePersonalInfo, validatePaymentInfo]);
+
+  // Validar o step atual
+  const validateCurrentStep = useCallback(() => {
+    switch (currentStep) {
+      case 0: // Resumo do pedido
+        return checkout.items.length > 0;
+      case 1: // Dados pessoais
+        return validatePersonalInfo();
+      case 2: // Forma de pagamento
+        return validatePaymentInfo();
+      case 3: // Confirmação
+        return validatePersonalInfo() && validatePaymentInfo();
+      default:
+        return true;
+    }
+  }, [currentStep, checkout, validatePersonalInfo, validatePaymentInfo]);
+
+  // Validar um step específico
+  const validateStep = useCallback(
+    (step: number) => {
+      switch (step) {
+        case 0: // Resumo do pedido
+          return checkout.items.length > 0;
+        case 1: // Dados pessoais
+          return validatePersonalInfo();
+        case 2: // Forma de pagamento
+          return validatePaymentInfo();
+        case 3: // Confirmação
+          return validatePersonalInfo() && validatePaymentInfo();
+        default:
+          return true;
+      }
+    },
+    [checkout, validatePersonalInfo, validatePaymentInfo]
+  );
+
+  // Revalidar ao mudar o tipo de entrega
+  useEffect(() => {
+    personalInfoForm.clearErrors();
+
+    // Atualizar o resolver com o schema atualizado
+    personalInfoForm.reset(checkout.personalInfo);
+
+    // Resetar os campos de endereço ao mudar para retirada
+    if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
+      setTimeout(() => {
+        personalInfoForm.trigger(["fullName", "whatsapp"]);
+      }, 100);
+    } else {
+      // Trigger de validação para campos de endereço quando for entrega
+      setTimeout(() => {
+        personalInfoForm.trigger();
+      }, 100);
+    }
+  }, [checkout.deliveryType, getDynamicPersonalInfoSchema, personalInfoForm]);
 
   // Observar mudanças no carrinho durante o checkout
   useEffect(() => {
@@ -280,6 +393,9 @@ export function useCheckoutViewModel() {
     checkout.companyName,
     checkout.companySlug,
     checkout.deliveryType,
+    checkout.items,
+    cacheCheckoutState,
+    initCheckout,
   ]);
 
   const forcedDeliveryFee = (checkout.total - checkout.subtotal).toLocaleString(
@@ -289,6 +405,116 @@ export function useCheckoutViewModel() {
       currency: "BRL",
     }
   );
+
+  // Atualizar tipo de entrega
+  const setDeliveryType = (type: CheckoutDeliveryType) => {
+    updateDeliveryType(type);
+
+    // Recalcular o total com ou sem taxa de entrega
+    const subtotal = checkout.subtotal;
+    let total = subtotal;
+
+    if (type === CheckoutDeliveryType.DELIVERY && checkout.deliveryFee > 0) {
+      total += checkout.deliveryFee;
+    }
+
+    // Atualizar o total no checkout
+    checkout.total = total;
+
+    // Gravar no cache
+    setTimeout(() => {
+      cacheCheckoutState();
+      // Revalidar o step
+      validateCurrentStep();
+      updateStepsValidation();
+    }, 100);
+  };
+
+  // Função para ir para um step específico com validação
+  const goToStep = useCallback(
+    (step: number) => {
+      // Não permitir ir para um step futuro sem validar os steps anteriores
+      if (step > currentStep) {
+        // Validar todos os steps anteriores
+        for (let i = 0; i <= currentStep; i++) {
+          if (!validateStep(i)) {
+            toastUtils.error(toast, "Complete a etapa atual antes de avançar");
+            return;
+          }
+        }
+      }
+
+      // Atualizar a validação de steps
+      updateStepsValidation();
+
+      // Ir para o step
+      storeGoToStep(step);
+    },
+    [currentStep, validateStep, storeGoToStep, toast, updateStepsValidation]
+  );
+
+  // Função para avançar ao próximo step com validação
+  const nextStep = useCallback(() => {
+    // Verificar se o step atual é válido
+    if (!validateCurrentStep()) {
+      // Mensagens de erro específicas para cada step
+      switch (currentStep) {
+        case 0:
+          if (checkout.items.length === 0) {
+            toastUtils.error(toast, "Seu carrinho está vazio");
+          } else {
+            toastUtils.error(toast, "Selecione uma forma de recebimento");
+          }
+          break;
+        case 1:
+          if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
+            toastUtils.error(
+              toast,
+              "Preencha todos os campos de endereço corretamente"
+            );
+          } else {
+            toastUtils.error(
+              toast,
+              "Preencha seu nome e WhatsApp corretamente"
+            );
+          }
+          break;
+        case 2:
+          if (checkout.paymentInfo.method === CheckoutPaymentMethod.CASH) {
+            toastUtils.error(toast, "Informe um valor válido para troco");
+          } else {
+            toastUtils.error(toast, "Selecione uma forma de pagamento");
+          }
+          break;
+      }
+      return false;
+    }
+
+    // Atualizar validação de steps
+    const validations = updateStepsValidation();
+
+    // Se o step atual é válido, avançar
+    storeNextStep();
+    return true;
+  }, [
+    currentStep,
+    validateCurrentStep,
+    updateStepsValidation,
+    storeNextStep,
+    checkout,
+    toast,
+  ]);
+
+  // Função para voltar ao step anterior
+  const prevStep = useCallback(() => {
+    // Atualizar validação de steps ao voltar
+    setTimeout(() => {
+      updateStepsValidation();
+    }, 100);
+
+    storePrevStep();
+    return true;
+  }, [storePrevStep, updateStepsValidation]);
 
   // Inicializar checkout com dados do carrinho e recuperar dados do usuário
   const initialize = useCallback(async () => {
@@ -311,8 +537,6 @@ export function useCheckoutViewModel() {
     const currentCartItems = cartViewModel.items;
     const currentCartTotal =
       CartProcessorService.calculateOrderTotal(currentCartItems);
-
-    // Path: src/features/checkout/view-models/use-checkout-view-model.ts (continuação)
 
     // Calcular subtotal e total com taxa de entrega
     const subtotal = CartProcessorService.calculateOrderTotal(currentCartItems);
@@ -339,11 +563,6 @@ export function useCheckoutViewModel() {
         console.error("Erro ao obter taxa de entrega:", error);
         deliveryFee = 0;
       }
-    }
-
-    // Buscar configurações de delivery
-    if (currentCartItems.length > 0 && currentCartItems[0].companyId) {
-      await fetchDeliveryConfig(currentCartItems[0].companyId);
     }
 
     // Se o checkout é para a mesma empresa, combine o estado em cache com o carrinho atual
@@ -466,106 +685,10 @@ export function useCheckoutViewModel() {
     updatePaymentInfo,
     getCachedCheckout,
     toast,
-    fetchDeliveryConfig,
+    personalInfoForm,
+    paymentInfoForm,
+    updateStepsValidation,
   ]);
-
-  // Atualizar tipo de entrega
-  const setDeliveryType = (type: CheckoutDeliveryType) => {
-    updateDeliveryType(type);
-
-    // Recalcular o total com ou sem taxa de entrega
-    const subtotal = checkout.subtotal;
-    let total = subtotal;
-
-    if (type === CheckoutDeliveryType.DELIVERY && checkout.deliveryFee > 0) {
-      total += checkout.deliveryFee;
-    }
-
-    // Atualizar o total no checkout
-    checkout.total = total;
-
-    // Gravar no cache
-    setTimeout(() => {
-      cacheCheckoutState();
-      // Revalidar o step
-      validateCurrentStep();
-      updateStepsValidation();
-    }, 100);
-  };
-
-  // Função para validar o passo de dados pessoais
-  const validatePersonalInfo = useCallback(() => {
-    const { fullName, whatsapp, address, number, neighborhood } =
-      checkout.personalInfo;
-
-    // Validação básica independente do tipo de entrega
-    const basicInfoValid = !!(
-      fullName &&
-      fullName.length >= 5 &&
-      whatsapp &&
-      whatsapp.length >= 11
-    );
-
-    // Se não for entrega, apenas valida informações básicas
-    if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
-      return basicInfoValid;
-    }
-
-    // Para entrega, valida também o endereço
-    const addressValid = !!(
-      address &&
-      address.length >= 5 &&
-      number &&
-      number.length >= 1 &&
-      neighborhood &&
-      neighborhood.length >= 3
-    );
-
-    // Se a empresa especifica bairros, verificar se o bairro é atendido
-    if (
-      deliveryConfig?.especificar_bairros_atendidos &&
-      deliveryConfig.bairros_atendidos &&
-      deliveryConfig.bairros_atendidos.length > 0
-    ) {
-      return (
-        basicInfoValid &&
-        addressValid &&
-        DeliveryConfigService.isValidNeighborhood(deliveryConfig, neighborhood)
-      );
-    }
-
-    return basicInfoValid && addressValid;
-  }, [checkout.personalInfo, checkout.deliveryType, deliveryConfig]);
-
-  // Função para validar o passo de método de pagamento
-  const validatePaymentInfo = useCallback(() => {
-    const { method, change } = checkout.paymentInfo;
-
-    // Se for dinheiro, precisa ter um valor de troco válido
-    if (method === CheckoutPaymentMethod.CASH) {
-      if (!change) return false;
-
-      // Verificar se o valor de troco é maior que o total
-      const changeValue = parseFloat(change.replace(",", "."));
-      return !isNaN(changeValue) && changeValue > checkout.total;
-    }
-
-    // Para outros métodos, só verifica se tem um método selecionado
-    return !!method;
-  }, [checkout.paymentInfo, checkout.total]);
-
-  // Atualizar a validação de todos os steps
-  const updateStepsValidation = useCallback(() => {
-    const stepValidation = [
-      true, // Primeiro passo sempre é válido (resumo)
-      validatePersonalInfo(),
-      validatePaymentInfo(),
-      true, // Último passo (confirmação) também sempre é válido
-    ];
-
-    setStepsValidation(stepValidation);
-    return stepValidation;
-  }, [validatePersonalInfo, validatePaymentInfo]);
 
   // Salvar dados pessoais, persistir localmente e avançar
   const savePersonalInfo = async (data: PersonalInfo) => {
@@ -681,137 +804,6 @@ export function useCheckoutViewModel() {
       return false;
     }
   };
-
-  // Helper para limpar cache
-  const clearCheckoutCache = useCallback(async () => {
-    try {
-      await storage.removeItem("cached_checkout");
-      console.log("Cache do checkout limpo com sucesso");
-    } catch (error) {
-      console.error("Erro ao limpar cache:", error);
-    }
-  }, []);
-
-  // Validar o step atual
-  const validateCurrentStep = useCallback(() => {
-    switch (currentStep) {
-      case 0: // Resumo do pedido
-        return checkout.items.length > 0;
-      case 1: // Dados pessoais
-        return validatePersonalInfo();
-      case 2: // Forma de pagamento
-        return validatePaymentInfo();
-      case 3: // Confirmação
-        return validatePersonalInfo() && validatePaymentInfo();
-      default:
-        return true;
-    }
-  }, [currentStep, checkout, validatePersonalInfo, validatePaymentInfo]);
-
-  // Validar um step específico
-  const validateStep = useCallback(
-    (step: number) => {
-      switch (step) {
-        case 0: // Resumo do pedido
-          return checkout.items.length > 0;
-        case 1: // Dados pessoais
-          return validatePersonalInfo();
-        case 2: // Forma de pagamento
-          return validatePaymentInfo();
-        case 3: // Confirmação
-          return validatePersonalInfo() && validatePaymentInfo();
-        default:
-          return true;
-      }
-    },
-    [checkout, validatePersonalInfo, validatePaymentInfo]
-  );
-
-  // Função para ir para um step específico com validação
-  const goToStep = useCallback(
-    (step: number) => {
-      // Não permitir ir para um step futuro sem validar os steps anteriores
-      if (step > currentStep) {
-        // Validar todos os steps anteriores
-        for (let i = 0; i <= currentStep; i++) {
-          if (!validateStep(i)) {
-            toastUtils.error(toast, "Complete a etapa atual antes de avançar");
-            return;
-          }
-        }
-      }
-
-      // Atualizar a validação de steps
-      updateStepsValidation();
-
-      // Ir para o step
-      storeGoToStep(step);
-    },
-    [currentStep, validateStep, storeGoToStep, toast, updateStepsValidation]
-  );
-
-  // Função para avançar ao próximo step com validação
-  const nextStep = useCallback(() => {
-    // Verificar se o step atual é válido
-    if (!validateCurrentStep()) {
-      // Mensagens de erro específicas para cada step
-      switch (currentStep) {
-        case 0:
-          if (checkout.items.length === 0) {
-            toastUtils.error(toast, "Seu carrinho está vazio");
-          } else {
-            toastUtils.error(toast, "Selecione uma forma de recebimento");
-          }
-          break;
-        case 1:
-          if (checkout.deliveryType === CheckoutDeliveryType.DELIVERY) {
-            toastUtils.error(
-              toast,
-              "Preencha todos os campos de endereço corretamente"
-            );
-          } else {
-            toastUtils.error(
-              toast,
-              "Preencha seu nome e WhatsApp corretamente"
-            );
-          }
-          break;
-        case 2:
-          if (checkout.paymentInfo.method === CheckoutPaymentMethod.CASH) {
-            toastUtils.error(toast, "Informe um valor válido para troco");
-          } else {
-            toastUtils.error(toast, "Selecione uma forma de pagamento");
-          }
-          break;
-      }
-      return false;
-    }
-
-    // Atualizar validação de steps
-    const validations = updateStepsValidation();
-
-    // Se o step atual é válido, avançar
-    storeNextStep();
-    return true;
-  }, [
-    currentStep,
-    validateCurrentStep,
-    updateStepsValidation,
-    storeNextStep,
-    checkout,
-    toast,
-  ]);
-
-  // Função para voltar ao step anterior
-  const prevStep = useCallback(() => {
-    // Atualizar validação de steps ao voltar
-    setTimeout(() => {
-      updateStepsValidation();
-    }, 100);
-
-    storePrevStep();
-    return true;
-  }, [storePrevStep, updateStepsValidation]);
 
   // Finalizar o pedido e criar um registro no OrderStore
   const finalizeOrder = async () => {
@@ -964,6 +956,5 @@ export function useCheckoutViewModel() {
     validateStep,
     updateStepsValidation,
     forcedDeliveryFee,
-    fetchDeliveryConfig,
   };
 }
