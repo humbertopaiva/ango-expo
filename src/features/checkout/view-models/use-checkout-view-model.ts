@@ -259,6 +259,7 @@ export function useCheckoutViewModel() {
   }, [checkout.personalInfo, checkout.deliveryType, deliveryConfig]);
 
   // Função para validar o passo de método de pagamento
+  // Modificações na validação do troco
   const validatePaymentInfo = useCallback(() => {
     const { method, change } = checkout.paymentInfo;
 
@@ -266,14 +267,25 @@ export function useCheckoutViewModel() {
     if (method === CheckoutPaymentMethod.CASH) {
       if (!change) return false;
 
-      // Verificar se o valor de troco é maior que o total
+      // Determinar o valor total correto baseado no tipo de entrega
+      const totalValue =
+        checkout.deliveryType === CheckoutDeliveryType.PICKUP
+          ? checkout.subtotal
+          : checkout.total;
+
+      // Verificar se o valor de troco é maior que o total correto
       const changeValue = parseFloat(change.replace(",", "."));
-      return !isNaN(changeValue) && changeValue > checkout.total;
+      return !isNaN(changeValue) && changeValue > totalValue;
     }
 
     // Para outros métodos, só verifica se tem um método selecionado
     return !!method;
-  }, [checkout.paymentInfo, checkout.total]);
+  }, [
+    checkout.paymentInfo,
+    checkout.total,
+    checkout.subtotal,
+    checkout.deliveryType,
+  ]);
 
   // Atualizar a validação de todos os steps - IMPORTANTE: declarar após as funções acima
   const updateStepsValidation = useCallback(() => {
@@ -767,6 +779,12 @@ export function useCheckoutViewModel() {
           return false;
         }
 
+        // Determinar o valor total correto baseado no tipo de entrega
+        const totalValue =
+          checkout.deliveryType === CheckoutDeliveryType.PICKUP
+            ? checkout.subtotal
+            : checkout.total;
+
         // Certifique-se de que o valor de troco é um número válido e maior que o total do pedido
         const changeValue = parseFloat(data.change.replace(",", "."));
 
@@ -775,10 +793,10 @@ export function useCheckoutViewModel() {
           return false;
         }
 
-        if (changeValue <= checkout.total) {
+        if (changeValue <= totalValue) {
           toastUtils.error(
             toast,
-            `Valor para troco deve ser maior que ${checkout.total.toLocaleString(
+            `Valor para troco deve ser maior que ${totalValue.toLocaleString(
               "pt-BR",
               {
                 style: "currency",
@@ -844,8 +862,11 @@ export function useCheckoutViewModel() {
           ? checkout.deliveryFee
           : 0;
 
-      // Calcular o total final com a taxa de entrega
-      const total = subtotal + deliveryFee;
+      // Calcular o total final com base no tipo de entrega
+      const finalTotal =
+        checkout.deliveryType === CheckoutDeliveryType.PICKUP
+          ? subtotal
+          : subtotal + deliveryFee;
 
       // Preparar itens para o OrderStore, mantendo a estrutura original de cada item
       const orderItems = [...checkout.items];
@@ -859,11 +880,9 @@ export function useCheckoutViewModel() {
         companyPhone
       );
 
-      // Atualizar o pedido com o valor correto da taxa de entrega
-      if (deliveryFee > 0) {
-        order.deliveryFee = deliveryFee;
-        order.total = total; // Atualizar total para incluir taxa de entrega
-      }
+      // Atualizar o pedido com os valores corretos
+      order.deliveryFee = deliveryFee;
+      order.total = finalTotal; // Usar o total final calculado corretamente
 
       // Construir mensagem para WhatsApp usando o serviço
       const message = CartProcessorService.formatWhatsAppMessage(checkout);

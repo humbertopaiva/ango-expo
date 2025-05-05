@@ -38,7 +38,6 @@ export function PaymentMethodStep() {
   const [showChangeInput, setShowChangeInput] = useState(
     checkout.paymentInfo.method === CheckoutPaymentMethod.CASH
   );
-  const [changeError, setChangeError] = useState<string | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
 
   const {
@@ -65,7 +64,6 @@ export function PaymentMethodStep() {
 
     if (paymentMethod !== CheckoutPaymentMethod.CASH) {
       setValue("change", "");
-      setChangeError(null);
       setIsFormValid(true);
     } else {
       // Se o método for dinheiro, validar o campo de troco
@@ -75,54 +73,12 @@ export function PaymentMethodStep() {
 
       // Verifica se já tem um valor de troco válido
       if (changeValue) {
-        validateChangeValue(changeValue || "");
+        setIsFormValid(true);
       } else {
         setIsFormValid(false);
       }
     }
   }, [paymentMethod, setValue, trigger]);
-
-  // Função para validar o valor do troco
-  const validateChangeValue = (value: string) => {
-    if (!value) {
-      setChangeError("Informe um valor para troco");
-      setIsFormValid(false);
-      return false;
-    }
-
-    const parsedValue = parseFloat(value.replace(",", "."));
-
-    if (isNaN(parsedValue)) {
-      setChangeError("Valor de troco inválido");
-      setIsFormValid(false);
-      return false;
-    }
-
-    if (parsedValue <= checkout.total) {
-      setChangeError(
-        `Valor para troco deve ser maior que ${checkout.total.toLocaleString(
-          "pt-BR",
-          {
-            style: "currency",
-            currency: "BRL",
-          }
-        )}`
-      );
-      setIsFormValid(false);
-      return false;
-    }
-
-    setChangeError(null);
-    setIsFormValid(true);
-    return true;
-  };
-
-  // Validar valor do troco quando for pagamento em dinheiro
-  useEffect(() => {
-    if (paymentMethod === CheckoutPaymentMethod.CASH) {
-      validateChangeValue(changeValue || "");
-    }
-  }, [changeValue, paymentMethod, checkout.total]);
 
   // Opções de pagamento
   const paymentOptions = [
@@ -191,7 +147,13 @@ export function PaymentMethodStep() {
     const changeAmount = parseFloat(changeValue.replace(",", "."));
     if (isNaN(changeAmount)) return 0;
 
-    return changeAmount - checkout.total;
+    // Determinar o valor total correto baseado no tipo de entrega
+    const totalValue =
+      checkout.deliveryType === CheckoutDeliveryType.PICKUP
+        ? checkout.subtotal
+        : checkout.total;
+
+    return changeAmount - totalValue;
   };
 
   return (
@@ -233,7 +195,7 @@ export function PaymentMethodStep() {
           />
 
           {showChangeInput && (
-            <FormControl isInvalid={!!changeError} isRequired={true}>
+            <FormControl isRequired={true}>
               <HStack alignItems="center" className="mb-1">
                 <Banknote size={16} color="#6B7280" />
                 <Text className="ml-2 text-gray-700 font-medium">
@@ -254,22 +216,13 @@ export function PaymentMethodStep() {
                         const cleaned = text.replace(/[^\d,]/g, "");
                         onChange(cleaned);
                       }}
-                      onBlur={() => {
-                        onBlur();
-                        validateChangeValue(value || "");
-                      }}
+                      onBlur={onBlur}
                       keyboardType="numeric"
                       testID="change-input"
                     />
                   </Input>
                 )}
               />
-
-              {changeError && (
-                <FormControlError>
-                  <FormControlErrorText>{changeError}</FormControlErrorText>
-                </FormControlError>
-              )}
 
               <Text className="text-xs text-gray-500 mt-1">
                 O valor deve ser maior que o total do pedido
@@ -279,29 +232,12 @@ export function PaymentMethodStep() {
 
           {/* Status de validação */}
           {paymentMethod === CheckoutPaymentMethod.CASH ? (
-            <View
-              className={`p-3 rounded-lg mt-2 ${
-                isFormValid
-                  ? "bg-green-50 border border-green-100"
-                  : "bg-amber-50 border border-amber-100"
-              }`}
-            >
+            <View className="p-3 rounded-lg mt-2 bg-green-50 border border-green-100">
               <HStack space="sm" alignItems="center">
-                {isFormValid ? (
-                  <>
-                    <CheckCircle size={18} color="#22C55E" />
-                    <Text className="text-sm text-green-700">
-                      Valor para troco válido
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle size={18} color="#F59E0B" />
-                    <Text className="text-sm text-amber-700">
-                      {changeError || "Informe um valor para troco válido"}
-                    </Text>
-                  </>
-                )}
+                <CheckCircle size={18} color="#22C55E" />
+                <Text className="text-sm text-green-700">
+                  Informe um valor para troco
+                </Text>
               </HStack>
             </View>
           ) : (
@@ -322,33 +258,31 @@ export function PaymentMethodStep() {
                 Total do pedido:
               </Text>
               <Text className="text-gray-800 font-bold">
-                {isDelivery
-                  ? checkout.total.toLocaleString("pt-BR", {
+                {checkout.deliveryType === CheckoutDeliveryType.PICKUP
+                  ? checkout.subtotal.toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
                     })
-                  : checkout.subtotal.toLocaleString("pt-BR", {
+                  : checkout.total.toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
                     })}
               </Text>
             </HStack>
 
-            {paymentMethod === CheckoutPaymentMethod.CASH &&
-              changeValue &&
-              !changeError && (
-                <>
-                  <HStack justifyContent="space-between" className="mt-2">
-                    <Text className="text-gray-700">Valor do troco:</Text>
-                    <Text className="text-gray-800">
-                      {calculateChange().toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </Text>
-                  </HStack>
-                </>
-              )}
+            {paymentMethod === CheckoutPaymentMethod.CASH && changeValue && (
+              <>
+                <HStack justifyContent="space-between" className="mt-2">
+                  <Text className="text-gray-700">Valor do troco:</Text>
+                  <Text className="text-gray-800">
+                    {calculateChange().toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </Text>
+                </HStack>
+              </>
+            )}
           </View>
 
           {/* Mensagem de orientação */}
