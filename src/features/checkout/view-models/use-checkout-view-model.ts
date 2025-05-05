@@ -24,6 +24,10 @@ import { z } from "zod";
 import { api } from "@/src/services/api";
 import { storage } from "@/src/lib/storage";
 import { DeliveryInfoService } from "../../cart/services/delivery-info.service";
+import {
+  DeliveryConfig,
+  DeliveryConfigService,
+} from "../services/delivery-config.service";
 
 export function useCheckoutViewModel() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,6 +38,12 @@ export function useCheckoutViewModel() {
     false,
     false,
   ]);
+  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig | null>(
+    null
+  );
+  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
+  const [isLoadingDeliveryConfig, setIsLoadingDeliveryConfig] = useState(false);
+
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const cartViewModel = useCartViewModel();
   const toast = useToast();
@@ -53,6 +63,45 @@ export function useCheckoutViewModel() {
     resetCheckout,
   } = useCheckoutStore();
 
+  // Buscar configurações de delivery
+  const fetchDeliveryConfig = useCallback(
+    async (companyId: string) => {
+      if (!companyId) return;
+
+      setIsLoadingDeliveryConfig(true);
+      try {
+        const config = await DeliveryConfigService.getDeliveryConfig(companyId);
+        if (config) {
+          setDeliveryConfig(config);
+
+          // Se a empresa especifica bairros, carregar a lista
+          if (
+            config.especificar_bairros_atendidos &&
+            config.bairros_atendidos
+          ) {
+            setNeighborhoods(config.bairros_atendidos);
+          }
+
+          // Atualizar a taxa de entrega no checkout
+          const deliveryFee = DeliveryConfigService.getDeliveryFee(config);
+          if (deliveryFee > 0) {
+            // Recalcular o total com a nova taxa
+            const newTotal = checkout.subtotal + deliveryFee;
+
+            // Atualizar taxa e total no checkout
+            checkout.deliveryFee = deliveryFee;
+            checkout.total = newTotal;
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao buscar configuração de delivery:", error);
+      } finally {
+        setIsLoadingDeliveryConfig(false);
+      }
+    },
+    [checkout]
+  );
+
   // Criar um schema dinâmico baseado no tipo de entrega
   const getDynamicPersonalInfoSchema = useCallback(() => {
     if (checkout.deliveryType === CheckoutDeliveryType.PICKUP) {
@@ -63,13 +112,32 @@ export function useCheckoutViewModel() {
       });
     } else {
       // Para entrega, validar todos os campos obrigatórios
-      return personalInfoSchema.extend({
+      const schema = personalInfoSchema.extend({
         address: z.string().min(5, "Endereço é obrigatório"),
         number: z.string().min(1, "Número é obrigatório"),
         neighborhood: z.string().min(3, "Bairro é obrigatório"),
       });
+
+      // Se a empresa especifica bairros, adicionar validação
+      if (deliveryConfig?.especificar_bairros_atendidos) {
+        return schema.refine(
+          (data) => {
+            if (!data.neighborhood) return false;
+            return DeliveryConfigService.isValidNeighborhood(
+              deliveryConfig,
+              data.neighborhood
+            );
+          },
+          {
+            message: "Selecione um bairro válido da lista",
+            path: ["neighborhood"],
+          }
+        );
+      }
+
+      return schema;
     }
-  }, [checkout.deliveryType]);
+  }, [checkout.deliveryType, deliveryConfig]);
 
   // Form para dados pessoais com schema dinâmico
   const personalInfoForm = useForm<PersonalInfo>({
@@ -244,6 +312,8 @@ export function useCheckoutViewModel() {
     const currentCartTotal =
       CartProcessorService.calculateOrderTotal(currentCartItems);
 
+    // Path: src/features/checkout/view-models/use-checkout-view-model.ts (continuação)
+
     // Calcular subtotal e total com taxa de entrega
     const subtotal = CartProcessorService.calculateOrderTotal(currentCartItems);
     const total = CartProcessorService.calculateOrderTotalWithDelivery(
@@ -269,6 +339,11 @@ export function useCheckoutViewModel() {
         console.error("Erro ao obter taxa de entrega:", error);
         deliveryFee = 0;
       }
+    }
+
+    // Buscar configurações de delivery
+    if (currentCartItems.length > 0 && currentCartItems[0].companyId) {
+      await fetchDeliveryConfig(currentCartItems[0].companyId);
     }
 
     // Se o checkout é para a mesma empresa, combine o estado em cache com o carrinho atual
@@ -391,6 +466,7 @@ export function useCheckoutViewModel() {
     updatePaymentInfo,
     getCachedCheckout,
     toast,
+    fetchDeliveryConfig,
   ]);
 
   // Atualizar tipo de entrega
@@ -436,18 +512,30 @@ export function useCheckoutViewModel() {
     }
 
     // Para entrega, valida também o endereço
-    return (
-      basicInfoValid &&
-      !!(
-        address &&
-        address.length >= 5 &&
-        number &&
-        number.length >= 1 &&
-        neighborhood &&
-        neighborhood.length >= 3
-      )
+    const addressValid = !!(
+      address &&
+      address.length >= 5 &&
+      number &&
+      number.length >= 1 &&
+      neighborhood &&
+      neighborhood.length >= 3
     );
-  }, [checkout.personalInfo, checkout.deliveryType]);
+
+    // Se a empresa especifica bairros, verificar se o bairro é atendido
+    if (
+      deliveryConfig?.especificar_bairros_atendidos &&
+      deliveryConfig.bairros_atendidos &&
+      deliveryConfig.bairros_atendidos.length > 0
+    ) {
+      return (
+        basicInfoValid &&
+        addressValid &&
+        DeliveryConfigService.isValidNeighborhood(deliveryConfig, neighborhood)
+      );
+    }
+
+    return basicInfoValid && addressValid;
+  }, [checkout.personalInfo, checkout.deliveryType, deliveryConfig]);
 
   // Função para validar o passo de método de pagamento
   const validatePaymentInfo = useCallback(() => {
@@ -499,6 +587,26 @@ export function useCheckoutViewModel() {
             "Preencha todos os campos de endereço corretamente"
           );
           return false;
+        }
+
+        // Se a empresa especifica bairros, verificar se o bairro selecionado é válido
+        if (
+          deliveryConfig?.especificar_bairros_atendidos &&
+          deliveryConfig.bairros_atendidos &&
+          deliveryConfig.bairros_atendidos.length > 0
+        ) {
+          const isValidNeighborhood = DeliveryConfigService.isValidNeighborhood(
+            deliveryConfig,
+            data.neighborhood || ""
+          );
+
+          if (!isValidNeighborhood) {
+            toastUtils.error(
+              toast,
+              "O bairro selecionado não é atendido para entrega"
+            );
+            return false;
+          }
         }
       }
 
@@ -835,6 +943,9 @@ export function useCheckoutViewModel() {
     isProcessing,
     isLoadingUserData,
     stepsValidation,
+    deliveryConfig,
+    isLoadingDeliveryConfig,
+    neighborhoods,
 
     // Formulários
     personalInfoForm,
@@ -853,5 +964,6 @@ export function useCheckoutViewModel() {
     validateStep,
     updateStepsValidation,
     forcedDeliveryFee,
+    fetchDeliveryConfig,
   };
 }

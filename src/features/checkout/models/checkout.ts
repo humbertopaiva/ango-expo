@@ -43,6 +43,7 @@ export const personalInfoSchema = z.object({
   number: z.string().optional(),
   neighborhood: z.string().optional(),
   reference: z.string().optional(),
+  isNeighborhoodValid: z.boolean().optional(),
 });
 
 // Schema para validação do método de pagamento
@@ -81,6 +82,7 @@ export const emptyCheckout: CheckoutData = {
     number: "",
     neighborhood: "",
     reference: "",
+    isNeighborhoodValid: true,
   },
   paymentInfo: {
     method: CheckoutPaymentMethod.PIX,

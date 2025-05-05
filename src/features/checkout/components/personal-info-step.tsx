@@ -31,10 +31,17 @@ import { CheckoutDeliveryType, PersonalInfo } from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { FormValidationFeedback } from "@/components/common/form-validation-feedback";
 import { maskPhoneNumber } from "../utils/checkout.utils";
+import { NeighborhoodSelector } from "./neighborhood-selector";
+import { DeliveryConfigService } from "../services/delivery-config.service";
 
 export function PersonalInfoStep() {
-  const { checkout, personalInfoForm, isLoadingUserData } =
-    useCheckoutViewModel();
+  const {
+    checkout,
+    personalInfoForm,
+    isLoadingUserData,
+    deliveryConfig,
+    neighborhoods,
+  } = useCheckoutViewModel();
 
   const primaryColor = THEME_COLORS.primary;
   const toast = useToast();
@@ -53,7 +60,30 @@ export function PersonalInfoStep() {
 
   // Observar alterações em tempo real para todos os campos
   const watchedFields = watch();
+  const selectedNeighborhood = watch("neighborhood");
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
+  const hasSpecificNeighborhoods =
+    deliveryConfig?.especificar_bairros_atendidos && neighborhoods.length > 0;
+
+  // Verificar se o bairro selecionado é atendido
+  const [isNeighborhoodValid, setIsNeighborhoodValid] = useState(true);
+
+  // Efeito para verificar se o bairro selecionado é atendido
+  useEffect(() => {
+    if (
+      isDelivery &&
+      deliveryConfig?.especificar_bairros_atendidos &&
+      selectedNeighborhood
+    ) {
+      const isValid = DeliveryConfigService.isValidNeighborhood(
+        deliveryConfig,
+        selectedNeighborhood
+      );
+      setIsNeighborhoodValid(isValid);
+    } else {
+      setIsNeighborhoodValid(true);
+    }
+  }, [isDelivery, deliveryConfig, selectedNeighborhood]);
 
   // Verificar se os dados iniciais são válidos quando o componente monta
   useEffect(() => {
@@ -313,42 +343,78 @@ export function PersonalInfoStep() {
                   </FormControlError>
                 </FormControl>
 
-                <FormControl
-                  isInvalid={!!errors.neighborhood}
-                  className="flex-1"
-                  isRequired
-                >
-                  <Text className="text-gray-700 font-medium mb-1">Bairro</Text>
-                  <Controller
-                    control={control}
-                    name="neighborhood"
-                    rules={{
-                      required: "Bairro é obrigatório",
-                      minLength: { value: 3, message: "Bairro muito curto" },
-                    }}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input>
-                        <InputField
-                          placeholder="Bairro"
-                          value={value}
-                          onChangeText={onChange}
-                          onBlur={() => {
-                            onBlur();
-                            trigger("neighborhood");
-                            verifyAddressFields();
-                          }}
-                          testID="neighborhood-input"
+                {hasSpecificNeighborhoods ? (
+                  <FormControl className="flex-1" isRequired>
+                    <Controller
+                      control={control}
+                      name="neighborhood"
+                      rules={{
+                        required: "Bairro é obrigatório",
+                      }}
+                      render={({ field: { onChange, value } }) => (
+                        <NeighborhoodSelector
+                          neighborhoods={neighborhoods}
+                          selectedNeighborhood={value || ""}
+                          onSelectNeighborhood={onChange}
+                          primaryColor={primaryColor}
+                          error={errors.neighborhood?.message}
                         />
-                      </Input>
-                    )}
-                  />
-                  <FormControlError>
-                    <FormControlErrorText>
-                      {errors.neighborhood?.message}
-                    </FormControlErrorText>
-                  </FormControlError>
-                </FormControl>
+                      )}
+                    />
+                  </FormControl>
+                ) : (
+                  <FormControl
+                    isInvalid={!!errors.neighborhood}
+                    className="flex-1"
+                    isRequired
+                  >
+                    <Text className="text-gray-700 font-medium mb-1">
+                      Bairro
+                    </Text>
+                    <Controller
+                      control={control}
+                      name="neighborhood"
+                      rules={{
+                        required: "Bairro é obrigatório",
+                        minLength: { value: 3, message: "Bairro muito curto" },
+                      }}
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <Input>
+                          <InputField
+                            placeholder="Bairro"
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={() => {
+                              onBlur();
+                              trigger("neighborhood");
+                              verifyAddressFields();
+                            }}
+                            testID="neighborhood-input"
+                          />
+                        </Input>
+                      )}
+                    />
+                    <FormControlError>
+                      <FormControlErrorText>
+                        {errors.neighborhood?.message}
+                      </FormControlErrorText>
+                    </FormControlError>
+                  </FormControl>
+                )}
               </HStack>
+
+              {/* Aviso de bairro não atendido */}
+              {isDelivery &&
+                deliveryConfig?.especificar_bairros_atendidos &&
+                selectedNeighborhood &&
+                !isNeighborhoodValid && (
+                  <View className="mt-2 p-3 bg-red-50 rounded-lg border border-red-100">
+                    <Text className="text-red-700">
+                      Desculpe, o bairro selecionado não é atendido para
+                      entrega.
+                    </Text>
+                  </View>
+                )}
 
               {/* Cidade (fixa) */}
               <Input isDisabled={true} className="mt-2">
@@ -384,7 +450,11 @@ export function PersonalInfoStep() {
           )}
 
           <FormValidationFeedback
-            isValid={isDelivery ? isValid && addressFieldsComplete : isValid}
+            isValid={
+              isDelivery
+                ? isValid && addressFieldsComplete && isNeighborhoodValid
+                : isValid
+            }
             isPartiallyValid={isDirty && !isValid}
             validMessage={
               isDelivery
