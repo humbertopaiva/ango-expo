@@ -25,7 +25,7 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { CartProcessorService } from "../services/cart-processor.service";
 
 export function OrderConfirmationStep() {
-  const { checkout } = useCheckoutViewModel();
+  const { checkout, forcedDeliveryFee } = useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
 
   const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
@@ -256,20 +256,11 @@ export function OrderConfirmationStep() {
               {/* Taxa de entrega - mostrar mesmo quando for grátis */}
               <HStack className="justify-between mt-1">
                 <Text className="text-gray-600">Taxa de entrega</Text>
-                <Text
-                  className={`font-medium ${
-                    isDeliveryFree ? "text-green-600" : "text-gray-800"
-                  }`}
-                >
-                  {isDelivery
-                    ? isDeliveryFree
-                      ? "Grátis"
-                      : checkout.deliveryFee.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })
-                    : "Grátis (Retirada)"}
-                </Text>
+                {isDelivery && (
+                  <Text className="font-medium text-primary-500">
+                    {isDelivery && forcedDeliveryFee}
+                  </Text>
+                )}
               </HStack>
 
               <Divider className="my-2" />
@@ -277,10 +268,15 @@ export function OrderConfirmationStep() {
               <HStack className="justify-between">
                 <Text className="font-semibold text-gray-800">Total</Text>
                 <Text className="font-bold text-gray-800">
-                  {checkout.total.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {checkout.deliveryType === CheckoutDeliveryType.PICKUP
+                    ? checkout.subtotal.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })
+                    : checkout.total.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                 </Text>
               </HStack>
             </VStack>

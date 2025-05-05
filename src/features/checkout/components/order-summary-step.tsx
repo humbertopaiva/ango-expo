@@ -11,7 +11,8 @@ import { RadioOptionButton } from "@/components/ui/radio-option-button";
 import { CartProcessorService } from "../services/cart-processor.service";
 
 export function OrderSummaryStep() {
-  const { checkout, setDeliveryType } = useCheckoutViewModel();
+  const { checkout, setDeliveryType, forcedDeliveryFee } =
+    useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
 
   // Processar os itens em categorias
@@ -22,6 +23,8 @@ export function OrderSummaryStep() {
   // Verificar se a entrega é gratuita
   const isDeliveryFree =
     checkout.deliveryFee === 0 || checkout.deliveryFee === undefined;
+
+  const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
 
   // Formatar a taxa de entrega
   const formatDeliveryFee = () => {
@@ -82,26 +85,15 @@ export function OrderSummaryStep() {
 
           {/* Exibir claramente a taxa de entrega */}
           {checkout.deliveryType === CheckoutDeliveryType.DELIVERY && (
-            <View className="bg-blue-50 p-3 rounded-lg mb-4">
+            <View className="bg-secondary-50 p-3 rounded-lg mb-4">
               <HStack className="justify-between items-center">
-                <Text className="text-blue-800 font-medium">
+                <Text className="text-primary-500 font-medium">
                   Taxa de entrega:
                 </Text>
                 <View>
-                  {isDeliveryFree ? (
-                    <Badge
-                      backgroundColor="green.100"
-                      borderColor="green.400"
-                      borderWidth={1}
-                      rounded="lg"
-                    >
-                      <Text className="text-xs text-green-600 font-medium">
-                        Grátis
-                      </Text>
-                    </Badge>
-                  ) : (
-                    <Text className="font-medium text-blue-800">
-                      {formatDeliveryFee()}
+                  {isDelivery && (
+                    <Text className="font-medium text-primary-500">
+                      {isDelivery && forcedDeliveryFee}
                     </Text>
                   )}
                 </View>
@@ -223,32 +215,25 @@ export function OrderSummaryStep() {
               {/* Mostrar taxa de entrega no resumo de valores */}
               <HStack className="justify-between mt-1">
                 <Text className="text-gray-600">Taxa de entrega</Text>
-                <Text
-                  className={`font-medium ${
-                    isDeliveryFree ||
-                    checkout.deliveryType === CheckoutDeliveryType.PICKUP
-                      ? "text-green-600"
-                      : "text-gray-800"
-                  }`}
-                >
-                  {checkout.deliveryType === CheckoutDeliveryType.DELIVERY
-                    ? isDeliveryFree
-                      ? "Grátis"
-                      : checkout.deliveryFee.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })
-                    : "Grátis (Retirada)"}
-                </Text>
+                {isDelivery && (
+                  <Text className="font-medium text-primary-500">
+                    {isDelivery && forcedDeliveryFee}
+                  </Text>
+                )}
               </HStack>
 
               <HStack className="justify-between mt-2">
                 <Text className="font-semibold text-gray-800">Total</Text>
                 <Text className="font-bold text-gray-800">
-                  {checkout.total.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
+                  {isDelivery
+                    ? checkout.total.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })
+                    : checkout.subtotal.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                 </Text>
               </HStack>
             </View>

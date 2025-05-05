@@ -58,8 +58,12 @@ export function CartScreen() {
       // Obter a taxa de entrega da configuração
       const deliveryFee = cart.getDeliveryFeeFromConfig(companyContext.config);
 
+      console.log("Taxa de entrega obtida:", deliveryFee);
+
       // Configurar a taxa no store do carrinho
-      cart.setDeliveryFee(deliveryFee);
+      if (!isNaN(deliveryFee) && deliveryFee > 0) {
+        cart.setDeliveryFee(deliveryFee);
+      }
     }
   }, [companySlug, companyContext.config]);
 
@@ -284,7 +288,7 @@ export function CartScreen() {
             </HStack>
 
             {/* Seletor de modo de entrega */}
-            {/* {companyContext.hasDelivery() && (
+            {companyContext.hasDelivery() && (
               <CartDeliverySelector
                 isDelivery={cart.isDelivery}
                 onToggleDeliveryMode={cart.toggleDeliveryMode}
@@ -297,7 +301,7 @@ export function CartScreen() {
                 config={companyContext.config}
                 primaryColor={primaryColor}
               />
-            )} */}
+            )}
 
             {/* Lista de itens do carrinho */}
             <View className="mb-6">

@@ -22,13 +22,18 @@ import {
   CheckCircle,
 } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
-import { CheckoutPaymentMethod, PaymentInfo } from "../models/checkout";
+import {
+  CheckoutDeliveryType,
+  CheckoutPaymentMethod,
+  PaymentInfo,
+} from "../models/checkout";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { RadioOptionButton } from "@/components/ui/radio-option-button";
 
 export function PaymentMethodStep() {
   const { checkout, paymentInfoForm } = useCheckoutViewModel();
   const primaryColor = THEME_COLORS.primary;
+  const isDelivery = checkout.deliveryType === CheckoutDeliveryType.DELIVERY;
 
   const [showChangeInput, setShowChangeInput] = useState(
     checkout.paymentInfo.method === CheckoutPaymentMethod.CASH
@@ -317,10 +322,15 @@ export function PaymentMethodStep() {
                 Total do pedido:
               </Text>
               <Text className="text-gray-800 font-bold">
-                {checkout.total.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
+                {isDelivery
+                  ? checkout.total.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })
+                  : checkout.subtotal.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
               </Text>
             </HStack>
 

@@ -16,8 +16,13 @@ export class DeliveryInfoService {
     // A taxa de entrega é armazenada como string, então convertemos para número
     const taxaEntrega = config.delivery.taxa_entrega;
 
-    // Analisar a string e converter para número (em centavos)
-    return parseFloat(taxaEntrega) || 0;
+    // Analisar a string e converter para número
+    try {
+      return parseFloat(taxaEntrega) || 0;
+    } catch (error) {
+      console.error("Erro ao converter taxa de entrega:", error);
+      return 0;
+    }
   }
 
   /**
