@@ -188,7 +188,6 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
             >
               <View className="w-full px-2 rounded-md">
                 <HStack className="w-full justify-between">
-                  {/* Tempo estimado */}
                   {vm.config.delivery.tempo_estimado_entrega && (
                     <VStack alignItems="center" space="xs" className="mb-1">
                       <HStack space="xs" className="items-center">
@@ -204,7 +203,6 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                     </VStack>
                   )}
 
-                  {/* Taxa de entrega */}
                   <VStack alignItems="center" space="xs" className="mb-1">
                     <Text className="text-sm font-semibold text-gray-800">
                       <Text
@@ -222,7 +220,6 @@ export function CompanyHeader({ onMoreInfoPress }: CompanyHeaderProps) {
                     </Text>
                   </VStack>
 
-                  {/* Pedido mínimo */}
                   {vm.config.delivery.pedido_minimo && (
                     <VStack alignItems="center" space="xs" className="mb-1">
                       <HStack space="xs" className="items-center">

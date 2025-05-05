@@ -172,6 +172,9 @@ export class CartProcessorService {
    * @param checkoutData Dados do checkout
    * @returns Mensagem formatada
    */
+
+  // Modificar apenas o método formatWhatsAppMessage
+
   // Path: src/features/checkout/services/cart-processor.service.ts
   // Modificar apenas o método formatWhatsAppMessage
 
@@ -186,6 +189,8 @@ export class CartProcessorService {
       subtotal,
       deliveryFee,
     } = checkoutData;
+
+    console.log("IIIIIITEMS", items);
 
     // Calcular o valor final correto baseado no tipo de entrega
     const finalTotal =
