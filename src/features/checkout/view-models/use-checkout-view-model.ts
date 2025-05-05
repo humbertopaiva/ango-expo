@@ -261,31 +261,11 @@ export function useCheckoutViewModel() {
   // Função para validar o passo de método de pagamento
   // Modificações na validação do troco
   const validatePaymentInfo = useCallback(() => {
-    const { method, change } = checkout.paymentInfo;
+    const { method } = checkout.paymentInfo;
 
-    // Se for dinheiro, precisa ter um valor de troco válido
-    if (method === CheckoutPaymentMethod.CASH) {
-      if (!change) return false;
-
-      // Determinar o valor total correto baseado no tipo de entrega
-      const totalValue =
-        checkout.deliveryType === CheckoutDeliveryType.PICKUP
-          ? checkout.subtotal
-          : checkout.total;
-
-      // Verificar se o valor de troco é maior que o total correto
-      const changeValue = parseFloat(change.replace(",", "."));
-      return !isNaN(changeValue) && changeValue > totalValue;
-    }
-
-    // Para outros métodos, só verifica se tem um método selecionado
+    // Apenas verificar se tem um método selecionado
     return !!method;
-  }, [
-    checkout.paymentInfo,
-    checkout.total,
-    checkout.subtotal,
-    checkout.deliveryType,
-  ]);
+  }, [checkout.paymentInfo]);
 
   // Atualizar a validação de todos os steps - IMPORTANTE: declarar após as funções acima
   const updateStepsValidation = useCallback(() => {
@@ -772,42 +752,7 @@ export function useCheckoutViewModel() {
   // Salvar método de pagamento e avançar
   const savePaymentInfo = async (data: PaymentInfo) => {
     try {
-      // Validação especial para pagamento em dinheiro (cash)
-      if (data.method === CheckoutPaymentMethod.CASH) {
-        if (!data.change) {
-          toastUtils.error(toast, "Informe um valor para troco");
-          return false;
-        }
-
-        // Determinar o valor total correto baseado no tipo de entrega
-        const totalValue =
-          checkout.deliveryType === CheckoutDeliveryType.PICKUP
-            ? checkout.subtotal
-            : checkout.total;
-
-        // Certifique-se de que o valor de troco é um número válido e maior que o total do pedido
-        const changeValue = parseFloat(data.change.replace(",", "."));
-
-        if (isNaN(changeValue)) {
-          toastUtils.error(toast, "Valor de troco inválido");
-          return false;
-        }
-
-        if (changeValue <= totalValue) {
-          toastUtils.error(
-            toast,
-            `Valor para troco deve ser maior que ${totalValue.toLocaleString(
-              "pt-BR",
-              {
-                style: "currency",
-                currency: "BRL",
-              }
-            )}`
-          );
-          return false;
-        }
-      }
-
+      // Aceitar qualquer valor para troco, não fazer validação
       updatePaymentInfo(data);
 
       // Salvar no cache

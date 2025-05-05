@@ -1,23 +1,14 @@
 // Path: src/features/checkout/components/neighborhood-selector.tsx
 
 import React, { useState, useEffect } from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import {
-  Select,
-  SelectTrigger,
-  SelectInput,
-  SelectPortal,
-  SelectItem,
-  SelectContent,
-  SelectIcon,
-  Icon,
-  ChevronDownIcon,
   FormControl,
   FormControlError,
   FormControlErrorText,
 } from "@gluestack-ui/themed";
-import { MapPin } from "lucide-react-native";
-import { DeliveryInfoService } from "../../cart/services/delivery-info.service";
+import { MapPin, ChevronDown } from "lucide-react-native";
+import { NeighborhoodModal } from "./neighborhood-modal";
 
 interface NeighborhoodSelectorProps {
   neighborhoods: string[];
@@ -36,7 +27,7 @@ export function NeighborhoodSelector({
   error,
   isRequired = true,
 }: NeighborhoodSelectorProps) {
-  const [open, setOpen] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Se não houver nenhum bairro selecionado mas houver bairros disponíveis,
   // seleciona o primeiro automaticamente
@@ -59,40 +50,36 @@ export function NeighborhoodSelector({
 
   return (
     <FormControl isInvalid={!!error} isRequired={isRequired}>
-      <View className="mb-1">
-        <Text className="font-medium text-gray-700 flex-row items-center">
-          <MapPin size={16} color="#6B7280" /> Selecione seu bairro
-        </Text>
-      </View>
-
-      <Select
-        selectedValue={selectedNeighborhood}
-        onValueChange={(value) => onSelectNeighborhood(value)}
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        className="h-12 border border-gray-300 rounded-lg bg-white px-3 flex-row justify-between items-center"
       >
-        <SelectTrigger className="h-12 border border-gray-300 rounded-lg bg-white px-3">
-          <SelectInput placeholder="Selecione seu bairro" />
-          <SelectIcon>
-            <Icon as={ChevronDownIcon} />
-          </SelectIcon>
-        </SelectTrigger>
-        <SelectPortal>
-          <SelectContent>
-            {neighborhoods.map((neighborhood) => (
-              <SelectItem
-                key={neighborhood}
-                label={neighborhood}
-                value={neighborhood}
-              />
-            ))}
-          </SelectContent>
-        </SelectPortal>
-      </Select>
+        <View className="flex-row items-center">
+          <MapPin size={16} color="#6B7280" className="mr-2" />
+          <Text
+            className={`${
+              selectedNeighborhood ? "text-gray-800" : "text-gray-400"
+            }`}
+          >
+            {selectedNeighborhood || "Selecione seu bairro"}
+          </Text>
+        </View>
+        <ChevronDown size={18} color="#6B7280" />
+      </TouchableOpacity>
 
       {error && (
         <FormControlError>
           <FormControlErrorText>{error}</FormControlErrorText>
         </FormControlError>
       )}
+
+      <NeighborhoodModal
+        isVisible={modalVisible}
+        neighborhoods={neighborhoods}
+        selectedNeighborhood={selectedNeighborhood}
+        onSelectNeighborhood={onSelectNeighborhood}
+        onClose={() => setModalVisible(false)}
+      />
     </FormControl>
   );
 }

@@ -172,6 +172,9 @@ export class CartProcessorService {
    * @param checkoutData Dados do checkout
    * @returns Mensagem formatada
    */
+  // Path: src/features/checkout/services/cart-processor.service.ts
+  // Modificar apenas o método formatWhatsAppMessage
+
   static formatWhatsAppMessage(checkoutData: CheckoutData): string {
     const {
       items,
@@ -218,12 +221,54 @@ export class CartProcessorService {
       }
     }
 
-    // Itens do pedido
+    // Itens do pedido - CORREÇÃO
     message += `\n*ITENS DO PEDIDO:*\n`;
 
-    // [...] Restante do processamento dos itens mantido igual
+    // Produtos principais
+    mainItems.forEach((item) => {
+      message += `• ${item.quantity}x ${item.name}`;
+      if (item.hasVariation && item.variationName) {
+        message += ` (${item.variationName})`;
+      }
+      message += ` - ${item.totalPriceFormatted}\n`;
 
-    // Adicionar informações de pagamento de forma mais clara
+      // Adicionais do item
+      const itemAddons = addons[item.id] || [];
+      if (itemAddons.length > 0) {
+        itemAddons.forEach((addon) => {
+          message += `   + ${addon.quantity}x ${addon.name}\n`;
+        });
+      }
+
+      // Observação do item
+      if (item.observation) {
+        message += `   Obs: ${item.observation}\n`;
+      }
+    });
+
+    // Produtos personalizados
+    customItems.forEach((item) => {
+      message += `• ${item.quantity}x ${item.name} (Personalizado) - ${item.totalPriceFormatted}\n`;
+
+      // Detalhes dos passos customizados
+      if (item.customProductSteps && item.customProductSteps.length > 0) {
+        item.customProductSteps.forEach((step) => {
+          if (step.stepName) {
+            message += `   ${step.stepName}: `;
+          }
+          if (step.selectedItems && step.selectedItems.length > 0) {
+            message += `${step.selectedItems.map((i) => i.name).join(", ")}\n`;
+          }
+        });
+      }
+
+      // Observação do item
+      if (item.observation) {
+        message += `   Obs: ${item.observation}\n`;
+      }
+    });
+
+    // Adicionar informações de pagamento
     message += `\n*PAGAMENTO:*\n`;
     let paymentMethodText = "";
 
@@ -247,7 +292,7 @@ export class CartProcessorService {
 
     message += `Forma de pagamento: ${paymentMethodText}\n`;
 
-    // Adicionar detalhamento do valor com ou sem taxa de entrega
+    // Adicionar detalhamento do valor
     message += `Subtotal: ${subtotal.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -267,7 +312,7 @@ export class CartProcessorService {
       message += `Entrega: Grátis (Retirada no local)\n`;
     }
 
-    // Usar o valor total correto baseado no tipo de entrega
+    // Usar o valor total correto
     message += `Total: ${finalTotal.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",

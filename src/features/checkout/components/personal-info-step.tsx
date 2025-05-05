@@ -1,4 +1,5 @@
 // Path: src/features/checkout/components/personal-info-step.tsx
+
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
@@ -18,6 +19,7 @@ import {
   FormControlError,
   FormControlErrorText,
   useToast,
+  Divider,
 } from "@gluestack-ui/themed";
 import {
   User,
@@ -25,6 +27,11 @@ import {
   MapPin,
   AlertCircle,
   CheckCircle,
+  Mail,
+  Home,
+  MapPinned,
+  Navigation,
+  Info,
 } from "lucide-react-native";
 import { useCheckoutViewModel } from "../view-models/use-checkout-view-model";
 import { CheckoutDeliveryType, PersonalInfo } from "../models/checkout";
@@ -147,14 +154,16 @@ export function PersonalInfoStep() {
     <ScrollView
       className="flex-1"
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
     >
+      {/* Alertas e mensagens de contexto */}
       {hasLoadedUserData && (
         <View className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
           <HStack space="sm" alignItems="center">
             <CheckCircle size={18} color="#3B82F6" />
-            <Text className="text-sm text-blue-700">
-              Seus dados foram recuperados automaticamente
+            <Text className="text-sm text-blue-700 flex-1">
+              Seus dados foram recuperados automaticamente. Verifique se estão
+              corretos.
             </Text>
           </HStack>
         </View>
@@ -164,16 +173,18 @@ export function PersonalInfoStep() {
         <View className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-100">
           <HStack space="sm" alignItems="center">
             <AlertCircle size={18} color="#F59E0B" />
-            <Text className="text-sm text-amber-700">
-              Preencha todos os campos de endereço para entrega
+            <Text className="text-sm text-amber-700 flex-1">
+              Para entrega, precisamos de seu endereço completo. Preencha todos
+              os campos abaixo.
             </Text>
           </HStack>
         </View>
       )}
 
+      {/* Dados de contato */}
       <Card className="p-4 mb-4 border border-gray-100">
-        <Text className="text-lg font-semibold text-gray-800 mb-4">
-          Seus Dados
+        <Text className="text-lg font-semibold text-gray-800 mb-3">
+          Informações de Contato
         </Text>
 
         <VStack space="md">
@@ -196,9 +207,13 @@ export function PersonalInfoStep() {
                 },
               }}
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input>
+                <Input
+                  size="md"
+                  className="bg-white"
+                  borderColor={errors.fullName ? "red.400" : "gray.300"}
+                >
                   <InputField
-                    placeholder="Nome completo"
+                    placeholder="Digite seu nome completo"
                     value={value}
                     onChangeText={onChange}
                     onBlur={() => {
@@ -236,7 +251,11 @@ export function PersonalInfoStep() {
                 },
               }}
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input>
+                <Input
+                  size="md"
+                  className="bg-white"
+                  borderColor={errors.whatsapp ? "red.400" : "gray.300"}
+                >
                   <InputField
                     placeholder="(00) 0 0000-0000"
                     value={maskPhoneNumber(value)}
@@ -261,226 +280,285 @@ export function PersonalInfoStep() {
               </FormControlErrorText>
             </FormControlError>
           </FormControl>
+        </VStack>
+      </Card>
 
-          {/* Campos de endereço (apenas se for entrega) */}
-          {isDelivery && (
-            <>
-              <Text className="text-lg font-semibold text-gray-800 mb-1 mt-4">
-                Endereço de Entrega
-              </Text>
+      {/* Campos de endereço (apenas se for entrega) */}
+      {isDelivery && (
+        <Card className="p-4 border border-gray-100">
+          <View className="flex-row items-center mb-3">
+            <Home size={18} color={primaryColor} className="mr-2" />
+            <Text className="text-lg font-semibold text-gray-800">
+              Endereço de Entrega
+            </Text>
+          </View>
 
-              {/* Rua */}
-              <FormControl isInvalid={!!errors.address} isRequired>
-                <HStack alignItems="center" className="mb-1">
-                  <MapPin size={16} color="#6B7280" />
-                  <Text className="ml-2 text-gray-700 font-medium">
-                    Rua/Avenida
-                  </Text>
-                </HStack>
+          <VStack space="md">
+            {/* Rua */}
+            <FormControl isInvalid={!!errors.address} isRequired>
+              <HStack alignItems="center" className="mb-1">
+                <MapPin size={16} color="#6B7280" />
+                <Text className="ml-2 text-gray-700 font-medium">
+                  Rua/Avenida
+                </Text>
+              </HStack>
+              <Controller
+                control={control}
+                name="address"
+                rules={{
+                  required: "Endereço é obrigatório",
+                  minLength: { value: 5, message: "Endereço muito curto" },
+                }}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    size="md"
+                    className="bg-white"
+                    borderColor={errors.address ? "red.400" : "gray.300"}
+                  >
+                    <InputField
+                      placeholder="Digite sua rua ou avenida"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={() => {
+                        onBlur();
+                        trigger("address");
+                        verifyAddressFields();
+                      }}
+                      testID="address-input"
+                    />
+                  </Input>
+                )}
+              />
+              <FormControlError>
+                <FormControlErrorText>
+                  {errors.address?.message}
+                </FormControlErrorText>
+              </FormControlError>
+            </FormControl>
+
+            {/* Número e Bairro */}
+            <HStack space="md">
+              <FormControl
+                isInvalid={!!errors.number}
+                className="w-1/3 mr-2"
+                isRequired
+              >
+                <Text className="text-gray-700 font-medium mb-1">Número</Text>
                 <Controller
                   control={control}
-                  name="address"
-                  rules={{
-                    required: "Endereço é obrigatório",
-                    minLength: { value: 5, message: "Endereço muito curto" },
-                  }}
+                  name="number"
+                  rules={{ required: "Número é obrigatório" }}
                   render={({ field: { onChange, onBlur, value } }) => (
-                    <Input>
+                    <Input
+                      size="md"
+                      className="bg-white"
+                      borderColor={errors.number ? "red.400" : "gray.300"}
+                    >
                       <InputField
-                        placeholder="Rua/Avenida"
+                        placeholder="N°"
                         value={value}
                         onChangeText={onChange}
                         onBlur={() => {
                           onBlur();
-                          trigger("address");
+                          trigger("number");
                           verifyAddressFields();
                         }}
-                        testID="address-input"
+                        keyboardType="numeric"
+                        testID="number-input"
                       />
                     </Input>
                   )}
                 />
                 <FormControlError>
                   <FormControlErrorText>
-                    {errors.address?.message}
+                    {errors.number?.message}
                   </FormControlErrorText>
                 </FormControlError>
               </FormControl>
 
-              {/* Número e Bairro */}
-              <HStack space="md">
-                <FormControl
-                  isInvalid={!!errors.number}
-                  className="w-1/3 mr-2"
-                  isRequired
-                >
-                  <Text className="text-gray-700 font-medium mb-1">Número</Text>
+              {hasSpecificNeighborhoods ? (
+                <FormControl className="flex-1" isRequired>
+                  <Text className="text-gray-700 font-medium mb-1">Bairro</Text>
                   <Controller
                     control={control}
-                    name="number"
-                    rules={{ required: "Número é obrigatório" }}
+                    name="neighborhood"
+                    rules={{
+                      required: "Bairro é obrigatório",
+                    }}
+                    render={({ field: { onChange, value } }) => (
+                      <NeighborhoodSelector
+                        neighborhoods={neighborhoods}
+                        selectedNeighborhood={value || ""}
+                        onSelectNeighborhood={onChange}
+                        primaryColor={primaryColor}
+                        error={errors.neighborhood?.message}
+                      />
+                    )}
+                  />
+                  {!isNeighborhoodValid && (
+                    <FormControlError>
+                      <FormControlErrorText>
+                        Este bairro não é atendido para entrega
+                      </FormControlErrorText>
+                    </FormControlError>
+                  )}
+                </FormControl>
+              ) : (
+                <FormControl
+                  isInvalid={!!errors.neighborhood}
+                  className="flex-1"
+                  isRequired
+                >
+                  <Text className="text-gray-700 font-medium mb-1">Bairro</Text>
+                  <Controller
+                    control={control}
+                    name="neighborhood"
+                    rules={{
+                      required: "Bairro é obrigatório",
+                      minLength: { value: 3, message: "Bairro muito curto" },
+                    }}
                     render={({ field: { onChange, onBlur, value } }) => (
-                      <Input>
+                      <Input
+                        size="md"
+                        className="bg-white"
+                        borderColor={
+                          errors.neighborhood ? "red.400" : "gray.300"
+                        }
+                      >
                         <InputField
-                          placeholder="Número"
+                          placeholder="Digite seu bairro"
                           value={value}
                           onChangeText={onChange}
                           onBlur={() => {
                             onBlur();
-                            trigger("number");
+                            trigger("neighborhood");
                             verifyAddressFields();
                           }}
-                          keyboardType="numeric"
-                          testID="number-input"
+                          testID="neighborhood-input"
                         />
                       </Input>
                     )}
                   />
                   <FormControlError>
                     <FormControlErrorText>
-                      {errors.number?.message}
+                      {errors.neighborhood?.message}
                     </FormControlErrorText>
                   </FormControlError>
                 </FormControl>
+              )}
+            </HStack>
 
-                {hasSpecificNeighborhoods ? (
-                  <FormControl className="flex-1" isRequired>
-                    <Text className="text-gray-700 font-medium mb-1">
-                      Bairro
-                    </Text>
-                    <Controller
-                      control={control}
-                      name="neighborhood"
-                      rules={{
-                        required: "Bairro é obrigatório",
-                      }}
-                      render={({ field: { onChange, value } }) => (
-                        <NeighborhoodSelector
-                          neighborhoods={neighborhoods}
-                          selectedNeighborhood={value || ""}
-                          onSelectNeighborhood={onChange}
-                          primaryColor={primaryColor}
-                          error={errors.neighborhood?.message}
-                        />
-                      )}
-                    />
-                    {!isNeighborhoodValid && (
-                      <FormControlError>
-                        <FormControlErrorText>
-                          Este bairro não é atendido para entrega
-                        </FormControlErrorText>
-                      </FormControlError>
-                    )}
-                  </FormControl>
-                ) : (
-                  <FormControl
-                    isInvalid={!!errors.neighborhood}
-                    className="flex-1"
-                    isRequired
-                  >
-                    <Text className="text-gray-700 font-medium mb-1">
-                      Bairro
-                    </Text>
-                    <Controller
-                      control={control}
-                      name="neighborhood"
-                      rules={{
-                        required: "Bairro é obrigatório",
-                        minLength: { value: 3, message: "Bairro muito curto" },
-                      }}
-                      render={({ field: { onChange, onBlur, value } }) => (
-                        <Input>
-                          <InputField
-                            placeholder="Bairro"
-                            value={value}
-                            onChangeText={onChange}
-                            onBlur={() => {
-                              onBlur();
-                              trigger("neighborhood");
-                              verifyAddressFields();
-                            }}
-                            testID="neighborhood-input"
-                          />
-                        </Input>
-                      )}
-                    />
-                    <FormControlError>
-                      <FormControlErrorText>
-                        {errors.neighborhood?.message}
-                      </FormControlErrorText>
-                    </FormControlError>
-                  </FormControl>
-                )}
-              </HStack>
-
-              {/* Aviso de bairro não atendido */}
-              {isDelivery &&
-                deliveryConfig?.especificar_bairros_atendidos &&
-                selectedNeighborhood &&
-                !isNeighborhoodValid && (
-                  <View className="mt-2 p-3 bg-red-50 rounded-lg border border-red-100">
-                    <Text className="text-red-700">
+            {/* Aviso de bairro não atendido */}
+            {isDelivery &&
+              deliveryConfig?.especificar_bairros_atendidos &&
+              selectedNeighborhood &&
+              !isNeighborhoodValid && (
+                <View className="mt-2 p-3 bg-red-50 rounded-lg border border-red-100">
+                  <HStack alignItems="center">
+                    <AlertCircle size={18} color="#EF4444" className="mr-2" />
+                    <Text className="text-red-700 flex-1">
                       Desculpe, o bairro selecionado não é atendido para
-                      entrega.
+                      entrega. Por favor, escolha outro bairro ou selecione a
+                      opção de retirada.
                     </Text>
-                  </View>
-                )}
+                  </HStack>
+                </View>
+              )}
 
-              {/* Cidade (fixa) */}
-              <Input isDisabled={true} className="mt-2">
-                <InputField
-                  value="Lima Duarte (MG)"
-                  placeholder="Cidade"
-                  className="bg-gray-100"
-                />
+            {/* Cidade fixa */}
+            <View className="mt-2">
+              <HStack alignItems="center" className="mb-1">
+                <MapPinned size={16} color="#6B7280" />
+                <Text className="ml-2 text-gray-700 font-medium">Cidade</Text>
+              </HStack>
+              <Input
+                isDisabled={true}
+                size="md"
+                className="bg-gray-50 text-gray-500"
+              >
+                <InputField value="Lima Duarte (MG)" placeholder="Cidade" />
               </Input>
+              <Text className="text-xs text-gray-500 mt-1">
+                Entregamos apenas em Lima Duarte - MG
+              </Text>
+            </View>
 
-              {/* Ponto de referência (opcional) */}
-              <FormControl className="mt-2">
-                <Text className="text-gray-700 font-medium mb-1">
-                  Ponto de referência (opcional)
+            {/* Ponto de referência (opcional) */}
+            <FormControl className="mt-2">
+              <HStack alignItems="center" className="mb-1">
+                <Navigation size={16} color="#6B7280" />
+                <Text className="ml-2 text-gray-700 font-medium">
+                  Ponto de referência{" "}
+                  <Text className="font-normal text-gray-500">(opcional)</Text>
                 </Text>
-                <Controller
-                  control={control}
-                  name="reference"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input>
-                      <InputField
-                        placeholder="Ponto de referência (opcional)"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        testID="reference-input"
-                      />
-                    </Input>
-                  )}
-                />
-              </FormControl>
-            </>
-          )}
+              </HStack>
+              <Controller
+                control={control}
+                name="reference"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input size="md" className="bg-white" borderColor="gray.300">
+                    <InputField
+                      placeholder="Ex: Próximo ao mercado, casa azul..."
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      testID="reference-input"
+                    />
+                  </Input>
+                )}
+              />
+              <Text className="text-xs text-gray-500 mt-1">
+                Adicione informações que facilitem a localização da sua casa
+              </Text>
+            </FormControl>
+          </VStack>
 
-          <FormValidationFeedback
-            isValid={
-              isDelivery
-                ? isValid && addressFieldsComplete && isNeighborhoodValid
-                : isValid
-            }
-            isPartiallyValid={isDirty && !isValid}
-            validMessage={
-              isDelivery
-                ? "Todos os campos preenchidos corretamente"
-                : "Dados básicos preenchidos corretamente"
-            }
-            invalidMessage={
-              isDelivery
-                ? "Preencha todos os campos obrigatórios"
-                : "Preencha seu nome e WhatsApp corretamente"
-            }
-            partialMessage="Continue preenchendo os campos obrigatórios"
-            primaryColor={primaryColor}
-          />
-        </VStack>
-      </Card>
+          {/* Dicas para entrega fácil */}
+          <View className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <HStack space="sm" alignItems="flex-start">
+              <Info size={16} color="#3B82F6" className="mt-1" />
+              <View className="flex-1">
+                <Text className="text-sm text-blue-700 font-medium">
+                  Dicas para entrega
+                </Text>
+                <Text className="text-xs text-blue-700 mt-1">
+                  • Certifique-se de que o endereço está completo e correto
+                </Text>
+                <Text className="text-xs text-blue-700">
+                  • Adicione referências que facilitem a localização
+                </Text>
+                <Text className="text-xs text-blue-700">
+                  • Mantenha seu telefone por perto para o contato do entregador
+                </Text>
+              </View>
+            </HStack>
+          </View>
+        </Card>
+      )}
+
+      {/* Validação final */}
+      <View className="mt-4">
+        <FormValidationFeedback
+          isValid={
+            isDelivery
+              ? isValid && addressFieldsComplete && isNeighborhoodValid
+              : isValid
+          }
+          isPartiallyValid={isDirty && !isValid}
+          validMessage={
+            isDelivery
+              ? "Todos os campos preenchidos corretamente"
+              : "Dados básicos preenchidos corretamente"
+          }
+          invalidMessage={
+            isDelivery
+              ? "Preencha todos os campos obrigatórios"
+              : "Preencha seu nome e WhatsApp corretamente"
+          }
+          partialMessage="Continue preenchendo os campos obrigatórios"
+          primaryColor={primaryColor}
+        />
+      </View>
     </ScrollView>
   );
 }
