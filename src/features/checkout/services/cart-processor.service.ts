@@ -190,8 +190,6 @@ export class CartProcessorService {
       deliveryFee,
     } = checkoutData;
 
-    console.log("IIIIIITEMS", items);
-
     // Calcular o valor final correto baseado no tipo de entrega
     const finalTotal =
       deliveryType === CheckoutDeliveryType.PICKUP ? subtotal : total;
@@ -199,113 +197,122 @@ export class CartProcessorService {
     // Processar os itens em categorias
     const { mainItems, addons, customItems } = this.processItems(items);
 
-    // Cabeçalho
-    let message = `*NOVO PEDIDO - ${companyName}*\n\n`;
+    // ===== CABEÇALHO =====
+    let message = `🛍️ *NOVO PEDIDO - ${companyName}*\n`;
+    message += `📆 Data: ${new Date().toLocaleDateString("pt-BR")}\n`;
+    message += `⏰ Hora: ${new Date().toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}\n\n`;
 
-    // Tipo de entrega
-    message += `*Tipo de entrega:* ${
+    // ===== TIPO DE ENTREGA =====
+    message += `🚚 *FORMA DE RECEBIMENTO:* ${
       deliveryType === CheckoutDeliveryType.DELIVERY
         ? "Entrega"
         : "Retirada no local"
     }\n\n`;
 
-    // Dados do cliente
-    message += `*DADOS DO CLIENTE:*\n`;
-    message += `Nome: ${personalInfo.fullName}\n`;
-    message += `WhatsApp: ${personalInfo.whatsapp}\n`;
+    // ===== DADOS DO CLIENTE =====
+    message += `👤 *DADOS DO CLIENTE:*\n`;
+    message += `📝 Nome: ${personalInfo.fullName}\n`;
+    message += `📱 WhatsApp: ${personalInfo.whatsapp}\n`;
 
-    // Endereço (se for entrega)
+    // ===== ENDEREÇO (SE FOR ENTREGA) =====
     if (deliveryType === CheckoutDeliveryType.DELIVERY) {
-      message += `\n*ENDEREÇO DE ENTREGA:*\n`;
-      message += `${personalInfo.address}, ${personalInfo.number}\n`;
-      message += `Bairro: ${personalInfo.neighborhood}\n`;
-      message += `Cidade: Lima Duarte (MG)\n`;
+      message += `\n📍 *ENDEREÇO DE ENTREGA:*\n`;
+      message += `🏠 ${personalInfo.address}, ${personalInfo.number}\n`;
+      message += `🏙️ Bairro: ${personalInfo.neighborhood}\n`;
+      message += `🌆 Cidade: Lima Duarte (MG)\n`;
 
       if (personalInfo.reference) {
-        message += `Ponto de referência: ${personalInfo.reference}\n`;
+        message += `🔍 Referência: ${personalInfo.reference}\n`;
       }
     }
 
-    // Itens do pedido - CORREÇÃO
-    message += `\n*ITENS DO PEDIDO:*\n`;
+    // ===== ITENS DO PEDIDO =====
+    message += `\n📋 *ITENS DO PEDIDO:*\n`;
 
-    // Produtos principais
+    // Contador para numerar os itens do pedido
+    let itemNumber = 1;
+
+    // ===== PRODUTOS PRINCIPAIS COM ADICIONAIS =====
     mainItems.forEach((item) => {
-      message += `• ${item.quantity}x ${item.name}`;
+      // Numeração e informações básicas do item
+      message += `\n*${itemNumber}. ${item.name}*`;
       if (item.hasVariation && item.variationName) {
-        message += ` (${item.variationName})`;
+        message += ` _(${item.variationName})_`;
       }
-      message += ` - ${item.totalPriceFormatted}\n`;
+      message += `\n`;
 
-      // Adicionais do item
+      // Quantidade e preço
+      message += `   • Quantidade: ${item.quantity}\n`;
+      message += `   • Valor: ${item.totalPriceFormatted}\n`;
+
+      // Adicionais do item principal
       const itemAddons = addons[item.id] || [];
       if (itemAddons.length > 0) {
+        message += `   • *Adicionais:*\n`;
         itemAddons.forEach((addon) => {
-          message += `   + ${addon.quantity}x ${addon.name}\n`;
+          // Formatação de preço para o adicional
+          const addonTotalPrice = (addon.price * addon.quantity).toLocaleString(
+            "pt-BR",
+            {
+              style: "currency",
+              currency: "BRL",
+            }
+          );
+
+          message += `      - ${addon.quantity}x ${addon.name}: ${addonTotalPrice}\n`;
         });
       }
 
       // Observação do item
       if (item.observation) {
-        message += `   Obs: ${item.observation}\n`;
+        message += `   • *Observação:* ${item.observation}\n`;
       }
+
+      // Incrementar o contador de itens
+      itemNumber++;
     });
 
-    // Produtos personalizados
+    // ===== PRODUTOS CUSTOMIZADOS =====
     customItems.forEach((item) => {
-      message += `• ${item.quantity}x ${item.name} (Personalizado) - ${item.totalPriceFormatted}\n`;
+      // Numeração e informações básicas do item customizado
+      message += `\n*${itemNumber}. ${item.name} (Personalizado)*\n`;
+      message += `   • Quantidade: ${item.quantity}\n`;
+      message += `   • Valor: ${item.totalPriceFormatted}\n`;
 
       // Detalhes dos passos customizados
       if (item.customProductSteps && item.customProductSteps.length > 0) {
+        message += `   • *Seleções personalizadas:*\n`;
         item.customProductSteps.forEach((step) => {
-          if (step.stepName) {
-            message += `   ${step.stepName}: `;
-          }
-          if (step.selectedItems && step.selectedItems.length > 0) {
-            message += `${step.selectedItems.map((i) => i.name).join(", ")}\n`;
-          }
+          const stepName = step.stepName ? step.stepName : "Opções";
+          const selectedItems = step.selectedItems
+            .map((i) => i.name)
+            .join(", ");
+          message += `      - ${stepName}: ${selectedItems}\n`;
         });
       }
 
-      // Observação do item
+      // Observação do item customizado
       if (item.observation) {
-        message += `   Obs: ${item.observation}\n`;
+        message += `   • *Observação:* ${item.observation}\n`;
       }
+
+      // Incrementar o contador de itens
+      itemNumber++;
     });
 
-    // Adicionar informações de pagamento
-    message += `\n*PAGAMENTO:*\n`;
-    let paymentMethodText = "";
-
-    switch (paymentInfo.method) {
-      case CheckoutPaymentMethod.PIX:
-        paymentMethodText = "PIX";
-        break;
-      case CheckoutPaymentMethod.CREDIT_CARD:
-        paymentMethodText = "Cartão de Crédito";
-        break;
-      case CheckoutPaymentMethod.DEBIT_CARD:
-        paymentMethodText = "Cartão de Débito";
-        break;
-      case CheckoutPaymentMethod.CASH:
-        paymentMethodText = "Dinheiro";
-        if (paymentInfo.change) {
-          paymentMethodText += ` (Troco para R$ ${paymentInfo.change})`;
-        }
-        break;
-    }
-
-    message += `Forma de pagamento: ${paymentMethodText}\n`;
-
-    // Adicionar detalhamento do valor
-    message += `Subtotal: ${subtotal.toLocaleString("pt-BR", {
+    // ===== RESUMO DE PAGAMENTO =====
+    message += `\n💰 *RESUMO DE VALORES:*\n`;
+    message += `📦 Subtotal dos itens: ${subtotal.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
     })}\n`;
 
     // Mostrar taxa de entrega ou indicar que é retirada no local
     if (deliveryType === CheckoutDeliveryType.DELIVERY) {
-      message += `Taxa de entrega: ${
+      message += `🚚 Taxa de entrega: ${
         deliveryFee > 0
           ? deliveryFee.toLocaleString("pt-BR", {
               style: "currency",
@@ -314,17 +321,49 @@ export class CartProcessorService {
           : "Grátis"
       }\n`;
     } else {
-      message += `Entrega: Grátis (Retirada no local)\n`;
+      message += `🚚 Entrega: Grátis (Retirada no local)\n`;
     }
 
-    // Usar o valor total correto
-    message += `Total: ${finalTotal.toLocaleString("pt-BR", {
+    // Total final
+    message += `💵 *Valor Total: ${finalTotal.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
-    })}\n\n`;
+    })}*\n`;
 
-    // Agradecimento
-    message += `Obrigado pelo seu pedido!`;
+    // ===== PAGAMENTO =====
+    message += `\n💳 *FORMA DE PAGAMENTO:*\n`;
+
+    let paymentMethodText = "";
+    let paymentIcon = "";
+
+    switch (paymentInfo.method) {
+      case CheckoutPaymentMethod.PIX:
+        paymentMethodText = "PIX";
+        paymentIcon = "📱";
+        break;
+      case CheckoutPaymentMethod.CREDIT_CARD:
+        paymentMethodText = "Cartão de Crédito";
+        paymentIcon = "💳";
+        break;
+      case CheckoutPaymentMethod.DEBIT_CARD:
+        paymentMethodText = "Cartão de Débito";
+        paymentIcon = "💳";
+        break;
+      case CheckoutPaymentMethod.CASH:
+        paymentMethodText = "Dinheiro";
+        paymentIcon = "💵";
+        break;
+    }
+
+    message += `${paymentIcon} ${paymentMethodText}`;
+
+    // Adiciona informação de troco, se aplicável
+    if (
+      paymentInfo.method === CheckoutPaymentMethod.CASH &&
+      paymentInfo.change
+    ) {
+      message += ` (Troco para ${paymentInfo.change})`;
+    }
 
     return message;
   }
