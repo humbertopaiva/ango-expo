@@ -28,6 +28,7 @@ import { ProductObservationInput } from "../components/product-observation-input
 import { useCartViewModel } from "@/src/features/cart/view-models/use-cart-view-model";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { TextareaInput } from "@gluestack-ui/themed";
+import { TextInput } from "react-native-gesture-handler";
 
 export function CustomProductDetailScreen() {
   const { productId, companySlug } = useLocalSearchParams<{
@@ -252,15 +253,18 @@ export function CustomProductDetailScreen() {
 
             {vm.showObservationInput && (
               <View className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <TextareaInput
+                <TextInput
                   value={vm.observation}
                   onChangeText={vm.setObservation}
-                  placeholder="Alguma observação? Ex: Gostaria que..."
+                  placeholder="Alguma observação? Ex: Sem cebola, bem passado..."
+                  multiline
+                  numberOfLines={3}
                   className="text-gray-700 min-h-24"
+                  style={{ textAlignVertical: "top" }}
                 />
                 <Text className="text-gray-500 text-xs mt-2">
                   Informe aqui preferências ou instruções especiais para este
-                  produto personalizado.
+                  produto.
                 </Text>
               </View>
             )}
