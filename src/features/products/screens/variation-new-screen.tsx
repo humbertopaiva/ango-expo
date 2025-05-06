@@ -1,23 +1,29 @@
 // Path: src/features/products/screens/variation-new-screen.tsx
 
 import React, { useRef, useState, useEffect } from "react";
-import { View, Text, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast } from "@gluestack-ui/themed";
 import { router } from "expo-router";
-import { Tag } from "lucide-react-native";
+import { Tag, Save, X, HelpCircle } from "lucide-react-native";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import {
   VariationTypeForm,
   VariationTypeFormRef,
 } from "../components/variation-type-form";
-import { FormActions } from "@/components/custom/form-actions";
 import useAuthStore from "@/src/stores/auth";
 import { useVariationTypes } from "../hooks/use-variation-types";
 import {
   showErrorToast,
   showSuccessToast,
 } from "@/components/common/toast-helper";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 export function VariationNewScreen() {
   const toast = useToast();
@@ -27,7 +33,7 @@ export function VariationNewScreen() {
 
   const formRef = useRef<VariationTypeFormRef>(null);
 
-  // Forçar refetch ao montar o componente
+  // Force refetch when component mounts
   useEffect(() => {
     refetch();
   }, [refetch]);
@@ -41,7 +47,7 @@ export function VariationNewScreen() {
     try {
       setIsSubmitting(true);
 
-      // Simplificando o modelo: apenas nome, empresa e os valores da variação
+      // Simplifying the model: just name, company and variation values
       await createVariation({
         nome: data.nome,
         variacao: data.variacao,
@@ -50,10 +56,10 @@ export function VariationNewScreen() {
 
       showSuccessToast(toast, "Tipo de variação criado com sucesso!");
 
-      // Forçar refetch imediatamente
+      // Force refetch immediately
       await refetch();
 
-      // Navegar de volta após breve delay
+      // Navigate back after brief delay
       setTimeout(() => {
         router.push("/admin/products/variations/types");
       }, 500);
@@ -66,52 +72,173 @@ export function VariationNewScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView style={styles.container}>
       <AdminScreenHeader
         title="Nova Variação"
         backTo="/admin/products/variations/types"
       />
 
-      <ScrollView className="flex-1 p-4">
-        <View className="bg-blue-50 p-4 rounded-lg mb-6">
-          <View className="flex-row items-center mb-2">
-            <Tag size={20} color="#1E40AF" />
-            <Text className="ml-2 text-blue-800 font-medium">
-              O que são variações?
-            </Text>
+      <ScrollView style={styles.scrollView}>
+        {/* Help Card */}
+        <View style={styles.helpCard}>
+          <View style={styles.helpHeader}>
+            <HelpCircle size={22} color="#1E40AF" />
+            <Text style={styles.helpTitle}>O que são variações?</Text>
           </View>
-          <Text className="text-blue-700">
+          <Text style={styles.helpText}>
             Variações são características dos produtos que podem ter diferentes
             opções, como tamanhos, cores ou materiais. Aqui você cria os tipos
             de variação que poderão ser associados a produtos posteriormente.
           </Text>
         </View>
 
-        <VariationTypeForm
-          ref={formRef}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting || isCreating}
-        />
+        {/* Form Card */}
+        <View style={styles.formCard}>
+          <View style={styles.formHeader}>
+            <Tag size={20} color={THEME_COLORS.primary} />
+            <Text style={styles.formTitle}>Dados da Variação</Text>
+          </View>
 
-        <View className="h-20" />
+          <VariationTypeForm
+            ref={formRef}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting || isCreating}
+          />
+        </View>
+
+        {/* Bottom spacing */}
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-        <FormActions
-          primaryAction={{
-            label:
-              isSubmitting || isCreating ? "Salvando..." : "Criar Variação",
-            onPress: () => formRef.current?.handleSubmit(),
-            isLoading: isSubmitting || isCreating,
-          }}
-          secondaryAction={{
-            label: "Cancelar",
-            onPress: () => router.back(),
-            variant: "outline",
-            isDisabled: isSubmitting || isCreating,
-          }}
-        />
+      {/* Action Buttons */}
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => router.back()}
+          disabled={isSubmitting || isCreating}
+        >
+          <X size={20} color="#4B5563" />
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            (isSubmitting || isCreating) && styles.disabledButton,
+          ]}
+          onPress={() => formRef.current?.handleSubmit()}
+          disabled={isSubmitting || isCreating}
+        >
+          <Save size={20} color="#FFFFFF" />
+          <Text style={styles.saveButtonText}>
+            {isSubmitting || isCreating ? "Salvando..." : "Criar Variação"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  helpCard: {
+    margin: 16,
+    backgroundColor: "#EFF6FF",
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#1E40AF",
+  },
+  helpHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  helpTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1E40AF",
+    marginLeft: 8,
+  },
+  helpText: {
+    fontSize: 14,
+    color: "#1E3A8A",
+    lineHeight: 20,
+  },
+  formCard: {
+    margin: 16,
+    marginTop: 0,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  formHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  formTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
+    marginLeft: 8,
+  },
+  actionContainer: {
+    flexDirection: "row",
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  cancelButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+    paddingVertical: 12,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    marginLeft: 8,
+    color: "#4B5563",
+    fontWeight: "600",
+  },
+  saveButton: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    backgroundColor: THEME_COLORS.primary,
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    marginLeft: 8,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+});

@@ -1,11 +1,18 @@
 // Path: src/features/products/screens/variation-edit-screen.tsx
 
 import React, { useRef, useState, useEffect } from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useToast } from "@gluestack-ui/themed";
 import { router, useLocalSearchParams } from "expo-router";
-import { Tag } from "lucide-react-native";
+import { Tag, Save, X, AlertCircle } from "lucide-react-native";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import {
   VariationTypeForm,
@@ -28,12 +35,12 @@ export function VariationEditScreen() {
 
   const formRef = useRef<VariationTypeFormRef>(null);
 
-  // Forçar refetch ao montar o componente
+  // Force refetch when component mounts
   useEffect(() => {
     refetch();
   }, [refetch, id]);
 
-  // Encontrar a variação pelo ID
+  // Find variation by ID
   const variation = variations.find((v) => v.id === id);
 
   const handleSubmit = async (data: { nome: string; variacao: string[] }) => {
@@ -55,10 +62,10 @@ export function VariationEditScreen() {
 
       showSuccessToast(toast, "Tipo de variação atualizado com sucesso!");
 
-      // Forçar refetch imediatamente
+      // Force refetch immediately
       await refetch();
 
-      // Navegar de volta após breve delay
+      // Navigate back after brief delay
       setTimeout(() => {
         router.push("/admin/products/variations/types");
       }, 500);
@@ -70,17 +77,17 @@ export function VariationEditScreen() {
     }
   };
 
-  // Exibir loading se estiver carregando dados
+  // Show loading if fetching data
   if (isLoading || (!variation && !isLoading)) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView style={styles.container}>
         <AdminScreenHeader
           title="Editar Variação"
           backTo="/admin/products/variations/types"
         />
-        <View className="flex-1 justify-center items-center">
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={THEME_COLORS.primary} />
-          <Text className="mt-4 text-gray-500">
+          <Text style={styles.loadingText}>
             Carregando dados da variação...
           </Text>
         </View>
@@ -89,52 +96,183 @@ export function VariationEditScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView style={styles.container}>
       <AdminScreenHeader
         title="Editar Variação"
         backTo="/admin/products/variations/types"
       />
 
-      <ScrollView className="flex-1 p-4">
-        <View className="bg-blue-50 p-4 rounded-lg mb-6">
-          <View className="flex-row items-center mb-2">
-            <Tag size={20} color="#1E40AF" />
-            <Text className="ml-2 text-blue-800 font-medium">
-              Editando: {variation?.nome}
-            </Text>
+      <ScrollView style={styles.scrollView}>
+        {/* Info Card */}
+        <View style={styles.infoCard}>
+          <View style={styles.infoHeader}>
+            <AlertCircle size={22} color="#1E40AF" />
+            <Text style={styles.infoTitle}>Editando: {variation?.nome}</Text>
           </View>
-          <Text className="text-blue-700">
+          <Text style={styles.infoText}>
             Você está editando um tipo de variação existente. Altere o nome ou
             as opções de variação conforme necessário.
           </Text>
         </View>
 
-        <VariationTypeForm
-          ref={formRef}
-          initialData={variation}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting || isUpdating}
-        />
+        {/* Form Card */}
+        <View style={styles.formCard}>
+          <View style={styles.formHeader}>
+            <Tag size={20} color={THEME_COLORS.primary} />
+            <Text style={styles.formTitle}>Dados da Variação</Text>
+          </View>
 
-        <View className="h-20" />
+          <VariationTypeForm
+            ref={formRef}
+            initialData={variation}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting || isUpdating}
+          />
+        </View>
+
+        {/* Bottom spacing */}
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-        <FormActions
-          primaryAction={{
-            label:
-              isSubmitting || isUpdating ? "Salvando..." : "Salvar Alterações",
-            onPress: () => formRef.current?.handleSubmit(),
-            isLoading: isSubmitting || isUpdating,
-          }}
-          secondaryAction={{
-            label: "Cancelar",
-            onPress: () => router.back(),
-            variant: "outline",
-            isDisabled: isSubmitting || isUpdating,
-          }}
-        />
+      {/* Action Buttons */}
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => router.back()}
+          disabled={isSubmitting || isUpdating}
+        >
+          <X size={20} color="#4B5563" />
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            (isSubmitting || isUpdating) && styles.disabledButton,
+          ]}
+          onPress={() => formRef.current?.handleSubmit()}
+          disabled={isSubmitting || isUpdating}
+        >
+          <Save size={20} color="#FFFFFF" />
+          <Text style={styles.saveButtonText}>
+            {isSubmitting || isUpdating ? "Salvando..." : "Salvar Alterações"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  infoCard: {
+    margin: 16,
+    backgroundColor: "#EFF6FF",
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#1E40AF",
+  },
+  infoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1E40AF",
+    marginLeft: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: "#1E3A8A",
+    lineHeight: 20,
+  },
+  formCard: {
+    margin: 16,
+    marginTop: 0,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  formHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  formTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
+    marginLeft: 8,
+  },
+  actionContainer: {
+    flexDirection: "row",
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  cancelButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+    paddingVertical: 12,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    marginLeft: 8,
+    color: "#4B5563",
+    fontWeight: "600",
+  },
+  saveButton: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    backgroundColor: THEME_COLORS.primary,
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    marginLeft: 8,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+});

@@ -1,20 +1,28 @@
 // Path: src/features/products/screens/variation-types-screen.tsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, useToast } from "@gluestack-ui/themed";
 import { useVariationTypes } from "../hooks/use-variation-types";
-import { ListItem } from "@/components/custom/list-item";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
-import { Tag, Plus, AlertTriangle } from "lucide-react-native";
+import {
+  Tag,
+  Plus,
+  AlertTriangle,
+  Edit,
+  Trash,
+  RefreshCw,
+} from "lucide-react-native";
 import {
   showErrorToast,
   showSuccessToast,
@@ -28,19 +36,18 @@ export function VariationTypesScreen() {
   const { variations, isLoading, deleteVariation, isDeleting, refetch } =
     useVariationTypes();
   const [refreshing, setRefreshing] = useState(false);
-
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [variationToDelete, setVariationToDelete] = useState<string | null>(
     null
   );
 
-  // Efeito para forçar refetch quando a tela é montada
+  // Force refetch when the screen is mounted
   useEffect(() => {
     refetch();
   }, [refetch]);
 
-  // Função de pull-to-refresh para atualizações manuais
-  const onRefresh = React.useCallback(async () => {
+  // Pull-to-refresh function for manual updates
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
@@ -74,85 +81,331 @@ export function VariationTypesScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView style={styles.container}>
       <AdminScreenHeader title="Tipos de Variação" backTo="/admin/products" />
 
-      <View className="p-4 flex-1">
-        <Card className="p-4 mb-4">
-          <Text className="text-lg font-semibold text-gray-800">
-            Tipos de Variação
+      {/* Top Action Bar */}
+      <View style={styles.actionBar}>
+        <View style={styles.statsContainer}>
+          <Text style={styles.statsText}>
+            {variations.length} tipo{variations.length !== 1 ? "s" : ""} de
+            variação
           </Text>
-          <Text className="mt-1 text-gray-600">
-            Crie e gerencie tipos de variação como tamanho, cor, material, etc.
-            Estes poderão ser usados nos seus produtos.
-          </Text>
-        </Card>
+        </View>
 
-        {isLoading ? (
-          <View className="p-4 items-center">
-            <ActivityIndicator size="large" color={THEME_COLORS.primary} />
-            <Text className="mt-2 text-gray-500">Carregando variações...</Text>
+        <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+          <RefreshCw size={16} color="#4B5563" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Info Card */}
+      <Card style={styles.infoCard}>
+        <View style={styles.infoCardContent}>
+          <Tag size={22} color={THEME_COLORS.primary} style={styles.infoIcon} />
+          <View style={styles.infoTextContainer}>
+            <Text style={styles.infoTitle}>Tipos de Variação</Text>
+            <Text style={styles.infoDescription}>
+              Crie e gerencie tipos de variação como tamanho, cor, material,
+              etc. Estes poderão ser usados nos seus produtos.
+            </Text>
           </View>
-        ) : variations.length === 0 ? (
-          <Card className="p-6 items-center justify-center">
-            <Tag size={40} color="#9CA3AF" />
-            <Text className="text-lg font-medium text-gray-500 mt-2">
-              Nenhum tipo de variação cadastrado
-            </Text>
-            <Text className="text-center text-gray-400 mt-1">
-              Adicione tipos de variação para seus produtos
-            </Text>
-          </Card>
-        ) : (
-          <ScrollView
-            className="mb-20"
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={[THEME_COLORS.primary]}
-              />
-            }
-          >
-            {variations.map((variation) => (
-              <View key={variation.id} className="mb-3">
-                <ListItem
-                  title={variation.nome || "Sem nome"}
-                  subtitle={`${variation.variacao?.length || 0} opções`}
-                  description={
-                    Array.isArray(variation.variacao) &&
-                    variation.variacao.length > 0
-                      ? variation.variacao.join(", ")
-                      : "Sem opções"
-                  }
-                  imageIcon={Tag}
-                  onEdit={() => handleEditVariation(variation.id)}
-                  onDelete={() => handleDeleteVariation(variation.id)}
-                />
-              </View>
-            ))}
-          </ScrollView>
-        )}
+        </View>
+      </Card>
 
-        {/* Botão de adicionar variação */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+          <Text style={styles.loadingText}>Carregando variações...</Text>
+        </View>
+      ) : variations.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Tag size={40} color="#9CA3AF" />
+          <Text style={styles.emptyTitle}>
+            Nenhum tipo de variação cadastrado
+          </Text>
+          <Text style={styles.emptyDescription}>
+            Adicione tipos de variação para seus produtos
+          </Text>
+          <TouchableOpacity
+            style={styles.addEmptyButton}
+            onPress={handleAddVariation}
+          >
+            <Plus size={16} color="#FFFFFF" />
+            <Text style={styles.addEmptyButtonText}>Nova Variação</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.listContainer}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[THEME_COLORS.primary]}
+            />
+          }
+        >
+          {variations.map((variation) => (
+            <View key={variation.id} style={styles.variationCard}>
+              <View style={styles.variationHeader}>
+                <View style={styles.variationIconContainer}>
+                  <Tag size={18} color={THEME_COLORS.primary} />
+                </View>
+                <View style={styles.variationTitleContainer}>
+                  <Text style={styles.variationTitle}>
+                    {variation.nome || "Sem nome"}
+                  </Text>
+                  <Text style={styles.variationSubtitle}>
+                    {variation.variacao?.length || 0} opções
+                  </Text>
+                </View>
+              </View>
+
+              {Array.isArray(variation.variacao) &&
+                variation.variacao.length > 0 && (
+                  <View style={styles.tagsContainer}>
+                    {variation.variacao.map((value, index) => (
+                      <View key={`${value}-${index}`} style={styles.tagItem}>
+                        <Text style={styles.tagText}>{value}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+              <View style={styles.variationActions}>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.editButton]}
+                  onPress={() => handleEditVariation(variation.id)}
+                >
+                  <Edit size={16} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Editar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.deleteButton]}
+                  onPress={() => handleDeleteVariation(variation.id)}
+                >
+                  <Trash size={16} color="#FFFFFF" />
+                  <Text style={styles.actionButtonText}>Excluir</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+
+      {/* Add button - only show if we have variations already */}
+      {variations.length > 0 && (
         <PrimaryActionButton
           onPress={handleAddVariation}
           label="Nova Variação"
           icon={<Plus size={20} color="white" />}
         />
+      )}
 
-        {/* Diálogo de confirmação */}
-        <ConfirmationDialog
-          isOpen={isDeleteDialogOpen}
-          onClose={() => setIsDeleteDialogOpen(false)}
-          onConfirm={confirmDeleteVariation}
-          title="Excluir Tipo de Variação"
-          message="Tem certeza que deseja excluir este tipo de variação? Esta ação não pode ser desfeita."
-          confirmLabel="Excluir"
-          variant="danger"
-          isLoading={isDeleting}
-        />
-      </View>
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteVariation}
+        title="Excluir Tipo de Variação"
+        message="Tem certeza que deseja excluir este tipo de variação? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  actionBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
+  },
+  statsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statsText: {
+    fontSize: 14,
+    color: "#4B5563",
+    fontWeight: "500",
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+  },
+  infoCard: {
+    margin: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  infoCardContent: {
+    flexDirection: "row",
+    padding: 16,
+  },
+  infoIcon: {
+    marginRight: 12,
+  },
+  infoTextContainer: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1F2937",
+    marginBottom: 4,
+  },
+  infoDescription: {
+    fontSize: 14,
+    color: "#6B7280",
+    lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#6B7280",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#4B5563",
+    marginTop: 16,
+  },
+  emptyDescription: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  addEmptyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: THEME_COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 24,
+  },
+  addEmptyButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  listContainer: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  variationCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  variationHeader: {
+    flexDirection: "row",
+    padding: 16,
+    alignItems: "center",
+  },
+  variationIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: "#F3F8FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  variationTitleContainer: {
+    flex: 1,
+  },
+  variationTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  variationSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 2,
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 8,
+  },
+  tagItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 100,
+  },
+  tagText: {
+    fontSize: 12,
+    color: "#4B5563",
+  },
+  variationActions: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  editButton: {
+    backgroundColor: THEME_COLORS.primary,
+  },
+  deleteButton: {
+    backgroundColor: "#EF4444",
+  },
+  actionButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "500",
+    marginLeft: 8,
+  },
+});
