@@ -2,100 +2,29 @@
 import React from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Image,
-  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useNavigation } from "expo-router";
-import {
-  Package,
-  Star,
-  FileText,
-  Truck,
-  User,
-  Menu,
-  Grid2X2,
-} from "lucide-react-native";
+import { Menu } from "lucide-react-native";
 import { DrawerActions } from "@react-navigation/native";
 
 import { THEME_COLORS } from "@/src/styles/colors";
-import { DashboardMenuCard } from "../components/dashboard-menu-card";
-import { DashboardSupportCard } from "../components/dashboard-support-card";
 import { useCompanyDetails } from "../hooks/use-company-details";
-import { SimpleDashboardCompanyCard } from "../components/dashboard-company-card";
-import { DashboardCompanyLinksCard } from "../components/dashboard-company-links-card";
-import { DashboardReportsButton } from "../components/dashboard-reports-button";
 import { Box } from "@/components/ui/box";
-
-const { width } = Dimensions.get("window");
-const cardWidth = (width - 48) / 2; // 2 cards por linha com margem total de 48
+import { ModernDashboard } from "../components/modern-dashboard";
 
 export default function DashboardScreen() {
-  const { company, isLoading, error } = useCompanyDetails();
+  const { company, isLoading } = useCompanyDetails();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  // Menu items configuration
-  const menuItems = [
-    {
-      id: "categories",
-      title: "Categorias",
-      icon: Grid2X2,
-      color: "#4CAF50",
-      path: "/admin/categories",
-    },
-    {
-      id: "products",
-      title: "Produtos",
-      icon: Package,
-      color: "#2196F3",
-      path: "/admin/products",
-    },
-    {
-      id: "vitrine",
-      title: "Destaques",
-      icon: Star,
-      color: "#FFC107",
-      path: "/admin/vitrine",
-    },
-    {
-      id: "leaflets",
-      title: "Encartes",
-      icon: FileText,
-      color: "#9C27B0",
-      path: "/admin/leaflets",
-    },
-    {
-      id: "delivery",
-      title: "Delivery",
-      icon: Truck,
-      color: "#F44336",
-      path: "/admin/delivery-config",
-    },
-    {
-      id: "profile",
-      title: "Perfil",
-      icon: User,
-      color: "#009688",
-      path: "/admin/profile",
-    },
-  ];
-
-  const subcategoryNames = React.useMemo(() => {
-    if (!company?.subcategorias?.length) return [];
-
-    return company.subcategorias
-      .filter((item) => item.subcategorias_empresas_id?.nome)
-      .map((item) => item.subcategorias_empresas_id.nome);
-  }, [company?.subcategorias]);
-
   return (
     <View style={styles.container}>
-      {/* Header personalizado com cor fixa */}
+      {/* Header with fixed color */}
       <View
         style={[
           styles.header,
@@ -124,48 +53,12 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <Box className="">
-          {/* Empresa Card - Versão simplificada sem os botões */}
-          <SimpleDashboardCompanyCard
-            name={company?.nome || "Minha Empresa"}
-            logo={company?.logo}
-            categoryName={company?.categoria?.nome}
-            subcategoryNames={subcategoryNames}
-            primaryColor={company?.cor_primaria}
+        <Box className="flex-1">
+          <ModernDashboard
+            company={company}
+            isLoading={isLoading}
+            onMenuItemPress={(path) => router.push(path as any)}
           />
-
-          <Box className="px-4 pt-4">
-            {/* Novo card de links da empresa */}
-            <DashboardCompanyLinksCard
-              slug={company?.slug}
-              primaryColor={company?.cor_primaria || THEME_COLORS.primary}
-            />
-
-            {/* Botão de Relatórios */}
-            <DashboardReportsButton
-              primaryColor={company?.cor_primaria || THEME_COLORS.primary}
-            />
-
-            {/* Menu Grid */}
-            <View style={styles.menuGrid}>
-              {menuItems.map((item) => (
-                <View key={item.id} style={styles.cardContainer}>
-                  <DashboardMenuCard
-                    title={item.title}
-                    icon={item.icon}
-                    color={item.color}
-                    onPress={() => router.push(item.path as any)}
-                  />
-                </View>
-              ))}
-            </View>
-
-            {/* Card de Suporte - Versão compacta */}
-            <DashboardSupportCard
-              primaryColor={THEME_COLORS.primary}
-              onPress={() => router.push("/(drawer)/support")}
-            />
-          </Box>
         </Box>
       </ScrollView>
     </View>
@@ -175,7 +68,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#ffffff", // Changed to white for a cleaner look
   },
   header: {
     backgroundColor: "#F4511E",
@@ -205,16 +98,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   scrollContent: {
-    paddingBottom: 24,
-  },
-  menuGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  cardContainer: {
-    width: cardWidth,
-    marginBottom: 16,
+    flexGrow: 1,
   },
 });
