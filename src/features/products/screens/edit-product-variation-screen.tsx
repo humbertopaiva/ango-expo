@@ -1,11 +1,18 @@
 // Path: src/features/products/screens/edit-product-variation-screen.tsx
+
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/services/api";
-import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,8 +25,15 @@ import {
   TextareaInput,
   useToast,
 } from "@gluestack-ui/themed";
-import { FormActions } from "@/components/custom/form-actions";
-import { Layers, AlertCircle } from "lucide-react-native";
+import {
+  Layers,
+  AlertCircle,
+  DollarSign,
+  Image as ImageIcon,
+  Save,
+  X,
+  Eye,
+} from "lucide-react-native";
 import { CurrencyInput } from "@/components/common/currency-input";
 import { ImageUpload } from "@/components/common/image-upload";
 import { StatusToggle } from "@/components/common/status-toggle";
@@ -28,11 +42,11 @@ import {
   showErrorToast,
   showSuccessToast,
 } from "@/components/common/toast-helper";
-import { SectionCard } from "@/components/custom/section-card";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { VariationVisibilityOptions } from "../components/variation-visibility-options";
+import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 
-// Schema para validação do formulário
+// Schema for form validation
 const productVariationFormSchema = z.object({
   variacao: z.string().min(1, "A variação é obrigatória"),
   valor_variacao: z.string().min(1, "O valor da variação é obrigatório"),
@@ -42,7 +56,7 @@ const productVariationFormSchema = z.object({
   imagem: z.string().nullable().optional(),
   disponivel: z.boolean().default(true),
 
-  // Novos campos
+  // New fields
   exibir_produto: z.boolean().default(true),
   exibir_preco: z.boolean().default(true),
   quantidade_maxima_carrinho: z.preprocess(
@@ -72,7 +86,7 @@ export function EditProductVariationScreen() {
   } = useProductVariationItems(productId as string);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Buscar detalhes do produto
+  // Fetch product details
   const { data: product, isLoading: isLoadingProduct } = useQuery({
     queryKey: ["product-for-variation", productId],
     queryFn: async () => {
@@ -84,12 +98,12 @@ export function EditProductVariationScreen() {
     enabled: !!productId,
   });
 
-  // Encontrar a variação atual
+  // Find current variation
   const currentVariation = variationItems.find(
     (item) => item.id === variationId
   );
 
-  // Formulário
+  // Form
   const form = useForm<ProductVariationFormData>({
     resolver: zodResolver(productVariationFormSchema),
     defaultValues: {
@@ -101,7 +115,7 @@ export function EditProductVariationScreen() {
     },
   });
 
-  // Atualizar os valores do formulário quando a variação for carregada
+  // Update form values when variation is loaded
   useEffect(() => {
     if (currentVariation) {
       form.reset({
@@ -111,7 +125,7 @@ export function EditProductVariationScreen() {
         imagem: currentVariation.imagem || "",
         disponivel: currentVariation.disponivel !== false,
 
-        // Novos campos - use valores padrão caso não estejam definidos
+        // New fields - use default values if not defined
         quantidade_maxima_carrinho:
           currentVariation.quantidade_maxima_carrinho ?? null,
         exibir_produto: currentVariation.exibir_produto !== false, // default true
@@ -145,7 +159,7 @@ export function EditProductVariationScreen() {
 
       showSuccessToast(toast, "Variação de produto atualizada com sucesso!");
 
-      // Redirecionar para a página de detalhes do produto após um breve delay
+      // Redirect to product details after a brief delay
       setTimeout(() => {
         router.push(`/admin/products/view/${productId}`);
       }, 500);
@@ -159,14 +173,14 @@ export function EditProductVariationScreen() {
 
   if (isLoadingProduct || isLoadingVariations || !currentVariation) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView style={styles.container}>
         <AdminScreenHeader
           title="Editar Variação"
           backTo={`/admin/products/view/${productId}`}
         />
-        <View className="flex-1 justify-center items-center">
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={THEME_COLORS.primary} />
-          <Text className="mt-4 text-gray-500">
+          <Text style={styles.loadingText}>
             Carregando dados da variação...
           </Text>
         </View>
@@ -175,66 +189,80 @@ export function EditProductVariationScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 p-4">
-        <View className="bg-blue-50 p-4 rounded-lg mb-6">
-          <View className="flex-row items-center mb-2">
+    <SafeAreaView style={styles.container}>
+      <AdminScreenHeader
+        title="Editar Variação"
+        backTo={`/admin/products/view/${productId}`}
+      />
+
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.infoCard}>
+          <View style={styles.infoIcon}>
             <Layers size={20} color="#1E40AF" />
-            <Text className="ml-2 text-blue-800 font-medium">
+          </View>
+          <View style={styles.infoContent}>
+            <Text style={styles.infoTitle}>
               Editando variação: {currentVariation.variacao.nome} -{" "}
               {currentVariation.valor_variacao}
             </Text>
+            <Text style={styles.infoText}>
+              Edite as informações desta variação do produto {product?.nome}.
+            </Text>
           </View>
-          <Text className="text-blue-700">
-            Edite as informações desta variação do produto {product?.nome}.
-          </Text>
         </View>
 
-        <SectionCard title="Informações Básicas">
-          <View className="gap-6 py-4">
-            {/* Descrição */}
+        {/* Basic Information */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Layers size={18} color={THEME_COLORS.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Informações Básicas</Text>
+          </View>
+
+          <View style={styles.formDivider} />
+
+          <View style={styles.sectionContent}>
+            {/* Description */}
             <FormControl isInvalid={!!form.formState.errors.descricao}>
               <FormControlLabel>
-                <Text className="text-sm font-medium text-gray-700">
-                  Descrição
-                </Text>
+                <Text style={styles.labelText}>Descrição</Text>
               </FormControlLabel>
               <Controller
                 control={form.control}
                 name="descricao"
                 render={({ field: { onChange, value } }) => (
-                  <Textarea h={150}>
+                  <Textarea style={styles.textAreaContainer} h={150}>
                     <TextareaInput
                       placeholder="Digite a descrição da variação do produto"
                       onChangeText={onChange}
                       value={value || ""}
                       multiline={true}
                       textAlignVertical="top"
-                      style={{
-                        height: 150,
-                        minHeight: 150,
-                      }}
-                      className="bg-white border border-gray-200 rounded-md p-4 text-base"
+                      style={styles.textArea}
                     />
                   </Textarea>
                 )}
               />
               {form.formState.errors.descricao && (
                 <FormControlError>
-                  <FormControlErrorText>
+                  <FormControlErrorText style={styles.errorText}>
                     {form.formState.errors.descricao.message}
                   </FormControlErrorText>
                 </FormControlError>
               )}
             </FormControl>
 
-            {/* Imagem */}
+            <View style={styles.inputSpacing} />
+
+            {/* Image */}
             <FormControl isInvalid={!!form.formState.errors.imagem}>
-              <FormControlLabel>
-                <Text className="text-sm font-medium text-gray-700">
-                  Imagem da Variação
-                </Text>
-              </FormControlLabel>
+              <View style={styles.sectionSubheader}>
+                <ImageIcon size={16} color={THEME_COLORS.primary} />
+                <FormControlLabel>
+                  <Text style={styles.labelText}>Imagem da Variação</Text>
+                </FormControlLabel>
+              </View>
               <Controller
                 control={form.control}
                 name="imagem"
@@ -248,34 +276,32 @@ export function EditProductVariationScreen() {
               />
               {form.formState.errors.imagem && (
                 <FormControlError>
-                  <FormControlErrorText>
+                  <FormControlErrorText style={styles.errorText}>
                     {form.formState.errors.imagem.message}
                   </FormControlErrorText>
                 </FormControlError>
               )}
               {product?.imagem && !form.watch("imagem") && (
-                <View className="mt-2 p-3 bg-yellow-50 rounded-md">
-                  <View className="flex-row">
-                    <AlertCircle
-                      size={16}
-                      color="#B45309"
-                      className="mt-1 mr-2"
-                    />
-                    <Text className="text-yellow-800 text-sm flex-1">
-                      Se nenhuma imagem for fornecida, a imagem do produto
-                      principal será utilizada.
-                    </Text>
-                  </View>
+                <View style={styles.tipContainer}>
+                  <AlertCircle
+                    size={16}
+                    color="#92400E"
+                    style={styles.tipIcon}
+                  />
+                  <Text style={styles.tipText}>
+                    Se nenhuma imagem for fornecida, a imagem do produto
+                    principal será utilizada.
+                  </Text>
                 </View>
               )}
             </FormControl>
 
+            <View style={styles.inputSpacing} />
+
             {/* Status */}
             <FormControl>
               <FormControlLabel>
-                <Text className="text-sm font-medium text-gray-700">
-                  Disponibilidade
-                </Text>
+                <Text style={styles.labelText}>Disponibilidade</Text>
               </FormControlLabel>
               <Controller
                 control={form.control}
@@ -292,18 +318,40 @@ export function EditProductVariationScreen() {
               />
             </FormControl>
           </View>
-        </SectionCard>
+        </View>
 
-        <SectionCard title="Opções de Visibilidade">
-          <VariationVisibilityOptions
-            control={form.control}
-            isSubmitting={isSubmitting || isUpdating}
-          />
-        </SectionCard>
+        {/* Visibility Options */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <Eye size={18} color={THEME_COLORS.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Opções de Visibilidade</Text>
+          </View>
 
-        <SectionCard title="Preços">
-          <View className="gap-6 py-4">
-            {/* Preço */}
+          <View style={styles.formDivider} />
+
+          <View style={styles.sectionContent}>
+            <VariationVisibilityOptions
+              control={form.control}
+              isSubmitting={isSubmitting || isUpdating}
+            />
+          </View>
+        </View>
+
+        {/* Prices */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconContainer}>
+              <DollarSign size={18} color={THEME_COLORS.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Preços</Text>
+          </View>
+
+          <View style={styles.formDivider} />
+
+          <View style={styles.sectionContent}>
+            {/* Price */}
             <Controller
               control={form.control}
               name="preco"
@@ -319,7 +367,9 @@ export function EditProductVariationScreen() {
               )}
             />
 
-            {/* Preço Promocional */}
+            <View style={styles.inputSpacing} />
+
+            {/* Promotional Price */}
             <Controller
               control={form.control}
               name="preco_promocional"
@@ -337,26 +387,216 @@ export function EditProductVariationScreen() {
               )}
             />
           </View>
-        </SectionCard>
+        </View>
+
+        {/* Bottom spacing */}
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Botões de Ação */}
-      <View className="p-4 bg-white border-t border-gray-200">
-        <FormActions
-          primaryAction={{
-            label:
-              isSubmitting || isUpdating ? "Salvando..." : "Salvar Alterações",
-            onPress: form.handleSubmit(onSubmit),
-            isLoading: isSubmitting || isUpdating,
-          }}
-          secondaryAction={{
-            label: "Cancelar",
-            onPress: () => router.back(),
-            variant: "outline",
-            isDisabled: isSubmitting || isUpdating,
-          }}
-        />
+      {/* Action Buttons */}
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => router.back()}
+          disabled={isSubmitting || isUpdating}
+        >
+          <X size={20} color="#4B5563" />
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            (isSubmitting || isUpdating) && styles.disabledButton,
+          ]}
+          onPress={form.handleSubmit(onSubmit)}
+          disabled={isSubmitting || isUpdating}
+        >
+          <Save size={20} color="#FFFFFF" />
+          <Text style={styles.saveButtonText}>
+            {isSubmitting || isUpdating ? "Salvando..." : "Salvar Alterações"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  infoCard: {
+    flexDirection: "row",
+    margin: 16,
+    marginBottom: 8,
+    backgroundColor: "#EFF6FF",
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#1E40AF",
+  },
+  infoIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1E40AF",
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 14,
+    color: "#1E3A8A",
+    lineHeight: 20,
+  },
+  sectionCard: {
+    margin: 16,
+    marginBottom: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    overflow: "hidden",
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  },
+  sectionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  formDivider: {
+    height: 1,
+    backgroundColor: "#F3F4F6",
+    marginHorizontal: 16,
+  },
+  sectionContent: {
+    padding: 16,
+  },
+  sectionSubheader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  labelText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151",
+    marginLeft: 8,
+  },
+  textAreaContainer: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+  },
+  textArea: {
+    height: 150,
+    minHeight: 150,
+    padding: 12,
+    fontSize: 14,
+    color: "#111827",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#EF4444",
+  },
+  inputSpacing: {
+    height: 20,
+  },
+  tipContainer: {
+    flexDirection: "row",
+    backgroundColor: "#FFFBEB",
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+  },
+  tipIcon: {
+    marginRight: 8,
+    marginTop: 2,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#92400E",
+    lineHeight: 18,
+  },
+  actionContainer: {
+    flexDirection: "row",
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  cancelButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+    paddingVertical: 12,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+  },
+  cancelButtonText: {
+    marginLeft: 8,
+    color: "#4B5563",
+    fontWeight: "600",
+  },
+  saveButton: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    backgroundColor: THEME_COLORS.primary,
+    borderRadius: 8,
+  },
+  saveButtonText: {
+    marginLeft: 8,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+});
