@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import { ProductsProvider } from "@/src/features/products/contexts/products-provider";
 import { THEME_COLORS } from "@/src/styles/colors";
 
-export default function ProductsLayout() {
+export default function VariationsLayout() {
   return (
     <ProductsProvider>
       <Stack
@@ -18,51 +18,29 @@ export default function ProductsLayout() {
           headerShadowVisible: true,
         }}
       >
-        {/* Dashboard principal de produtos */}
+        {/* Editar Variação */}
         <Stack.Screen
-          name="index"
+          name="edit/[id]"
           options={{
-            title: "Produtos",
-            headerShown: false,
+            title: "Editar Variação",
+            headerShown: true,
           }}
         />
 
         {/* Gerenciamento de produtos */}
         <Stack.Screen
-          name="list"
-          options={{
-            title: "Lista de Produtos",
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
           name="new"
           options={{
-            title: "Novo Produto",
-            headerShown: true,
-          }}
-        />
-        <Stack.Screen
-          name="[id]"
-          options={{
-            title: "Editar Produto",
+            title: "Criar Variação",
             headerShown: true,
           }}
         />
 
-        {/* Visualização e variações de produtos */}
         <Stack.Screen
-          name="view/[id]"
+          name="types"
           options={{
-            title: "Detalhes do Produto",
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="[id]/add-variation"
-          options={{
-            title: "Adicionar Variação",
-            headerShown: false,
+            title: "Listar Variações",
+            headerShown: true,
           }}
         />
       </Stack>

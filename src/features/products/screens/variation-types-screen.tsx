@@ -54,11 +54,11 @@ export function VariationTypesScreen() {
   }, [refetch]);
 
   const handleAddVariation = () => {
-    router.push("/admin/products/variations/new");
+    router.push("/admin/variations/new");
   };
 
   const handleEditVariation = (id: string) => {
-    router.push(`/admin/products/variations/edit/${id}`);
+    router.push(`/admin/variations/edit/${id}`);
   };
 
   const handleDeleteVariation = (id: string) => {
@@ -82,8 +82,6 @@ export function VariationTypesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <AdminScreenHeader title="Tipos de Variação" backTo="/admin/products" />
-
       {/* Top Action Bar */}
       <View style={styles.actionBar}>
         <View style={styles.statsContainer}>
@@ -173,20 +171,31 @@ export function VariationTypesScreen() {
                   </View>
                 )}
 
+              {/* Aqui estão os botões de ação redesenhados para serem mais discretos */}
               <View style={styles.variationActions}>
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.editButton]}
+                  style={styles.actionButton}
                   onPress={() => handleEditVariation(variation.id)}
                 >
-                  <Edit size={16} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Editar</Text>
+                  <Edit size={16} color={THEME_COLORS.secondary} />
+                  <Text
+                    style={styles.actionButtonText}
+                    className="text-secondary-500"
+                  >
+                    Editar
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.actionButton, styles.deleteButton]}
+                  style={styles.actionButton}
                   onPress={() => handleDeleteVariation(variation.id)}
                 >
-                  <Trash size={16} color="#FFFFFF" />
-                  <Text style={styles.actionButtonText}>Excluir</Text>
+                  <Trash size={16} color="#ef4444" />
+                  <Text
+                    style={styles.actionButtonText}
+                    className="text-red-500"
+                  >
+                    Excluir
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -385,10 +394,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#4B5563",
   },
+  editButton: {
+    backgroundColor: THEME_COLORS.primary,
+  },
+  deleteButton: {
+    backgroundColor: "#EF4444",
+  },
   variationActions: {
     flexDirection: "row",
     borderTopWidth: 1,
     borderTopColor: "#F3F4F6",
+    backgroundColor: "#F9FAFB", // Fundo mais claro e sutil
   },
   actionButton: {
     flex: 1,
@@ -396,16 +412,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 12,
-  },
-  editButton: {
-    backgroundColor: THEME_COLORS.primary,
-  },
-  deleteButton: {
-    backgroundColor: "#EF4444",
+    backgroundColor: "transparent", // Sem cor de fundo
   },
   actionButtonText: {
-    color: "#FFFFFF",
     fontWeight: "500",
     marginLeft: 8,
+    fontSize: 13,
   },
 });

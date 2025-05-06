@@ -36,6 +36,9 @@ export default function AdminLayout() {
         {/* Produtos */}
         <Stack.Screen name="products" />
 
+        {/* Produtos */}
+        <Stack.Screen name="variations" />
+
         {/* Delivery */}
         <Stack.Screen name="delivery-config/index" />
 

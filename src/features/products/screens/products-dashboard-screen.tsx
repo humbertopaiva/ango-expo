@@ -41,7 +41,7 @@ export function ProductsDashboardScreen() {
       icon: Tag,
       iconColor: "#9C27B0",
       bgColor: "#F3E8FF",
-      path: "/admin/products/variations/types",
+      path: "/admin/variations/types",
     },
     {
       id: "addons",
