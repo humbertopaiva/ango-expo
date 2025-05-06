@@ -67,7 +67,7 @@ export function VariationEditScreen() {
 
       // Navigate back after brief delay
       setTimeout(() => {
-        router.push("/admin/products/variations/types");
+        router.push("/admin/variations");
       }, 500);
     } catch (error) {
       console.error("Erro ao atualizar tipo de variação:", error);
@@ -81,10 +81,6 @@ export function VariationEditScreen() {
   if (isLoading || (!variation && !isLoading)) {
     return (
       <SafeAreaView style={styles.container}>
-        <AdminScreenHeader
-          title="Editar Variação"
-          backTo="/admin/products/variations/types"
-        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={THEME_COLORS.primary} />
           <Text style={styles.loadingText}>
@@ -97,11 +93,6 @@ export function VariationEditScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <AdminScreenHeader
-        title="Editar Variação"
-        backTo="/admin/products/variations/types"
-      />
-
       <ScrollView style={styles.scrollView}>
         {/* Info Card */}
         <View style={styles.infoCard}>

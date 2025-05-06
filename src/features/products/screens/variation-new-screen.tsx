@@ -61,7 +61,7 @@ export function VariationNewScreen() {
 
       // Navigate back after brief delay
       setTimeout(() => {
-        router.push("/admin/products/variations/types");
+        router.push("/admin/variations");
       }, 500);
     } catch (error) {
       console.error("Erro ao criar tipo de variação:", error);
@@ -73,11 +73,6 @@ export function VariationNewScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <AdminScreenHeader
-        title="Nova Variação"
-        backTo="/admin/products/variations/types"
-      />
-
       <ScrollView style={styles.scrollView}>
         {/* Help Card */}
         <View style={styles.helpCard}>
