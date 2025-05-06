@@ -1,8 +1,13 @@
 // Path: src/features/products/components/product-card.tsx
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Pressable } from "react-native";
-import { Card } from "@gluestack-ui/themed";
-import { Edit, Trash, Eye, Layers, MoreVertical } from "lucide-react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Pressable,
+  Animated,
+} from "react-native";
+import { Edit, Trash, Eye, Layers, ChevronRight } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { StatusBadge } from "@/components/custom/status-badge";
@@ -27,6 +32,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const [showActions, setShowActions] = useState(false);
   const { hasVariation } = useProducts();
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const formatCurrency = (value: string | null | undefined) => {
     if (!value) return "";
@@ -62,11 +68,43 @@ export function ProductCard({
     return "Variação configurada";
   };
 
+  // Animation on press
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      friction: 5,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
-    <Card className="bg-white overflow-hidden">
+    <Animated.View
+      style={{
+        transform: [{ scale: scaleAnim }],
+        backgroundColor: "white",
+        borderRadius: 16,
+        overflow: "hidden",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+      }}
+    >
       <Pressable
         onPress={onView}
-        className="flex-1"
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         android_ripple={{ color: "rgba(0, 0, 0, 0.05)" }}
       >
         <View className="p-4">
@@ -82,7 +120,7 @@ export function ProductCard({
             {/* Informações do produto */}
             <View className="flex-1 justify-center">
               <Text
-                className="font-medium text-sm"
+                className="font-medium text-base text-gray-800"
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -94,7 +132,7 @@ export function ProductCard({
                 <View className="flex-row items-center mt-1">
                   {product.preco_promocional ? (
                     <>
-                      <Text className="font-medium text-xs text-primary-500">
+                      <Text className="font-medium text-base text-primary-500">
                         {formatCurrency(product.preco_promocional)}
                       </Text>
                       <Text className="ml-2 text-xs text-gray-500 line-through">
@@ -102,7 +140,7 @@ export function ProductCard({
                       </Text>
                     </>
                   ) : (
-                    <Text className="font-medium text-sm text-primary-600">
+                    <Text className="font-medium text-base text-primary-600">
                       {formatCurrency(product.preco)}
                     </Text>
                   )}
@@ -112,7 +150,7 @@ export function ProductCard({
               {/* Variação - mostrar qual variação está configurada */}
               {productHasVariation && (
                 <View className="mt-1">
-                  <Text className="text-xs text-blue-700">
+                  <Text className="text-xs text-blue-700 font-medium">
                     Variação: {getVariationName()}
                   </Text>
                 </View>
@@ -137,78 +175,59 @@ export function ProductCard({
               </View>
             </View>
 
-            {/* Menu de ações */}
-            <TouchableOpacity
-              onPress={toggleActions}
-              className="p-2 self-start"
-            >
-              <MoreVertical size={20} color="#374151" />
-            </TouchableOpacity>
+            {/* Indicator icon */}
+            <View className="justify-center">
+              <ChevronRight size={20} color="#9CA3AF" />
+            </View>
           </View>
         </View>
       </Pressable>
 
-      {/* Ações (expandíveis) */}
-      {showActions && (
-        <View className="flex-row border-t border-gray-100 bg-gray-50">
-          {onView && (
-            <TouchableOpacity
-              onPress={() => {
-                onView();
-                setShowActions(false);
-              }}
-              className="flex-1 p-3 flex-row items-center justify-center"
-              style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
-            >
-              <Eye size={16} color="#374151" className="mr-1" />
-              <Text className="text-xs font-medium text-gray-700">Ver</Text>
-            </TouchableOpacity>
-          )}
+      {/* Quick Actions Bar - Always shown at the bottom */}
+      <View className="flex-row border-t border-gray-100 bg-gray-50">
+        {onView && (
+          <TouchableOpacity
+            onPress={onView}
+            className="flex-1 p-3 flex-row items-center justify-center"
+            style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
+          >
+            <Eye size={16} color="#374151" className="mr-1" />
+            <Text className="text-xs font-medium text-gray-700">Ver</Text>
+          </TouchableOpacity>
+        )}
 
-          {onEdit && (
-            <TouchableOpacity
-              onPress={() => {
-                onEdit();
-                setShowActions(false);
-              }}
-              className="flex-1 p-3 flex-row items-center justify-center"
-              style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
-            >
-              <Edit size={16} color="#374151" className="mr-1" />
-              <Text className="text-xs font-medium text-gray-700">Editar</Text>
-            </TouchableOpacity>
-          )}
+        {onEdit && (
+          <TouchableOpacity
+            onPress={onEdit}
+            className="flex-1 p-3 flex-row items-center justify-center"
+            style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
+          >
+            <Edit size={16} color="#374151" className="mr-1" />
+            <Text className="text-xs font-medium text-gray-700">Editar</Text>
+          </TouchableOpacity>
+        )}
 
-          {productHasVariation && onAddVariation && (
-            <TouchableOpacity
-              onPress={() => {
-                onAddVariation();
-                setShowActions(false);
-              }}
-              className="flex-1 p-3 flex-row items-center justify-center"
-              style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
-            >
-              <Layers size={16} color="#1E40AF" className="mr-1" />
-              <Text className="text-xs font-medium text-blue-800">
-                Variação
-              </Text>
-            </TouchableOpacity>
-          )}
+        {productHasVariation && onAddVariation && (
+          <TouchableOpacity
+            onPress={onAddVariation}
+            className="flex-1 p-3 flex-row items-center justify-center"
+            style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
+          >
+            <Layers size={16} color="#1E40AF" className="mr-1" />
+            <Text className="text-xs font-medium text-blue-800">Variação</Text>
+          </TouchableOpacity>
+        )}
 
-          {onDelete && (
-            <TouchableOpacity
-              onPress={() => {
-                onDelete();
-                setShowActions(false);
-              }}
-              className="flex-1 p-3 flex-row items-center justify-center"
-            >
-              <Trash size={16} color="#EF4444" className="mr-1" />
-              <Text className="text-xs font-medium text-red-500">Excluir</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-    </Card>
+        {onDelete && (
+          <TouchableOpacity
+            onPress={onDelete}
+            className="flex-1 p-3 flex-row items-center justify-center"
+          >
+            <Trash size={16} color="#EF4444" className="mr-1" />
+            <Text className="text-xs font-medium text-red-500">Excluir</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </Animated.View>
   );
 }
