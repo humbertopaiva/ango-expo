@@ -1,4 +1,4 @@
-// Path: src/features/delivery/components/enhanced-delivery-card.tsx
+// Path: src/features/delivery/components/delivery-card.tsx
 import React from "react";
 import {
   View,
@@ -144,16 +144,20 @@ export function DeliveryCard({
           {/* Categorias */}
           {profile.empresa?.subcategorias && (
             <View style={styles.categoriesContainer}>
-              {profile.empresa.subcategorias.slice(0, 2).map((sub) => (
-                <View
-                  key={sub.subcategorias_empresas_id.id + `-${index}`}
-                  style={styles.categoryBadge}
-                >
-                  <Text style={styles.categoryName}>
-                    {sub.subcategorias_empresas_id.nome}
-                  </Text>
-                </View>
-              ))}
+              {profile.empresa.subcategorias
+                .slice(0, 2)
+                .map((sub, subIndex) => (
+                  <View
+                    key={`${profile.id}-category-${
+                      sub.subcategorias_empresas_id.id || subIndex
+                    }`}
+                    style={styles.categoryBadge}
+                  >
+                    <Text style={styles.categoryName}>
+                      {sub.subcategorias_empresas_id.nome}
+                    </Text>
+                  </View>
+                ))}
               {profile.empresa.subcategorias.length > 2 && (
                 <Text style={styles.moreCategories}>
                   +{profile.empresa.subcategorias.length - 2}
@@ -197,9 +201,9 @@ export function DeliveryCard({
             style={styles.showcaseScroll}
             contentContainerStyle={{ paddingLeft: 16, paddingRight: 8 }}
           >
-            {showcaseItems.slice(0, 5).map((item) => (
+            {showcaseItems.slice(0, 5).map((item, itemIndex) => (
               <TouchableOpacity
-                key={item.id}
+                key={`${profile.id}-product-${item.id || itemIndex}`}
                 style={styles.productCard}
                 onPress={navigateToCompany}
               >
@@ -273,6 +277,7 @@ export function DeliveryCard({
               <TouchableOpacity
                 style={styles.viewMoreCard}
                 onPress={navigateToCompany}
+                key={`${profile.id}-view-more`}
               >
                 <View style={styles.viewMoreContent}>
                   <View style={styles.viewMoreIconContainer}>
