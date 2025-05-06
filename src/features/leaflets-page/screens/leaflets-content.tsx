@@ -200,26 +200,18 @@ export function LeafletsContent() {
         </View>
 
         {/* Cabeçalho */}
-        <View className="items-center mb-6 pt-6 px-4">
-          <HStack className="bg-primary-100/60 px-4 py-2 rounded-full items-center gap-2 mb-4">
-            <Sparkles size={18} color={THEME_COLORS.primary} />
-            <Text className="text-sm font-medium text-primary-500">
-              Promoções e Ofertas
-            </Text>
-          </HStack>
 
-          <VStack alignItems="center" space="xs">
-            <Text className="text-3xl font-gothic text-secondary-500 text-center mb-1">
-              ENCARTES <Text className="text-primary-500">PROMOCIONAIS</Text>
-            </Text>
-            <Text className="text-gray-600 text-center font-sans">
-              Confira os melhores preços e ofertas das lojas da sua região
-            </Text>
-          </VStack>
-        </View>
+        <VStack alignItems="flex-start" className="px-4 pb-6">
+          <Text className="text-2xl font-semibold tracking-tight text-secondary-500 text-center mb-1">
+            Encartes Promocionais
+          </Text>
+          <Text className="text-gray-600  font-sans">
+            Confira os melhores preços e ofertas das lojas da sua região
+          </Text>
+        </VStack>
 
         {/* Barra de busca */}
-        <View className="px-4 mb-6">
+        <View className="px-4">
           <SearchInput
             value={vm.searchTerm}
             onChangeText={vm.setSearchTerm}
@@ -241,9 +233,9 @@ export function LeafletsContent() {
         {/* Conteúdo principal: encartes por categoria */}
         <View className="mt-6">
           {vm.isLoading ? (
-            <View className="gap-8 px-4">
+            <View className="space-y-8 px-4">
               {[1, 2].map((i) => (
-                <View key={i} className="gap-4">
+                <View key={i} className="space-y-4">
                   <View className="h-8 w-40 bg-gray-200 rounded-lg animate-pulse" />
                   <View className="flex-row gap-4">
                     <View className="h-48 w-40 bg-gray-200 rounded-lg animate-pulse" />
