@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import {
   Card,
@@ -32,6 +33,7 @@ import {
   Box,
   Tag,
   FileText,
+  Search,
 } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { SectionCard } from "@/components/custom/section-card";
@@ -112,190 +114,208 @@ const StepItem = memo(
     };
 
     return (
-      <Card className="mb-4 p-4 bg-white">
-        <View className="flex-row items-center justify-between mb-4">
-          <View className="bg-primary-100 px-3 py-1 rounded-full">
-            <Text className="text-primary-800 font-medium">
-              Passo {step.passo_numero}
-            </Text>
-          </View>
-
-          <View className="flex-row">
-            {!isFirstStep && (
-              <TouchableOpacity
-                onPress={() => onMoveUp(index)}
-                className="p-2 mr-1"
-              >
-                <MoveUp size={20} color="#6B7280" />
-              </TouchableOpacity>
-            )}
-
-            {!isLastStep && (
-              <TouchableOpacity
-                onPress={() => onMoveDown(index)}
-                className="p-2 mr-1"
-              >
-                <MoveDown size={20} color="#6B7280" />
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              onPress={() => onRemoveStep(step.passo_numero)}
-              className="p-2 bg-red-50 rounded-full"
-            >
-              <Trash size={20} color="#EF4444" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Nome do passo */}
-        <View className="mb-4">
-          <View className="flex-row items-center mb-2">
-            <Tag size={16} color="#374151" className="mr-2" />
-            <Text className="text-gray-700 font-medium">Nome do passo:</Text>
-          </View>
-          <TextInput
-            style={styles.textInput}
-            placeholder={`Nome do passo ${step.passo_numero}`}
-            value={name}
-            onChangeText={handleNameChange}
-          />
-        </View>
-
-        {/* Descrição do passo */}
-        <View className="mb-4">
-          <View className="flex-row items-center mb-2">
-            <FileText size={16} color="#374151" className="mr-2" />
-            <Text className="text-gray-700 font-medium">
-              Descrição do passo:
-            </Text>
-          </View>
-          <TextInput
-            style={styles.textAreaInput}
-            placeholder="Descreva este passo de personalização"
-            value={description}
-            onChangeText={handleDescriptionChange}
-            multiline={true}
-            numberOfLines={3}
-          />
-        </View>
-
-        {/* Configuração de quantidade */}
-        <View className="mb-4">
-          <Text className="text-gray-700 mb-2">
-            Quantidade de itens a selecionar:
-          </Text>
-          <View className="flex-row items-center">
-            <TouchableOpacity
-              onPress={() => {
-                if (step.qtd_items_step > 1) {
-                  onUpdateQuantity(step.passo_numero, step.qtd_items_step - 1);
-                }
-              }}
-              className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
-              disabled={step.qtd_items_step <= 1}
-            >
-              <Minus
-                size={20}
-                color={step.qtd_items_step <= 1 ? "#D1D5DB" : "#374151"}
-              />
-            </TouchableOpacity>
-
-            <Text className="mx-4 text-lg font-medium">
-              {step.qtd_items_step}
-            </Text>
-
-            <TouchableOpacity
-              onPress={() =>
-                onUpdateQuantity(step.passo_numero, step.qtd_items_step + 1)
-              }
-              className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
-            >
-              <Plus size={20} color="#374151" />
-            </TouchableOpacity>
-
-            <Text className="ml-4 text-gray-500">
-              Itens que o cliente poderá escolher neste passo
-            </Text>
-          </View>
-        </View>
-
-        {/* Lista de produtos no passo */}
-        <View>
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="font-medium text-gray-800">
-              Produtos deste passo
-            </Text>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => onOpenProductSelector(step.passo_numero)}
-            >
-              <View className="flex-row items-center">
-                <PlusCircle size={16} color={THEME_COLORS.primary} />
-                <ButtonText className="ml-1" color={THEME_COLORS.primary}>
-                  Adicionar produtos
-                </ButtonText>
+      <Card className="mb-4 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+        {/* Cabeçalho do passo */}
+        <View className="p-4 bg-gray-50 border-b border-gray-100">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <View className="bg-primary-100 h-9 w-9 rounded-full items-center justify-center mr-2">
+                <Text className="text-primary-800 font-semibold">
+                  {step.passo_numero}
+                </Text>
               </View>
-            </Button>
+              <Text className="font-medium text-gray-800">
+                {name || `Passo ${step.passo_numero}`}
+              </Text>
+            </View>
+
+            <View className="flex-row">
+              {!isFirstStep && (
+                <TouchableOpacity
+                  onPress={() => onMoveUp(index)}
+                  className="p-2 bg-gray-100 rounded-md mr-1"
+                >
+                  <MoveUp size={18} color="#6B7280" />
+                </TouchableOpacity>
+              )}
+
+              {!isLastStep && (
+                <TouchableOpacity
+                  onPress={() => onMoveDown(index)}
+                  className="p-2 bg-gray-100 rounded-md mr-1"
+                >
+                  <MoveDown size={18} color="#6B7280" />
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                onPress={() => onRemoveStep(step.passo_numero)}
+                className="p-2 bg-red-50 rounded-md"
+              >
+                <Trash size={18} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        <View className="p-4">
+          {/* Nome do passo */}
+          <View className="mb-4">
+            <View className="flex-row items-center mb-2 gap-2">
+              <Tag size={16} color="#374151" className="mr-2" />
+              <Text className="text-gray-700 font-medium">Nome do passo:</Text>
+            </View>
+            <TextInput
+              style={styles.textInput}
+              placeholder={`Nome do passo ${step.passo_numero}`}
+              value={name}
+              onChangeText={handleNameChange}
+            />
           </View>
 
-          {step.produtos.length === 0 ? (
-            <View className="p-4 bg-gray-50 rounded-lg items-center">
-              <Package size={24} color="#9CA3AF" />
-              <Text className="text-gray-500 mt-2">
-                Nenhum produto adicionado a este passo
-              </Text>
-              <Text className="text-gray-500 text-sm mt-1 text-center">
-                Adicione produtos clicando no botão acima
+          {/* Descrição do passo */}
+          <View className="mb-4">
+            <View className="flex-row items-center mb-2 gap-2">
+              <FileText size={16} color="#374151" className="mr-2" />
+              <Text className="text-gray-700 font-medium">
+                Descrição do passo:
               </Text>
             </View>
-          ) : (
-            <View className="gap-2">
-              {step.produtos.map((productItem, productIndex) => {
-                // Encontrar os detalhes do produto pelo ID
-                const productDetails = products.find(
-                  (p) => p.id === productItem.produtos.key
-                );
+            <TextInput
+              style={styles.textAreaInput}
+              placeholder="Descreva este passo de personalização"
+              value={description}
+              onChangeText={handleDescriptionChange}
+              multiline={true}
+              numberOfLines={3}
+            />
+          </View>
 
-                if (!productDetails) return null;
+          {/* Configuração de quantidade */}
+          <View className="mb-4 bg-gray-50 p-3 rounded-lg">
+            <Text className="text-gray-700 font-medium mb-2">
+              Quantidade de itens a selecionar:
+            </Text>
+            <View className="flex-row items-center">
+              <TouchableOpacity
+                onPress={() => {
+                  if (step.qtd_items_step > 1) {
+                    onUpdateQuantity(
+                      step.passo_numero,
+                      step.qtd_items_step - 1
+                    );
+                  }
+                }}
+                className="w-10 h-10 bg-white rounded-full items-center justify-center border border-gray-200"
+                disabled={step.qtd_items_step <= 1}
+              >
+                <Minus
+                  size={20}
+                  color={step.qtd_items_step <= 1 ? "#D1D5DB" : "#374151"}
+                />
+              </TouchableOpacity>
 
-                return (
-                  <View
-                    key={`${step.passo_numero}-${productIndex}`}
-                    className="flex-row items-center p-3 bg-gray-50 rounded-lg"
-                  >
-                    <View className="h-12 w-12 mr-3">
-                      <ImagePreview
-                        uri={productDetails.imagem}
-                        fallbackIcon={Box}
-                        containerClassName="rounded-lg"
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="font-medium">{productDetails.nome}</Text>
-                      {productDetails.preco && (
-                        <Text className="text-xs text-gray-600">
-                          {formatCurrency(parseFloat(productDetails.preco))}
-                        </Text>
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() =>
-                        onRemoveProduct(
-                          step.passo_numero,
-                          productItem.produtos.key
-                        )
-                      }
-                      className="p-2 bg-red-50 rounded-full"
+              <Text className="mx-4 text-lg font-medium">
+                {step.qtd_items_step}
+              </Text>
+
+              <TouchableOpacity
+                onPress={() =>
+                  onUpdateQuantity(step.passo_numero, step.qtd_items_step + 1)
+                }
+                className="w-10 h-10 bg-white rounded-full items-center justify-center border border-gray-200"
+              >
+                <Plus size={20} color="#374151" />
+              </TouchableOpacity>
+
+              <Text className="ml-4 text-gray-500 flex-1">
+                Itens que o cliente poderá escolher neste passo
+              </Text>
+            </View>
+          </View>
+
+          {/* Lista de produtos no passo */}
+          <View>
+            <View className="flex-col justify-between mb-3 gap-2">
+              <Text className="font-medium text-gray-800">
+                Produtos deste passo
+              </Text>
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => onOpenProductSelector(step.passo_numero)}
+              >
+                <View className="flex-row items-center">
+                  <PlusCircle size={16} color={THEME_COLORS.primary} />
+                  <ButtonText className="ml-1" color={THEME_COLORS.primary}>
+                    Adicionar produtos
+                  </ButtonText>
+                </View>
+              </Button>
+            </View>
+
+            {step.produtos.length === 0 ? (
+              <View className="p-6 bg-gray-50 rounded-lg items-center">
+                <Package size={24} color="#9CA3AF" />
+                <Text className="text-gray-500 mt-2 font-medium">
+                  Nenhum produto adicionado
+                </Text>
+                <Text className="text-gray-500 text-sm mt-1 text-center">
+                  Adicione produtos para este passo de personalização
+                </Text>
+              </View>
+            ) : (
+              <View className="gap-2">
+                {step.produtos.map((productItem, productIndex) => {
+                  // Encontrar os detalhes do produto pelo ID
+                  const productDetails = products.find(
+                    (p) => p.id === productItem.produtos.key
+                  );
+
+                  if (!productDetails) return null;
+
+                  return (
+                    <View
+                      key={`${step.passo_numero}-${productIndex}`}
+                      className="flex-row items-center p-3 bg-gray-50 rounded-lg"
                     >
-                      <Trash size={16} color="#EF4444" />
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </View>
-          )}
+                      <View className="h-12 w-12 mr-3">
+                        <ImagePreview
+                          uri={productDetails.imagem}
+                          fallbackIcon={Box}
+                          containerClassName="rounded-lg"
+                        />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="font-medium text-gray-800">
+                          {productDetails.nome}
+                        </Text>
+                        {productDetails.preco && (
+                          <View className="flex-row items-center">
+                            <Tag size={12} color="#6B7280" className="mr-1" />
+                            <Text className="text-sm text-gray-600">
+                              {formatCurrency(parseFloat(productDetails.preco))}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          onRemoveProduct(
+                            step.passo_numero,
+                            productItem.produtos.key
+                          )
+                        }
+                        className="p-2 bg-red-50 rounded-full"
+                      >
+                        <Trash size={16} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
         </View>
       </Card>
     );
@@ -479,20 +499,22 @@ export function StepsEditor({
           <View style={styles.modalHeader}>
             <View className="flex-row items-center justify-between w-full px-4 py-3">
               <Heading size="md">Selecionar Produtos</Heading>
-              <Button
+              <TouchableOpacity
                 onPress={() => {
                   setProductSelectorVisible(false);
                   setSearchTerm("");
                   setCurrentStepIndex(null);
                 }}
+                className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
               >
                 <CloseIcon color={THEME_COLORS.primary} />
-              </Button>
+              </TouchableOpacity>
             </View>
 
             {/* Campo de busca (Fixed) */}
-            <View className="mx-4 mb-3">
-              <Input variant="outline" className="bg-gray-100">
+            <View className="mx-4 mb-3 bg-gray-100 rounded-lg flex-row items-center px-3 py-2">
+              <Search size={20} color="#6B7280" />
+              <Input className="flex-1 ml-2">
                 <InputField
                   placeholder="Buscar produtos..."
                   value={searchTerm}
@@ -500,6 +522,14 @@ export function StepsEditor({
                   className="text-base"
                 />
               </Input>
+              {searchTerm ? (
+                <TouchableOpacity
+                  onPress={() => setSearchTerm("")}
+                  className="p-1"
+                >
+                  <CloseIcon size="sm" color="#6B7280" />
+                </TouchableOpacity>
+              ) : null}
             </View>
           </View>
 
@@ -507,12 +537,27 @@ export function StepsEditor({
           <View style={styles.modalBody}>
             {/* Loading State */}
             {isProductsLoading ? (
-              <View className="p-4 items-center">
-                <Text className="text-gray-500">Carregando produtos...</Text>
+              <View className="p-8 items-center">
+                <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+                <Text className="text-gray-500 mt-4">
+                  Carregando produtos...
+                </Text>
               </View>
             ) : filteredProducts.length === 0 ? (
-              <View className="p-4 items-center">
-                <Text className="text-gray-500">Nenhum produto encontrado</Text>
+              <View className="p-8 items-center">
+                <Box size={40} color="#9CA3AF" />
+                <Text className="text-gray-700 font-medium text-lg mt-4">
+                  Nenhum produto encontrado
+                </Text>
+                {searchTerm ? (
+                  <Text className="text-gray-500 text-center mt-2">
+                    Tente usar termos diferentes na sua busca
+                  </Text>
+                ) : (
+                  <Text className="text-gray-500 text-center mt-2">
+                    Você precisa cadastrar produtos para associá-los aos passos
+                  </Text>
+                )}
               </View>
             ) : (
               <FlatList
@@ -540,7 +585,7 @@ export function StepsEditor({
                       }}
                       className={`p-3 mb-2 mx-4 rounded-lg border ${
                         isSelected
-                          ? "border-primary-500 bg-primary-50"
+                          ? "border-primary-300 bg-primary-50"
                           : "border-gray-200 bg-white"
                       }`}
                     >
@@ -553,20 +598,39 @@ export function StepsEditor({
                           />
                         </View>
                         <View className="flex-1">
-                          <Text className="font-medium text-base">
+                          <Text className="font-medium text-base text-gray-800">
                             {item.nome}
                           </Text>
                           {item.preco && (
-                            <Text className="text-sm text-gray-600">
-                              Preço: {formatCurrency(parseFloat(item.preco))}
+                            <View className="flex-row items-center mt-1">
+                              <Tag
+                                size={14}
+                                color={THEME_COLORS.primary}
+                                className="mr-1"
+                              />
+                              <Text className="text-primary-700 font-medium">
+                                {formatCurrency(parseFloat(item.preco))}
+                              </Text>
+                            </View>
+                          )}
+                          {item.descricao && (
+                            <Text
+                              numberOfLines={1}
+                              className="text-gray-500 text-sm mt-1"
+                            >
+                              {item.descricao}
                             </Text>
                           )}
                         </View>
-                        {isSelected && (
-                          <View className="w-8 h-8 rounded-full bg-primary-500 items-center justify-center">
-                            <Check size={16} color="white" />
-                          </View>
-                        )}
+                        <View className="ml-2">
+                          {isSelected ? (
+                            <View className="w-8 h-8 rounded-full bg-primary-500 items-center justify-center">
+                              <Check size={16} color="white" />
+                            </View>
+                          ) : (
+                            <View className="w-8 h-8 rounded-full border-2 border-gray-200" />
+                          )}
+                        </View>
                       </View>
                     </TouchableOpacity>
                   );
@@ -587,6 +651,7 @@ export function StepsEditor({
                 setCurrentStepIndex(null);
               }}
               width="100%"
+              className="bg-primary-500"
             >
               <ButtonText>
                 Concluído (
@@ -594,7 +659,7 @@ export function StepsEditor({
                   ? steps.find((s) => s.passo_numero === currentStepIndex)
                       ?.produtos.length || 0
                   : 0}{" "}
-                selecionados)
+                produtos selecionados)
               </ButtonText>
             </Button>
           </View>

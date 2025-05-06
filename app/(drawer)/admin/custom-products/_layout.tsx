@@ -1,11 +1,12 @@
 // Path: app/(drawer)/admin/products/_layout.tsx (atualização)
 import { Stack } from "expo-router";
-import { ProductsProvider } from "@/src/features/products/contexts/products-provider";
-import { THEME_COLORS } from "@/src/styles/colors";
 
-export default function ProductsLayout() {
+import { THEME_COLORS } from "@/src/styles/colors";
+import { CustomProductsProvider } from "@/src/features/custom-products/contexts/custom-products-provider";
+
+export default function CustomProductsLayout() {
   return (
-    <ProductsProvider>
+    <CustomProductsProvider>
       <Stack
         screenOptions={{
           headerStyle: {
@@ -22,50 +23,34 @@ export default function ProductsLayout() {
         <Stack.Screen
           name="index"
           options={{
-            title: "Produtos",
+            title: "Produtos Customizados",
             headerShown: true,
           }}
         />
 
         {/* Gerenciamento de produtos */}
         <Stack.Screen
-          name="list"
+          name="[id]"
           options={{
-            title: "Lista de Produtos",
+            title: "Editar Produto Customizado",
             headerShown: true,
           }}
         />
         <Stack.Screen
           name="new"
           options={{
-            title: "Novo Produto",
+            title: "Novo Produto Customizado",
             headerShown: true,
           }}
         />
-        <Stack.Screen
-          name="[id]"
-          options={{
-            title: "Editar Produto",
-            headerShown: true,
-          }}
-        />
-
-        {/* Visualização e variações de produtos */}
         <Stack.Screen
           name="view/[id]"
           options={{
-            title: "Detalhes do Produto",
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="[id]/add-variation"
-          options={{
-            title: "Adicionar Variação",
-            headerShown: false,
+            title: "Produto Customizado",
+            headerShown: true,
           }}
         />
       </Stack>
-    </ProductsProvider>
+    </CustomProductsProvider>
   );
 }
