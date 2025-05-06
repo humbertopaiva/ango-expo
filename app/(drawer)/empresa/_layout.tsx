@@ -81,7 +81,7 @@ export default function CompanyLayout() {
           name="[companySlug]/orders/index"
           options={{
             title: "Meus Pedidos",
-            headerShown: true,
+            headerShown: false,
           }}
         />
         <Stack.Screen
