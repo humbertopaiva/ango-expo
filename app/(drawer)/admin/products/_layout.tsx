@@ -23,7 +23,7 @@ export default function ProductsLayout() {
           name="index"
           options={{
             title: "Produtos",
-            headerShown: false,
+            headerShown: true,
           }}
         />
 
@@ -32,7 +32,7 @@ export default function ProductsLayout() {
           name="list"
           options={{
             title: "Lista de Produtos",
-            headerShown: false,
+            headerShown: true,
           }}
         />
         <Stack.Screen

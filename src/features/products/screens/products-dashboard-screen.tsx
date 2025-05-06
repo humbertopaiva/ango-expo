@@ -41,7 +41,7 @@ export function ProductsDashboardScreen() {
       icon: Tag,
       iconColor: "#9C27B0",
       bgColor: "#F3E8FF",
-      path: "/admin/variations/types",
+      path: "/admin/variations",
     },
     {
       id: "addons",
@@ -90,12 +90,6 @@ export function ProductsDashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <AdminScreenHeader
-        title="Produtos"
-        showBackButton={true}
-        backTo="/admin"
-      />
-
       <ScrollView className="flex-1">
         {/* Quick Actions */}
         <View className="px-4 flex-row justify-between mb-6 py-6">

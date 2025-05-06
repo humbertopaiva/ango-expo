@@ -26,6 +26,7 @@ import {
   RadioIcon,
   RadioLabel,
   CircleIcon,
+  Card,
 } from "@gluestack-ui/themed";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -52,6 +53,9 @@ import { imageUtils } from "@/src/utils/image.utils";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { TouchableOpacity } from "react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { CurrencyInput } from "@/components/common/currency-input";
+import { Textarea } from "@gluestack-ui/themed";
+import { TextareaInput } from "@gluestack-ui/themed";
 
 // Form validation schema
 const customProductFormSchema = z.object({
@@ -59,7 +63,9 @@ const customProductFormSchema = z.object({
   descricao: z.string().optional(),
   status: z.boolean().default(false),
   // New fields
-  preco_tipo: z.enum(["menor", "media", "maior", "unico"]).default("menor"),
+  preco_tipo: z
+    .enum(["menor", "media", "maior", "unico", "soma"])
+    .default("soma"),
   preco: z.string().optional(),
 });
 
@@ -85,7 +91,7 @@ export function CustomProductFormScreen() {
     defaultValues: {
       nome: "",
       descricao: "",
-      status: false,
+      status: true,
       preco_tipo: "menor",
       preco: "",
     },
@@ -232,7 +238,9 @@ export function CustomProductFormScreen() {
           nome: data.nome,
           descricao: data.descricao || "",
           imagem: imageUri,
-          status: data.status ? "ativo" : "desativado",
+          status: data.status
+            ? ("ativo" as "ativo" | "desativado")
+            : ("desativado" as "ativo" | "desativado"),
           preco_tipo: data.preco_tipo,
           preco: data.preco_tipo === "unico" ? data.preco : undefined,
           passos: steps,
@@ -254,7 +262,7 @@ export function CustomProductFormScreen() {
         }, 500);
       } else {
         // Para criação, precisamos de todos os campos
-        const customProductData = {
+        const customProductData: CreateCustomProductDTO = {
           nome: data.nome,
           descricao: data.descricao || "",
           imagem: imageUri,
@@ -262,7 +270,7 @@ export function CustomProductFormScreen() {
           preco_tipo: data.preco_tipo,
           preco: data.preco_tipo === "unico" ? data.preco : undefined,
           passos: steps,
-          empresa: "", // Será preenchido no backend
+          empresa: "",
         };
 
         await createCustomProduct(customProductData);
@@ -313,15 +321,6 @@ export function CustomProductFormScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <AdminScreenHeader
-        title={
-          isEditing
-            ? "Editar Produto Personalizado"
-            : "Novo Produto Personalizado"
-        }
-        backTo="/admin/custom-products"
-      />
-
       <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -407,16 +406,19 @@ export function CustomProductFormScreen() {
                 control={form.control}
                 name="descricao"
                 render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
+                  <Textarea>
+                    <TextareaInput
                       placeholder="Digite uma descrição para o produto personalizado"
                       onChangeText={onChange}
                       value={value ?? ""}
-                      multiline={true}
                       numberOfLines={4}
-                      className="bg-white min-h-[100px] text-base py-2 px-3"
+                      className="bg-white"
+                      style={{
+                        minHeight: 120,
+                        textAlignVertical: "top",
+                      }}
                     />
-                  </Input>
+                  </Textarea>
                 )}
               />
             </FormControl>
@@ -504,22 +506,21 @@ export function CustomProductFormScreen() {
         </SectionCard>
 
         {/* Configuração de Preço */}
-        <SectionCard
-          title="Configuração de Preço"
-          icon={<Tag size={22} color="#F4511E" />}
-        >
-          <View className="gap-4 flex flex-col py-4">
-            <Text className="text-gray-600 mb-2">
+        <Card className="p-4 bg-white rounded-xl shadow-sm mb-4">
+          <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4 gap-2">
+            <Tag size={22} color={THEME_COLORS.primary} className="mr-2" />
+            <Text className="text-lg font-semibold text-gray-800">
+              Configuração de Preço
+            </Text>
+          </View>
+
+          <View className="gap-4 py-2">
+            <Text className="text-gray-600">
               Escolha como o preço do produto personalizado será definido:
             </Text>
 
             {/* Tipo de Preço */}
             <FormControl isInvalid={!!form.formState.errors.preco_tipo}>
-              <FormControlLabel>
-                <FormControlLabelText className="text-sm font-medium text-gray-700">
-                  Tipo de Preço
-                </FormControlLabelText>
-              </FormControlLabel>
               <Controller
                 control={form.control}
                 name="preco_tipo"
@@ -529,35 +530,109 @@ export function CustomProductFormScreen() {
                     onChange={handlePriceTypeChange}
                     className="mt-2 gap-2"
                   >
-                    <Radio value="menor" className="mb-2">
+                    <Radio
+                      value="menor"
+                      className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                    >
                       <RadioIndicator mr="$2">
-                        <RadioIcon as={CircleIcon} />
+                        <RadioIcon
+                          as={CircleIcon}
+                          color={THEME_COLORS.primary}
+                        />
                       </RadioIndicator>
-                      <RadioLabel>
-                        Menor preço entre os produtos selecionados
-                      </RadioLabel>
+                      <View className="flex-1">
+                        <RadioLabel className="text-base font-medium text-gray-800">
+                          Menor preço
+                        </RadioLabel>
+                        <Text className="text-gray-600 text-sm mt-1">
+                          Será considerado o menor valor entre os produtos
+                          selecionados
+                        </Text>
+                      </View>
                     </Radio>
-                    <Radio value="media" className="mb-2">
+
+                    <Radio
+                      value="media"
+                      className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                    >
                       <RadioIndicator mr="$2">
-                        <RadioIcon as={CircleIcon} />
+                        <RadioIcon
+                          as={CircleIcon}
+                          color={THEME_COLORS.primary}
+                        />
                       </RadioIndicator>
-                      <RadioLabel>
-                        Média dos preços dos produtos selecionados
-                      </RadioLabel>
+                      <View className="flex-1">
+                        <RadioLabel className="text-base font-medium text-gray-800">
+                          Média dos preços
+                        </RadioLabel>
+                        <Text className="text-gray-600 text-sm mt-1">
+                          Será calculada a média dos valores dos produtos
+                          selecionados
+                        </Text>
+                      </View>
                     </Radio>
-                    <Radio value="maior" className="mb-2">
+
+                    <Radio
+                      value="maior"
+                      className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                    >
                       <RadioIndicator mr="$2">
-                        <RadioIcon as={CircleIcon} />
+                        <RadioIcon
+                          as={CircleIcon}
+                          color={THEME_COLORS.primary}
+                        />
                       </RadioIndicator>
-                      <RadioLabel>
-                        Maior preço entre os produtos selecionados
-                      </RadioLabel>
+                      <View className="flex-1">
+                        <RadioLabel className="text-base font-medium text-gray-800">
+                          Maior preço
+                        </RadioLabel>
+                        <Text className="text-gray-600 text-sm mt-1">
+                          Será considerado o maior valor entre os produtos
+                          selecionados
+                        </Text>
+                      </View>
                     </Radio>
-                    <Radio value="unico" className="mb-2">
+
+                    {/* Nova opção: Soma */}
+                    <Radio
+                      value="soma"
+                      className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                    >
                       <RadioIndicator mr="$2">
-                        <RadioIcon as={CircleIcon} />
+                        <RadioIcon
+                          as={CircleIcon}
+                          color={THEME_COLORS.primary}
+                        />
                       </RadioIndicator>
-                      <RadioLabel>Preço único definido manualmente</RadioLabel>
+                      <View className="flex-1">
+                        <RadioLabel className="text-base font-medium text-gray-800">
+                          Soma dos preços
+                        </RadioLabel>
+                        <Text className="text-gray-600 text-sm mt-1">
+                          Será calculado como a soma de todos os produtos
+                          selecionados em cada passo
+                        </Text>
+                      </View>
+                    </Radio>
+
+                    <Radio
+                      value="unico"
+                      className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                    >
+                      <RadioIndicator mr="$2">
+                        <RadioIcon
+                          as={CircleIcon}
+                          color={THEME_COLORS.primary}
+                        />
+                      </RadioIndicator>
+                      <View className="flex-1">
+                        <RadioLabel className="text-base font-medium text-gray-800">
+                          Preço único
+                        </RadioLabel>
+                        <Text className="text-gray-600 text-sm mt-1">
+                          Defina manualmente um preço fixo para o produto
+                        </Text>
+                      </View>
                     </Radio>
                   </RadioGroup>
                 )}
@@ -566,25 +641,24 @@ export function CustomProductFormScreen() {
 
             {/* Campo de Preço (visível apenas quando o tipo de preço é "unico") */}
             {selectedPriceType === "unico" && (
-              <FormControl isInvalid={!!form.formState.errors.preco}>
+              <FormControl
+                isInvalid={!!form.formState.errors.preco}
+                className="p-3 bg-blue-50 rounded-lg"
+              >
                 <FormControlLabel>
-                  <FormControlLabelText className="text-sm font-medium text-gray-700">
-                    Preço <Text className="text-red-500">*</Text>
+                  <FormControlLabelText className="text-sm font-medium text-blue-800">
+                    Preço único <Text className="text-red-500">*</Text>
                   </FormControlLabelText>
                 </FormControlLabel>
                 <Controller
                   control={form.control}
                   name="preco"
                   render={({ field: { onChange, value } }) => (
-                    <Input>
-                      <InputField
-                        placeholder="Digite o preço do produto (ex: 19.90)"
-                        onChangeText={onChange}
-                        value={value ?? ""}
-                        keyboardType="decimal-pad"
-                        className="bg-white"
-                      />
-                    </Input>
+                    <CurrencyInput
+                      placeholder="Digite o preço do produto (ex: 19.90)"
+                      value={value ?? ""}
+                      onChangeValue={onChange}
+                    />
                   )}
                 />
                 {form.formState.errors.preco && (
@@ -599,29 +673,33 @@ export function CustomProductFormScreen() {
 
             {/* Explicação sobre o tipo de preço selecionado */}
             <View className="bg-gray-50 p-3 rounded-lg mt-2">
-              <View className="flex-row items-center">
+              <View className="flex-row items-center gap-1">
                 <Percent
                   size={18}
                   color={THEME_COLORS.primary}
                   className="mr-2"
                 />
-                <Text className="text-gray-700 font-medium">
+                <Text className="text-gray-800 font-medium">
                   Como funciona:
                 </Text>
               </View>
-              <Text className="text-gray-600 mt-1">
-                {selectedPriceType === "menor" &&
-                  "O preço será automaticamente definido como o menor valor entre todos os produtos que o cliente selecionar durante a personalização."}
-                {selectedPriceType === "media" &&
-                  "O preço será calculado como a média dos valores de todos os produtos que o cliente selecionar durante a personalização."}
-                {selectedPriceType === "maior" &&
-                  "O preço será automaticamente definido como o maior valor entre todos os produtos que o cliente selecionar durante a personalização."}
-                {selectedPriceType === "unico" &&
-                  "Você define um preço fixo para este produto personalizado, independente das escolhas do cliente."}
-              </Text>
+              <View className="mt-2">
+                <Text className="text-gray-600">
+                  {selectedPriceType === "menor" &&
+                    "O preço será automaticamente definido como o menor valor entre todos os produtos que o cliente selecionar durante a personalização."}
+                  {selectedPriceType === "media" &&
+                    "O preço será calculado como a média dos valores de todos os produtos que o cliente selecionar durante a personalização."}
+                  {selectedPriceType === "maior" &&
+                    "O preço será automaticamente definido como o maior valor entre todos os produtos que o cliente selecionar durante a personalização."}
+                  {selectedPriceType === "soma" &&
+                    "O preço será calculado somando os valores de todos os produtos que o cliente selecionar em cada passo do processo de personalização."}
+                  {selectedPriceType === "unico" &&
+                    "Você define um preço fixo para este produto personalizado, independente das escolhas do cliente."}
+                </Text>
+              </View>
             </View>
           </View>
-        </SectionCard>
+        </Card>
 
         {/* Configuração de passos */}
         <StepsEditor initialSteps={steps} onStepsChange={handleStepsChange} />

@@ -1,4 +1,6 @@
 // Path: src/features/custom-products/screens/custom-product-details-screen.tsx
+// Corrigindo problema de scroll
+
 import React, { useCallback } from "react";
 import {
   View,
@@ -12,18 +14,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { useCustomProductById } from "../hooks/use-custom-products";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
-import { SectionCard } from "@/components/custom/section-card";
 import { THEME_COLORS } from "@/src/styles/colors";
 import {
-  MenuSquare,
   Box,
   Edit,
-  Calendar,
   RefreshCw,
   AlertCircle,
   StepForwardIcon,
   Tag,
   Percent,
+  Calendar,
+  Info,
 } from "lucide-react-native";
 import { Card, useToast } from "@gluestack-ui/themed";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
@@ -48,22 +49,6 @@ export function CustomProductDetailsScreen() {
     router.push(`/admin/custom-products/${id}`);
   };
 
-  // Formatar data para exibição
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "N/A";
-
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Data inválida";
-
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   // Para exibir o tipo de preço de forma amigável
   const getPriceTypeLabel = (priceType?: string) => {
     switch (priceType) {
@@ -75,6 +60,8 @@ export function CustomProductDetailsScreen() {
         return "Média de preços";
       case "unico":
         return "Preço único";
+      case "soma":
+        return "Soma dos valores";
       default:
         return "Não definido";
     }
@@ -146,27 +133,28 @@ export function CustomProductDetailsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <AdminScreenHeader
-        title={customProduct.nome}
-        backTo="/admin/custom-products"
-      />
-
-      <ScrollView
-        className="flex-1 p-4 pb-20"
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-            colors={[THEME_COLORS.primary]}
-            tintColor={THEME_COLORS.primary}
-          />
-        }
-      >
-        {/* Atualizar manualmente */}
-        <View className="bg-blue-50 p-3 mb-4 rounded-lg">
+      {/* Adicionando View com flex-1 para garantir que o ScrollView ocupe o espaço disponível */}
+      <View className="flex-1">
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: 100, // Aumento do padding inferior para dar espaço para o botão
+          }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={[THEME_COLORS.primary]}
+              tintColor={THEME_COLORS.primary}
+            />
+          }
+          showsVerticalScrollIndicator={true} // Certifica que a barra de rolagem é visível
+        >
+          {/* Atualizar manualmente */}
           <TouchableOpacity
             onPress={onRefresh}
-            className="flex-row items-center justify-center"
+            className="flex-row items-center justify-center bg-blue-50 p-3 mb-4 rounded-xl"
             disabled={isRefreshing}
           >
             <RefreshCw size={16} color="#3B82F6" className="mr-2" />
@@ -174,17 +162,19 @@ export function CustomProductDetailsScreen() {
               {isRefreshing ? "Atualizando..." : "Atualizar dados"}
             </Text>
           </TouchableOpacity>
-        </View>
 
-        {/* Informações Gerais */}
-        <SectionCard
-          title="Informações Gerais"
-          icon={<MenuSquare size={20} color="#374151" />}
-        >
-          <View className="py-4">
-            <View className="flex-row items-start">
+          {/* Cabeçalho e Informações Gerais */}
+          <Card className="bg-white p-4 rounded-xl shadow-sm mb-4">
+            <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4 gap-2">
+              <Box size={20} color={THEME_COLORS.primary} className="mr-2" />
+              <Text className="text-lg font-semibold text-gray-800">
+                Informações Gerais
+              </Text>
+            </View>
+
+            <View className="flex-row">
               {customProduct.imagem && (
-                <View className="w-24 h-24 mr-4">
+                <View className="w-24 h-24 mr-4 rounded-lg overflow-hidden">
                   <ImagePreview
                     uri={customProduct.imagem}
                     containerClassName="rounded-lg"
@@ -194,14 +184,14 @@ export function CustomProductDetailsScreen() {
               )}
 
               <View className="flex-1">
-                <Text className="text-lg font-semibold">
+                <Text className="text-xl font-semibold text-gray-800">
                   {customProduct.nome}
                 </Text>
-                <Text className="text-gray-600 mt-1">
+                <Text className="text-gray-600 mt-1 mb-2">
                   {customProduct.descricao}
                 </Text>
 
-                <View className="mt-2">
+                <View>
                   <View
                     className={`self-start px-2 py-1 rounded-full ${
                       customProduct.status === "ativo"
@@ -224,202 +214,226 @@ export function CustomProductDetailsScreen() {
                 </View>
               </View>
             </View>
+          </Card>
 
-            <View className="flex-row items-center mt-3">
-              <Calendar size={16} color="#4B5563" className="mr-2" />
-              <View>
-                <Text className="text-sm text-gray-600">
-                  Data de criação: {formatDate(customProduct.date_created)}
+          {/* Estatísticas em Cards */}
+          <View className="flex-row justify-between mb-4">
+            <Card className="w-[48%] p-4 bg-white rounded-xl shadow-sm">
+              <View className="items-center">
+                <StepForwardIcon
+                  size={22}
+                  color={THEME_COLORS.primary}
+                  className="mb-2"
+                />
+                <Text className="text-2xl font-bold text-gray-800">
+                  {customProduct.passos?.length || 0}
                 </Text>
-                {customProduct.date_updated && (
-                  <Text className="text-sm text-gray-600">
-                    Última atualização: {formatDate(customProduct.date_updated)}
+                <Text className="text-gray-500 text-center">Passos</Text>
+              </View>
+            </Card>
+
+            <Card className="w-[48%] p-4 bg-white rounded-xl shadow-sm">
+              <View className="items-center">
+                <Box size={22} color={THEME_COLORS.primary} className="mb-2" />
+                <Text className="text-2xl font-bold text-gray-800">
+                  {customProduct.passos?.reduce(
+                    (total, passo) => total + passo.produtos.length,
+                    0
+                  ) || 0}
+                </Text>
+                <Text className="text-gray-500 text-center">Produtos</Text>
+              </View>
+            </Card>
+          </View>
+
+          {/* Informações de Preço */}
+          <Card className="p-4 bg-white rounded-xl shadow-sm mb-4">
+            <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4 gap-2">
+              <Tag size={20} color={THEME_COLORS.primary} className="mr-2" />
+              <Text className="text-lg font-semibold text-gray-800">
+                Informações de Preço
+              </Text>
+            </View>
+
+            <View className="py-2">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-gray-700 font-medium">
+                  Tipo de Preço:
+                </Text>
+                <View className="bg-primary-50 px-3 py-1 rounded-full">
+                  <Text className="text-primary-700 font-medium">
+                    {getPriceTypeLabel(customProduct.preco_tipo)}
                   </Text>
-                )}
+                </View>
               </View>
-            </View>
-          </View>
-        </SectionCard>
 
-        {/* Informações de Preço */}
-        <SectionCard
-          title="Informações de Preço"
-          icon={<Tag size={20} color="#374151" />}
-        >
-          <View className="py-4">
-            <View className="flex-row items-center">
-              <Percent
-                size={18}
-                color={THEME_COLORS.primary}
-                className="mr-2"
-              />
-              <Text className="text-gray-700 font-medium">
-                Tipo de Preço: {getPriceTypeLabel(customProduct.preco_tipo)}
-              </Text>
-            </View>
+              {customProduct.preco_tipo === "unico" && customProduct.preco && (
+                <View className="mt-3 bg-gray-50 p-3 rounded-lg">
+                  <Text className="text-gray-700 font-medium mb-1">
+                    Preço fixado:
+                  </Text>
+                  <Text className="text-primary-700 font-semibold text-lg">
+                    {formatCurrency(parseFloat(customProduct.preco))}
+                  </Text>
+                </View>
+              )}
 
-            {customProduct.preco_tipo === "unico" && customProduct.preco && (
-              <View className="bg-primary-50 rounded-lg p-3 mt-2">
-                <Text className="text-primary-700 font-semibold text-lg">
-                  {formatCurrency(parseFloat(customProduct.preco))}
+              <View className="mt-3 bg-gray-50 p-3 rounded-lg flex-row items-start gap-1">
+                <Info size={18} color="#6B7280" className="mr-2 mt-0.5" />
+                <Text className="text-gray-600 flex-1">
+                  {customProduct.preco_tipo === "menor" &&
+                    "O preço será calculado como o menor valor entre todos os produtos selecionados pelo cliente."}
+                  {customProduct.preco_tipo === "media" &&
+                    "O preço será calculado como a média dos valores de todos os produtos selecionados pelo cliente."}
+                  {customProduct.preco_tipo === "maior" &&
+                    "O preço será calculado como o maior valor entre todos os produtos selecionados pelo cliente."}
+                  {customProduct.preco_tipo === "soma" &&
+                    "O preço será calculado como a soma dos valores de todos os produtos selecionados pelo cliente."}
+                  {customProduct.preco_tipo === "unico" &&
+                    "Este produto tem um preço fixo, independente das escolhas do cliente."}
                 </Text>
               </View>
-            )}
-
-            <View className="bg-gray-50 p-3 rounded-lg mt-3">
-              <Text className="text-gray-600">
-                {customProduct.preco_tipo === "menor" &&
-                  "O preço será calculado como o menor valor entre todos os produtos selecionados pelo cliente."}
-                {customProduct.preco_tipo === "media" &&
-                  "O preço será calculado como a média dos valores de todos os produtos selecionados pelo cliente."}
-                {customProduct.preco_tipo === "maior" &&
-                  "O preço será calculado como o maior valor entre todos os produtos selecionados pelo cliente."}
-                {customProduct.preco_tipo === "unico" &&
-                  "Este produto tem um preço fixo, independente das escolhas do cliente."}
-              </Text>
             </View>
-          </View>
-        </SectionCard>
+          </Card>
 
-        {/* Estatísticas */}
-        <View className="flex-row justify-between mb-4 mt-2">
-          <Card className="w-[48%] p-4 bg-white">
-            <View className="items-center">
+          {/* Passos de Personalização */}
+          <Card className="p-4 bg-white rounded-xl shadow-sm mb-6">
+            <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4 gap-2">
               <StepForwardIcon
                 size={20}
                 color={THEME_COLORS.primary}
-                className="mb-2"
+                className="mr-2"
               />
-              <Text className="text-2xl font-bold">
-                {customProduct.passos?.length || 0}
+              <Text className="text-lg font-semibold text-gray-800">
+                Passos de Personalização
               </Text>
-              <Text className="text-gray-500 text-center">Passos</Text>
             </View>
-          </Card>
 
-          <Card className="w-[48%] p-4 bg-white">
-            <View className="items-center">
-              <Box size={20} color={THEME_COLORS.primary} className="mb-2" />
-              <Text className="text-2xl font-bold">
-                {customProduct.passos?.reduce(
-                  (total, passo) => total + passo.produtos.length,
-                  0
-                ) || 0}
-              </Text>
-              <Text className="text-gray-500 text-center">Produtos</Text>
-            </View>
-          </Card>
-        </View>
-
-        {/* Passos de Personalização */}
-        <SectionCard
-          title="Passos de Personalização"
-          icon={<StepForwardIcon size={20} color="#374151" />}
-        >
-          {customProduct.passos && customProduct.passos.length > 0 ? (
-            <View className="gap-4 py-4">
-              {customProduct.passos.map((passo, passoIndex) => (
-                <Card key={passoIndex} className="p-4 bg-white">
-                  <View className="flex-row items-center mb-2">
-                    <View className="bg-primary-100 px-3 py-1 rounded-full">
-                      <Text className="text-primary-800 font-medium">
-                        Passo {passo.passo_numero}
-                      </Text>
-                    </View>
-                    <Text className="ml-3 text-gray-600">
-                      Cliente seleciona {passo.qtd_items_step}{" "}
-                      {passo.qtd_items_step === 1 ? "item" : "itens"}
-                    </Text>
-                  </View>
-
-                  {/* Nome do passo */}
-                  {passo.nome && (
-                    <View className="mb-2 border-l-4 border-primary-200 pl-3">
-                      <Text className="font-semibold text-gray-800">
-                        {passo.nome}
-                      </Text>
-                    </View>
-                  )}
-
-                  {/* Descrição do passo */}
-                  {passo.descricao && (
-                    <View className="mb-3 bg-gray-50 p-3 rounded-lg">
-                      <Text className="text-gray-600">{passo.descricao}</Text>
-                    </View>
-                  )}
-
-                  <Text className="font-medium mb-2 mt-2">
-                    Produtos disponíveis:
-                  </Text>
-
-                  <View className="gap-2">
-                    {passo.produtos.map((produtoItem, produtoIndex) => {
-                      const produtoDetalhes = getProductById(
-                        produtoItem.produtos.key
-                      );
-
-                      if (!produtoDetalhes) {
-                        return (
-                          <View
-                            key={produtoIndex}
-                            className="p-3 bg-red-50 rounded-lg"
-                          >
-                            <Text className="text-red-500">
-                              Produto não encontrado (ID:{" "}
-                              {produtoItem.produtos.key})
-                            </Text>
-                          </View>
-                        );
-                      }
-
-                      return (
-                        <View
-                          key={produtoIndex}
-                          className="flex-row items-center p-3 bg-gray-50 rounded-lg"
-                        >
-                          <View className="h-10 w-10 mr-3">
-                            <ImagePreview
-                              uri={produtoDetalhes.imagem}
-                              fallbackIcon={Box}
-                              containerClassName="rounded-lg"
-                            />
-                          </View>
-                          <View className="flex-1">
-                            <Text className="font-medium">
-                              {produtoDetalhes.nome}
-                            </Text>
-                            {produtoDetalhes.preco && (
-                              <Text className="text-xs text-gray-600">
-                                {formatCurrency(
-                                  parseFloat(produtoDetalhes.preco)
-                                )}
-                              </Text>
-                            )}
-                          </View>
+            {customProduct.passos && customProduct.passos.length > 0 ? (
+              <View className="gap-4">
+                {customProduct.passos.map((passo, passoIndex) => (
+                  <View
+                    key={passoIndex}
+                    className="border border-gray-100 rounded-lg overflow-hidden"
+                  >
+                    {/* Cabeçalho do passo */}
+                    <View className="bg-gray-50 p-3 flex-row items-center justify-between">
+                      <View className="flex-row items-center">
+                        <View className="bg-primary-100 h-8 w-8 rounded-full items-center justify-center mr-2">
+                          <Text className="text-primary-800 font-semibold">
+                            {passo.passo_numero}
+                          </Text>
                         </View>
-                      );
-                    })}
-                  </View>
-                </Card>
-              ))}
-            </View>
-          ) : (
-            <View className="py-4 items-center">
-              <AlertCircle size={24} color="#9CA3AF" />
-              <Text className="text-gray-500 mt-2">
-                Nenhum passo configurado
-              </Text>
-            </View>
-          )}
-        </SectionCard>
-      </ScrollView>
+                        <Text className="font-medium text-gray-800">
+                          {passo.nome}
+                        </Text>
+                      </View>
+                      <View className="bg-gray-200 px-2 py-1 rounded-full">
+                        <Text className="text-xs text-gray-700">
+                          {passo.qtd_items_step}{" "}
+                          {passo.qtd_items_step === 1 ? "item" : "itens"}
+                        </Text>
+                      </View>
+                    </View>
 
-      {/* Botão de edição */}
-      <PrimaryActionButton
-        onPress={handleEditCustomProduct}
-        label="Editar Produto"
-        icon={<Edit size={20} color="white" />}
-      />
+                    {/* Descrição do passo */}
+                    {passo.descricao && (
+                      <View className="p-3 border-b border-gray-100">
+                        <Text className="text-gray-600">{passo.descricao}</Text>
+                      </View>
+                    )}
+
+                    {/* Lista de produtos no passo */}
+                    <View className="p-3">
+                      <Text className="font-medium mb-2 text-gray-700">
+                        Produtos disponíveis neste passo:
+                      </Text>
+
+                      <View className="gap-2">
+                        {passo.produtos.map((produtoItem, produtoIndex) => {
+                          const produtoDetalhes = getProductById(
+                            produtoItem.produtos.key
+                          );
+
+                          if (!produtoDetalhes) {
+                            return (
+                              <View
+                                key={produtoIndex}
+                                className="p-3 bg-red-50 rounded-lg"
+                              >
+                                <Text className="text-red-500">
+                                  Produto não encontrado (ID:{" "}
+                                  {produtoItem.produtos.key})
+                                </Text>
+                              </View>
+                            );
+                          }
+
+                          return (
+                            <View
+                              key={produtoIndex}
+                              className="flex-row items-center p-3 bg-gray-50 rounded-lg"
+                            >
+                              <View className="h-10 w-10 mr-3">
+                                <ImagePreview
+                                  uri={produtoDetalhes.imagem}
+                                  fallbackIcon={Box}
+                                  containerClassName="rounded-lg"
+                                />
+                              </View>
+                              <View className="flex-1">
+                                <Text className="font-medium text-gray-800">
+                                  {produtoDetalhes.nome}
+                                </Text>
+                                {produtoDetalhes.preco && (
+                                  <View className="flex-row items-center gap-1">
+                                    <Tag
+                                      size={12}
+                                      color="#6B7280"
+                                      className="mr-1"
+                                    />
+                                    <Text className="text-sm text-gray-600">
+                                      {formatCurrency(
+                                        parseFloat(produtoDetalhes.preco)
+                                      )}
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View className="py-6 items-center bg-gray-50 rounded-lg">
+                <AlertCircle size={28} color="#9CA3AF" />
+                <Text className="text-gray-500 mt-2 font-medium">
+                  Nenhum passo configurado
+                </Text>
+                <Text className="text-gray-500 text-sm text-center mt-1 px-8">
+                  Edite este produto para adicionar passos de personalização
+                </Text>
+              </View>
+            )}
+          </Card>
+
+          {/* Espaço adicional para garantir que tudo seja visível mesmo com o botão fixo */}
+          <View style={{ height: 80 }} />
+        </ScrollView>
+      </View>
+
+      {/* Botão de edição - agora posicionado na parte inferior */}
+      <View className="absolute bottom-0 left-0 right-0">
+        <PrimaryActionButton
+          onPress={handleEditCustomProduct}
+          label="Editar Produto"
+          icon={<Edit size={20} color="white" />}
+        />
+      </View>
     </SafeAreaView>
   );
 }

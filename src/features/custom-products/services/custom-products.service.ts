@@ -45,6 +45,7 @@ class CustomProductsService {
   }
 
   async createCustomProduct(data: CreateCustomProductDTO) {
+    console.log(data);
     try {
       const response = await api.post<{ data: CustomProduct }>(
         "/api/custom-products",

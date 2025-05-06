@@ -177,7 +177,7 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
 
   // Calcular preço baseado no tipo (menor, maior, média)
   const calculatePrice = useCallback(
-    (priceType: "menor" | "media" | "maior"): string => {
+    (priceType: "menor" | "media" | "maior" | "soma" | "unico"): string => {
       // Obter todos os produtos selecionados em todos os passos
       const allSelectedProducts = steps
         .flatMap((step) =>
@@ -203,6 +203,12 @@ export function useCustomProductForm(initialSteps: CustomProductStep[] = []) {
             0
           );
           return (sum / allSelectedProducts.length).toFixed(2);
+        case "soma":
+          const total = allSelectedProducts.reduce(
+            (acc, price) => acc + price,
+            0
+          );
+          return total.toFixed(2);
         default:
           return "0";
       }
