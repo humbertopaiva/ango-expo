@@ -23,10 +23,10 @@ export function SearchInput({
     <View className="relative mb-4">
       <Input
         isDisabled={disabled}
-        className="bg-white rounded-xl border border-secondary-500 h-12"
+        className="bg-white rounded-xl border border-primary-500 h-12"
       >
         <InputSlot className="pl-3 ">
-          <InputIcon as={SearchIcon} color={THEME_COLORS.secondary} />
+          <InputIcon as={SearchIcon} color={THEME_COLORS.primary} />
         </InputSlot>
         <InputField
           placeholder={placeholder}

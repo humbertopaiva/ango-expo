@@ -1,4 +1,5 @@
-// Path: src/features/addons/screens/-addon-details-screen.tsx
+// Path: src/features/addons/screens/addon-details-screen.tsx
+
 import React, { useCallback } from "react";
 import {
   View,
@@ -7,25 +8,23 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { useAddonsListById } from "../hooks/use-addons";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
-import { SectionCard } from "@/components/custom/section-card";
 import { THEME_COLORS } from "@/src/styles/colors";
 import {
   Tag,
   Box,
   Edit,
-  ListIcon,
   Calendar,
   RefreshCw,
   Info,
   AlertCircle,
+  Clock,
 } from "lucide-react-native";
-import { Card, useToast } from "@gluestack-ui/themed";
+import { useToast } from "@gluestack-ui/themed";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { formatCurrency } from "@/src/utils/format.utils";
@@ -137,212 +136,230 @@ export function AddonDetailsScreen() {
         }
       >
         {/* Atualizar manualmente */}
-        <View className="bg-blue-50 p-3 mb-4 rounded-lg">
-          <TouchableOpacity
-            onPress={onRefresh}
-            className="flex-row items-center justify-center"
-            disabled={isRefreshing}
-          >
-            <RefreshCw size={16} color="#3B82F6" className="mr-2" />
-            <Text className="text-blue-600 font-medium">
-              {isRefreshing ? "Atualizando..." : "Atualizar dados"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Informações Gerais */}
-        <SectionCard
-          title="Informações Gerais"
-          icon={<ListIcon size={20} color="#374151" />}
+        <TouchableOpacity
+          onPress={onRefresh}
+          className="flex-row items-center justify-center bg-blue-50 p-3 mb-4 rounded-xl"
+          disabled={isRefreshing}
         >
-          <View className="py-4">
-            <Text className="text-lg font-semibold">{addonsList.nome}</Text>
+          <RefreshCw size={16} color="#3B82F6" className="mr-2" />
+          <Text className="text-blue-600 font-medium">
+            {isRefreshing ? "Atualizando..." : "Atualizar dados"}
+          </Text>
+        </TouchableOpacity>
 
-            <View className="flex-row items-center mt-3">
-              <Calendar size={16} color="#4B5563" className="mr-2" />
-              <View>
+        {/* Cabeçalho e Informações Gerais */}
+        <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
+          <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4">
+            <Box size={20} color={THEME_COLORS.primary} className="mr-2" />
+            <Text className="text-lg font-semibold text-gray-800">
+              Informações Gerais
+            </Text>
+          </View>
+
+          <Text className="text-xl font-semibold text-gray-800">
+            {addonsList.nome}
+          </Text>
+
+          <View className="flex-row items-center mt-4">
+            <Clock size={16} color="#6B7280" className="mr-2" />
+            <View>
+              <Text className="text-sm text-gray-600">
+                Data de criação: {formatDate(addonsList.date_created)}
+              </Text>
+              {addonsList.date_updated && (
                 <Text className="text-sm text-gray-600">
-                  Data de criação: {formatDate(addonsList.date_created)}
+                  Última atualização: {formatDate(addonsList.date_updated)}
                 </Text>
-                {addonsList.date_updated && (
-                  <Text className="text-sm text-gray-600">
-                    Última atualização: {formatDate(addonsList.date_updated)}
-                  </Text>
-                )}
-              </View>
+              )}
             </View>
           </View>
-        </SectionCard>
+        </View>
 
-        {/* Estatísticas */}
-        <View className="flex-row justify-between mb-4 mt-2">
-          <Card className="w-[48%] p-4 bg-white">
+        {/* Estatísticas em Cards */}
+        <View className="flex-row justify-between mb-4">
+          <View className="w-[48%] p-4 bg-white rounded-xl shadow-sm">
             <View className="items-center">
-              <Box size={20} color={THEME_COLORS.primary} className="mb-2" />
-              <Text className="text-2xl font-bold">
+              <Box size={22} color={THEME_COLORS.primary} className="mb-2" />
+              <Text className="text-2xl font-bold text-gray-800">
                 {addonsList.produtos?.length || 0}
               </Text>
               <Text className="text-gray-500 text-center">Produtos</Text>
             </View>
-          </Card>
+          </View>
 
-          <Card className="w-[48%] p-4 bg-white">
+          <View className="w-[48%] p-4 bg-white rounded-xl shadow-sm">
             <View className="items-center">
-              <Tag size={20} color={THEME_COLORS.primary} className="mb-2" />
-              <Text className="text-2xl font-bold">
+              <Tag size={22} color={THEME_COLORS.primary} className="mb-2" />
+              <Text className="text-2xl font-bold text-gray-800">
                 {addonsList.categorias?.length || 0}
               </Text>
               <Text className="text-gray-500 text-center">Categorias</Text>
             </View>
-          </Card>
+          </View>
         </View>
 
         {/* Categorias associadas */}
-        <SectionCard
-          title="Categorias Associadas"
-          icon={<Tag size={20} color="#374151" />}
-        >
+        <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
+          <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4">
+            <Tag size={20} color={THEME_COLORS.primary} className="mr-2" />
+            <Text className="text-lg font-semibold text-gray-800">
+              Categorias Associadas
+            </Text>
+          </View>
+
           {addonsList.categorias && addonsList.categorias.length > 0 ? (
-            <View className="gap-2 py-4">
+            <View className="gap-2">
               {addonsList.categorias.map((category) => (
-                <Card key={category.id} className="p-3 bg-white">
-                  <View className="flex-row items-center">
-                    {category.categorias_produto_id.imagem && (
-                      <View className="w-12 h-12 mr-3">
-                        <ImagePreview
-                          uri={category.categorias_produto_id.imagem}
-                          containerClassName="rounded-lg"
-                          fallbackIcon={Tag}
-                        />
-                      </View>
-                    )}
-                    <View className="flex-1">
-                      <Text className="font-medium">
-                        {category.categorias_produto_id.nome}
-                      </Text>
-                      <View className="flex-row mt-1">
-                        <View
-                          className={`px-2 py-0.5 rounded-full ${
+                <View
+                  key={category.id}
+                  className="p-3 rounded-lg bg-gray-50 border border-gray-100 flex-row items-center"
+                >
+                  {category.categorias_produto_id.imagem && (
+                    <View className="w-10 h-10 mr-3 rounded-lg overflow-hidden">
+                      <ImagePreview
+                        uri={category.categorias_produto_id.imagem}
+                        containerClassName="rounded-lg"
+                        fallbackIcon={Tag}
+                      />
+                    </View>
+                  )}
+                  <View className="flex-1">
+                    <Text className="font-medium text-gray-800">
+                      {category.categorias_produto_id.nome}
+                    </Text>
+                    <View className="mt-1">
+                      <View
+                        className={`px-2 py-0.5 rounded-full self-start ${
+                          category.categorias_produto_id.categoria_ativa
+                            ? "bg-green-100"
+                            : "bg-red-100"
+                        }`}
+                      >
+                        <Text
+                          className={
                             category.categorias_produto_id.categoria_ativa
-                              ? "bg-green-100"
-                              : "bg-red-100"
-                          }`}
+                              ? "text-xs text-green-800"
+                              : "text-xs text-red-800"
+                          }
                         >
-                          <Text
-                            className={
-                              category.categorias_produto_id.categoria_ativa
-                                ? "text-xs text-green-800"
-                                : "text-xs text-red-800"
-                            }
-                          >
-                            {category.categorias_produto_id.categoria_ativa
-                              ? "Ativa"
-                              : "Inativa"}
-                          </Text>
-                        </View>
+                          {category.categorias_produto_id.categoria_ativa
+                            ? "Ativa"
+                            : "Inativa"}
+                        </Text>
                       </View>
                     </View>
                   </View>
-                </Card>
+                </View>
               ))}
             </View>
           ) : (
-            <View className="py-4 items-center">
-              <Info size={24} color="#9CA3AF" />
-              <Text className="text-gray-500 mt-2">
+            <View className="py-8 items-center">
+              <Info size={28} color="#9CA3AF" />
+              <Text className="text-gray-500 mt-2 font-medium">
                 Nenhuma categoria associada
+              </Text>
+              <Text className="text-gray-400 text-sm text-center mt-1">
+                Edite esta lista para adicionar categorias
               </Text>
             </View>
           )}
-        </SectionCard>
+        </View>
 
         {/* Produtos associados */}
-        <SectionCard
-          title="Produtos Associados"
-          icon={<Box size={20} color="#374151" />}
-        >
-          {addonsList.produtos && addonsList.produtos.length > 0 ? (
-            <View className="gap-2 py-4">
-              {addonsList.produtos.map((product) => (
-                <Card key={product.id} className="p-3 bg-white">
-                  <View className="flex-row">
-                    {product.produtos_id.imagem && (
-                      <View className="w-16 h-16 mr-3">
-                        <ImagePreview
-                          uri={product.produtos_id.imagem}
-                          containerClassName="rounded-lg"
-                          fallbackIcon={Box}
-                        />
-                      </View>
-                    )}
-                    <View className="flex-1">
-                      <Text className="font-medium">
-                        {product.produtos_id.nome}
-                      </Text>
+        <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
+          <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4">
+            <Box size={20} color={THEME_COLORS.primary} className="mr-2" />
+            <Text className="text-lg font-semibold text-gray-800">
+              Produtos Associados
+            </Text>
+          </View>
 
-                      {product.produtos_id.preco && (
-                        <View className="flex-row items-center mt-1">
-                          {product.produtos_id.preco_promocional ? (
-                            <>
-                              <Text className="text-xs text-primary-500 font-medium">
-                                {formatCurrency(
-                                  parseFloat(
-                                    product.produtos_id.preco_promocional
-                                  )
-                                )}
-                              </Text>
-                              <Text className="ml-2 text-xs text-gray-500 line-through">
-                                {formatCurrency(
-                                  parseFloat(product.produtos_id.preco)
-                                )}
-                              </Text>
-                            </>
-                          ) : (
-                            <Text className="text-xs text-primary-600 font-medium">
+          {addonsList.produtos && addonsList.produtos.length > 0 ? (
+            <View className="gap-2">
+              {addonsList.produtos.map((product) => (
+                <View
+                  key={product.id}
+                  className="p-3 rounded-lg bg-gray-50 border border-gray-100 flex-row"
+                >
+                  {product.produtos_id.imagem && (
+                    <View className="w-14 h-14 mr-3 rounded-lg overflow-hidden">
+                      <ImagePreview
+                        uri={product.produtos_id.imagem}
+                        containerClassName="rounded-lg"
+                        fallbackIcon={Box}
+                      />
+                    </View>
+                  )}
+                  <View className="flex-1">
+                    <Text className="font-medium text-gray-800">
+                      {product.produtos_id.nome}
+                    </Text>
+
+                    {product.produtos_id.preco && (
+                      <View className="flex-row items-center mt-1">
+                        {product.produtos_id.preco_promocional ? (
+                          <>
+                            <Text className="text-sm text-primary-600 font-semibold">
+                              {formatCurrency(
+                                parseFloat(
+                                  product.produtos_id.preco_promocional
+                                )
+                              )}
+                            </Text>
+                            <Text className="ml-2 text-xs text-gray-500 line-through">
                               {formatCurrency(
                                 parseFloat(product.produtos_id.preco)
                               )}
                             </Text>
-                          )}
-                        </View>
-                      )}
-
-                      {/* Status do produto */}
-                      <View className="mt-1">
-                        <View
-                          className={`px-2 py-0.5 rounded-full self-start ${
-                            product.produtos_id.status === "disponivel"
-                              ? "bg-green-100"
-                              : "bg-red-100"
-                          }`}
-                        >
-                          <Text
-                            className={
-                              product.produtos_id.status === "disponivel"
-                                ? "text-xs text-green-800"
-                                : "text-xs text-red-800"
-                            }
-                          >
-                            {product.produtos_id.status === "disponivel"
-                              ? "Disponível"
-                              : "Indisponível"}
+                          </>
+                        ) : (
+                          <Text className="text-sm text-primary-600 font-semibold">
+                            {formatCurrency(
+                              parseFloat(product.produtos_id.preco)
+                            )}
                           </Text>
-                        </View>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Status do produto */}
+                    <View className="mt-2">
+                      <View
+                        className={`px-2 py-0.5 rounded-full self-start ${
+                          product.produtos_id.status === "disponivel"
+                            ? "bg-green-100"
+                            : "bg-red-100"
+                        }`}
+                      >
+                        <Text
+                          className={
+                            product.produtos_id.status === "disponivel"
+                              ? "text-xs text-green-800"
+                              : "text-xs text-red-800"
+                          }
+                        >
+                          {product.produtos_id.status === "disponivel"
+                            ? "Disponível"
+                            : "Indisponível"}
+                        </Text>
                       </View>
                     </View>
                   </View>
-                </Card>
+                </View>
               ))}
             </View>
           ) : (
-            <View className="py-4 items-center">
-              <Info size={24} color="#9CA3AF" />
-              <Text className="text-gray-500 mt-2">
+            <View className="py-8 items-center">
+              <Info size={28} color="#9CA3AF" />
+              <Text className="text-gray-500 mt-2 font-medium">
                 Nenhum produto associado
+              </Text>
+              <Text className="text-gray-400 text-sm text-center mt-1">
+                Edite esta lista para adicionar produtos
               </Text>
             </View>
           )}
-        </SectionCard>
+        </View>
       </ScrollView>
 
       {/* Botão de edição */}

@@ -1,11 +1,12 @@
-// Path: src/features/addons/screens/-addons-content.tsx
+// Path: src/features/addons/screens/addons-content.tsx
+
 import React, { useCallback } from "react";
 import {
   View,
   Text,
   SafeAreaView,
   RefreshControl,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
 } from "react-native";
 import { useAddonsContext } from "../contexts/use-addons-context";
@@ -14,15 +15,13 @@ import { ConfirmationDialog } from "@/components/custom/confirmation-dialog";
 import { Plus, RefreshCw, Layers } from "lucide-react-native";
 import { router } from "expo-router";
 import { PrimaryActionButton } from "@/components/common/primary-action-button";
-import { SectionCard } from "@/components/custom/section-card";
-import { AddonCard } from "../components/addon-card";
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { AddonCard } from "../components/addon-card";
 
 export function AddonsContent() {
   const vm = useAddonsContext();
 
-  // Funções de navegação
   const handleAddAddonsList = () => {
     router.push("/admin/addons/new");
   };
@@ -35,7 +34,6 @@ export function AddonsContent() {
     router.push(`/admin/addons/view/${addonsList.id}`);
   };
 
-  // Para atualizar a lista com pull-to-refresh
   const onRefresh = useCallback(() => {
     vm.refreshAddonsList();
   }, [vm]);
@@ -48,21 +46,24 @@ export function AddonsContent() {
         showBackButton={true}
       />
 
-      <View className="flex-1 px-4">
-        <SectionCard title="Gerenciamento de Adicionais">
-          <View className="py-2">
-            <Text className="text-gray-700">
-              Gerencie suas listas de produtos adicionais para categorias
-              específicas
+      <View className="px-4 py-2">
+        <View className="bg-white p-4 rounded-xl mb-4 shadow-sm">
+          <View className="flex-row items-center border-b border-gray-100 pb-3 mb-3">
+            <Layers size={20} color={THEME_COLORS.primary} className="mr-2" />
+            <Text className="text-lg font-semibold text-gray-800">
+              Gerenciamento de Adicionais
             </Text>
           </View>
-        </SectionCard>
+          <Text className="text-gray-600">
+            Gerencie suas listas de produtos adicionais para categorias
+            específicas
+          </Text>
+        </View>
 
-        {/* Atualizar manualmente */}
-        <View className="bg-blue-50 p-3 mt-2 mb-4 rounded-lg">
+        <View className="flex-row mb-4 bg-blue-50 p-2.5 rounded-lg">
           <TouchableOpacity
             onPress={vm.refreshAddonsList}
-            className="flex-row items-center justify-center"
+            className="flex-row items-center justify-center flex-1"
             disabled={vm.isRefreshing}
           >
             <RefreshCw size={16} color="#3B82F6" className="mr-2" />
@@ -72,7 +73,6 @@ export function AddonsContent() {
           </TouchableOpacity>
         </View>
 
-        {/* Barra de pesquisa */}
         <SearchInput
           value={vm.searchTerm}
           onChangeText={vm.setSearchTerm}
@@ -80,71 +80,77 @@ export function AddonsContent() {
           disabled={vm.isLoading || vm.isRefreshing}
         />
 
-        {/* Lista de adicionais */}
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingBottom: 100 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={vm.isRefreshing}
-              onRefresh={onRefresh}
-              colors={[THEME_COLORS.primary]}
-              tintColor={THEME_COLORS.primary}
-            />
-          }
-        >
-          {vm.isLoading ? (
-            <View className="flex items-center justify-center py-8">
-              <Layers size={40} color="#D1D5DB" className="mb-2" />
-              <Text className="text-gray-500 text-center">
-                Carregando listas de adicionais...
-              </Text>
-            </View>
-          ) : vm.filteredAddonsList.length === 0 ? (
-            <View className="flex items-center justify-center py-12 bg-white rounded-lg mt-4">
-              <Layers size={48} color="#D1D5DB" className="mb-3" />
-              <Text className="text-gray-700 text-lg font-medium">
-                Nenhuma lista de adicionais encontrada
-              </Text>
-              <Text className="text-gray-500 text-center mt-1 px-8">
-                Crie uma nova lista de adicionais para melhorar suas vendas com
-                opções extras
-              </Text>
-            </View>
-          ) : (
-            vm.filteredAddonsList.map((addon) => (
+        {vm.isLoading ? (
+          <View className="flex items-center justify-center py-16 bg-white rounded-xl">
+            <Layers size={40} color="#D1D5DB" className="mb-2" />
+            <Text className="text-gray-500 text-center">
+              Carregando listas de adicionais...
+            </Text>
+          </View>
+        ) : vm.filteredAddonsList.length === 0 ? (
+          <View className="flex items-center justify-center py-16 bg-white rounded-xl">
+            <Layers size={48} color="#D1D5DB" className="mb-3" />
+            <Text className="text-gray-700 text-lg font-medium">
+              Nenhuma lista de adicionais encontrada
+            </Text>
+            <Text className="text-gray-500 text-center mt-1 px-8 mb-6">
+              Crie uma nova lista de adicionais para melhorar suas vendas com
+              opções extras
+            </Text>
+            <TouchableOpacity
+              onPress={handleAddAddonsList}
+              className="bg-primary-500 px-6 py-3 rounded-lg flex-row items-center"
+            >
+              <Plus size={18} color="white" className="mr-2" />
+              <Text className="text-white font-medium">Nova Lista</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={vm.filteredAddonsList}
+            renderItem={({ item }) => (
               <AddonCard
-                key={addon.id}
-                addon={addon}
-                onEdit={() => handleEditAddonsList(addon)}
-                onDelete={() => vm.confirmDeleteAddonsList(addon.id)}
-                onView={() => handleViewAddonsList(addon)}
+                addon={item}
+                onEdit={() => handleEditAddonsList(item)}
+                onDelete={() => vm.confirmDeleteAddonsList(item.id)}
+                onView={() => handleViewAddonsList(item)}
               />
-            ))
-          )}
-        </ScrollView>
+            )}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={vm.isRefreshing}
+                onRefresh={onRefresh}
+                colors={[THEME_COLORS.primary]}
+                tintColor={THEME_COLORS.primary}
+              />
+            }
+          />
+        )}
+      </View>
 
-        {/* Botão para adicionar */}
+      {vm.filteredAddonsList.length > 0 && (
         <PrimaryActionButton
           onPress={handleAddAddonsList}
-          label="Nova Lista de Adicionais"
+          label="Nova Lista"
           icon={<Plus size={20} color="white" />}
         />
+      )}
 
-        {/* Diálogo de confirmação para exclusão */}
-        <ConfirmationDialog
-          isOpen={vm.isDeleteDialogOpen}
-          onClose={vm.cancelDeleteAddonsList}
-          onConfirm={() =>
-            vm.addonsToDelete && vm.handleDeleteAddonsList(vm.addonsToDelete)
-          }
-          title="Excluir Lista de Adicionais"
-          message="Tem certeza que deseja excluir esta lista de adicionais? Esta ação não pode ser desfeita."
-          confirmLabel="Excluir"
-          variant="danger"
-          isLoading={vm.isDeleting}
-        />
-      </View>
+      <ConfirmationDialog
+        isOpen={vm.isDeleteDialogOpen}
+        onClose={vm.cancelDeleteAddonsList}
+        onConfirm={() =>
+          vm.addonsToDelete && vm.handleDeleteAddonsList(vm.addonsToDelete)
+        }
+        title="Excluir Lista de Adicionais"
+        message="Tem certeza que deseja excluir esta lista de adicionais? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="danger"
+        isLoading={vm.isDeleting}
+      />
     </SafeAreaView>
   );
 }
