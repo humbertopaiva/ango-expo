@@ -31,8 +31,9 @@ export function CustomProductsContent() {
     router.push(`/admin/custom-products/${customProduct.id}`);
   };
 
+  // Atualizar apenas as funções de navegação
   const handleViewCustomProduct = (customProduct: any) => {
-    router.push(`/admin/custom-products/view/${customProduct.id}`);
+    router.push(`/admin/custom-products/${customProduct.id}/details`);
   };
 
   // Para atualizar a lista com pull-to-refresh

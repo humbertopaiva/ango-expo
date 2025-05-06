@@ -1,8 +1,8 @@
-// Path: app/(drawer)/admin/products/_layout.tsx (atualização)
-import { Stack } from "expo-router";
+// Path: app/(drawer)/admin/custom-products/_layout.tsx
 
-import { THEME_COLORS } from "@/src/styles/colors";
+import { Stack } from "expo-router";
 import { CustomProductsProvider } from "@/src/features/custom-products/contexts/custom-products-provider";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 export default function CustomProductsLayout() {
   return (
@@ -19,34 +19,34 @@ export default function CustomProductsLayout() {
           headerShadowVisible: true,
         }}
       >
-        {/* Dashboard principal de produtos */}
+        {/* Lista de produtos personalizados */}
         <Stack.Screen
           name="index"
           options={{
-            title: "Produtos Customizados",
+            title: "Produtos Personalizados",
             headerShown: true,
           }}
         />
 
-        {/* Gerenciamento de produtos */}
-        <Stack.Screen
-          name="[id]"
-          options={{
-            title: "Editar Produto Customizado",
-            headerShown: true,
-          }}
-        />
+        {/* Formulários de criação e edição */}
         <Stack.Screen
           name="new"
           options={{
-            title: "Novo Produto Customizado",
+            title: "Novo Produto Personalizado",
             headerShown: true,
           }}
         />
         <Stack.Screen
-          name="view/[id]"
+          name="[id]/index"
           options={{
-            title: "Produto Customizado",
+            title: "Editar Produto Personalizado",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="[id]/details"
+          options={{
+            title: "Detalhes do Produto Personalizado",
             headerShown: true,
           }}
         />
