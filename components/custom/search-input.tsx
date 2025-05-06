@@ -21,9 +21,12 @@ export function SearchInput({
 }: SearchInputProps) {
   return (
     <View className="relative mb-4">
-      <Input isDisabled={disabled} className="bg-white rounded-xl h-12">
+      <Input
+        isDisabled={disabled}
+        className="bg-white rounded-xl border border-secondary-500 h-12"
+      >
         <InputSlot className="pl-3 ">
-          <InputIcon as={SearchIcon} color={THEME_COLORS.primary} />
+          <InputIcon as={SearchIcon} color={THEME_COLORS.secondary} />
         </InputSlot>
         <InputField
           placeholder={placeholder}
