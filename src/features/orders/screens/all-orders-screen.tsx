@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   Trash2,
   MessageSquare,
+  Home,
 } from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
 import { Order } from "../models/order";
@@ -128,6 +129,10 @@ export function AllOrdersScreen() {
     }
   };
 
+  const handleGoToHome = () => {
+    router.push("/(drawer)/(tabs)/comercio-local");
+  };
+
   const formatCurrency = (value: number) => {
     return value.toLocaleString("pt-BR", {
       style: "currency",
@@ -139,7 +144,10 @@ export function AllOrdersScreen() {
     return format(new Date(date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
-  const renderOrderItem = ({ item }: { item: Order }) => {
+  const renderOrderItem = ({ item, index }: { item: Order; index: number }) => {
+    // Usar o índice + 1 como número do pedido para sequência não aleatória
+    const orderNumber = index + 1;
+
     return (
       <SwipeableCard
         onEdit={() => handleOrderPress(item)}
@@ -169,10 +177,8 @@ export function AllOrdersScreen() {
           </HStack>
 
           <Text className="text-gray-600 text-sm mt-2">
-            <Text className="font-medium">
-              Pedido #{item.id.replace("order_", "").substring(0, 6)}
-            </Text>{" "}
-            •{item.items.length} {item.items.length === 1 ? "item" : "itens"}
+            <Text className="font-medium">Pedido #{orderNumber}</Text> •{" "}
+            {item.items.length} {item.items.length === 1 ? "item" : "itens"}
           </Text>
 
           <HStack className="justify-end gap-4 mt-3">
@@ -201,7 +207,7 @@ export function AllOrdersScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* <ScreenHeader
+      <ScreenHeader
         title="Todos os Pedidos"
         subtitle={`${
           orders.length > 0
@@ -217,14 +223,14 @@ export function AllOrdersScreen() {
             </TouchableOpacity>
           ) : undefined
         }
-      /> */}
+      />
 
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
         renderItem={renderOrderItem}
-        contentContainerStyle={{ padding: 16 }}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 16, paddingBottom: 88 }}
+        showsVerticalScrollIndicator={true}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
@@ -241,6 +247,28 @@ export function AllOrdersScreen() {
           </Card>
         }
       />
+
+      {/* Botão "Voltar para Home" fixo na parte inferior */}
+      <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+        <TouchableOpacity
+          onPress={handleGoToHome}
+          className="py-3 rounded-lg flex-row justify-center items-center"
+          style={{ backgroundColor: primaryColor }}
+        >
+          <Home size={18} color="white" className="mr-2" />
+          <Text className="text-white font-medium">Voltar para Home</Text>
+        </TouchableOpacity>
+
+        {orders.length > 0 && (
+          <TouchableOpacity
+            onPress={handleClearAllOrders}
+            className="py-3 mt-2 rounded-lg border border-red-500 flex-row justify-center items-center"
+          >
+            <Trash2 size={18} color="#EF4444" className="mr-2" />
+            <Text className="text-red-500 font-medium">Limpar Pedidos</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }

@@ -185,7 +185,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
             control={control}
             name="email"
             render={({ field: { onChange, value } }) => (
-              <View className="space-y-2">
+              <View className="gap-2">
                 <Text className="text-sm font-medium text-gray-700 mb-1">
                   E-mail
                 </Text>
@@ -226,7 +226,7 @@ export function LoginForm({ viewModel }: LoginFormProps) {
             control={control}
             name="password"
             render={({ field: { onChange, value } }) => (
-              <View className="space-y-2">
+              <View className="gap-2">
                 <Text className="text-sm font-medium text-gray-700 mb-1">
                   Senha
                 </Text>

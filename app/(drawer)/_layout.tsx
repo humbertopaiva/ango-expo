@@ -31,7 +31,7 @@ export default function DrawerLayout() {
         screenOptions={{
           headerShown: false,
           drawerPosition: "left",
-          drawerType: isPermanentDrawer ? "permanent" : "front", // Permanente na web em telas grandes
+          drawerType: isPermanentDrawer ? "permanent" : "front",
           drawerStyle: {
             width: drawerWidth,
             backgroundColor: "white",

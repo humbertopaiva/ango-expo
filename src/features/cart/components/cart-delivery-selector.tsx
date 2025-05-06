@@ -66,7 +66,7 @@ export const CartDeliverySelector: React.FC<CartDeliverySelectorProps> = ({
             if (!isDelivery) onToggleDeliveryMode();
           }}
         >
-          <VStack className="items-center space-y-1">
+          <VStack className="items-center gap-1">
             <Truck size={24} color={isDelivery ? primaryColor : "#6B7280"} />
             <Text
               className="font-medium text-center"
@@ -100,7 +100,7 @@ export const CartDeliverySelector: React.FC<CartDeliverySelectorProps> = ({
             if (isDelivery) onToggleDeliveryMode();
           }}
         >
-          <VStack className="items-center space-y-1">
+          <VStack className="items-center gap-1">
             <Home size={24} color={!isDelivery ? primaryColor : "#6B7280"} />
             <Text
               className="font-medium text-center"

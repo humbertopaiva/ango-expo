@@ -61,7 +61,7 @@ export const VariationTypeForm = forwardRef<
   }));
 
   return (
-    <View className="space-y-6">
+    <View className="gap-6">
       <FormControl isInvalid={!!form.formState.errors.nome}>
         <FormControl.Label>
           <Text className="text-sm font-medium text-gray-700">

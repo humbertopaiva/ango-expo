@@ -36,7 +36,7 @@ export function AdditionalSection() {
               {vm.profile.adicionais.map((adicional, index) => (
                 <View
                   key={index}
-                  className="p-4 rounded-lg border border-gray-100 bg-gray-50 space-y-1"
+                  className="p-4 rounded-lg border border-gray-100 bg-gray-50 gap-1"
                 >
                   <Text className="font-medium text-gray-700">
                     {adicional.titulo}

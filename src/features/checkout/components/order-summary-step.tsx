@@ -257,7 +257,7 @@ export function OrderSummaryStep() {
         <Divider className="my-3" />
 
         {/* Resumo de valores com visual aprimorado */}
-        <View className="space-y-2">
+        <View className="gap-2">
           <HStack className="justify-between">
             <Text className="text-gray-600">Subtotal</Text>
             <Text className="font-medium text-gray-800">

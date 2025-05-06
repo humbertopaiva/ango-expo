@@ -105,7 +105,7 @@ export function SortableList<T>({
         </View>
       )}
 
-      <ScrollView className="space-y-4">
+      <ScrollView className="gap-4">
         {orderedItems.map((item, index) => (
           <View key={keyExtractor(item)} className="mb-4">
             {renderItem(

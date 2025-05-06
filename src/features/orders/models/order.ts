@@ -67,9 +67,22 @@ export function createOrderFromCart(
   companyPhone?: string
 ): Order {
   const subtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const currentDate = new Date();
+
+  // Gera um ID baseado na data atual sem aleatoriedade
+  // Usamos a data formatada como YYYYMMDDHHmmss para garantir sequência cronológica
+  const timestamp =
+    currentDate.getFullYear() +
+    String(currentDate.getMonth() + 1).padStart(2, "0") +
+    String(currentDate.getDate()).padStart(2, "0") +
+    String(currentDate.getHours()).padStart(2, "0") +
+    String(currentDate.getMinutes()).padStart(2, "0") +
+    String(currentDate.getSeconds()).padStart(2, "0");
+
+  const orderId = `order_${timestamp}`;
 
   return {
-    id: `order_${Date.now()}`,
+    id: orderId,
     companyId,
     companySlug,
     companyName,
@@ -81,8 +94,8 @@ export function createOrderFromCart(
     payment: {
       method: PaymentMethod.CREDIT_CARD,
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: currentDate,
+    updatedAt: currentDate,
     estimatedDeliveryTime: 45,
   };
 }

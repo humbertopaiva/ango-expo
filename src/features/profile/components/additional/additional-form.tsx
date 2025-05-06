@@ -86,9 +86,9 @@ export function AdditionalForm({
         </ModalHeader>
 
         <ScrollView className="p-4">
-          <View className="space-y-6">
+          <View className="gap-6">
             {/* Informações Adicionais */}
-            <View className="space-y-4">
+            <View className="gap-4">
               <View className="flex-row items-center justify-between">
                 <Text className="text-lg font-medium">
                   Informações Adicionais
@@ -104,12 +104,9 @@ export function AdditionalForm({
               </View>
 
               {adicionaisFields.map((field, index) => (
-                <View
-                  key={field.id}
-                  className="space-y-4 p-4 border rounded-lg"
-                >
+                <View key={field.id} className="gap-4 p-4 border rounded-lg">
                   <View className="flex-row items-start justify-between">
-                    <View className="flex-1 space-y-4">
+                    <View className="flex-1 gap-4">
                       <FormControl
                         isInvalid={
                           !!form.formState.errors.adicionais?.[index]?.titulo
@@ -167,7 +164,7 @@ export function AdditionalForm({
             </View>
 
             {/* Tags */}
-            <View className="space-y-4">
+            <View className="gap-4">
               <View className="flex-row items-center justify-between">
                 <Text className="text-lg font-medium">Tags</Text>
                 <Button

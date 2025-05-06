@@ -1,14 +1,7 @@
 // Path: src/features/orders/screens/order-details-screen.tsx
 
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Share,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
 import { Card, VStack, HStack, Divider } from "@gluestack-ui/themed";
@@ -18,10 +11,10 @@ import {
   CreditCard,
   MessageSquare,
   Phone,
-  RefreshCw,
   ShoppingBag,
   Share2,
   Trash2,
+  Home,
 } from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
 import { Order, PaymentMethod } from "../models/order";
@@ -30,7 +23,6 @@ import { ptBR } from "date-fns/locale";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { Package } from "lucide-react-native";
-import { useMultiCartStore } from "@/src/features/cart/stores/cart.store";
 import { toastUtils } from "@/src/utils/toast.utils";
 import { useToast } from "@gluestack-ui/themed";
 
@@ -42,8 +34,8 @@ export function OrderDetailsScreen() {
 
   const orderViewModel = useOrderViewModel();
   const [order, setOrder] = useState<Order | null>(null);
+  const [orderNumber, setOrderNumber] = useState<number>(0);
 
-  const multiCartStore = useMultiCartStore();
   const toast = useToast();
 
   const primaryColor = THEME_COLORS.primary;
@@ -53,6 +45,11 @@ export function OrderDetailsScreen() {
       const foundOrder = orderViewModel.getOrderById(orderId);
       if (foundOrder) {
         setOrder(foundOrder);
+
+        // Encontrar o número de ordem baseado na posição na lista de pedidos
+        const allOrders = orderViewModel.getAllOrders();
+        const orderIndex = allOrders.findIndex((o) => o.id === orderId);
+        setOrderNumber(orderIndex !== -1 ? orderIndex + 1 : 0);
       } else {
         // Se o pedido não for encontrado, voltar para a lista de pedidos
         router.back();
@@ -108,50 +105,8 @@ export function OrderDetailsScreen() {
     );
   };
 
-  const handleRepeatOrder = () => {
-    // Adicionar itens ao carrinho
-    multiCartStore.clearCart(companySlug);
-    order.items.forEach((item) => {
-      multiCartStore.addItem(companySlug, item);
-    });
-
-    // Navegar para o carrinho
-    router.push(`/(drawer)/empresa/${companySlug}/cart`);
-    toastUtils.success(toast, "Itens adicionados ao carrinho!");
-  };
-
-  const handleShareOrder = async () => {
-    try {
-      const orderCode = order.id.replace("order_", "").substring(0, 6);
-      const formattedDate = format(
-        new Date(order.createdAt),
-        "dd/MM/yyyy 'às' HH:mm",
-        { locale: ptBR }
-      );
-      const totalItems = order.items.reduce(
-        (sum, item) => sum + item.quantity,
-        0
-      );
-
-      const message = `
-Pedido #${orderCode} - ${order.companyName}
-Data: ${formattedDate}
-Itens: ${totalItems} ${totalItems === 1 ? "item" : "itens"}
-Total: ${formatCurrency(order.total)}
-
-Detalhes do pedido:
-${order.items
-  .map((item) => `- ${item.quantity}x ${item.name} (${item.priceFormatted})`)
-  .join("\n")}
-`;
-
-      await Share.share({
-        message,
-        title: `Pedido #${orderCode} - ${order.companyName}`,
-      });
-    } catch (error) {
-      console.error("Erro ao compartilhar pedido:", error);
-    }
+  const handleReturnToCompanyHome = () => {
+    router.push(`/(drawer)/empresa/${companySlug}`);
   };
 
   const getPaymentMethodInfo = (method: PaymentMethod) => {
@@ -200,21 +155,21 @@ ${order.items
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* <ScreenHeader
-        title={`Pedido #${order.id.replace("order_", "").substring(0, 6)}`}
+      <ScreenHeader
+        title={`Pedido #${orderNumber}`}
         showBackButton={true}
         onBackPress={() => router.back()}
         rightContent={
-          <TouchableOpacity onPress={handleShareOrder} className="p-2">
-            <Share2 size={20} color="white" />
+          <TouchableOpacity onPress={handleDeleteOrder} className="p-2">
+            <Trash2 size={20} color="white" />
           </TouchableOpacity>
         }
-      /> */}
+      />
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16 }}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 16, paddingBottom: 88 }}
+        showsVerticalScrollIndicator={true}
       >
         {/* Informações Gerais do Pedido */}
         <Card className="mb-4 border border-gray-100">
@@ -433,19 +388,7 @@ ${order.items
         </Card>
 
         {/* Botões de ação */}
-        <View className="mb-8 space-y-3">
-          <TouchableOpacity
-            className="py-3 rounded-lg border border-primary-500"
-            onPress={handleRepeatOrder}
-          >
-            <HStack space="sm" className="items-center justify-center">
-              <RefreshCw size={18} color={primaryColor} />
-              <Text className="font-medium" style={{ color: primaryColor }}>
-                Repetir Pedido
-              </Text>
-            </HStack>
-          </TouchableOpacity>
-
+        <View className="mb-8 gap-3">
           <TouchableOpacity
             className="py-3 rounded-lg"
             style={{ backgroundColor: primaryColor }}
@@ -470,6 +413,18 @@ ${order.items
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Botão "Voltar para Home" fixo na parte inferior */}
+      <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+        <TouchableOpacity
+          onPress={handleReturnToCompanyHome}
+          className="py-3 rounded-lg flex-row justify-center items-center"
+          style={{ backgroundColor: primaryColor }}
+        >
+          <Home size={18} color="white" className="mr-2" />
+          <Text className="text-white font-medium">Perfil da Empresa</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

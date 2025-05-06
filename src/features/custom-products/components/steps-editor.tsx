@@ -251,7 +251,7 @@ const StepItem = memo(
               </Text>
             </View>
           ) : (
-            <View className="space-y-2">
+            <View className="gap-2">
               {step.produtos.map((productItem, productIndex) => {
                 // Encontrar os detalhes do produto pelo ID
                 const productDetails = products.find(
@@ -403,7 +403,7 @@ export function StepsEditor({
   );
 
   return (
-    <View className="space-y-4">
+    <View className="gap-4">
       <SectionCard
         title="Passos de Personalização"
         icon={<Package size={20} color={THEME_COLORS.primary} />}

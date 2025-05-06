@@ -22,7 +22,7 @@ export function VariationVisibilityOptions({
   isSubmitting,
 }: VariationVisibilityOptionsProps) {
   return (
-    <View className="space-y-6 py-4">
+    <View className="gap-6 py-4">
       {/* Exibir Produto */}
       <FormControl>
         <FormControlLabel>

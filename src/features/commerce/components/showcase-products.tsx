@@ -31,7 +31,7 @@ export function ShowcaseProducts({
 
   if (isLoading) {
     return (
-      <View className="space-y-4 mb-8">
+      <View className="gap-4 mb-8">
         <Text className="text-lg font-medium">Carregando produtos...</Text>
         <View className="flex-row flex-wrap gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -49,7 +49,7 @@ export function ShowcaseProducts({
   }
 
   return (
-    <View className="space-y-4 mb-8">
+    <View className="gap-4 mb-8">
       <View className="flex-row justify-between items-center mb-4">
         <Text className="text-lg font-semibold text-gray-800">
           Produtos em destaque de {companyName}
@@ -117,7 +117,7 @@ export function ShowcaseProducts({
                   <Text className="text-sm text-gray-500 line-clamp-2 mb-2">
                     {item.descricao}
                   </Text>
-                  <View className="space-y-1">
+                  <View className="gap-1">
                     {item.preco_promocional ? (
                       <>
                         <Text className="text-lg font-medium text-primary-600">

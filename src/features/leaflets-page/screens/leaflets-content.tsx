@@ -241,9 +241,9 @@ export function LeafletsContent() {
         {/* Conteúdo principal: encartes por categoria */}
         <View className="mt-6">
           {vm.isLoading ? (
-            <View className="space-y-8 px-4">
+            <View className="gap-8 px-4">
               {[1, 2].map((i) => (
-                <View key={i} className="space-y-4">
+                <View key={i} className="gap-4">
                   <View className="h-8 w-40 bg-gray-200 rounded-lg animate-pulse" />
                   <View className="flex-row gap-4">
                     <View className="h-48 w-40 bg-gray-200 rounded-lg animate-pulse" />

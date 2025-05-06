@@ -29,7 +29,7 @@ export function LeafletsFilter({
 }: LeafletsFilterProps) {
   if (isLoading) {
     return (
-      <View className="space-y-4">
+      <View className="gap-4">
         <View className="h-10 w-32 rounded-full bg-gray-200 animate-pulse" />
         <View className="h-10 w-full rounded-lg bg-gray-200 animate-pulse" />
       </View>
@@ -49,7 +49,7 @@ export function LeafletsFilter({
   };
 
   return (
-    <View className="space-y-4 mb-2">
+    <View className="gap-4 mb-2">
       {/* Filtros ativos e botão limpar */}
       {(selectedCompany || selectedCategory) && (
         <View className="flex-row items-center justify-between">

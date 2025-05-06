@@ -191,7 +191,7 @@ export function EditProductVariationScreen() {
         </View>
 
         <SectionCard title="Informações Básicas">
-          <View className="space-y-6 py-4">
+          <View className="gap-6 py-4">
             {/* Descrição */}
             <FormControl isInvalid={!!form.formState.errors.descricao}>
               <FormControlLabel>
@@ -302,7 +302,7 @@ export function EditProductVariationScreen() {
         </SectionCard>
 
         <SectionCard title="Preços">
-          <View className="space-y-6 py-4">
+          <View className="gap-6 py-4">
             {/* Preço */}
             <Controller
               control={form.control}

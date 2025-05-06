@@ -48,7 +48,7 @@ export function ModalForm({
         </ModalHeader>
 
         <Content className="p-4">
-          <View className="space-y-4">
+          <View className="gap-4">
             {children}
 
             <View className="flex-row justify-end gap-3 pt-4">
