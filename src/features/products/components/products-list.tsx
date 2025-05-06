@@ -1,11 +1,17 @@
 // Path: src/features/products/components/products-list.tsx
-import React, { useEffect } from "react";
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import React from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
 import { ProductCard } from "./product-card";
 import { Product } from "../models/product";
 import { ProductSkeletonList } from "./product-skeleton";
 import { Package } from "lucide-react-native";
-import { useQueryClient } from "@tanstack/react-query";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface ProductsListProps {
   products: Product[];
@@ -15,6 +21,7 @@ interface ProductsListProps {
   onView: (product: Product) => void;
   onAddVariation: (product: Product) => void;
   emptyMessage?: string;
+  refreshControl?: React.ReactElement;
 }
 
 export function ProductsList({
@@ -25,6 +32,7 @@ export function ProductsList({
   onView,
   onAddVariation,
   emptyMessage = "Nenhum produto encontrado. Crie um novo produto para começar.",
+  refreshControl,
 }: ProductsListProps) {
   if (isLoading) {
     return <ProductSkeletonList count={3} />;
@@ -32,9 +40,9 @@ export function ProductsList({
 
   if (products.length === 0) {
     return (
-      <View className="bg-white p-6 rounded-lg items-center justify-center">
-        <Package size={40} color="#9CA3AF" />
-        <Text className="text-lg font-medium text-gray-500 mt-2">
+      <View className="bg-white p-8 rounded-xl shadow-sm items-center justify-center">
+        <Package size={48} color="#9CA3AF" />
+        <Text className="text-lg font-medium text-gray-500 mt-4 text-center">
           {emptyMessage}
         </Text>
       </View>
@@ -56,6 +64,7 @@ export function ProductsList({
       )}
       contentContainerStyle={{ paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
+      refreshControl={refreshControl}
       ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
     />
   );

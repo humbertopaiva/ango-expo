@@ -7,13 +7,11 @@ import {
   View,
   StyleSheet,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Filter, Grid } from "lucide-react-native";
+import { Tag } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { Box } from "@/components/ui/box";
 
 interface CategoryFilterProps {
-  categories: any;
+  categories: any[];
   selectedCategoryId: number | null;
   onSelectCategory: (categoryId: number | null) => void;
 }
@@ -24,24 +22,19 @@ export function CategoryFilter({
   onSelectCategory,
 }: CategoryFilterProps) {
   return (
-    <View className="mb-4 mt-2">
-      {/* Cabeçalho elegante com degradê */}
-      <Box className="rounded-xl mb-4 py-2 px-4">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <Filter size={18} color={THEME_COLORS.primary} />
-            <Text className="ml-2 text-md font-medium text-primary-500">
-              Descubra por categorias
-            </Text>
-          </View>
-        </View>
-      </Box>
+    <View className="mb-4">
+      <View className="mb-2 flex-row items-center">
+        <Tag size={16} color={THEME_COLORS.primary} />
+        <Text className="ml-2 text-sm font-medium text-gray-700">
+          Filtrar por categoria
+        </Text>
+      </View>
 
       {/* Categorias rolantes */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 4 }}
+        contentContainerStyle={{ paddingVertical: 4 }}
       >
         {/* Opção "Todos" */}
         <TouchableOpacity
@@ -57,7 +50,7 @@ export function CategoryFilter({
               selectedCategoryId === null && styles.activeText,
             ]}
           >
-            Todos os produtos
+            Todos
           </Text>
         </TouchableOpacity>
 
@@ -88,25 +81,25 @@ export function CategoryFilter({
 
 const styles = StyleSheet.create({
   categoryButton: {
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 100,
-    marginRight: 10,
+    marginRight: 8,
     backgroundColor: "white",
     borderWidth: 1,
-    borderColor: "rgba(244, 81, 30, 0.15)",
+    borderColor: "#F1F5F9",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    elevation: 1,
   },
   activeButton: {
     backgroundColor: THEME_COLORS.primary,
     borderColor: THEME_COLORS.primary,
   },
   categoryText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500",
     color: "#4B5563",
   },
