@@ -25,17 +25,6 @@ interface AddonCardProps {
 export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
   const [isActionsVisible, setIsActionsVisible] = useState(false);
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Data inválida";
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
   const toggleActions = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsActionsVisible(!isActionsVisible);
@@ -56,7 +45,7 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
               </Text>
 
               <View className="flex-row flex-wrap items-center mt-2 gap-2">
-                <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-md">
+                <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-md gap-1">
                   <Tag
                     size={14}
                     color={THEME_COLORS.primary}
@@ -67,7 +56,7 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
                   </Text>
                 </View>
 
-                <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-md">
+                <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-md gap-1">
                   <Box
                     size={14}
                     color={THEME_COLORS.primary}
@@ -77,15 +66,6 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
                     {addon.produtos?.length || 0} Produtos
                   </Text>
                 </View>
-              </View>
-
-              <View className="flex-row items-center mt-3">
-                <Calendar size={14} color="#6B7280" className="mr-1" />
-                <Text className="text-gray-500 text-xs">
-                  {addon.date_updated
-                    ? `Atualizado em ${formatDate(addon.date_updated)}`
-                    : `Criado em ${formatDate(addon.date_created)}`}
-                </Text>
               </View>
             </View>
 
