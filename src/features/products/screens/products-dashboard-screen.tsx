@@ -97,21 +97,8 @@ export function ProductsDashboardScreen() {
       />
 
       <ScrollView className="flex-1">
-        {/* Hero section */}
-        <View className="bg-primary-500 px-4 pt-6 pb-8 mb-4">
-          <View className="mb-3 flex-row items-center">
-            <Grid size={20} color="#FFFFFF" />
-            <Text className="ml-2 text-white font-medium">
-              Gerenciamento de Produtos
-            </Text>
-          </View>
-          <Text className="text-white text-opacity-90">
-            Gerencie seu catálogo, variações e personalizações
-          </Text>
-        </View>
-
         {/* Quick Actions */}
-        <View className="px-4 flex-row justify-between mb-6">
+        <View className="px-4 flex-row justify-between mb-6 py-6">
           {quickActions.map((action) => (
             <TouchableOpacity
               key={action.id}
@@ -169,42 +156,6 @@ export function ProductsDashboardScreen() {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        {/* Recent Activity Section */}
-        <View className="px-4 mb-8">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
-            Estatísticas
-          </Text>
-
-          <Box className="bg-gray-50 p-4 rounded-xl">
-            <View className="flex-row justify-between mb-3">
-              <View className="flex-1">
-                <Text className="text-gray-500 text-sm">Total de Produtos</Text>
-                <Text className="text-xl font-semibold text-primary-500">
-                  {isLoading ? "..." : products.length}
-                </Text>
-              </View>
-
-              <View className="flex-1">
-                <Text className="text-gray-500 text-sm">Produtos Ativos</Text>
-                <Text className="text-xl font-semibold text-green-500">
-                  {isLoading
-                    ? "..."
-                    : products.filter((p) => p.status === "disponivel").length}
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              className="bg-gray-200 py-2 rounded-lg mt-2"
-              onPress={() => router.push("/admin/products/list")}
-            >
-              <Text className="text-center text-gray-800 font-medium">
-                Ver Detalhes
-              </Text>
-            </TouchableOpacity>
-          </Box>
         </View>
 
         {/* Bottom spacing */}

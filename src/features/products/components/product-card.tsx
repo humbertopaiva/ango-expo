@@ -188,7 +188,7 @@ export function ProductCard({
         {onView && (
           <TouchableOpacity
             onPress={onView}
-            className="flex-1 p-3 flex-row items-center justify-center"
+            className="flex-1 p-3 flex-row items-center justify-center gap-1"
             style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
           >
             <Eye size={16} color="#374151" className="mr-1" />
@@ -199,7 +199,7 @@ export function ProductCard({
         {onEdit && (
           <TouchableOpacity
             onPress={onEdit}
-            className="flex-1 p-3 flex-row items-center justify-center"
+            className="flex-1 p-3 flex-row items-center justify-center gap-1"
             style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
           >
             <Edit size={16} color="#374151" className="mr-1" />
@@ -210,7 +210,7 @@ export function ProductCard({
         {productHasVariation && onAddVariation && (
           <TouchableOpacity
             onPress={onAddVariation}
-            className="flex-1 p-3 flex-row items-center justify-center"
+            className="flex-1 p-3 flex-row items-center justify-center gap-1"
             style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
           >
             <Layers size={16} color="#1E40AF" className="mr-1" />
@@ -221,7 +221,7 @@ export function ProductCard({
         {onDelete && (
           <TouchableOpacity
             onPress={onDelete}
-            className="flex-1 p-3 flex-row items-center justify-center"
+            className="flex-1 p-3 flex-row items-center justify-center gap-1"
           >
             <Trash size={16} color="#EF4444" className="mr-1" />
             <Text className="text-xs font-medium text-red-500">Excluir</Text>
