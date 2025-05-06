@@ -23,7 +23,7 @@ export function CompanyShowcase({ products, isLoading }: CompanyShowcaseProps) {
 
   if (isLoading) {
     return (
-      <View className="space-y-4">
+      <View className="gap-4">
         <View className="h-6 w-48 bg-gray-200 animate-pulse rounded" />
         <View className="flex-row flex-wrap">
           {[1, 2, 3, 4].map((i) => (
@@ -41,7 +41,7 @@ export function CompanyShowcase({ products, isLoading }: CompanyShowcaseProps) {
   }
 
   return (
-    <View className="space-y-4 mx-4">
+    <View className="gap-4 mx-4">
       <Text className="text-xl font-semibold">Produtos em Destaque</Text>
       <FlatList
         data={products}

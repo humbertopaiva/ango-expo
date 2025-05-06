@@ -317,7 +317,7 @@ export function CustomProductDetailsScreen() {
           icon={<StepForwardIcon size={20} color="#374151" />}
         >
           {customProduct.passos && customProduct.passos.length > 0 ? (
-            <View className="space-y-4 py-4">
+            <View className="gap-4 py-4">
               {customProduct.passos.map((passo, passoIndex) => (
                 <Card key={passoIndex} className="p-4 bg-white">
                   <View className="flex-row items-center mb-2">
@@ -352,7 +352,7 @@ export function CustomProductDetailsScreen() {
                     Produtos disponíveis:
                   </Text>
 
-                  <View className="space-y-2">
+                  <View className="gap-2">
                     {passo.produtos.map((produtoItem, produtoIndex) => {
                       const produtoDetalhes = getProductById(
                         produtoItem.produtos.key

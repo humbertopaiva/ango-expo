@@ -77,7 +77,7 @@ export function CategoryProductSelector({
   const selectedProducts = getSelectedProducts();
 
   return (
-    <View className="space-y-6">
+    <View className="gap-6">
       {/* Seção de Produtos */}
       <SectionCard
         title="Produtos Adicionais"
@@ -102,7 +102,7 @@ export function CategoryProductSelector({
               </Text>
             </View>
           ) : (
-            <View className="space-y-2">
+            <View className="gap-2">
               {selectedProducts.map((product) => (
                 <Card key={product.id} className="p-3 bg-white">
                   <View className="flex-row items-center">

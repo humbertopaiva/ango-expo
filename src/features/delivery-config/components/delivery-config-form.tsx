@@ -317,7 +317,7 @@ export const DeliveryConfigForm = forwardRef(
                           <Plus size={20} color="white" />
                         </TouchableOpacity>
                       </View>
-                      <View className="space-y-2">
+                      <View className="gap-2">
                         {bairrosAtendidos && bairrosAtendidos.length > 0 ? (
                           bairrosAtendidos.map((bairro, index) => (
                             <View

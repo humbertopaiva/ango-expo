@@ -185,7 +185,7 @@ export function LeafletDetailsModal({
 
             {/* Metadados */}
             <View className="p-4 border-t border-gray-200">
-              <View className="space-y-2">
+              <View className="gap-2">
                 <View className="flex-row items-center">
                   <Calendar size={14} color="#6B7280" />
                   <Text className="text-sm text-gray-500 ml-1">

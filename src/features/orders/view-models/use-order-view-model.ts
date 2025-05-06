@@ -10,10 +10,15 @@ export interface OrderViewModel {
   isLoading: boolean;
   orders: Order[];
 
-  // Ações
+  // Ações para obter pedidos
   getOrdersByCompany: (companySlug: string, limit?: number) => Order[];
   getOrderById: (orderId: string) => Order | undefined;
-  getAllOrders: (limit?: number) => Order[]; // Adicionando esta função à interface
+  getAllOrders: (limit?: number) => Order[];
+
+  // Método para obter pedidos em sequência (do mais recente para o mais antigo)
+  getOrdersInSequence: (companySlug?: string, limit?: number) => Order[];
+
+  // Ações para manipular pedidos
   deleteOrder: (orderId: string) => void;
   clearAllOrders: () => void;
   clearCompanyOrders: (companySlug: string) => void;
@@ -25,7 +30,7 @@ export function useOrderViewModel(): OrderViewModel {
   const orderStore = useOrderStore();
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
 
-  // Obter pedidos
+  // Obter pedidos de uma empresa específica
   const getOrdersByCompany = (companySlug: string, limit?: number): Order[] => {
     return orderStore.getOrdersByCompany(companySlug, limit);
   };
@@ -38,6 +43,22 @@ export function useOrderViewModel(): OrderViewModel {
   // Obter todos os pedidos
   const getAllOrders = (limit?: number): Order[] => {
     return orderStore.getAllOrders(limit);
+  };
+
+  // Método para obter pedidos em sequência (do mais recente para o mais antigo)
+  const getOrdersInSequence = (
+    companySlug?: string,
+    limit?: number
+  ): Order[] => {
+    const allOrders = companySlug
+      ? orderStore.getOrdersByCompany(companySlug, limit)
+      : orderStore.getAllOrders(limit);
+
+    // Ordenar por data (mais recentes primeiro)
+    return [...allOrders].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   };
 
   // Deletar pedido
@@ -70,10 +91,12 @@ export function useOrderViewModel(): OrderViewModel {
       let message = "";
 
       if (order) {
+        // Usar o ID do pedido para criar uma referência simples
+        // Não precisamos mais do substring random para o número do pedido
+        const orderReferenceId = orderId.replace("order_", "");
+
         // Formatar mensagem com detalhes do pedido
-        message = `Olá! Gostaria de falar sobre meu pedido #${orderId
-          .replace("order_", "")
-          .substring(0, 6)} feito em ${new Date(
+        message = `Olá! Gostaria de falar sobre meu pedido #${orderReferenceId} feito em ${new Date(
           order.createdAt
         ).toLocaleDateString()}`;
       } else {
@@ -103,7 +126,8 @@ export function useOrderViewModel(): OrderViewModel {
     orders: orderStore.getAllOrders(),
     getOrdersByCompany,
     getOrderById,
-    getAllOrders, // Inclua esta função no objeto retornado
+    getAllOrders,
+    getOrdersInSequence,
     deleteOrder,
     clearAllOrders,
     clearCompanyOrders,

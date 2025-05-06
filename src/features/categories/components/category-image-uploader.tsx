@@ -235,7 +235,7 @@ export function CategoryImageUploader({
       className="w-full aspect-square rounded-lg border-2 border-dashed border-gray-300 
                bg-gray-50 items-center justify-center p-4 max-w-[200px]"
     >
-      <View className="items-center space-y-2">
+      <View className="items-center gap-2">
         {isUploading ? (
           <>
             <ActivityIndicator size="small" color="#0891B2" />

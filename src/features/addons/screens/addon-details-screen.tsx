@@ -203,7 +203,7 @@ export function AddonDetailsScreen() {
           icon={<Tag size={20} color="#374151" />}
         >
           {addonsList.categorias && addonsList.categorias.length > 0 ? (
-            <View className="space-y-2 py-4">
+            <View className="gap-2 py-4">
               {addonsList.categorias.map((category) => (
                 <Card key={category.id} className="p-3 bg-white">
                   <View className="flex-row items-center">
@@ -262,7 +262,7 @@ export function AddonDetailsScreen() {
           icon={<Box size={20} color="#374151" />}
         >
           {addonsList.produtos && addonsList.produtos.length > 0 ? (
-            <View className="space-y-2 py-4">
+            <View className="gap-2 py-4">
               {addonsList.produtos.map((product) => (
                 <Card key={product.id} className="p-3 bg-white">
                   <View className="flex-row">

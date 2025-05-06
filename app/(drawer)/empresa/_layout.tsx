@@ -88,7 +88,7 @@ export default function CompanyLayout() {
           name="[companySlug]/orders/[orderId]"
           options={{
             title: "Detalhes do Pedido",
-            headerShown: true,
+            headerShown: false,
           }}
         />
         <Stack.Screen

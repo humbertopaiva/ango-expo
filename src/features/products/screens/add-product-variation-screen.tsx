@@ -281,7 +281,7 @@ export function AddProductVariationScreen() {
         </View>
 
         <SectionCard title="Dados da Variação">
-          <View className="space-y-6 py-4">
+          <View className="gap-6 py-4">
             {/* Tipo de Variação (read-only, mostrando a variação do produto) */}
             <FormControl isInvalid={!!form.formState.errors.variacao}>
               <FormControlLabel>
@@ -371,7 +371,7 @@ export function AddProductVariationScreen() {
         </SectionCard>
 
         <SectionCard title="Informações Básicas">
-          <View className="space-y-6 py-4">
+          <View className="gap-6 py-4">
             {/* Descrição */}
             <FormControl isInvalid={!!form.formState.errors.descricao}>
               <FormControlLabel>
@@ -482,7 +482,7 @@ export function AddProductVariationScreen() {
         </SectionCard>
 
         <SectionCard title="Preços">
-          <View className="space-y-6 py-4">
+          <View className="gap-6 py-4">
             {/* Preço */}
             <Controller
               control={form.control}

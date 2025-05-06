@@ -71,7 +71,7 @@ export function ShowcaseGrid({ companies, isLoading }: ShowcaseGridProps) {
         </Text>
       </View>
 
-      <View className="space-y-4">
+      <View className="gap-4">
         {companies.map((item) => (
           <TouchableOpacity
             key={item.id}

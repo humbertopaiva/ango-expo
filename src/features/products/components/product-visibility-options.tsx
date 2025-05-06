@@ -29,7 +29,7 @@ export function ProductVisibilityOptions({
       title="Opções de Visibilidade"
       icon={<Eye size={20} color="#374151" />}
     >
-      <View className="space-y-6 py-4">
+      <View className="gap-6 py-4">
         {/* Exibir Produto */}
         <FormControl>
           <FormControlLabel>

@@ -36,7 +36,7 @@ export function EnhancedDeliveryShowcaseSection({
           </Text>
         </View>
 
-        <View className="space-y-6">
+        <View className="gap-6">
           {[1, 2].map((i) => (
             <View
               key={i}

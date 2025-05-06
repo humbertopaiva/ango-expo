@@ -50,7 +50,7 @@ export function CompanyList({
 
   if (isLoading) {
     return (
-      <View className="space-y-4">
+      <View className="gap-4">
         {[1, 2, 3].map((i) => (
           <View key={i} className="h-32 bg-gray-200 rounded-xl animate-pulse" />
         ))}
@@ -107,7 +107,7 @@ export function CompanyList({
 
   // Versão para web e mobile
   return (
-    <View className="space-y-6">
+    <View className="gap-6">
       {openCompanies.length > 0 && (
         <View className="mb-2">
           <SectionHeader

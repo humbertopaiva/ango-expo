@@ -89,7 +89,7 @@ export const VariationForm = forwardRef<VariationFormRef, VariationFormProps>(
     return (
       <View className="bg-white">
         {/* Form Fields */}
-        <View className="space-y-4">
+        <View className="gap-4">
           <FormControl isInvalid={!!error.nome}>
             <FormControlLabel>
               <Text className="text-sm font-medium text-gray-700">

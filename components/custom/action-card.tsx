@@ -51,7 +51,7 @@ export function ActionCard({
         </View>
       </View>
 
-      <View className="p-4 space-y-4">{children}</View>
+      <View className="p-4 gap-4">{children}</View>
 
       {footer && <View className="p-4 border-t border-gray-200">{footer}</View>}
     </Card>

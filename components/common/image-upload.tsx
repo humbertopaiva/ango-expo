@@ -151,7 +151,7 @@ export function ImageUpload({
       className="w-full aspect-[4/3] rounded-lg border-2 border-dashed border-gray-300 
                  bg-gray-50 items-center justify-center p-4"
     >
-      <View className="items-center space-y-2">
+      <View className="items-center gap-2">
         <Upload color="#0891B2" size={32} />
         <Text className="text-base font-medium text-gray-700">
           {isUploading ? "Enviando imagem..." : "Toque para selecionar imagem"}

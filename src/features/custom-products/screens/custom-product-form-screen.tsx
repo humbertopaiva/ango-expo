@@ -527,7 +527,7 @@ export function CustomProductFormScreen() {
                   <RadioGroup
                     value={value}
                     onChange={handlePriceTypeChange}
-                    className="mt-2 space-y-2"
+                    className="mt-2 gap-2"
                   >
                     <Radio value="menor" className="mb-2">
                       <RadioIndicator mr="$2">

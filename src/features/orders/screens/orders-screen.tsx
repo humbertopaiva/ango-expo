@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
-  Share,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import ScreenHeader from "@/components/ui/screen-header";
@@ -19,8 +18,8 @@ import {
   ChevronRight,
   Calendar,
   Package,
-  RefreshCw,
   Trash2,
+  Home,
   MessageSquare,
 } from "lucide-react-native";
 import { useOrderViewModel } from "../view-models/use-order-view-model";
@@ -36,7 +35,6 @@ export function OrdersScreen() {
   const { companySlug } = useLocalSearchParams<{ companySlug: string }>();
   const [orders, setOrders] = useState<Order[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const multiCartStore = useMultiCartStore();
   const toast = useToast();
 
   const primaryColor = THEME_COLORS.primary;
@@ -113,23 +111,9 @@ export function OrdersScreen() {
     );
   };
 
-  // Handler para repetir um pedido
-  const handleRepeatOrder = (orderId: string) => {
-    const order = orderViewModel.getOrderById(orderId);
-
-    if (order) {
-      // Adicionar os itens ao carrinho
-      multiCartStore.clearCart(companySlug);
-      order.items.forEach((item) => {
-        multiCartStore.addItem(companySlug, item);
-      });
-
-      // Navegar para o carrinho
-      router.push(`/(drawer)/empresa/${companySlug}/cart`);
-
-      // Exibir alerta de sucesso
-      toastUtils.success(toast, "Itens adicionados ao carrinho!");
-    }
+  // Retornar para a tela principal da empresa
+  const handleReturnToCompanyHome = () => {
+    router.push(`/(drawer)/empresa/${companySlug}`);
   };
 
   // Contatar a empresa via WhatsApp
@@ -167,7 +151,11 @@ export function OrdersScreen() {
     return format(date, "dd 'de' MMMM, yyyy 'às' HH:mm", { locale: ptBR });
   };
 
-  const renderOrderItem = ({ item }: { item: Order }) => {
+  // Renderizar item de pedido simplificado conforme solicitação
+  const renderOrderItem = ({ item, index }: { item: Order; index: number }) => {
+    // Usar o índice + 1 como número do pedido para sequência não aleatória
+    const orderNumber = index + 1;
+
     return (
       <SwipeableCard
         onEdit={() => handleOrderPress(item.id)}
@@ -183,7 +171,7 @@ export function OrdersScreen() {
                 <ShoppingBag size={16} color={primaryColor} />
               </View>
               <Text className="font-semibold text-gray-800">
-                Pedido #{item.id.replace("order_", "").substring(0, 6)}
+                Pedido #{orderNumber}
               </Text>
             </HStack>
 
@@ -209,16 +197,6 @@ export function OrdersScreen() {
 
           <HStack space="md" justifyContent="flex-end">
             <TouchableOpacity
-              onPress={() => handleRepeatOrder(item.id)}
-              className="flex-row items-center"
-            >
-              <RefreshCw size={16} color={primaryColor} />
-              <Text className="ml-1 text-sm" style={{ color: primaryColor }}>
-                Repetir pedido
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
               onPress={() => handleContactCompany(item.id)}
               className="flex-row items-center"
             >
@@ -243,7 +221,7 @@ export function OrdersScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* <ScreenHeader
+      <ScreenHeader
         title="Meus Pedidos"
         subtitle={
           companySlug ? `${orders.length} pedidos realizados` : undefined
@@ -257,14 +235,14 @@ export function OrdersScreen() {
             </TouchableOpacity>
           ) : undefined
         }
-      /> */}
+      />
 
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
         renderItem={renderOrderItem}
-        contentContainerStyle={{ padding: 16 }}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 16, paddingBottom: 88 }} // Adicionar espaço para botão ao final
+        showsVerticalScrollIndicator={true} // Garantir que o scroll vertical esteja visível
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
@@ -280,6 +258,30 @@ export function OrdersScreen() {
           </Card>
         }
       />
+
+      {/* Botão Voltar para Home ao final da tela */}
+      <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+        <TouchableOpacity
+          onPress={handleReturnToCompanyHome}
+          className="py-3 rounded-lg flex-row justify-center items-center"
+          style={{ backgroundColor: primaryColor }}
+        >
+          <Home size={18} color="white" className="mr-2" />
+          <Text className="text-white font-medium">
+            Voltar para o perfil da empresa
+          </Text>
+        </TouchableOpacity>
+
+        {orders.length > 0 && (
+          <TouchableOpacity
+            onPress={handleClearAllOrders}
+            className="py-3 mt-2 rounded-lg border border-red-500 flex-row justify-center items-center"
+          >
+            <Trash2 size={18} color="#EF4444" className="mr-2" />
+            <Text className="text-red-500 font-medium">Limpar Pedidos</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }

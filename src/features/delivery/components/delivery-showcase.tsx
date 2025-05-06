@@ -19,7 +19,7 @@ export function DeliveryShowcase({
 }: DeliveryShowcaseProps) {
   if (isLoading) {
     return (
-      <View className="space-y-4">
+      <View className="gap-4">
         <View className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
         <View className="flex-row gap-4">
           {[1, 2, 3, 4].map((i) => (

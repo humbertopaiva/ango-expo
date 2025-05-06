@@ -274,7 +274,7 @@ export function CompanyInfoModal({
                   color={primaryColor}
                 />
 
-                <Box className="space-y-4">
+                <Box className="gap-4">
                   <HStack className="flex-wrap gap-2">
                     {/* Tempo estimado */}
                     {config.delivery.tempo_estimado_entrega && (
@@ -370,7 +370,7 @@ export function CompanyInfoModal({
                   color={primaryColor}
                 />
 
-                <Box className="space-y-3">
+                <Box className="gap-3">
                   {/* Telefone */}
                   {profile.telefone && (
                     <TouchableOpacity

@@ -349,7 +349,7 @@ export function ProductDetailsScreen() {
             title="Preços e Pagamento"
             icon={<DollarSign size={20} color="#374151" />}
           >
-            <View className="space-y-2">
+            <View className="gap-2">
               {product.preco && (
                 <View className="flex-row justify-between">
                   <Text className="text-gray-700">Preço:</Text>
@@ -395,7 +395,7 @@ export function ProductDetailsScreen() {
           title="Opções de Visibilidade"
           icon={<Eye size={20} color="#374151" />}
         >
-          <View className="space-y-2 py-4">
+          <View className="gap-2 py-4">
             {/* Visibilidade do Produto */}
             <View className="flex-row justify-between">
               <Text className="text-gray-700">Visibilidade do produto:</Text>
@@ -459,7 +459,7 @@ export function ProductDetailsScreen() {
                 </TouchableOpacity>
               </View>
             ) : (
-              <View className="space-y-3 mt-2">
+              <View className="gap-3 mt-2">
                 {variationItems.map((item) => (
                   <Card key={item.id} className="p-4 bg-white">
                     <View className="flex-row items-start">
