@@ -1,6 +1,13 @@
 // Path: src/features/addons/screens/addon-form-screen.tsx
+
 import React, { useState, useEffect } from "react";
-import { View, Text, Platform, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  Platform,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useForm, Controller } from "react-hook-form";
@@ -25,9 +32,8 @@ import {
 import { AdminScreenHeader } from "@/components/navigation/admin-screen-header";
 import { FormActions } from "@/components/custom/form-actions";
 import { CategoryProductSelector } from "../components/category-product-selector";
-import { SectionCard } from "@/components/custom/section-card";
-import { THEME_COLORS } from "@/src/styles/colors";
 import { ListIcon, AlertCircle } from "lucide-react-native";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 // Form validation schema
 const addonsFormSchema = z.object({
@@ -153,7 +159,7 @@ export function AddonFormScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-gray-50">
       <AdminScreenHeader
         title={
           isEditing ? "Editar Lista de Adicionais" : "Nova Lista de Adicionais"
@@ -174,65 +180,72 @@ export function AddonFormScreen() {
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
       >
-        {/* Instruções de uso */}
-        <View className="bg-blue-50 p-4 rounded-lg mb-6">
+        {/* Tutorial Card */}
+        <View className="bg-blue-50 p-4 rounded-xl mb-6 border-l-4 border-blue-600">
           <View className="flex-row">
-            <AlertCircle size={20} color="#1E40AF" className="mr-2 mt-0.5" />
+            <AlertCircle size={22} color="#1E40AF" className="mr-3" />
             <View>
-              <Text className="text-blue-800 font-medium">
+              <Text className="text-blue-800 font-semibold text-base">
                 Como criar uma lista de adicionais:
               </Text>
-              <Text className="text-blue-700 mt-1">
-                1. Dê um nome para a lista de adicionais
-              </Text>
-              <Text className="text-blue-700">
-                2. Selecione os produtos que farão parte desta lista
-              </Text>
-              <Text className="text-blue-700">
-                3. Escolha as categorias onde estes adicionais estarão
-                disponíveis
-              </Text>
+              <View className="ml-1 mt-2 gap-1">
+                <Text className="text-blue-700">
+                  1. Dê um nome para a lista de adicionais
+                </Text>
+                <Text className="text-blue-700">
+                  2. Selecione os produtos que farão parte desta lista
+                </Text>
+                <Text className="text-blue-700">
+                  3. Escolha as categorias onde estes adicionais estarão
+                  disponíveis
+                </Text>
+              </View>
             </View>
           </View>
         </View>
 
         {/* Informações básicas */}
-        <SectionCard
-          title="Informações Básicas"
-          icon={<ListIcon size={22} color={THEME_COLORS.primary} />}
-        >
-          <View className="gap-4 flex flex-col py-4">
-            <FormControl isInvalid={!!form.formState.errors.nome}>
-              <FormControlLabel>
-                <Text className="text-sm font-medium text-gray-700">
-                  Nome da Lista de Adicionais{" "}
-                  <Text className="text-red-500">*</Text>
-                </Text>
-              </FormControlLabel>
-              <Controller
-                control={form.control}
-                name="nome"
-                render={({ field: { onChange, value } }) => (
-                  <Input>
-                    <InputField
-                      placeholder="Digite o nome da lista de adicionais"
-                      onChangeText={onChange}
-                      value={value ?? ""}
-                      className="bg-white"
-                    />
-                  </Input>
-                )}
-              />
-              {form.formState.errors.nome && (
-                <FormControlError>
-                  <FormControlErrorText className="text-sm">
-                    {form.formState.errors.nome.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              )}
-            </FormControl>
+        <View className="bg-white p-4 rounded-xl shadow-sm mb-6">
+          <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4">
+            <ListIcon size={20} color={THEME_COLORS.primary} className="mr-2" />
+            <Text className="text-lg font-semibold text-gray-800">
+              Informações Básicas
+            </Text>
           </View>
-        </SectionCard>
+
+          <FormControl
+            isInvalid={!!form.formState.errors.nome}
+            className="mb-2"
+          >
+            <FormControlLabel>
+              <Text className="text-sm font-medium text-gray-700 mb-1">
+                Nome da Lista de Adicionais{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            </FormControlLabel>
+            <Controller
+              control={form.control}
+              name="nome"
+              render={({ field: { onChange, value } }) => (
+                <Input>
+                  <InputField
+                    placeholder="Digite o nome da lista de adicionais"
+                    onChangeText={onChange}
+                    value={value ?? ""}
+                    className="bg-white rounded-lg border-gray-200"
+                  />
+                </Input>
+              )}
+            />
+            {form.formState.errors.nome && (
+              <FormControlError>
+                <FormControlErrorText className="text-sm">
+                  {form.formState.errors.nome.message}
+                </FormControlErrorText>
+              </FormControlError>
+            )}
+          </FormControl>
+        </View>
 
         {/* Seletor de categorias e produtos */}
         <CategoryProductSelector
@@ -245,7 +258,7 @@ export function AddonFormScreen() {
 
       {/* Botões de ação */}
       <View
-        className="absolute bottom-0 left-0 right-0 w-full pb-6 pt-3 bg-white border-t border-gray-200 shadow-lg"
+        className="absolute bottom-0 left-0 right-0 w-full px-4 pb-6 pt-3 bg-white border-t border-gray-200 shadow-lg"
         style={{ paddingBottom: Platform.OS === "ios" ? 24 : 16 }}
       >
         <FormActions
@@ -265,7 +278,7 @@ export function AddonFormScreen() {
             variant: "outline",
             isDisabled: isSubmitting || isCreating || isUpdating,
           }}
-          className="px-4 w-full"
+          className="w-full"
           spacing="sm"
         />
       </View>

@@ -1,4 +1,5 @@
 // Path: src/features/addons/components/category-product-selector.tsx
+
 import React, { useState } from "react";
 import {
   View,
@@ -7,9 +8,9 @@ import {
   FlatList,
   TextInput,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import {
-  Card,
   Button,
   Modal,
   ModalContent,
@@ -20,13 +21,18 @@ import {
   Heading,
   CloseIcon,
 } from "@gluestack-ui/themed";
-import { PlusCircle, Tag, Box, Search, Check } from "lucide-react-native";
+import {
+  PlusCircle,
+  Tag,
+  Box,
+  Search,
+  Check,
+  AlertCircle,
+} from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
-import { SectionCard } from "@/components/custom/section-card";
 import { ImagePreview } from "@/components/custom/image-preview";
 import { useAddonFormData } from "../hooks/use-addon-form-data";
 import { formatCurrency } from "@/src/utils/format.utils";
-import { AlertCircle } from "lucide-react-native";
 
 interface CategoryProductSelectorProps {
   initialCategories?: number[];
@@ -79,180 +85,198 @@ export function CategoryProductSelector({
   return (
     <View className="gap-6">
       {/* Seção de Produtos */}
-      <SectionCard
-        title="Produtos Adicionais"
-        icon={<Box size={20} color={THEME_COLORS.primary} />}
-      >
-        <View className="mb-2">
-          <Text className="text-gray-600">
-            Selecione quais produtos farão parte desta lista de adicionais
+      <View className="bg-white p-4 rounded-xl shadow-sm">
+        <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4">
+          <Box size={20} color={THEME_COLORS.primary} className="mr-2" />
+          <Text className="text-lg font-semibold text-gray-800">
+            Produtos Adicionais
           </Text>
         </View>
 
+        <Text className="text-gray-600 mb-4">
+          Selecione quais produtos farão parte desta lista de adicionais
+        </Text>
+
         {/* Cards dos produtos selecionados */}
-        <View className="mt-4 mb-2">
-          {selectedProducts.length === 0 ? (
-            <View className="p-4 bg-gray-50 rounded-lg items-center">
-              <Box size={24} color="#9CA3AF" />
-              <Text className="text-gray-500 mt-2">
-                Nenhum produto selecionado
-              </Text>
-              <Text className="text-gray-500 text-sm mt-1 text-center">
-                Adicione produtos clicando no botão abaixo
-              </Text>
-            </View>
-          ) : (
-            <View className="gap-2">
-              {selectedProducts.map((product) => (
-                <Card key={product.id} className="p-3 bg-white">
-                  <View className="flex-row items-center">
-                    <View className="h-12 w-12 mr-3">
-                      <ImagePreview
-                        uri={product.imagem}
-                        fallbackIcon={Box}
-                        containerClassName="rounded-lg"
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="font-medium">{product.nome}</Text>
-                      {product.preco && (
-                        <Text className="text-xs text-gray-600">
-                          {formatCurrency(parseFloat(product.preco))}
-                        </Text>
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => toggleProductSelection(product.id)}
-                      className="p-2 bg-red-50 rounded-full"
-                    >
-                      <CloseIcon size="sm" color="#EF4444" />
-                    </TouchableOpacity>
-                  </View>
-                </Card>
-              ))}
-            </View>
-          )}
-
-          {/* Status de carregamento ou erro */}
-          {isProductsLoading && (
-            <View className="p-3 bg-blue-50 rounded-lg my-2">
-              <View className="flex-row items-center">
-                <AlertCircle size={18} color="#1E40AF" className="mr-2" />
-                <Text className="text-blue-800">Carregando produtos...</Text>
+        {isProductsLoading ? (
+          <View className="items-center py-6">
+            <ActivityIndicator size="small" color={THEME_COLORS.primary} />
+            <Text className="text-gray-500 mt-2">Carregando produtos...</Text>
+          </View>
+        ) : selectedProducts.length === 0 ? (
+          <View className="p-5 bg-gray-50 rounded-xl items-center mb-4">
+            <Box size={28} color="#9CA3AF" />
+            <Text className="text-gray-600 font-medium mt-2">
+              Nenhum produto selecionado
+            </Text>
+            <Text className="text-gray-500 text-sm mt-1 text-center">
+              Adicione produtos clicando no botão abaixo
+            </Text>
+          </View>
+        ) : (
+          <View className="gap-2 mb-4">
+            {selectedProducts.map((product) => (
+              <View
+                key={product.id}
+                className="p-3 rounded-lg bg-gray-50 border border-gray-100 flex-row items-center"
+              >
+                <View className="h-10 w-10 mr-3 rounded-md overflow-hidden">
+                  <ImagePreview
+                    uri={product.imagem}
+                    fallbackIcon={Box}
+                    containerClassName="rounded-md"
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-medium text-gray-800">
+                    {product.nome}
+                  </Text>
+                  {product.preco && (
+                    <Text className="text-xs text-gray-600">
+                      {formatCurrency(parseFloat(product.preco))}
+                    </Text>
+                  )}
+                </View>
+                <TouchableOpacity
+                  onPress={() => toggleProductSelection(product.id)}
+                  className="p-2 rounded-full"
+                >
+                  <CloseIcon size="sm" color="#EF4444" />
+                </TouchableOpacity>
               </View>
-            </View>
-          )}
+            ))}
+          </View>
+        )}
 
-          {!isProductsLoading && products.length === 0 && (
-            <View className="p-3 bg-yellow-50 rounded-lg my-2">
-              <View className="flex-row items-center">
-                <AlertCircle size={18} color="#D97706" className="mr-2" />
-                <Text className="text-yellow-800">
-                  Nenhum produto encontrado. Cadastre produtos primeiro.
-                </Text>
-              </View>
+        {/* Status de erro */}
+        {!isProductsLoading && products.length === 0 && (
+          <View className="p-3 bg-yellow-50 rounded-lg mb-4 border border-yellow-200">
+            <View className="flex-row items-center">
+              <AlertCircle size={18} color="#D97706" className="mr-2" />
+              <Text className="text-yellow-800">
+                Nenhum produto encontrado. Cadastre produtos primeiro.
+              </Text>
             </View>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* Botão para abrir o modal de seleção de produtos */}
         <Button
-          variant="outline"
           onPress={() => setProductModalVisible(true)}
-          className="mt-3"
           isDisabled={isProductsLoading || products.length === 0}
+          className={`px-4 py-2 ${
+            selectedProducts.length > 0 ? "bg-gray-100" : "bg-primary-500"
+          }`}
+          variant={selectedProducts.length > 0 ? "outline" : "solid"}
         >
-          <PlusCircle size={18} color={THEME_COLORS.primary} className="mr-2" />
-          <ButtonText color={THEME_COLORS.primary}>
+          <PlusCircle
+            size={18}
+            color={selectedProducts.length > 0 ? THEME_COLORS.primary : "white"}
+            className="mr-2"
+          />
+          <ButtonText
+            color={selectedProducts.length > 0 ? THEME_COLORS.primary : "white"}
+          >
             {selectedProducts.length > 0
               ? "Gerenciar Produtos"
               : "Selecionar Produtos"}
           </ButtonText>
         </Button>
-      </SectionCard>
+      </View>
 
       {/* Seção de Categorias */}
-      <SectionCard
-        title="Categorias"
-        icon={<Tag size={20} color={THEME_COLORS.primary} />}
-      >
-        <View className="mb-2">
-          <Text className="text-gray-600">
-            Selecione para quais categorias esta lista de adicionais estará
-            disponível
+      <View className="bg-white p-4 rounded-xl shadow-sm">
+        <View className="flex-row items-center border-b border-gray-100 pb-3 mb-4">
+          <Tag size={20} color={THEME_COLORS.primary} className="mr-2" />
+          <Text className="text-lg font-semibold text-gray-800">
+            Categorias
           </Text>
         </View>
 
+        <Text className="text-gray-600 mb-4">
+          Selecione para quais categorias esta lista de adicionais estará
+          disponível
+        </Text>
+
         {/* Cards das categorias selecionadas */}
-        <View className="mt-4 mb-2">
-          {selectedCategories.length === 0 ? (
-            <View className="p-4 bg-gray-50 rounded-lg items-center">
-              <Tag size={24} color="#9CA3AF" />
-              <Text className="text-gray-500 mt-2">
-                Nenhuma categoria selecionada
-              </Text>
-              <Text className="text-gray-500 text-sm mt-1 text-center">
-                Adicione categorias clicando no botão abaixo
-              </Text>
-            </View>
-          ) : (
-            <View className="flex-row flex-wrap">
-              {selectedCategories.map((category) => (
-                <View
-                  key={category.id}
-                  className="m-1 bg-primary-100 rounded-full px-3 py-1 flex-row items-center"
-                >
-                  <Text className="text-primary-800 font-medium mr-1">
-                    {category.nome}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => toggleCategorySelection(Number(category.id))}
-                    className="p-1"
-                  >
-                    <CloseIcon size="xs" color={THEME_COLORS.primary} />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Status de carregamento ou erro */}
-          {isCategoriesLoading && (
-            <View className="p-3 bg-blue-50 rounded-lg my-2">
-              <View className="flex-row items-center">
-                <AlertCircle size={18} color="#1E40AF" className="mr-2" />
-                <Text className="text-blue-800">Carregando categorias...</Text>
-              </View>
-            </View>
-          )}
-
-          {!isCategoriesLoading && categories.length === 0 && (
-            <View className="p-3 bg-yellow-50 rounded-lg my-2">
-              <View className="flex-row items-center">
-                <AlertCircle size={18} color="#D97706" className="mr-2" />
-                <Text className="text-yellow-800">
-                  Nenhuma categoria encontrada. Cadastre categorias primeiro.
+        {isCategoriesLoading ? (
+          <View className="items-center py-6">
+            <ActivityIndicator size="small" color={THEME_COLORS.primary} />
+            <Text className="text-gray-500 mt-2">Carregando categorias...</Text>
+          </View>
+        ) : selectedCategories.length === 0 ? (
+          <View className="p-5 bg-gray-50 rounded-xl items-center mb-4">
+            <Tag size={28} color="#9CA3AF" />
+            <Text className="text-gray-600 font-medium mt-2">
+              Nenhuma categoria selecionada
+            </Text>
+            <Text className="text-gray-500 text-sm mt-1 text-center">
+              Adicione categorias clicando no botão abaixo
+            </Text>
+          </View>
+        ) : (
+          <View className="flex-row flex-wrap mb-4 gap-2">
+            {selectedCategories.map((category) => (
+              <View
+                key={category.id}
+                className="bg-primary-50 rounded-full px-3 py-2 flex-row items-center"
+              >
+                <Text className="text-primary-800 font-medium mr-2">
+                  {category.nome}
                 </Text>
+                // Path:
+                src/features/addons/components/category-product-selector.tsx
+                (continuação)
+                <TouchableOpacity
+                  onPress={() => toggleCategorySelection(Number(category.id))}
+                  className="p-1"
+                >
+                  <CloseIcon size="xs" color={THEME_COLORS.primary} />
+                </TouchableOpacity>
               </View>
+            ))}
+          </View>
+        )}
+
+        {/* Status de erro */}
+        {!isCategoriesLoading && categories.length === 0 && (
+          <View className="p-3 bg-yellow-50 rounded-lg mb-4 border border-yellow-200">
+            <View className="flex-row items-center">
+              <AlertCircle size={18} color="#D97706" className="mr-2" />
+              <Text className="text-yellow-800">
+                Nenhuma categoria encontrada. Cadastre categorias primeiro.
+              </Text>
             </View>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* Botão para abrir o modal de seleção de categorias */}
         <Button
-          variant="outline"
           onPress={() => setCategoryModalVisible(true)}
-          className="mt-3"
           isDisabled={isCategoriesLoading || categories.length === 0}
+          className={`px-4 py-2 ${
+            selectedCategories.length > 0 ? "bg-gray-100" : "bg-primary-500"
+          }`}
+          variant={selectedCategories.length > 0 ? "outline" : "solid"}
         >
-          <PlusCircle size={18} color={THEME_COLORS.primary} className="mr-2" />
-          <ButtonText color={THEME_COLORS.primary}>
+          <PlusCircle
+            size={18}
+            color={
+              selectedCategories.length > 0 ? THEME_COLORS.primary : "white"
+            }
+            className="mr-2"
+          />
+          <ButtonText
+            color={
+              selectedCategories.length > 0 ? THEME_COLORS.primary : "white"
+            }
+          >
             {selectedCategories.length > 0
               ? "Gerenciar Categorias"
               : "Selecionar Categorias"}
           </ButtonText>
         </Button>
-      </SectionCard>
+      </View>
 
       {/* Modal de Seleção de Produtos */}
       <Modal
@@ -268,14 +292,15 @@ export function CategoryProductSelector({
           <View style={styles.modalHeader}>
             <View className="flex-row items-center justify-between w-full px-4 py-3">
               <Heading size="md">Selecionar Produtos</Heading>
-              <Button
+              <TouchableOpacity
                 onPress={() => {
                   setProductModalVisible(false);
                   setProductSearchTerm("");
                 }}
+                className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
               >
                 <CloseIcon color={THEME_COLORS.primary} />
-              </Button>
+              </TouchableOpacity>
             </View>
 
             {/* Campo de busca (Fixed) */}
@@ -288,7 +313,10 @@ export function CategoryProductSelector({
                 onChangeText={setProductSearchTerm}
               />
               {productSearchTerm ? (
-                <TouchableOpacity onPress={() => setProductSearchTerm("")}>
+                <TouchableOpacity
+                  onPress={() => setProductSearchTerm("")}
+                  className="p-1"
+                >
                   <CloseIcon size="sm" />
                 </TouchableOpacity>
               ) : null}
@@ -299,12 +327,28 @@ export function CategoryProductSelector({
           <View style={styles.modalBody}>
             {/* Loading State */}
             {isProductsLoading ? (
-              <View className="p-4 items-center">
-                <Text className="text-gray-500">Carregando produtos...</Text>
+              <View className="p-8 items-center">
+                <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+                <Text className="text-gray-500 mt-4">
+                  Carregando produtos...
+                </Text>
               </View>
             ) : filteredProducts.length === 0 ? (
-              <View className="p-4 items-center">
-                <Text className="text-gray-500">Nenhum produto encontrado</Text>
+              <View className="p-8 items-center">
+                <Box size={40} color="#9CA3AF" />
+                <Text className="text-gray-500 mt-4 font-medium">
+                  Nenhum produto encontrado
+                </Text>
+                {productSearchTerm ? (
+                  <Text className="text-gray-400 text-center mt-2">
+                    Tente usar termos diferentes na sua busca
+                  </Text>
+                ) : (
+                  <Text className="text-gray-400 text-center mt-2">
+                    Você precisa cadastrar produtos para associá-los à lista de
+                    adicionais
+                  </Text>
+                )}
               </View>
             ) : (
               <FlatList
@@ -319,7 +363,7 @@ export function CategoryProductSelector({
                     }`}
                   >
                     <View className="flex-row items-center">
-                      <View className="w-16 h-16 rounded-lg overflow-hidden mr-3">
+                      <View className="w-14 h-14 rounded-lg overflow-hidden mr-3">
                         <ImagePreview
                           uri={item.imagem}
                           fallbackIcon={Box}
@@ -336,10 +380,12 @@ export function CategoryProductSelector({
                           </Text>
                         )}
                       </View>
-                      {selectedProductIds.includes(item.id) && (
+                      {selectedProductIds.includes(item.id) ? (
                         <View className="w-8 h-8 rounded-full bg-primary-500 items-center justify-center">
                           <Check size={16} color="white" />
                         </View>
+                      ) : (
+                        <View className="w-8 h-8 rounded-full border-2 border-gray-200" />
                       )}
                     </View>
                   </TouchableOpacity>
@@ -382,14 +428,15 @@ export function CategoryProductSelector({
           <View style={styles.modalHeader}>
             <View className="flex-row items-center justify-between w-full px-4 py-3">
               <Heading size="md">Selecionar Categorias</Heading>
-              <Button
+              <TouchableOpacity
                 onPress={() => {
                   setCategoryModalVisible(false);
                   setCategorySearchTerm("");
                 }}
+                className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
               >
                 <CloseIcon color={THEME_COLORS.primary} />
-              </Button>
+              </TouchableOpacity>
             </View>
 
             {/* Campo de busca (Fixed) */}
@@ -402,7 +449,10 @@ export function CategoryProductSelector({
                 onChangeText={setCategorySearchTerm}
               />
               {categorySearchTerm ? (
-                <TouchableOpacity onPress={() => setCategorySearchTerm("")}>
+                <TouchableOpacity
+                  onPress={() => setCategorySearchTerm("")}
+                  className="p-1"
+                >
                   <CloseIcon size="sm" />
                 </TouchableOpacity>
               ) : null}
@@ -413,14 +463,28 @@ export function CategoryProductSelector({
           <View style={styles.modalBody}>
             {/* Loading State */}
             {isCategoriesLoading ? (
-              <View className="p-4 items-center">
-                <Text className="text-gray-500">Carregando categorias...</Text>
+              <View className="p-8 items-center">
+                <ActivityIndicator size="large" color={THEME_COLORS.primary} />
+                <Text className="text-gray-500 mt-4">
+                  Carregando categorias...
+                </Text>
               </View>
             ) : filteredCategories.length === 0 ? (
-              <View className="p-4 items-center">
-                <Text className="text-gray-500">
+              <View className="p-8 items-center">
+                <Tag size={40} color="#9CA3AF" />
+                <Text className="text-gray-500 mt-4 font-medium">
                   Nenhuma categoria encontrada
                 </Text>
+                {categorySearchTerm ? (
+                  <Text className="text-gray-400 text-center mt-2">
+                    Tente usar termos diferentes na sua busca
+                  </Text>
+                ) : (
+                  <Text className="text-gray-400 text-center mt-2">
+                    Você precisa cadastrar categorias para associá-las à lista
+                    de adicionais
+                  </Text>
+                )}
               </View>
             ) : (
               <FlatList
@@ -428,21 +492,23 @@ export function CategoryProductSelector({
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => toggleCategorySelection(Number(item.id))}
-                    className={`p-3 mb-2 mx-4 rounded-lg border ${
+                    className={`p-4 mb-2 mx-4 rounded-lg border ${
                       selectedCategoryIds.includes(Number(item.id))
                         ? "border-primary-500 bg-primary-50"
                         : "border-gray-200 bg-white"
                     }`}
                   >
                     <View className="flex-row items-center">
-                      <View className="w-8 h-8 rounded-full bg-primary-100 items-center justify-center mr-3">
-                        <Tag size={16} color={THEME_COLORS.primary} />
+                      <View className="w-10 h-10 rounded-full bg-primary-100 items-center justify-center mr-3">
+                        <Tag size={18} color={THEME_COLORS.primary} />
                       </View>
                       <Text className="font-medium flex-1">{item.nome}</Text>
-                      {selectedCategoryIds.includes(Number(item.id)) && (
+                      {selectedCategoryIds.includes(Number(item.id)) ? (
                         <View className="w-8 h-8 rounded-full bg-primary-500 items-center justify-center">
                           <Check size={16} color="white" />
                         </View>
+                      ) : (
+                        <View className="w-8 h-8 rounded-full border-2 border-gray-200" />
                       )}
                     </View>
                   </TouchableOpacity>

@@ -1,7 +1,7 @@
-// Path: src/features/addons/components/enhanced-addon-card.tsx
+// Path: src/features/addons/components/addon-card.tsx
+
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Pressable } from "react-native";
-import { Card } from "@gluestack-ui/themed";
 import {
   MoreVertical,
   Edit,
@@ -9,7 +9,6 @@ import {
   Eye,
   Tag,
   Box,
-  Layers,
   Calendar,
 } from "lucide-react-native";
 import { AddonsList } from "../models/addon";
@@ -26,13 +25,10 @@ interface AddonCardProps {
 export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
   const [isActionsVisible, setIsActionsVisible] = useState(false);
 
-  // Formatar data para exibição legível
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
-
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Data inválida";
-
     return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
@@ -46,7 +42,7 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
   };
 
   return (
-    <Card className="p-0 bg-white mb-3 overflow-hidden">
+    <View className="bg-white rounded-xl mb-3 overflow-hidden border border-gray-100 shadow-sm">
       <Pressable
         onPress={onView}
         className="flex-1"
@@ -55,36 +51,35 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
         <View className="p-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
-              <Text className="font-medium text-lg text-gray-800">
+              <Text className="font-semibold text-lg text-gray-800">
                 {addon.nome}
               </Text>
 
-              {/* Estatísticas e datas */}
-              <View className="flex-row items-center flex-wrap mt-2">
-                <View className="flex-row items-center mr-4 mb-1">
+              <View className="flex-row flex-wrap items-center mt-2 gap-2">
+                <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-md">
                   <Tag
-                    size={16}
+                    size={14}
                     color={THEME_COLORS.primary}
                     className="mr-1"
                   />
-                  <Text className="text-gray-600">
+                  <Text className="text-sm text-gray-600">
                     {addon.categorias?.length || 0} Categorias
                   </Text>
                 </View>
-                <View className="flex-row items-center mb-1">
+
+                <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-md">
                   <Box
-                    size={16}
+                    size={14}
                     color={THEME_COLORS.primary}
                     className="mr-1"
                   />
-                  <Text className="text-gray-600">
+                  <Text className="text-sm text-gray-600">
                     {addon.produtos?.length || 0} Produtos
                   </Text>
                 </View>
               </View>
 
-              {/* Data de modificação */}
-              <View className="flex-row items-center mt-1">
+              <View className="flex-row items-center mt-3">
                 <Calendar size={14} color="#6B7280" className="mr-1" />
                 <Text className="text-gray-500 text-xs">
                   {addon.date_updated
@@ -94,16 +89,18 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
               </View>
             </View>
 
-            <TouchableOpacity onPress={toggleActions} className="p-2">
-              <MoreVertical size={20} color="#374151" />
+            <TouchableOpacity
+              onPress={toggleActions}
+              className="w-8 h-8 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <MoreVertical size={18} color="#374151" />
             </TouchableOpacity>
           </View>
         </View>
       </Pressable>
 
-      {/* Ações (expandíveis) */}
       {isActionsVisible && (
-        <View className="flex-row border-t border-gray-100 bg-gray-50">
+        <View className="flex-row border-t border-gray-100">
           <TouchableOpacity
             onPress={() => {
               onView();
@@ -112,8 +109,8 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
             className="flex-1 p-3 flex-row items-center justify-center"
             style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
           >
-            <Eye size={16} color="#374151" className="mr-1" />
-            <Text className="text-xs font-medium text-gray-700">Ver</Text>
+            <Eye size={16} color="#374151" className="mr-2" />
+            <Text className="text-sm font-medium text-gray-700">Ver</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -124,8 +121,8 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
             className="flex-1 p-3 flex-row items-center justify-center"
             style={{ borderRightWidth: 1, borderRightColor: "#f3f4f6" }}
           >
-            <Edit size={16} color="#374151" className="mr-1" />
-            <Text className="text-xs font-medium text-gray-700">Editar</Text>
+            <Edit size={16} color="#374151" className="mr-2" />
+            <Text className="text-sm font-medium text-gray-700">Editar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -135,11 +132,11 @@ export function AddonCard({ addon, onEdit, onDelete, onView }: AddonCardProps) {
             }}
             className="flex-1 p-3 flex-row items-center justify-center"
           >
-            <Trash size={16} color="#EF4444" className="mr-1" />
-            <Text className="text-xs font-medium text-red-500">Excluir</Text>
+            <Trash size={16} color="#EF4444" className="mr-2" />
+            <Text className="text-sm font-medium text-red-500">Excluir</Text>
           </TouchableOpacity>
         </View>
       )}
-    </Card>
+    </View>
   );
 }
