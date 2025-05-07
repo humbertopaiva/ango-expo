@@ -42,11 +42,11 @@ export function StatusToggle({
             {value ? (
               <CheckCircle2 size={18} color="#16A34A" />
             ) : (
-              <XCircle size={18} color="#DC2626" />
+              <XCircle size={18} color={THEME_COLORS.primary} />
             )}
             <Text
               className={`ml-2 font-medium ${
-                value ? "text-green-600" : "text-red-600"
+                value ? "text-green-600" : "text-primary-600"
               }`}
             >
               {currentLabel}

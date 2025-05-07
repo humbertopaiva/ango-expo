@@ -1,8 +1,15 @@
 // Path: src/components/common/currency-input.tsx
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Platform,
+  ViewStyle,
+  TextStyle,
+} from "react-native";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { DollarSign, X } from "lucide-react-native";
+import { X } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 interface CurrencyInputProps {
@@ -14,6 +21,10 @@ interface CurrencyInputProps {
   errorMessage?: string;
   disabled?: boolean;
   required?: boolean;
+  // Estilos simples passados como props
+  style?: ViewStyle;
+  className?: string;
+  labelClassName?: string;
 }
 
 export function CurrencyInput({
@@ -25,82 +36,80 @@ export function CurrencyInput({
   errorMessage,
   disabled = false,
   required = false,
+  // Props de estilo
+  style,
+  className = "",
+  labelClassName = "",
 }: CurrencyInputProps) {
-  // Estado para o valor numérico (em centavos)
-  const [amountInCents, setAmountInCents] = useState<number>(0);
-
   // Estado para controlar o texto exibido no input
   const [displayValue, setDisplayValue] = useState("");
 
-  // Converte o valor inicial para centavos e atualiza o estado
-  useEffect(() => {
-    if (value) {
-      // Converte para número, considerando a vírgula como separador decimal
-      const numValue = parseFloat(value.replace(",", ".")) || 0;
-      // Converte para centavos
-      const cents = Math.round(numValue * 100);
-      setAmountInCents(cents);
-      // Atualiza o texto exibido
-      setDisplayValue(formatCurrency(cents));
-    } else {
-      setAmountInCents(0);
-      setDisplayValue("");
-    }
-  }, [value]);
+  // Flag para controlar a inicialização
+  const isInitialMount = useRef(true);
 
-  // Formata os centavos para exibição como moeda (Ex: 1234 -> "12,34")
-  const formatCurrency = (cents: number): string => {
+  // Função para formatar valor em centavos para exibição (Ex: 1200 -> "12,00")
+  const formatFromCents = (cents: number): string => {
     if (cents === 0) return "";
 
-    // Converte centavos para a representação decimal
-    const value = cents / 100;
+    // Divide por 100 para converter de centavos para reais
+    const reais = cents / 100;
 
-    // Formata como moeda brasileira (sem o símbolo R$)
-    return value.toLocaleString("pt-BR", {
+    return reais.toLocaleString("pt-BR", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
   };
+
+  // Função para converter valor de exibição para centavos (Ex: "12,00" -> 1200)
+  const parseToCents = (val: string): number => {
+    if (!val) return 0;
+
+    // Remove todos os caracteres não numéricos
+    const numericValue = val.replace(/\D/g, "");
+    return parseInt(numericValue) || 0;
+  };
+
+  // Atualiza o display quando o valor externo muda
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+
+      if (value) {
+        // Converte o valor inicial para centavos
+        const cents = parseToCents(value);
+        setDisplayValue(formatFromCents(cents));
+      }
+      return;
+    }
+
+    if (value) {
+      const cents = parseToCents(value);
+      setDisplayValue(formatFromCents(cents));
+    } else {
+      setDisplayValue("");
+    }
+  }, [value]);
 
   // Processa a entrada de números
   const handleNumberInput = (text: string) => {
     // Remove todos os caracteres não numéricos
     const numericValue = text.replace(/\D/g, "");
 
-    // Converte para número inteiro
+    // Converte para número inteiro (centavos)
     const cents = parseInt(numericValue) || 0;
 
-    // Atualiza o estado local
-    setAmountInCents(cents);
-
     // Formata e atualiza a exibição
-    const formattedValue = formatCurrency(cents);
+    const formattedValue = formatFromCents(cents);
     setDisplayValue(formattedValue);
 
-    // Emite o valor atualizado no formato esperado pelo formulário (com vírgula)
-    const valueForForm = (cents / 100).toString().replace(".", ",");
+    // Emite o valor em centavos
+    // Para manter a compatibilidade, convertemos centavos para o formato "12,00"
+    const valueForForm = (cents / 100).toFixed(2).replace(".", ",");
     onChangeValue(valueForForm);
-  };
-
-  // Manipula o foco no input
-  const handleFocus = () => {
-    // Se estiver vazio, mostra "0,00" ao receber foco
-    if (!displayValue) {
-      setDisplayValue("0,00");
-    }
-  };
-
-  // Manipula a perda de foco
-  const handleBlur = () => {
-    // Se o valor for zero, limpa o campo ao perder foco
-    if (amountInCents === 0) {
-      setDisplayValue("");
-    }
   };
 
   // Função para limpar o input
   const clearInput = () => {
-    setAmountInCents(0);
     setDisplayValue("");
     onChangeValue("");
   };
@@ -109,25 +118,30 @@ export function CurrencyInput({
   const showClearButton = !!displayValue && !disabled;
 
   return (
-    <View>
+    <View style={style}>
       {label && (
-        <Text className="text-sm font-medium text-gray-700 mb-1">
+        <Text
+          className={`text-sm font-medium text-gray-700 mb-1 ${labelClassName}`}
+        >
           {label}
           {required && <Text className="text-red-500"> *</Text>}
         </Text>
       )}
 
-      <Input isInvalid={isInvalid} isDisabled={disabled} className="bg-white">
+      <Input
+        isInvalid={isInvalid}
+        isDisabled={disabled}
+        className={`bg-white ${className}`}
+      >
         <InputSlot className="pl-3">
-          <InputIcon as={DollarSign} color={THEME_COLORS.primary} />
+          <Text className="text-gray-500 font-medium">R$</Text>
         </InputSlot>
+
         <InputField
           placeholder={placeholder}
           value={displayValue}
           onChangeText={handleNumberInput}
-          keyboardType="numeric"
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+          keyboardType={Platform.OS === "ios" ? "number-pad" : "numeric"}
         />
 
         {/* Botão de limpar - aparece apenas quando há valor */}
@@ -135,8 +149,8 @@ export function CurrencyInput({
           <InputSlot className="pr-3">
             <TouchableOpacity
               onPress={clearInput}
-              className="p-1" // padding para aumentar a área de toque
-              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }} // aumenta a área de toque
+              className="p-1"
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
             >
               <X size={16} color="#9CA3AF" />
             </TouchableOpacity>
