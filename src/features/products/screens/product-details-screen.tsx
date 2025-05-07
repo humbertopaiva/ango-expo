@@ -745,6 +745,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4B5563",
     lineHeight: 20,
+    paddingHorizontal: 8,
+    marginTop: 8,
   },
   pricingContainer: {
     backgroundColor: "#F9FAFB",
