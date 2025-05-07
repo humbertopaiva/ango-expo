@@ -362,7 +362,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                   />
                   {selectedVariationType && (
                     <View className="mt-2 p-3 bg-blue-50 rounded-md">
-                      <View className="flex-row">
+                      <View className="flex-row gap-2">
                         <Layers
                           size={16}
                           color="#1E40AF"
@@ -664,7 +664,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             <Heading size="lg">Atenção</Heading>
           </AlertDialogHeader>
           <AlertDialogBody>
-            <View className="flex-row mb-2">
+            <View className="flex-row mb-2 gap-2">
               <AlertTriangle size={24} color="#F59E0B" className="mr-2" />
               <Text className="text-gray-700 flex-1">
                 Ao transformar este produto em um produto com variação:

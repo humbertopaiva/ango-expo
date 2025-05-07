@@ -44,7 +44,7 @@ export default function ProductsLayout() {
           }}
         />
         <Stack.Screen
-          name="[id]"
+          name="[id]/index"
           options={{
             title: "Editar Produto",
             headerShown: true,
