@@ -214,10 +214,6 @@ export function ProductDetailsScreen() {
   if (!product) {
     return (
       <SafeAreaView style={styles.container}>
-        <AdminScreenHeader
-          title="Detalhes do Produto"
-          backTo="/admin/products/list"
-        />
         <View style={styles.errorContainer}>
           <Package size={48} color="#9CA3AF" />
           <Text style={styles.errorTitle}>Produto não encontrado</Text>
@@ -238,11 +234,6 @@ export function ProductDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <AdminScreenHeader
-        title="Detalhes do Produto"
-        backTo="/admin/products/list"
-      />
-
       <ScrollView style={styles.scrollView}>
         {/* Main actions */}
         <View style={styles.mainActions}>

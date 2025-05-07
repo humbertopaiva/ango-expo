@@ -67,11 +67,6 @@ export function ProductsListScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <AdminScreenHeader
-        title="Produtos Cadastrados"
-        backTo="/admin/products"
-      />
-
       {/* Tutorial de swipe (exibido apenas na primeira vez) */}
       {showSwipeTutorial && (
         <SwipeTutorial

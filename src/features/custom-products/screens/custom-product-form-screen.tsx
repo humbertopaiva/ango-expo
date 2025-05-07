@@ -56,6 +56,7 @@ import { THEME_COLORS } from "@/src/styles/colors";
 import { CurrencyInput } from "@/components/common/currency-input";
 import { Textarea } from "@gluestack-ui/themed";
 import { TextareaInput } from "@gluestack-ui/themed";
+import { useRouter } from "expo-router";
 
 // Form validation schema
 const customProductFormSchema = z.object({
@@ -71,18 +72,24 @@ const customProductFormSchema = z.object({
 
 type CustomProductFormData = z.infer<typeof customProductFormSchema>;
 
-export function CustomProductFormScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+interface CustomProductFormScreenProps {
+  productId?: string;
+}
+
+export function CustomProductFormScreen({
+  productId,
+}: CustomProductFormScreenProps) {
   const toast = useToast();
-  const isEditing = !!id;
+  const navigation = useRouter();
+  const isEditing = !!productId;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [steps, setSteps] = useState<CustomProductStep[]>([]);
   const [isImageLoading, setIsImageLoading] = useState(false);
-  const [selectedPriceType, setSelectedPriceType] = useState<string>("menor");
+  const [selectedPriceType, setSelectedPriceType] = useState<string>("soma");
 
   const { customProduct, isLoading: isLoadingCustomProduct } =
-    useCustomProductById(id as string);
+    useCustomProductById(productId as string);
   const { createCustomProduct, updateCustomProduct, isCreating, isUpdating } =
     useCustomProducts();
 
@@ -232,7 +239,7 @@ export function CustomProductFormScreen() {
 
       setIsSubmitting(true);
 
-      if (isEditing && id) {
+      if (isEditing && productId) {
         // Atualizar produto personalizado existente
         const updateData = {
           nome: data.nome,
@@ -247,7 +254,7 @@ export function CustomProductFormScreen() {
         };
 
         await updateCustomProduct({
-          id,
+          id: productId,
           data: updateData,
         });
 
