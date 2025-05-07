@@ -6,6 +6,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
+  Platform,
+  Dimensions,
 } from "react-native";
 import {
   Package,
@@ -13,17 +16,20 @@ import {
   FileText,
   Truck,
   User,
-  Grid2X2,
   BarChart,
   ExternalLink,
   Link,
   HelpCircle,
+  ChevronRight,
 } from "lucide-react-native";
 import { ResilientImage } from "@/components/common/resilient-image";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { CompanyDetails } from "../hooks/use-company-details";
 import * as Clipboard from "expo-clipboard";
-import { Linking, Alert, Platform } from "react-native";
+import { Linking, Alert } from "react-native";
+
+// Obter dimensões da tela para posicionamento
+const { height } = Dimensions.get("window");
 
 interface ModernDashboardProps {
   company: CompanyDetails | null;
@@ -41,6 +47,7 @@ export function ModernDashboard({
     {
       id: "products",
       title: "Produtos",
+      description: "Gerencie seu catálogo de produtos, categorias e variações",
       icon: Package,
       iconColor: "#2196F3",
       path: "/admin/products",
@@ -48,6 +55,7 @@ export function ModernDashboard({
     {
       id: "vitrine",
       title: "Destaques",
+      description: "Configure produtos em destaque na sua vitrine virtual",
       icon: Star,
       iconColor: "#FFC107",
       path: "/admin/vitrine",
@@ -55,6 +63,7 @@ export function ModernDashboard({
     {
       id: "leaflets",
       title: "Encartes",
+      description: "Crie e gerencie seus encartes promocionais",
       icon: FileText,
       iconColor: "#9C27B0",
       path: "/admin/leaflets",
@@ -62,6 +71,7 @@ export function ModernDashboard({
     {
       id: "delivery",
       title: "Delivery",
+      description: "Configure suas opções de entrega e retirada",
       icon: Truck,
       iconColor: "#F44336",
       path: "/admin/delivery-config",
@@ -69,6 +79,7 @@ export function ModernDashboard({
     {
       id: "profile",
       title: "Perfil",
+      description: "Edite os dados do seu negócio e personalize sua loja",
       icon: User,
       iconColor: "#009688",
       path: "/admin/profile",
@@ -160,105 +171,132 @@ export function ModernDashboard({
   }
 
   return (
-    <View style={styles.container}>
-      {/* Company info section */}
-      <View style={styles.companyContainer}>
-        <View style={styles.logoContainer}>
-          {company?.logo ? (
-            <ResilientImage
-              source={company.logo}
-              width={64}
-              height={64}
-              resizeMode="cover"
-              style={styles.logo}
-            />
-          ) : (
-            <View
-              style={[
-                styles.logoPlaceholder,
-                {
-                  backgroundColor: `${
-                    company?.cor_primaria || THEME_COLORS.primary
-                  }15`,
-                },
-              ]}
-            >
-              <User
-                size={28}
-                color={company?.cor_primaria || THEME_COLORS.primary}
+    <View style={styles.container} className="bg-gray-50">
+      {/* Conteúdo com scroll */}
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Company info section */}
+        <View style={styles.companyContainer}>
+          <View style={styles.logoContainer}>
+            {company?.logo ? (
+              <ResilientImage
+                source={company.logo}
+                width={64}
+                height={64}
+                resizeMode="cover"
+                style={styles.logo}
               />
-            </View>
-          )}
+            ) : (
+              <View
+                style={[
+                  styles.logoPlaceholder,
+                  {
+                    backgroundColor: `${
+                      company?.cor_primaria || THEME_COLORS.primary
+                    }15`,
+                  },
+                ]}
+              >
+                <User
+                  size={28}
+                  color={company?.cor_primaria || THEME_COLORS.primary}
+                />
+              </View>
+            )}
+          </View>
+          <View style={styles.companyInfo}>
+            <Text style={styles.companyName}>
+              {company?.nome || "Minha Empresa"}
+            </Text>
+            {company?.categoria?.nome && (
+              <View style={styles.categoryPill}>
+                <Text style={styles.categoryText}>
+                  {company.categoria.nome}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={styles.companyInfo}>
-          <Text style={styles.companyName}>
-            {company?.nome || "Minha Empresa"}
-          </Text>
-          {company?.categoria?.nome && (
-            <View style={styles.categoryPill}>
-              <Text style={styles.categoryText}>{company.categoria.nome}</Text>
-            </View>
-          )}
+
+        {/* Quick action buttons */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={navigateToProfile}
+            activeOpacity={0.7}
+          >
+            <ExternalLink size={20} color={THEME_COLORS.primary} />
+            <Text style={styles.actionText}>Ver Perfil</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={navigateToLinks}
+            activeOpacity={0.7}
+          >
+            <Link size={20} color={THEME_COLORS.primary} />
+            <Text style={styles.actionText}>Links Externos</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleReportsPress}
+            activeOpacity={0.7}
+          >
+            <BarChart size={20} color={THEME_COLORS.primary} />
+            <Text style={styles.actionText}>Relatórios</Text>
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Quick action buttons */}
-      <View style={styles.quickActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={navigateToProfile}
-        >
-          <ExternalLink size={20} color="#1F2937" />
-          <Text style={styles.actionText}>Ver Perfil</Text>
-        </TouchableOpacity>
+        {/* Divider */}
+        <View style={styles.divider} />
 
-        <TouchableOpacity style={styles.actionButton} onPress={navigateToLinks}>
-          <Link size={20} color="#1F2937" />
-          <Text style={styles.actionText}>Links Externos</Text>
-        </TouchableOpacity>
+        {/* Cards de gerenciamento (lista vertical) */}
+        <Text style={styles.sectionTitle}>Gerenciar</Text>
 
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleReportsPress}
-        >
-          <BarChart size={20} color="#1F2937" />
-          <Text style={styles.actionText}>Relatórios</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Divider */}
-      <View style={styles.divider} />
-
-      {/* Main menu */}
-      <Text style={styles.sectionTitle}>Gerenciar</Text>
-      <View style={styles.menuGrid}>
         {menuItems.map((item) => (
           <TouchableOpacity
             key={item.id}
-            style={styles.menuItem}
+            style={styles.card}
             onPress={() => onMenuItemPress(item.path)}
+            activeOpacity={0.7}
           >
-            <View
-              style={[
-                styles.iconCircle,
-                { backgroundColor: `${item.iconColor}15` },
-              ]}
-            >
-              <item.icon size={22} color={item.iconColor} />
+            <View style={styles.cardContent}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  { backgroundColor: `${item.iconColor}15` },
+                ]}
+              >
+                <item.icon size={24} color={item.iconColor} />
+              </View>
+              <View style={styles.cardTextContainer}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardDescription}>{item.description}</Text>
+              </View>
+              <ChevronRight size={20} color="#9CA3AF" />
             </View>
-            <Text style={styles.menuItemText}>{item.title}</Text>
           </TouchableOpacity>
         ))}
-      </View>
 
-      {/* Support button */}
-      <TouchableOpacity
-        style={styles.supportButton}
-        onPress={() => onMenuItemPress("/(drawer)/support")}
-      >
-        <HelpCircle size={20} color="#ffffff" />
-        <Text style={styles.supportText}>Suporte</Text>
-      </TouchableOpacity>
+        {/* Espaço adicional no final da lista para não ficar escondido atrás do botão fixo */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Support button fixo e sobreposto */}
+      <View style={styles.floatingButtonContainer}>
+        <TouchableOpacity
+          style={styles.supportButton}
+          onPress={() => onMenuItemPress("/(drawer)/support")}
+          activeOpacity={0.8}
+        >
+          <HelpCircle size={20} color="#ffffff" />
+          <Text style={styles.supportText}>Suporte</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -266,8 +304,6 @@ export function ModernDashboard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#ffffff",
   },
   loadingContainer: {
     flex: 1,
@@ -275,11 +311,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20, // Espaço adicional para o botão flutuante
+  },
   companyContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 25,
-    paddingBottom: 5,
+    marginBottom: 16,
   },
   logoContainer: {
     marginRight: 16,
@@ -320,7 +363,7 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 25,
+    marginBottom: 16,
   },
   actionButton: {
     flex: 1,
@@ -338,52 +381,75 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#f3f4f6",
-    marginBottom: 25,
+    backgroundColor: "#e1e1e1",
+    marginVertical: 8,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
     color: "#1F2937",
+    marginTop: 8,
     marginBottom: 16,
   },
-  menuGrid: {
+  card: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    marginBottom: 12,
+
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  cardContent: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 25,
-  },
-  menuItem: {
-    width: "30%",
     alignItems: "center",
-    marginBottom: 20,
+    padding: 16,
   },
-  iconCircle: {
+  iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
+    marginRight: 16,
   },
-  menuItemText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#374151",
-    textAlign: "center",
+  cardTextContainer: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1F2937",
+    marginBottom: 4,
+  },
+  cardDescription: {
+    fontSize: 13,
+    color: "#6B7280",
+    lineHeight: 18,
+  },
+  // Estilo para o botão flutuante
+  floatingButtonContainer: {
+    position: "absolute",
+    bottom: Platform.OS === "ios" ? 30 : 20,
+    left: 20,
+    right: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 999, // Garante que fique acima de todos os outros elementos
   },
   supportButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: THEME_COLORS.primary,
-    borderRadius: 24,
-    paddingVertical: 12,
-    marginVertical: 8,
+    borderRadius: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    width: "100%",
   },
   supportText: {
     color: "#ffffff",
-    fontWeight: "500",
+    fontWeight: "600",
     marginLeft: 8,
+    fontSize: 16,
   },
 });
