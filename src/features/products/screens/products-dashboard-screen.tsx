@@ -61,6 +61,15 @@ export function ProductsDashboardScreen() {
       bgColor: "#FEF2F2",
       path: "/admin/custom-products",
     },
+    {
+      id: "categories",
+      title: "Categorias",
+      subtitle: "Gerenciar categorias de produtos",
+      icon: Settings,
+      iconColor: "#10B981",
+      bgColor: "#c7e3da",
+      path: "/admin/products/categories",
+    },
   ];
 
   // Quick action buttons

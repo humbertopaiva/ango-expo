@@ -28,7 +28,7 @@ const navigationItems = [
     name: "categories",
     label: "Categorias",
     icon: Grid,
-    path: "/admin/categories",
+    path: "/admin/products/categories",
   },
   {
     name: "products",

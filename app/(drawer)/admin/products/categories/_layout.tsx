@@ -1,4 +1,4 @@
-// app/(app)/admin/categories/_layout.tsx
+// Path: app/(drawer)/admin/products/categories/_layout.tsx
 
 import { Stack } from "expo-router";
 import { CategoriesProvider } from "@/src/features/categories/contexts/categories-provider";
@@ -10,7 +10,20 @@ export default function CategoriesLayout() {
         <Stack.Screen
           name="index"
           options={{
-            title: "Categorias",
+            title: "Categorias2",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="new"
+          options={{
+            title: "Nova Categoria",
+          }}
+        />
+        <Stack.Screen
+          name="[id]"
+          options={{
+            title: "Editar Categoria",
           }}
         />
       </Stack>

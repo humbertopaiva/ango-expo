@@ -123,7 +123,7 @@ export function CustomTabBar() {
       name: "categories",
       label: "Categorias",
       icon: Grid,
-      path: "/admin/categories",
+      path: "/admin/products/categories",
       color: "#0891B2",
     },
     {
