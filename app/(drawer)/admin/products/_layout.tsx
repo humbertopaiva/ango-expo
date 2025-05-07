@@ -49,20 +49,27 @@ export default function ProductsLayout() {
             headerShown: true,
           }}
         />
+        <Stack.Screen
+          name="[id]/index"
+          options={{
+            title: "Criar Produto",
+            headerShown: true,
+          }}
+        />
 
         {/* Visualização e variações de produtos */}
         <Stack.Screen
           name="view/[id]"
           options={{
             title: "Detalhes do Produto",
-            headerShown: false,
+            headerShown: true,
           }}
         />
         <Stack.Screen
           name="[id]/add-variation"
           options={{
             title: "Adicionar Variação",
-            headerShown: false,
+            headerShown: true,
           }}
         />
       </Stack>
