@@ -39,13 +39,6 @@ export function ModernDashboard({
   // Menu items with configuration
   const menuItems = [
     {
-      id: "categories",
-      title: "Categorias",
-      icon: Grid2X2,
-      iconColor: "#4CAF50",
-      path: "/admin/categories",
-    },
-    {
       id: "products",
       title: "Produtos",
       icon: Package,

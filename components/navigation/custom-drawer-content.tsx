@@ -178,7 +178,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
     {
       label: "Categorias",
       icon: Store,
-      path: "/(drawer)/admin/categories",
+      path: "/(drawer)/admin/products/categories",
     },
     {
       label: "Produtos",

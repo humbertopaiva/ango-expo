@@ -1,4 +1,5 @@
-// Path: app/(drawer)/admin/products/_layout.tsx (atualização)
+// Path: app/(drawer)/admin/products/_layout.tsx
+
 import { Stack } from "expo-router";
 import { ProductsProvider } from "@/src/features/products/contexts/products-provider";
 import { THEME_COLORS } from "@/src/styles/colors";
@@ -49,10 +50,26 @@ export default function ProductsLayout() {
             headerShown: true,
           }}
         />
+
+        {/* Gerenciamento de categorias (novo) */}
         <Stack.Screen
-          name="[id]/index"
+          name="categories"
           options={{
-            title: "Criar Produto",
+            title: "Categorias",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="categories/new"
+          options={{
+            title: "Nova Categoria",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="categories/[id]"
+          options={{
+            title: "Editar Categoria",
             headerShown: true,
           }}
         />

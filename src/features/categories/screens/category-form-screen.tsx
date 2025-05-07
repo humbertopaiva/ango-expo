@@ -132,7 +132,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
 
       // Tempo para que a navegação ocorra após a animação do toast
       setTimeout(() => {
-        router.push("/admin/categories");
+        router.push("/admin/products/categories");
       }, 100);
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -273,7 +273,7 @@ export function CategoryFormScreen({ categoryId }: CategoryFormScreenProps) {
           <View className="flex-row gap-4">
             <Button
               variant="outline"
-              onPress={() => router.push("/admin/categories")}
+              onPress={() => router.push("/admin/products/categories")}
               disabled={isPending}
               className="flex-1 border-gray-300 h-14"
               style={{ borderColor: primaryColor }}
