@@ -7,7 +7,7 @@ import {
   View,
   StyleSheet,
 } from "react-native";
-import { Tag } from "lucide-react-native";
+import { Tag, Filter } from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 
 interface CategoryFilterProps {
@@ -23,11 +23,22 @@ export function CategoryFilter({
 }: CategoryFilterProps) {
   return (
     <View className="mb-4">
-      <View className="mb-2 flex-row items-center">
-        <Tag size={16} color={THEME_COLORS.primary} />
-        <Text className="ml-2 text-sm font-medium text-gray-700">
-          Filtrar por categoria
-        </Text>
+      <View className="mb-2 flex-row items-center justify-between">
+        <View className="flex-row items-center">
+          <Filter size={16} color={THEME_COLORS.primary} />
+          <Text className="ml-2 text-sm font-medium text-gray-700">
+            Filtrar por categoria
+          </Text>
+        </View>
+
+        {selectedCategoryId !== null && (
+          <TouchableOpacity
+            onPress={() => onSelectCategory(null)}
+            className="px-2 py-1 bg-gray-100 rounded-md"
+          >
+            <Text className="text-xs text-gray-600">Limpar filtro</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Categorias rolantes */}
@@ -50,7 +61,7 @@ export function CategoryFilter({
               selectedCategoryId === null && styles.activeText,
             ]}
           >
-            Todos
+            Todos os produtos
           </Text>
         </TouchableOpacity>
 
@@ -75,6 +86,15 @@ export function CategoryFilter({
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* Texto de assistência */}
+      <Text className="text-xs text-gray-500 mt-2 ml-1">
+        {selectedCategoryId === null
+          ? "Mostrando todos os produtos"
+          : `Mostrando apenas produtos da categoria selecionada (${
+              categories.find((c) => c.id === selectedCategoryId)?.nome || ""
+            })`}
+      </Text>
     </View>
   );
 }
@@ -93,6 +113,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 1,
     elevation: 1,
+    flexDirection: "row",
+    alignItems: "center",
   },
   activeButton: {
     backgroundColor: THEME_COLORS.primary,

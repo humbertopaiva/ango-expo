@@ -1,26 +1,25 @@
-// Path: src/components/common/enhanced-select.tsx
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { ChevronDown } from "lucide-react-native";
-import { THEME_COLORS } from "@/src/styles/colors";
+// Path: @/components/common/enhanced-select.tsx
+// (Assumindo que você já tem este componente, vamos apenas atualizá-lo)
 
-export interface SelectOption {
+import React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { ChevronDown } from "lucide-react-native";
+
+interface SelectOption {
   label: string;
-  value: string | number;
-  disabled?: boolean;
+  value: string;
+  data?: any;
 }
 
 interface EnhancedSelectProps {
-  label?: string;
+  label: string;
   options: SelectOption[];
-  value: string | number | null;
+  value: string;
   onSelect: () => void;
   placeholder?: string;
-  error?: string;
   isInvalid?: boolean;
-  isDisabled?: boolean;
-  className?: string;
-  required?: boolean;
+  error?: string;
+  helperText?: string;
 }
 
 export function EnhancedSelect({
@@ -29,103 +28,37 @@ export function EnhancedSelect({
   value,
   onSelect,
   placeholder = "Selecione uma opção",
+  isInvalid = false,
   error,
-  isInvalid,
-  isDisabled,
-  className = "",
-  required = false,
+  helperText,
 }: EnhancedSelectProps) {
-  // Encontrar a opção selecionada para exibição
-  const selectedOption = options.find(
-    (option) =>
-      option.value !== null &&
-      option.value.toString() === (value !== null ? value.toString() : "")
-  );
-
-  const displayText = selectedOption ? selectedOption.label : placeholder;
+  const selectedOption = options.find((option) => option.value === value);
 
   return (
-    <View style={styles.container} className={className}>
-      {label && (
-        <Text style={styles.label}>
-          {label}
-          {required && <Text className="text-red-500"> *</Text>}
-        </Text>
-      )}
-
+    <View className="mb-1">
       <TouchableOpacity
-        style={[
-          styles.selectContainer,
-          isInvalid && styles.invalidContainer,
-          isDisabled && styles.disabledContainer,
-        ]}
-        onPress={isDisabled ? undefined : onSelect}
-        activeOpacity={isDisabled ? 1 : 0.7}
+        onPress={onSelect}
+        className={`flex-row items-center justify-between border rounded-md p-3 ${
+          isInvalid ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"
+        }`}
       >
         <Text
-          style={[
-            styles.selectText,
-            !selectedOption && styles.placeholderText,
-            isDisabled && styles.disabledText,
-          ]}
-          numberOfLines={1}
+          className={`${
+            selectedOption ? "text-gray-900" : "text-gray-500"
+          } text-sm`}
         >
-          {displayText}
+          {selectedOption ? selectedOption.label : placeholder}
         </Text>
-
-        <ChevronDown
-          size={20}
-          color={isDisabled ? "#9CA3AF" : THEME_COLORS.primary}
-        />
+        <ChevronDown size={20} color="#6B7280" />
       </TouchableOpacity>
 
-      {isInvalid && error && <Text style={styles.errorText}>{error}</Text>}
+      {helperText && !isInvalid && (
+        <Text className="text-xs text-gray-500 mt-1">{helperText}</Text>
+      )}
+
+      {isInvalid && error && (
+        <Text className="text-xs text-red-500 mt-1">{error}</Text>
+      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#374151",
-    marginBottom: 4,
-  },
-  selectContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: "white",
-  },
-  invalidContainer: {
-    borderColor: "#EF4444",
-  },
-  disabledContainer: {
-    backgroundColor: "#F3F4F6",
-    borderColor: "#E5E7EB",
-    opacity: 0.8,
-  },
-  selectText: {
-    fontSize: 15,
-    color: "#111827",
-    flex: 1,
-  },
-  placeholderText: {
-    color: "#9CA3AF",
-  },
-  disabledText: {
-    color: "#6B7280",
-  },
-  errorText: {
-    color: "#EF4444",
-    fontSize: 12,
-    marginTop: 4,
-  },
-});
