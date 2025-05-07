@@ -492,7 +492,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
             title="Preços"
             icon={<DollarSign size={22} color="#0891B2" />}
           >
-            <View className="gap-4 flex flex-col py-4">
+            <View className="flex-row gap-4 w-full">
               {/* Preço */}
               <Controller
                 control={form.control}
@@ -506,6 +506,8 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                     errorMessage={form.formState.errors.preco?.message}
                     disabled={isSubmitting}
                     required
+                    style={{ flex: 1 }} // Para ocupar 50% do espaço
+                    className="h-12" // Altura maior para destaque
                   />
                 )}
               />
@@ -525,6 +527,8 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                     }
                     disabled={isSubmitting}
                     placeholder="0,00"
+                    style={{ flex: 1 }} // Para ocupar 50% do espaço
+                    className="h-12" // Altura maior para destaque
                   />
                 )}
               />
