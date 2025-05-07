@@ -1,4 +1,5 @@
 // Path: src/features/products/hooks/use-products.ts
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productService } from "../services/product.service";
 import { CreateProductDTO, UpdateProductDTO } from "../models/product";
@@ -33,12 +34,12 @@ export function useProducts() {
       return productService.createProduct(transformedData);
     },
     onSuccess: (newProduct) => {
-      // Apenas invalidar a lista de produtos
+      // Invalidar a lista de produtos e forçar um refetch
       invalidateProductQueries(queryClient, undefined, {
         invalidateList: true,
         invalidateDetails: false,
         invalidateVariations: false,
-        refetch: false,
+        refetch: true, // Alterado para true para forçar recarregamento
       });
     },
     onError: (error: any) => {
@@ -56,14 +57,17 @@ export function useProducts() {
 
       return productService.updateProduct(id, transformedData);
     },
-    onSuccess: (updatedProduct, variables) => {
-      // Invalidar apenas o produto específico
-      invalidateProductQueries(queryClient, variables.id, {
+    onSuccess: async (updatedProduct, variables) => {
+      // Invalidar o produto específico e a lista, forçando um refetch
+      await invalidateProductQueries(queryClient, variables.id, {
         invalidateList: true,
         invalidateDetails: true,
         invalidateVariations: false,
-        refetch: false,
+        refetch: true,
       });
+
+      // Garantir que a lista de produtos seja recarregada
+      await queryClient.refetchQueries({ queryKey });
     },
     onError: (error: any) => {
       console.error("Erro ao atualizar produto:", error);
@@ -73,12 +77,12 @@ export function useProducts() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productService.deleteProduct(id),
     onSuccess: (_, deletedProductId) => {
-      // Apenas invalidar a lista de produtos
+      // Invalidar a lista de produtos
       invalidateProductQueries(queryClient, undefined, {
         invalidateList: true,
         invalidateDetails: false,
         invalidateVariations: false,
-        refetch: false,
+        refetch: true,
       });
     },
     onError: (error: any) => {
