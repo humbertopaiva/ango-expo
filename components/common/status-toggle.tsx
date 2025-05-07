@@ -1,134 +1,107 @@
-// Path: src/components/common/status-toggle.tsx
+// Path: @/components/common/status-toggle.tsx
+// (Este é um componente comum, então vamos atualizá-lo para suportar as novas funcionalidades)
+
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from "react-native";
-import { Check, X } from "lucide-react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Switch } from "@gluestack-ui/themed";
+import { CheckCircle2, XCircle } from "lucide-react-native";
+import { THEME_COLORS } from "@/src/styles/colors";
 
 interface StatusToggleProps {
   value: boolean;
   onChange: (value: boolean) => void;
   activeLabel?: string;
   inactiveLabel?: string;
+  activeDescription?: string;
+  inactiveDescription?: string;
   disabled?: boolean;
-  primaryColor?: string;
+  labelOptions?: {
+    activeOption: string;
+    inactiveOption: string;
+  };
 }
 
 export function StatusToggle({
   value,
   onChange,
-  activeLabel = "Disponível",
-  inactiveLabel = "Indisponível",
+  activeLabel = "Ativo",
+  inactiveLabel = "Inativo",
+  activeDescription,
+  inactiveDescription,
   disabled = false,
-  primaryColor = "#F4511E",
+  labelOptions,
 }: StatusToggleProps) {
-  // Função para alternar o estado
-  const toggleStatus = () => {
-    if (!disabled) {
-      onChange(!value);
-    }
-  };
+  const currentLabel = value ? activeLabel : inactiveLabel;
+  const currentDescription = value ? activeDescription : inactiveDescription;
 
   return (
-    <TouchableOpacity
-      onPress={toggleStatus}
-      activeOpacity={disabled ? 1 : 0.8}
-      style={[
-        styles.container,
-        {
-          backgroundColor: value
-            ? `${primaryColor}15` // 15% de opacidade para o background
-            : "#F3F4F6",
-          borderColor: value ? primaryColor : "#D1D5DB",
-        },
-        disabled && styles.disabled,
-      ]}
-    >
-      {/* Ícone do status */}
-      <View
-        style={[
-          styles.iconContainer,
-          {
-            backgroundColor: value ? primaryColor : "#9CA3AF",
-          },
-        ]}
-      >
-        {value ? (
-          <Check size={16} color="white" />
+    <View className="bg-white rounded-lg border border-gray-200 p-3">
+      <View className="flex-row items-center justify-between">
+        <View className="flex-1">
+          <View className="flex-row items-center">
+            {value ? (
+              <CheckCircle2 size={18} color="#16A34A" />
+            ) : (
+              <XCircle size={18} color="#DC2626" />
+            )}
+            <Text
+              className={`ml-2 font-medium ${
+                value ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {currentLabel}
+            </Text>
+          </View>
+
+          {currentDescription && (
+            <Text className="text-gray-600 text-xs mt-1 ml-6">
+              {currentDescription}
+            </Text>
+          )}
+        </View>
+
+        {labelOptions ? (
+          <View className="flex-row bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+            <TouchableOpacity
+              className={`px-3 py-1.5 ${
+                value ? "bg-primary-500" : "bg-transparent"
+              }`}
+              onPress={() => onChange(true)}
+              disabled={disabled}
+            >
+              <Text
+                className={value ? "text-white font-medium" : "text-gray-600"}
+              >
+                {labelOptions.activeOption}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className={`px-3 py-1.5 ${
+                !value ? "bg-primary-500" : "bg-transparent"
+              }`}
+              onPress={() => onChange(false)}
+              disabled={disabled}
+            >
+              <Text
+                className={!value ? "text-white font-medium" : "text-gray-600"}
+              >
+                {labelOptions.inactiveOption}
+              </Text>
+            </TouchableOpacity>
+          </View>
         ) : (
-          <X size={16} color="white" />
+          <Switch
+            size="sm"
+            isDisabled={disabled}
+            value={value}
+            onToggle={(val) => onChange(val)}
+            trackColor={{
+              true: THEME_COLORS.primary,
+              false: "#D1D5DB",
+            }}
+          />
         )}
       </View>
-
-      {/* Texto do status */}
-      <Text
-        style={[
-          styles.label,
-          {
-            color: value ? primaryColor : "#4B5563",
-            fontWeight: value ? "600" : "400",
-          },
-        ]}
-      >
-        {value ? activeLabel : inactiveLabel}
-      </Text>
-
-      {/* Indicador visual de que é interativo */}
-      <View style={styles.toggleHint}>
-        <View
-          style={[
-            styles.toggleDot,
-            { backgroundColor: value ? primaryColor : "#9CA3AF" },
-            value && styles.activeDot,
-          ]}
-        />
-      </View>
-    </TouchableOpacity>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginVertical: 4,
-  },
-  iconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
-  label: {
-    flex: 1,
-    fontSize: 15,
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-  toggleHint: {
-    width: 40,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#E5E7EB",
-    padding: 2,
-  },
-  toggleDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#9CA3AF",
-  },
-  activeDot: {
-    transform: [{ translateX: 16 }],
-  },
-});

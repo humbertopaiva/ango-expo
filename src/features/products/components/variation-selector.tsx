@@ -105,6 +105,11 @@ export function VariationSelector({
         </Text>
       </FormControlLabel>
 
+      <Text className="text-xs text-gray-500 -mt-1 mb-2">
+        Selecione o tipo de variação para este produto (ex: Tamanho, Cor). Cada
+        produto só pode ter um tipo de variação.
+      </Text>
+
       {variationOptions.length > 0 ? (
         <>
           <EnhancedSelect
@@ -115,6 +120,7 @@ export function VariationSelector({
             placeholder="Selecione o tipo de variação"
             isInvalid={!!error}
             error={error}
+            helperText="Após selecionar, você poderá adicionar valores específicos para cada opção"
           />
 
           <CategorySelectModal
@@ -130,13 +136,18 @@ export function VariationSelector({
           />
         </>
       ) : (
-        <View className="p-3 border border-gray-300 rounded-md bg-gray-50">
-          <Text className="text-gray-500">
+        <View className="p-4 border border-gray-300 rounded-md bg-gray-50">
+          <Text className="text-gray-600 font-medium mb-1">
             {isLoading
               ? "Carregando variações..."
               : availableVariations.length === 0 && variations.length > 0
-              ? "Todas as variações já estão sendo utilizadas. Crie uma nova variação primeiro."
-              : "Nenhuma variação disponível. Cadastre variações primeiro."}
+              ? "Todas as variações já estão em uso"
+              : "Nenhuma variação disponível"}
+          </Text>
+          <Text className="text-xs text-gray-500">
+            {availableVariations.length === 0 && variations.length > 0
+              ? "Cada tipo de variação só pode ser usado em um produto. Crie uma nova variação antes de continuar."
+              : "Você precisa cadastrar tipos de variação antes de usar essa funcionalidade. Acesse o menu 'Variações' para criar."}
           </Text>
         </View>
       )}
