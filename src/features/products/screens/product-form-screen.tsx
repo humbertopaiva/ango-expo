@@ -352,13 +352,19 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
               />
               {form.watch("is_variacao_enabled") && (
                 <View className="mt-4">
-                  <VariationSelector
-                    value={form.watch("variacao") ?? null}
-                    onChange={(value) => form.setValue("variacao", value)}
-                    onVariationChange={handleVariationChange}
-                    error={form.formState.errors.variacao?.message}
-                    disabled={isSubmitting}
-                    productId={productId}
+                  <Controller
+                    control={form.control}
+                    name="variacao"
+                    render={({ field: { value, onChange } }) => (
+                      <VariationSelector
+                        value={value}
+                        onChange={onChange}
+                        onVariationChange={handleVariationChange}
+                        error={form.formState.errors.variacao?.message}
+                        disabled={isSubmitting}
+                        productId={productId}
+                      />
+                    )}
                   />
                   {selectedVariationType && (
                     <View className="mt-2 p-3 bg-blue-50 rounded-md">
