@@ -7,10 +7,17 @@ import {
   Pressable,
   Animated,
 } from "react-native";
-import { Edit, Trash, Eye, Layers, ChevronRight } from "lucide-react-native";
+import {
+  Edit,
+  Trash,
+  Eye,
+  Layers,
+  ChevronRight,
+  CheckCircle,
+  XCircle,
+} from "lucide-react-native";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { ImagePreview } from "@/components/custom/image-preview";
-import { StatusBadge } from "@/components/custom/status-badge";
 import { Product } from "../models/product";
 import * as Haptics from "expo-haptics";
 import { useProducts } from "../hooks/use-products";
@@ -52,6 +59,35 @@ export function ProductCard({
   // Verificar se o produto tem variação
   const productHasVariation = hasVariation(product);
 
+  // Função para verificar e normalizar o status do produto
+  const isProductAvailable = () => {
+    // Log detalhado para debug
+    console.log("Verificando status do produto:", {
+      id: product.id,
+      status: product.status,
+      tipo: typeof product.status,
+    });
+
+    if (product.status === undefined || product.status === null) {
+      console.log("Status indefinido ou nulo");
+      return false;
+    }
+
+    // Converter para string e normalizar
+    const statusStr = String(product.status).trim().toLowerCase();
+    console.log("Status normalizado:", statusStr);
+
+    // Verificar caracteres específicos para debug (pode haver caracteres invisíveis)
+    const charCodes = Array.from(statusStr).map((c) => c.charCodeAt(0));
+    console.log("Códigos dos caracteres:", charCodes);
+
+    // Verificação explícita com comparação estrita
+    const isAvailable = statusStr === "disponivel";
+    console.log("Resultado da verificação:", isAvailable);
+
+    return isAvailable;
+  };
+
   const toggleActions = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowActions(!showActions);
@@ -86,6 +122,9 @@ export function ProductCard({
       useNativeDriver: true,
     }).start();
   };
+
+  // Verificar disponibilidade
+  const available = isProductAvailable();
 
   return (
     <Animated.View
@@ -156,16 +195,26 @@ export function ProductCard({
                 </View>
               )}
 
-              {/* Status e badges */}
+              {/* Status - implementação direta sem StatusBadge */}
               <View className="flex-row items-center mt-1 gap-2">
-                <StatusBadge
-                  status={product.status}
-                  customLabel={
-                    product.status === "disponivel"
-                      ? "Disponível"
-                      : "Indisponível"
-                  }
-                />
+                <View
+                  className={`flex-row items-center px-2 py-1 rounded-full ${
+                    available ? "bg-green-100" : "bg-red-100"
+                  }`}
+                >
+                  {available ? (
+                    <CheckCircle size={12} color="#16A34A" className="mr-1" />
+                  ) : (
+                    <XCircle size={12} color="#DC2626" className="mr-1" />
+                  )}
+                  <Text
+                    className={`text-xs font-medium ${
+                      available ? "text-green-800" : "text-red-800"
+                    }`}
+                  >
+                    {available ? "Disponível" : "Indisponível"}
+                  </Text>
+                </View>
 
                 {productHasVariation && (
                   <View className="px-2 py-1 rounded-full bg-blue-100">
