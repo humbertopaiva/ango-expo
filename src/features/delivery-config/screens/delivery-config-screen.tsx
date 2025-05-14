@@ -9,11 +9,6 @@ import ScreenHeader from "@/components/ui/screen-header";
 export function DeliveryConfigScreen() {
   return (
     <View className="flex-1 bg-background">
-      <ScreenHeader
-        title="Configurações de Entrega"
-        subtitle="Gerencie as configurações de delivery da sua loja"
-        showBackButton={true}
-      />
       <DeliveryConfigProvider>
         <DeliveryConfigContent />
       </DeliveryConfigProvider>

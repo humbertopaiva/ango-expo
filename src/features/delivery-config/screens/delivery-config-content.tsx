@@ -15,7 +15,7 @@ export function DeliveryConfigContent() {
   const formRef = useRef<{ handleSubmit: () => void } | null>(null);
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-white pb-2" edges={["top"]}>
       <View className="flex-1">
         <Section className="flex-1">
           {vm.isLoading ? (

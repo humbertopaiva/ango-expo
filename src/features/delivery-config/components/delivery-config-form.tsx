@@ -36,6 +36,7 @@ import { DeliveryConfig } from "../models/delivery-config";
 import { ScrollView } from "react-native";
 import { Textarea, TextareaInput } from "@gluestack-ui/themed";
 import { THEME_COLORS } from "@/src/styles/colors";
+import { CurrencyInput } from "@/components/common/currency-input";
 
 interface DeliveryConfigFormProps {
   config?: DeliveryConfig | null;
@@ -263,35 +264,40 @@ export const DeliveryConfigForm = forwardRef(
                     )}
                   </FormControl>
 
+                  {/* Especificar Bairros Toggle - Padronizado com estilo de Configurações Gerais */}
                   <FormControl>
-                    <View className="flex-row items-center justify-between mb-1">
-                      <FormControlLabel>
-                        <FormControlLabelText className="text-sm font-medium text-gray-700">
-                          Especificar Bairros Atendidos
-                        </FormControlLabelText>
-                      </FormControlLabel>
-                      <Controller
-                        control={control}
-                        name="especificar_bairros_atendidos"
-                        render={({ field: { onChange, value } }) => (
-                          <Switch
-                            size="md"
-                            value={value}
-                            onValueChange={onChange}
-                            trackColor={{
-                              false: "#D1D5DB",
-                              true: THEME_COLORS.primary,
-                            }}
-                            thumbColor={value ? "#ffffff" : "#ffffff"}
-                          />
-                        )}
-                      />
+                    <View className="bg-gray-50 rounded-lg p-4">
+                      <View className="flex-row items-center justify-between mb-2">
+                        <View>
+                          <FormControlLabel>
+                            <FormControlLabelText className="text-base font-semibold text-gray-800">
+                              Especificar Bairros Atendidos
+                            </FormControlLabelText>
+                          </FormControlLabel>
+                          <Text className="text-xs text-gray-500 mt-1">
+                            {especificarBairros
+                              ? "Defina quais bairros são atendidos"
+                              : "Todos os bairros serão atendidos"}
+                          </Text>
+                        </View>
+                        <Controller
+                          control={control}
+                          name="especificar_bairros_atendidos"
+                          render={({ field: { onChange, value } }) => (
+                            <Switch
+                              size="lg"
+                              value={value}
+                              onValueChange={onChange}
+                              trackColor={{
+                                false: "#D1D5DB",
+                                true: THEME_COLORS.primary,
+                              }}
+                              thumbColor={value ? "#ffffff" : "#ffffff"}
+                            />
+                          )}
+                        />
+                      </View>
                     </View>
-                    <Text className="text-xs text-gray-500">
-                      {especificarBairros
-                        ? "Defina quais bairros são atendidos"
-                        : "Todos os bairros serão atendidos"}
-                    </Text>
                   </FormControl>
 
                   {especificarBairros && (
@@ -346,7 +352,7 @@ export const DeliveryConfigForm = forwardRef(
                 </View>
               </SectionCard>
 
-              {/* Preços e Taxas */}
+              {/* Preços e Taxas - Agora usando CurrencyInput */}
               <SectionCard
                 title="Valores"
                 icon={<DollarSign size={22} color={THEME_COLORS.secondary} />}
@@ -362,23 +368,16 @@ export const DeliveryConfigForm = forwardRef(
                       control={control}
                       name="taxa_entrega"
                       render={({ field: { onChange, value } }) => (
-                        <Input variant="outline">
-                          <InputField
-                            placeholder="R$ 0,00"
-                            onChangeText={onChange}
-                            value={value}
-                            className="bg-white"
-                          />
-                        </Input>
+                        <CurrencyInput
+                          value={value}
+                          onChangeValue={onChange}
+                          placeholder="0,00"
+                          isInvalid={!!errors.taxa_entrega}
+                          errorMessage={errors.taxa_entrega?.message}
+                          className="bg-white"
+                        />
                       )}
                     />
-                    {errors.taxa_entrega && (
-                      <FormControlError>
-                        <FormControlErrorText className="text-sm">
-                          {errors.taxa_entrega.message}
-                        </FormControlErrorText>
-                      </FormControlError>
-                    )}
                   </FormControl>
 
                   <FormControl isInvalid={!!errors.pedido_minimo}>
@@ -391,23 +390,16 @@ export const DeliveryConfigForm = forwardRef(
                       control={control}
                       name="pedido_minimo"
                       render={({ field: { onChange, value } }) => (
-                        <Input variant="outline">
-                          <InputField
-                            placeholder="R$ 0,00"
-                            onChangeText={onChange}
-                            value={value}
-                            className="bg-white"
-                          />
-                        </Input>
+                        <CurrencyInput
+                          value={value}
+                          onChangeValue={onChange}
+                          placeholder="0,00"
+                          isInvalid={!!errors.pedido_minimo}
+                          errorMessage={errors.pedido_minimo?.message}
+                          className="bg-white"
+                        />
                       )}
                     />
-                    {errors.pedido_minimo && (
-                      <FormControlError>
-                        <FormControlErrorText className="text-sm">
-                          {errors.pedido_minimo.message}
-                        </FormControlErrorText>
-                      </FormControlError>
-                    )}
                   </FormControl>
                 </View>
               </SectionCard>
@@ -434,9 +426,8 @@ export const DeliveryConfigForm = forwardRef(
                             onChangeText={onChange}
                             value={value}
                             numberOfLines={4}
-                            className="bg-white"
+                            className="bg-white border rounded-md border-gray-50"
                             style={{
-                              minHeight: 120,
                               textAlignVertical: "top",
                             }}
                           />

@@ -57,7 +57,10 @@ export default function AdminLayout() {
         <Stack.Screen name="custom-products" />
 
         {/* Delivery */}
-        <Stack.Screen name="delivery-config/index" />
+        <Stack.Screen
+          name="delivery-config/index"
+          options={{ title: "Config. de Loja	", headerShown: true }}
+        />
 
         {/* Vitrine */}
         <Stack.Screen
