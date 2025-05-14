@@ -1,6 +1,5 @@
 // Path: src/features/leaflets/components/leaflet-form.tsx
 
-// Atualizando o componente para adicionar a nova aba de PDF
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, SubmitErrorHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -33,8 +32,12 @@ import { DatePicker } from "@/components/common/date-picker";
 import { useLeafletsContext } from "../contexts/use-leaflets-context";
 import { THEME_COLORS } from "@/src/styles/colors";
 import { toastUtils } from "@/src/utils/toast.utils";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Button, ButtonText } from "@/components/ui/button";
 import { PdfUpload } from "./pdf-upload";
+import {
+  FormToastAlert,
+  ToastType,
+} from "@/components/custom/form-toast-alert";
 
 interface LeafletFormScreenProps {
   leafletId?: string;
@@ -65,6 +68,11 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
   const [statusValue, setStatusValue] = useState("ativo");
   // Estado para alternar entre upload de imagens individuais ou PDF
   const [uploadMode, setUploadMode] = useState<"images" | "pdf">("images");
+  // Estados para o toast personalizado
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<ToastType>("error");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LeafletFormData>({
     resolver: zodResolver(leafletFormSchema),
@@ -83,20 +91,18 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
       imagem_08: null,
       pdf: null,
     },
+    mode: "onSubmit",
   });
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    getValues,
-    setValue,
-    watch,
-  } = form;
+  // Função auxiliar para mostrar o toast personalizado
+  const showCustomToast = (message: string, type: ToastType = "error") => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
 
   // Monitorar o valor do PDF para atualizar o modo de upload
-  const pdfValue = watch("pdf");
+  const pdfValue = form.watch("pdf");
 
   useEffect(() => {
     if (pdfValue) {
@@ -104,14 +110,14 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
     } else {
       // Verificar se há imagens
       const hasImages = [
-        getValues("imagem_01"),
-        getValues("imagem_02"),
-        getValues("imagem_03"),
-        getValues("imagem_04"),
-        getValues("imagem_05"),
-        getValues("imagem_06"),
-        getValues("imagem_07"),
-        getValues("imagem_08"),
+        form.getValues("imagem_01"),
+        form.getValues("imagem_02"),
+        form.getValues("imagem_03"),
+        form.getValues("imagem_04"),
+        form.getValues("imagem_05"),
+        form.getValues("imagem_06"),
+        form.getValues("imagem_07"),
+        form.getValues("imagem_08"),
       ].some(Boolean);
 
       if (!hasImages) {
@@ -121,8 +127,8 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
   }, [pdfValue]);
 
   useEffect(() => {
-    if (leaflet) {
-      reset({
+    if (leaflet && !isSubmitting) {
+      form.reset({
         nome: leaflet.nome,
         validade: leaflet.validade,
         status: leaflet.status,
@@ -146,7 +152,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
         setUploadMode("images");
       }
     }
-  }, [leaflet, reset]);
+  }, [leaflet, form.reset, isSubmitting]);
 
   // Efeito para sincronizar o estado local com o valor do formulário
   useEffect(() => {
@@ -159,8 +165,86 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
     return () => subscription.unsubscribe();
   }, [form.watch]);
 
+  // Handler para erros de validação
+  const onError: SubmitErrorHandler<LeafletFormData> = (errors) => {
+    console.log("Validation errors:", errors);
+
+    // Mapear nomes amigáveis para os campos
+    const fieldLabels: Record<string, string> = {
+      nome: "Nome",
+      validade: "Data de validade",
+      status: "Status",
+      banner: "Banner",
+      imagem_01: "Adicione o conteúdo: Seja em PDF ou imagens",
+      imagem_02: "Página 2",
+      imagem_03: "Página 3",
+      imagem_04: "Página 4",
+      imagem_05: "Página 5",
+      imagem_06: "Página 6",
+      imagem_07: "Página 7",
+      imagem_08: "Página 8",
+      pdf: "Arquivo PDF",
+      root: "Conteúdo",
+    };
+
+    // Construir mensagem de erro
+    const errorFields = Object.keys(errors);
+
+    if (errorFields.length > 0) {
+      // Verificar se há erros de refinamento (errors.root)
+      if (errors.root?.message) {
+        // Mostrar erro de conteúdo (pelo menos uma imagem ou PDF necessário)
+        showCustomToast(errors.root.message, "error");
+        return;
+      }
+
+      // Para o toast, mostre uma mensagem mais curta
+      let toastMsg = "Campos obrigatórios: ";
+
+      // Limitar a quantidade de campos mostrados no toast
+      if (errorFields.length <= 3) {
+        toastMsg += errorFields
+          .map((field) => fieldLabels[field] || field)
+          .join(", ");
+      } else {
+        const firstFields = errorFields.slice(0, 2);
+        toastMsg +=
+          firstFields.map((field) => fieldLabels[field] || field).join(", ") +
+          ` e mais ${errorFields.length - 2} campos`;
+      }
+
+      // Mostrar toast personalizado
+      showCustomToast(toastMsg, "error");
+    }
+  };
+
   const onSubmit = async (data: LeafletFormData) => {
     try {
+      setIsSubmitting(true);
+
+      // Validação adicional para garantir que há pelo menos uma imagem ou PDF
+      const hasImages = [
+        data.imagem_01,
+        data.imagem_02,
+        data.imagem_03,
+        data.imagem_04,
+        data.imagem_05,
+        data.imagem_06,
+        data.imagem_07,
+        data.imagem_08,
+      ].some((image) => image && image.length > 0);
+
+      const hasPdf = data.pdf && data.pdf.length > 0;
+
+      if (!hasImages && !hasPdf) {
+        showCustomToast(
+          "O encarte deve ter pelo menos uma imagem ou um arquivo PDF",
+          "error"
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       // Se está no modo PDF, limpar os campos de imagens
       if (uploadMode === "pdf" && data.pdf) {
         data.imagem_01 = null;
@@ -180,33 +264,31 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
 
       if (isEditing && id) {
         await handleUpdateLeaflet(id, data);
+        showCustomToast("Encarte atualizado com sucesso!", "success");
         toastUtils.success(toast, "Encarte atualizado com sucesso!");
       } else {
         await handleCreateLeaflet(data);
+        showCustomToast("Encarte criado com sucesso!", "success");
         toastUtils.success(toast, "Encarte criado com sucesso!");
       }
-      router.back();
+
+      // Aguarda um momento antes de voltar para evitar race conditions
+      setTimeout(() => {
+        router.back();
+      }, 500);
     } catch (error) {
       console.error("Erro ao submeter formulário:", error);
+      showCustomToast(
+        `Erro ao ${isEditing ? "atualizar" : "criar"} encarte`,
+        "error"
+      );
       toastUtils.error(
         toast,
         `Erro ao ${isEditing ? "atualizar" : "criar"} encarte`
       );
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const countImages = () => {
-    const values = getValues();
-    return [
-      values.imagem_01,
-      values.imagem_02,
-      values.imagem_03,
-      values.imagem_04,
-      values.imagem_05,
-      values.imagem_06,
-      values.imagem_07,
-      values.imagem_08,
-    ].filter(Boolean).length;
   };
 
   // Função para alternar o modo de upload
@@ -232,14 +314,38 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
       ) {
         return;
       }
-      setValue("pdf", null);
+      form.setValue("pdf", null);
     }
 
     setUploadMode(mode);
   };
 
+  // Conta o número de imagens preenchidas
+  const countImages = () => {
+    const values = form.getValues();
+    return [
+      values.imagem_01,
+      values.imagem_02,
+      values.imagem_03,
+      values.imagem_04,
+      values.imagem_05,
+      values.imagem_06,
+      values.imagem_07,
+      values.imagem_08,
+    ].filter(Boolean).length;
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
+      {/* Toast personalizado */}
+      <FormToastAlert
+        visible={toastVisible}
+        onClose={() => setToastVisible(false)}
+        message={toastMessage}
+        type={toastType}
+        duration={5000}
+      />
+
       {/* Tabs Nav */}
       <View className="flex-row border-b border-gray-200 bg-white">
         <TouchableOpacity
@@ -281,14 +387,14 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
         <ScrollView className="flex-1 px-4 bg-white">
           <VStack space="lg" className="py-6">
             {/* Nome */}
-            <FormControl isInvalid={!!errors.nome}>
+            <FormControl isInvalid={!!form.formState.errors.nome}>
               <FormControl.Label>
                 <Text className="text-sm font-medium text-gray-700">
-                  Nome do Encarte
+                  Nome do Encarte <Text className="text-red-500">*</Text>
                 </Text>
               </FormControl.Label>
               <Controller
-                control={control}
+                control={form.control}
                 name="nome"
                 render={({ field: { onChange, value } }) => (
                   <Input>
@@ -301,47 +407,50 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                   </Input>
                 )}
               />
-              {errors.nome && (
+              {form.formState.errors.nome && (
                 <FormControl.Error>
                   <Text className="text-sm text-red-500">
-                    {errors.nome.message}
+                    {form.formState.errors.nome.message}
                   </Text>
                 </FormControl.Error>
               )}
             </FormControl>
 
             {/* Validade */}
-            <FormControl isInvalid={!!errors.validade}>
+            <FormControl isInvalid={!!form.formState.errors.validade}>
               <FormControl.Label>
                 <Text className="text-sm font-medium text-gray-700">
-                  Data de Validade
+                  Data de Validade <Text className="text-red-500">*</Text>
                 </Text>
               </FormControl.Label>
               <Controller
-                control={control}
+                control={form.control}
                 name="validade"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
                     value={value}
                     onChange={onChange}
                     placeholder="Selecione a data de validade"
-                    isInvalid={!!errors.validade}
-                    errorMessage={errors.validade?.message}
+                    isInvalid={!!form.formState.errors.validade}
+                    errorMessage={form.formState.errors.validade?.message}
                     disabled={isLoading}
                   />
                 )}
               />
-              {errors.validade && (
+              {form.formState.errors.validade && (
                 <FormControl.Error>
                   <Text className="text-sm text-red-500">
-                    {errors.validade.message}
+                    {form.formState.errors.validade.message}
                   </Text>
                 </FormControl.Error>
               )}
             </FormControl>
 
             {/* Status como Switch/Toggle */}
-            <FormControl isInvalid={!!errors.status} className="mb-2">
+            <FormControl
+              isInvalid={!!form.formState.errors.status}
+              className="mb-2"
+            >
               <FormControl.Label>
                 <Text className="text-sm font-medium text-gray-700 mb-2">
                   Status do Encarte
@@ -349,7 +458,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
               </FormControl.Label>
 
               <Controller
-                control={control}
+                control={form.control}
                 name="status"
                 render={({ field: { onChange, value } }) => (
                   <View className="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -399,27 +508,27 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                 )}
               />
 
-              {errors.status && (
+              {form.formState.errors.status && (
                 <FormControl.Error>
                   <Text className="text-sm text-red-500">
-                    {errors.status.message}
+                    {form.formState.errors.status.message}
                   </Text>
                 </FormControl.Error>
               )}
             </FormControl>
 
             {/* Banner Principal */}
-            <FormControl isInvalid={!!errors.banner}>
+            <FormControl isInvalid={!!form.formState.errors.banner}>
               <FormControl.Label>
                 <Text className="text-sm font-medium text-gray-700">
-                  Banner Principal
+                  Banner Principal <Text className="text-red-500">*</Text>
                 </Text>
               </FormControl.Label>
               <Text className="text-xs text-gray-500 mb-2">
                 Esta imagem será exibida como capa do encarte
               </Text>
               <Controller
-                control={control}
+                control={form.control}
                 name="banner"
                 render={({ field: { onChange, value } }) => (
                   <ImageUpload
@@ -429,10 +538,10 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                   />
                 )}
               />
-              {errors.banner && (
+              {form.formState.errors.banner && (
                 <FormControl.Error>
                   <Text className="text-sm text-red-500">
-                    {errors.banner.message}
+                    {form.formState.errors.banner.message}
                   </Text>
                 </FormControl.Error>
               )}
@@ -485,6 +594,14 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
               </Text>
             </View>
 
+            {/* Alerta de validação para conteúdo obrigatório */}
+            <Alert className="mb-4 bg-amber-50 border border-amber-200">
+              <AlertIcon as={AlertCircle} color="#F59E0B" />
+              <AlertText className="ml-3 text-amber-700">
+                O encarte deve ter pelo menos uma imagem ou um arquivo PDF
+              </AlertText>
+            </Alert>
+
             {uploadMode === "images" ? (
               // Imagens individuais
               <>
@@ -501,7 +618,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                   <FormControl
                     key={`imagem_${String(index + 1).padStart(2, "0")}`}
                     isInvalid={
-                      !!errors[
+                      !!form.formState.errors[
                         `imagem_${String(index + 1).padStart(
                           2,
                           "0"
@@ -516,7 +633,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                       </Text>
                     </FormControl.Label>
                     <Controller
-                      control={control}
+                      control={form.control}
                       name={
                         `imagem_${String(index + 1).padStart(
                           2,
@@ -531,7 +648,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                         />
                       )}
                     />
-                    {errors[
+                    {form.formState.errors[
                       `imagem_${String(index + 1).padStart(
                         2,
                         "0"
@@ -540,7 +657,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                       <FormControl.Error>
                         <Text className="text-sm text-red-500">
                           {
-                            errors[
+                            form.formState.errors[
                               `imagem_${String(index + 1).padStart(
                                 2,
                                 "0"
@@ -564,30 +681,33 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
                   </AlertText>
                 </Alert>
 
-                <FormControl isInvalid={!!errors.pdf} className="mb-6">
+                <FormControl
+                  isInvalid={!!form.formState.errors.pdf}
+                  className="mb-6"
+                >
                   <FormControl.Label>
                     <Text className="text-sm font-medium text-gray-700">
                       Arquivo PDF do Encarte
                     </Text>
                   </FormControl.Label>
                   <Controller
-                    control={control}
+                    control={form.control}
                     name="pdf"
                     render={({ field: { onChange, value } }) => (
                       <PdfUpload
                         value={value || ""}
                         onChange={(newValue) => {
-                          console.log("PDF URL sendo salva:", newValue); // Para debug
+                          console.log("PDF URL sendo salva:", newValue);
                           onChange(newValue);
                         }}
                         disabled={isLoading}
                       />
                     )}
                   />
-                  {errors.pdf && (
+                  {form.formState.errors.pdf && (
                     <FormControl.Error>
                       <Text className="text-sm text-red-500">
-                        {errors.pdf.message}
+                        {form.formState.errors.pdf.message}
                       </Text>
                     </FormControl.Error>
                   )}
@@ -621,7 +741,7 @@ export function LeafletFormScreen({ leafletId }: LeafletFormScreenProps) {
             <ButtonText>Cancelar</ButtonText>
           </Button>
           <Button
-            onPress={handleSubmit(onSubmit)}
+            onPress={form.handleSubmit(onSubmit, onError)}
             disabled={isLoading}
             className="flex-1 bg-primary-500 h-14"
             style={{ backgroundColor: primaryColor }}

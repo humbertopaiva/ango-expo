@@ -54,7 +54,10 @@ const CustomTabBar = ({ navigationState, position, jumpTo }: TabBarProps) => {
               onPress={() => jumpTo(route.key)}
               style={{ backgroundColor: "transparent" }}
             >
-              <ButtonText style={{ color: isActive ? "#F4511E" : "gray" }}>
+              <ButtonText
+                style={{ color: isActive ? "#F4511E" : "gray" }}
+                className="font-semibold"
+              >
                 {route.title}
               </ButtonText>
             </Button>
@@ -79,10 +82,10 @@ export function VitrinePageContent() {
     switch (route.key) {
       case "produtos":
         return (
-          <View className="flex-1 p-4 pt-6">
+          <View className="flex-1 p-4">
             {vm.vitrineProdutos.length < 10 && (
               <View className="mb-6">
-                <Text className="text-base text-gray-500 mb-2">
+                <Text className="text-base font-sans text-gray-500 mb-2">
                   Adicione até 10 produtos para exibir em sua vitrine virtual.
                 </Text>
                 {vm.vitrineProdutos.length === 0 && (
@@ -143,12 +146,7 @@ export function VitrinePageContent() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <ScreenHeader
-        title="Vitrine Virtual"
-        subtitle="Gerencie produtos em destaque e links importantes"
-      />
-
+    <SafeAreaView className="flex-1 bg-gray-50">
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}

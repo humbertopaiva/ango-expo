@@ -8,7 +8,6 @@ import { View } from "@gluestack-ui/themed";
 export default function EditLeafletPage() {
   return (
     <View className="flex-1 bg-background">
-      <ScreenHeader title="Editar Encarte" backTo="/admin/leaflets" />
       <LeafletFormScreen />
     </View>
   );
