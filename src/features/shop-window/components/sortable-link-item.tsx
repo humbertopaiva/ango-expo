@@ -188,7 +188,7 @@ export function SortableLinkItem({
           transform: [{ translateX: slideAnim }],
         }}
       >
-        <Card className="bg-white shadow-sm border border-gray-100 overflow-hidden">
+        <Card className="bg-white border border-gray-100 overflow-hidden">
           {/* Posição do item como "tag" no canto superior direito */}
           {!isReordering && position && (
             <View className="absolute top-0 right-0 bg-primary-100 rounded-bl-lg px-1.5 py-0.5 z-10">

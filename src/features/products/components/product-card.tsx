@@ -61,13 +61,6 @@ export function ProductCard({
 
   // Função para verificar e normalizar o status do produto
   const isProductAvailable = () => {
-    // Log detalhado para debug
-    console.log("Verificando status do produto:", {
-      id: product.id,
-      status: product.status,
-      tipo: typeof product.status,
-    });
-
     if (product.status === undefined || product.status === null) {
       console.log("Status indefinido ou nulo");
       return false;
@@ -75,15 +68,11 @@ export function ProductCard({
 
     // Converter para string e normalizar
     const statusStr = String(product.status).trim().toLowerCase();
-    console.log("Status normalizado:", statusStr);
 
-    // Verificar caracteres específicos para debug (pode haver caracteres invisíveis)
     const charCodes = Array.from(statusStr).map((c) => c.charCodeAt(0));
-    console.log("Códigos dos caracteres:", charCodes);
 
     // Verificação explícita com comparação estrita
     const isAvailable = statusStr === "disponivel";
-    console.log("Resultado da verificação:", isAvailable);
 
     return isAvailable;
   };
