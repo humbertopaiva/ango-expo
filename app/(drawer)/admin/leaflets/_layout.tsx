@@ -2,15 +2,40 @@
 
 import { Stack } from "expo-router";
 import { LeafletsProvider } from "@/src/features/leaflets/contexts/leaflets-provider";
+import { Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 export default function LeafletsLayout() {
   return (
     <LeafletsProvider>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: "#FFFFFF" },
+          headerShown: true,
+          headerBackTitle: "Voltar",
+          headerBackVisible: true,
+          headerTintColor: "#FFFFFF",
+          headerStyle: {
+            backgroundColor: "#F4511E",
+          },
+          headerTitleStyle: {
+            fontSize: 24,
+          },
+        }}
+      >
         <Stack.Screen
           name="index"
           options={{
             title: "Leaflets",
+            headerShown: true,
+            headerLeft: () => {
+              return (
+                <Pressable onPress={() => router.back()} className="pr-4">
+                  <Ionicons name="arrow-back" size={24} color="#fff" />
+                </Pressable>
+              );
+            },
           }}
         />
         <Stack.Screen
@@ -22,7 +47,8 @@ export default function LeafletsLayout() {
         <Stack.Screen
           name="[id]/index"
           options={{
-            title: "Editar Leaflet",
+            title: "Editar Encarte",
+            headerShown: true,
           }}
         />
       </Stack>

@@ -69,7 +69,7 @@ export function SwipeableCard({
 
   return (
     <GestureHandlerRootView style={{ marginBottom: 12 }}>
-      <View className="overflow-hidden relative">
+      <View className="overflow-hidden relative bg-white">
         {/* Action buttons */}
         <View className="absolute right-0 top-0 bottom-0 flex-row items-center justify-center h-full">
           {!disableEdit && (

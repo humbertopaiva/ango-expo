@@ -24,7 +24,21 @@ export default function AdminLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: "#FFFFFF" },
+          headerShown: false,
+          headerBackTitle: "Voltar",
+          headerBackVisible: true,
+          headerTintColor: "#FFFFFF",
+          headerStyle: {
+            backgroundColor: "#F4511E",
+          },
+          headerTitleStyle: {
+            fontSize: 24,
+          },
+        }}
+      >
         {/* Dashboard */}
         <Stack.Screen name="dashboard/index" />
 
@@ -46,10 +60,16 @@ export default function AdminLayout() {
         <Stack.Screen name="delivery-config/index" />
 
         {/* Vitrine */}
-        <Stack.Screen name="vitrine/index" />
+        <Stack.Screen
+          name="vitrine/index"
+          options={{ title: "Vitrine", headerShown: true }}
+        />
 
         {/* Encartes */}
-        <Stack.Screen name="leaflets" />
+        <Stack.Screen
+          name="leaflets"
+          options={{ title: "Encartes", headerShown: false }}
+        />
 
         {/* Perfil */}
         <Stack.Screen name="profile/index" />

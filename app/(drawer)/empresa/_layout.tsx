@@ -15,18 +15,11 @@ export default function CompanyLayout() {
     <CompanyPageProvider companySlug={companySlug as string}>
       <Stack
         screenOptions={{
-          // Configurações adicionais de estilo para todas as telas
           contentStyle: { backgroundColor: "#FFFFFF" },
           headerShown: true,
-          headerBackTitle: "Voltar", // Texto para o botão de voltar (iOS)
-          headerBackVisible: true, // Mostra o botão de voltar (Android/iOS)
-
-          // Opcional: Customizar a cor do botão de voltar
+          headerBackTitle: "Voltar",
+          headerBackVisible: true,
           headerTintColor: "#FFFFFF",
-
-          // Usar sua cor primária aqui
-
-          // Opcional: Estilizar o header
           headerStyle: {
             backgroundColor: "#F4511E",
           },
