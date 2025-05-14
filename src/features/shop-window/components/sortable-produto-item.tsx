@@ -135,7 +135,7 @@ export function SortableProdutoItem({
         }}
       >
         <Card
-          className={`bg-white shadow-sm border border-gray-100 overflow-hidden ${
+          className={`bg-white border border-gray-100 overflow-hidden ${
             !isAvailable ? "opacity-70" : ""
           }`}
         >

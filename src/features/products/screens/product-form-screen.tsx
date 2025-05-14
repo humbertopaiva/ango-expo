@@ -6,9 +6,10 @@ import {
   ActivityIndicator,
   Text,
   Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, SubmitErrorHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useProducts } from "../hooks/use-products";
 import { productFormSchema, ProductFormData } from "../schemas/product.schema";
@@ -56,6 +57,10 @@ import { CreateProductDTO } from "../models/product";
 import useAuthStore from "@/src/stores/auth";
 import { VariationSelector } from "../components/variation-selector";
 import { ProductVisibilityOptions } from "../components/product-visibility-options";
+import {
+  FormToastAlert,
+  ToastType,
+} from "@/components/custom/form-toast-alert";
 
 interface ProductFormScreenProps {
   productId?: string;
@@ -69,9 +74,15 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
   const [selectedVariationType, setSelectedVariationType] = useState<
     string | null
   >(null);
+
   const [selectedVariationName, setSelectedVariationName] =
     useState<string>("");
   const [variationValues, setVariationValues] = useState<string[]>([]);
+
+  // Estados para o toast personalizado
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<ToastType>("error");
 
   const { products, createProduct, updateProduct, isLoading } = useProducts();
   const { categories, isLoading: isCategoriesLoading } = useCategories();
@@ -100,7 +111,15 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       exibir_produto: true,
       exibir_preco: true,
     },
+    mode: "onSubmit",
   });
+
+  // Função auxiliar para mostrar o toast personalizado
+  const showCustomToast = (message: string, type: ToastType = "error") => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
 
   // Esta função auxiliar ajuda a obter o valor correto da categoria para o formulário
   const getProductCategoryId = useCallback(() => {
@@ -207,7 +226,61 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
     setShowVariationWarning(false);
   };
 
-  const handleSubmit = async (data: ProductFormData) => {
+  // Handler para erros de validação
+  const onError: SubmitErrorHandler<ProductFormData> = (errors) => {
+    console.log("Validation errors:", errors);
+
+    // Mapear nomes amigáveis para os campos
+    const fieldLabels: Record<string, string> = {
+      nome: "Nome",
+      preco: "Preço",
+      preco_promocional: "Preço promocional",
+      descricao: "Descrição",
+      categoria: "Categoria",
+      variacao: "Variação",
+      imagem: "Imagem",
+      quantidade_parcelas: "Quantidade de parcelas",
+      parcelas_sem_juros: "Parcelas sem juros",
+      desconto_avista: "Desconto à vista",
+      status: "Status",
+      is_variacao_enabled: "Produto com variação",
+      quantidade_maxima_carrinho: "Quantidade máxima no carrinho",
+      exibir_produto: "Visibilidade do produto",
+      exibir_preco: "Visibilidade do preço",
+    };
+
+    // Construir mensagem de erro
+    const errorFields = Object.keys(errors);
+
+    if (errorFields.length > 0) {
+      // Para o toast, mostre uma mensagem mais curta
+      let toastMsg = "Campos obrigatórios: ";
+
+      // Limitar a quantidade de campos mostrados no toast
+      if (errorFields.length <= 3) {
+        toastMsg += errorFields
+          .map((field) => fieldLabels[field] || field)
+          .join(", ");
+      } else {
+        const firstFields = errorFields.slice(0, 2);
+        toastMsg +=
+          firstFields.map((field) => fieldLabels[field] || field).join(", ") +
+          ` e mais ${errorFields.length - 2} campos`;
+      }
+
+      // Mostrar toast personalizado
+      showCustomToast(toastMsg, "error");
+
+      // Também mostrar o alert nativo com detalhes completos
+      let alertMsg = "Por favor, revise os campos obrigatórios:\n\n";
+      const fieldNamesList = errorFields
+        .map((field) => fieldLabels[field] || field)
+        .join("\n• ");
+      alertMsg += "• " + fieldNamesList;
+    }
+  };
+
+  const onSubmit = async (data: ProductFormData) => {
     try {
       setIsSubmitting(true);
       console.log("Iniciando salvamento do produto");
@@ -217,6 +290,8 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
 
       if (!companyId) {
         showErrorToast(toast, "ID da empresa não encontrado");
+        showCustomToast("ID da empresa não encontrado", "error");
+        setIsSubmitting(false);
         return;
       }
 
@@ -255,6 +330,12 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         console.log("Produto criado com sucesso");
       }
 
+      // Mostrar mensagem de sucesso
+      showCustomToast(
+        `Produto ${isEditing ? "atualizado" : "criado"} com sucesso!`,
+        "success"
+      );
+
       showSuccessToast(
         toast,
         `Produto ${isEditing ? "atualizado" : "criado"} com sucesso!`
@@ -266,6 +347,10 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
       }, 500);
     } catch (error) {
       console.error("Error submitting form:", error);
+      showCustomToast(
+        `Erro ao ${isEditing ? "atualizar" : "criar"} o produto`,
+        "error"
+      );
       showErrorToast(
         toast,
         `Erro ao ${isEditing ? "atualizar" : "criar"} o produto`
@@ -288,6 +373,15 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
+      {/* Toast personalizado */}
+      <FormToastAlert
+        visible={toastVisible}
+        onClose={() => setToastVisible(false)}
+        message={toastMessage}
+        type={toastType}
+        duration={5000}
+      />
+
       <ScrollView
         className="flex-1 p-4"
         showsVerticalScrollIndicator={false}
@@ -357,7 +451,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
                     name="variacao"
                     render={({ field: { value, onChange } }) => (
                       <VariationSelector
-                        value={value}
+                        value={value ?? null}
                         onChange={onChange}
                         onVariationChange={handleVariationChange}
                         error={form.formState.errors.variacao?.message}
@@ -718,7 +812,7 @@ export function ProductFormScreen({ productId }: ProductFormScreenProps) {
         <FormActions
           primaryAction={{
             label: isSubmitting ? "Salvando..." : "Salvar",
-            onPress: form.handleSubmit(handleSubmit),
+            onPress: form.handleSubmit(onSubmit, onError),
             isLoading: isSubmitting,
           }}
           secondaryAction={{

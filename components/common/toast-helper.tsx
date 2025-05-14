@@ -1,7 +1,7 @@
 // components/common/simplified-toast.tsx
 import React from "react";
 import { View, Text } from "react-native";
-import { useToast, Toast } from "@gluestack-ui/themed";
+import { useToast, Toast, ToastTitle } from "@gluestack-ui/themed";
 import { CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react-native";
 
 /**
@@ -94,31 +94,111 @@ export function showToast(
   });
 }
 
-// Funções auxiliares para diferentes tipos de toast
-export function showSuccessToast(
-  toast: ReturnType<typeof useToast>,
-  title: string
-) {
-  showToast(toast, { title, type: "success" });
-}
-
-export function showErrorToast(
-  toast: ReturnType<typeof useToast>,
-  title: string
-) {
-  showToast(toast, { title, type: "error" });
-}
-
-export function showWarningToast(
-  toast: ReturnType<typeof useToast>,
-  title: string
-) {
-  showToast(toast, { title, type: "warning" });
-}
-
 export function showInfoToast(
   toast: ReturnType<typeof useToast>,
   title: string
 ) {
   showToast(toast, { title, type: "info" });
+}
+
+/**
+ * Exibe um toast de erro
+ * @param toast Hook useToast() do Gluestack UI
+ * @param message Mensagem de erro a ser exibida
+ */
+export function showErrorToast(toast: any, message: string) {
+  toast.show({
+    placement: "top",
+    render: ({ id }: { id: string }) => {
+      return (
+        <Toast nativeID={id} action="error" variant="accent">
+          <ToastTitle color="$error800">{message}</ToastTitle>
+        </Toast>
+      );
+    },
+  });
+}
+
+/**
+ * Exibe um toast de sucesso
+ * @param toast Hook useToast() do Gluestack UI
+ * @param message Mensagem de sucesso a ser exibida
+ */
+export function showSuccessToast(toast: any, message: string) {
+  toast.show({
+    placement: "top",
+    render: ({ id }: { id: string }) => {
+      return (
+        <Toast nativeID={id} action="success" variant="accent">
+          <ToastTitle color="$success800">{message}</ToastTitle>
+        </Toast>
+      );
+    },
+  });
+}
+
+/**
+ * Exibe um toast de aviso
+ * @param toast Hook useToast() do Gluestack UI
+ * @param message Mensagem de aviso a ser exibida
+ */
+export function showWarningToast(toast: any, message: string) {
+  toast.show({
+    placement: "top",
+    render: ({ id }: { id: string }) => {
+      return (
+        <Toast nativeID={id} action="warning" variant="accent">
+          <ToastTitle color="$warning800">{message}</ToastTitle>
+        </Toast>
+      );
+    },
+  });
+}
+
+/**
+ * Verifica erros em um formulário e exibe um toast se necessário
+ * @param toast Hook useToast() do Gluestack UI
+ * @param errors Objeto de erros do react-hook-form
+ * @param options Opções de customização
+ * @returns true se o formulário é válido, false caso contrário
+ */
+export function validateFormWithToast(
+  toast: any,
+  errors: Record<string, any>,
+  options: {
+    errorMessage?: string;
+    fieldLabels?: Record<string, string>;
+    maxFieldsToShow?: number;
+  } = {}
+): boolean {
+  const {
+    errorMessage = "Por favor, revise as informações",
+    fieldLabels = {},
+    maxFieldsToShow = 3,
+  } = options;
+
+  const hasErrors = Object.keys(errors).length > 0;
+
+  if (hasErrors) {
+    const errorFields = Object.keys(errors);
+    let fullMessage = errorMessage;
+
+    if (errorFields.length > 0) {
+      const fieldsToShow = errorFields.slice(0, maxFieldsToShow);
+      const formattedFields = fieldsToShow
+        .map((field) => fieldLabels[field] || field)
+        .join(", ");
+
+      if (errorFields.length <= maxFieldsToShow) {
+        fullMessage += `. Campos: ${formattedFields}`;
+      } else {
+        fullMessage += `. ${fieldsToShow.length} de ${errorFields.length} campos: ${formattedFields}...`;
+      }
+    }
+
+    showErrorToast(toast, fullMessage);
+    return false;
+  }
+
+  return true;
 }
