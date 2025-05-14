@@ -27,7 +27,7 @@ export default function LeafletsLayout() {
         <Stack.Screen
           name="index"
           options={{
-            title: "Leaflets",
+            title: "Encartes",
             headerShown: true,
             headerLeft: () => {
               return (
@@ -39,9 +39,10 @@ export default function LeafletsLayout() {
           }}
         />
         <Stack.Screen
-          name="new"
+          name="new/index"
           options={{
-            title: "Novo Leaflet",
+            title: "Novo Encarte",
+            headerShown: true,
           }}
         />
         <Stack.Screen

@@ -8,7 +8,6 @@ import { View } from "@gluestack-ui/themed";
 export default function NewLeafletPage() {
   return (
     <View className="flex-1 bg-background">
-      <ScreenHeader title="Novo Encarte" backTo="/admin/leaflets" />
       <LeafletFormScreen />
     </View>
   );
